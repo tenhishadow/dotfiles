@@ -1,0 +1,56 @@
+# common
+[gpg]
+    program = gpg
+[commit]
+    gpgsign = true
+[tag]
+    forceSignAnnotated = true
+[grep]
+  lineNumber = true
+[help]
+    autocorrect = 1
+[submodule]
+    recurse = true
+    fetchJobs = 0
+[color]
+    ui = auto
+[color "branch"]
+    current = yellow reverse
+    local = yellow
+    remote = green
+[color "diff"]
+    meta = yellow bold
+    frag = magenta bold
+    old = red bold
+    new = green bold
+[color "status"]
+    added = yellow
+    changed = green
+    untracked = cyan
+[color "diff-highlight"]
+    oldNormal = red bold
+    oldHighlight = red bold 52
+    newNormal = green bold
+    newHighlight = green bold 22
+[core]
+    excludesfile = ~/.gitignore_global
+[github]
+    user = tenhishadow
+[user]
+    email = "adm@tenhi.dev"
+    name = "tenhishadow"
+    signingkey = "44E4A3C59E86E715C1CBE9B40D779E8EB9CE3D4D"
+
+# project related
+
+# personal github
+[includeIf "gitdir:~/projects/my_github/"]
+    path = ~/projects/my_github/.gitconfig
+
+# itechart
+[includeIf "gitdir:~/projects/itechart/"]
+    path = ~/projects/itechart/.gitconfig
+
+# itechart GlossGenius
+[includeIf "gitdir:/home/tenhi/projects/itechart_gg/"]
+    path = ~/projects/itechart_gg/.gitconfig
