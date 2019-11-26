@@ -34,6 +34,9 @@
     newHighlight = green bold 22
 [core]
     excludesfile = ~/.gitignore_global
+[alias]
+  fps = push --no-verify -f
+  cadd = commit --no-edit --no-verify --amend
 [github]
     user = tenhishadow
 [user]
