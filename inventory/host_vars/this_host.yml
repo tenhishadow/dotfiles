@@ -1,0 +1,29 @@
+---
+
+dotfiles_location: "{{ playbook_dir }}/dotfiles"
+
+dotfiles_mapping:
+  bashrc:
+    src: "{{ dotfiles_location }}/.bashrc"
+    dest: "{{ ansible_user_dir }}/.bashrc"
+  editorconfig:
+    src: "{{ dotfiles_location }}/.editorconfig"
+    dest: "{{ ansible_user_dir }}/.editorconfig"
+  gitconfig:
+    src: "{{ dotfiles_location }}/.gitconfig"
+    dest: "{{ ansible_user_dir }}/.gitconfig"
+  screenrc:
+    src: "{{ dotfiles_location }}/.screenrc"
+    dest: "{{ ansible_user_dir }}/.screenrc"
+  vimrc:
+    src: "{{ dotfiles_location }}/.vimrc"
+    dest: "{{ ansible_user_dir }}/.vimrc"
+  gpg_agent:
+    src: "{{ dotfiles_location }}/.gnugpg/gpg-agent.conf"
+    dest: "{{ ansible_user_dir }}/.gnugpg/gpg-agent.conf"
+    dir_path: "{{ ansible_user_dir }}/.gnugpg"
+    dir_mode: "u=rwx"
+    dir_owner: "{{ ansible_real_user_id }}"
+    dir_group: "{{ ansible_real_group_id }}"
+
+...

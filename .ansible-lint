@@ -1,0 +1,12 @@
+---
+
+exclude_paths:
+  - mitogen_ansible
+  - test
+skip_list:
+  - ansible_lint_skip
+  - '401'
+use_default_rules: yes
+verbosity: 1
+
+...

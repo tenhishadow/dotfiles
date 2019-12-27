@@ -1,0 +1,35 @@
+---
+
+- hosts: this_host
+  become: false
+  connection: local
+  gather_facts: true
+  tasks:
+    - name: check mandatory variables are defined
+      assert:
+        that:
+          - dotfiles_mapping is defined
+
+    - name: manage dirs for dotfiles
+      file:
+        path: "{{ item.value.dir_path }}"
+        state: directory
+        mode: "{{ item.value.dir_mode }}"
+        owner: "{{ item.value.dir_owner }}"
+        group: "{{ item.value.dir_group }}"
+      with_dict: "{{ dotfiles_mapping }}"
+      when:
+        - item.value.dir_path is defined
+        - item.value.dir_mode is defined
+        - item.value.dir_owner is defined
+        - item.value.dir_group is defined
+
+    - name: create symlinks for dotfiles
+      file:
+        src: "{{ item.value.src }}"
+        dest: "{{ item.value.dest }}"
+        force: true
+        state: link
+      with_dict: "{{ dotfiles_mapping }}"
+
+...
