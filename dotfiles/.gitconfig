@@ -17,6 +17,8 @@
 [merge]
   # show original change, incoming change, and unchanged
   conflictstyle = diff3
+[http]
+	sslverify = false
 
 [color]
   ui = auto
@@ -38,12 +40,15 @@
   oldHighlight = red bold 52
   newNormal = green bold
   newHighlight = green bold 22
+
 [github]
   user = tenhishadow
+
 [user]
   email = "adm@tenhi.dev"
   name = "tenhishadow"
   signingkey = "44E4A3C59E86E715C1CBE9B40D779E8EB9CE3D4D"
+
 [alias]
   fps = push --no-verify -f
   cadd = commit --no-edit --no-verify --amend
@@ -51,6 +56,8 @@
   glog = log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset'
   # undo last commit but keep staging
   undo = reset --soft HEAD^
+  # deletes any local branch which has been deleted from the remote
+  prune = fetch --prune
 
 # project related
 
