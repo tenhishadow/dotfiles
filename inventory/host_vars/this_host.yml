@@ -25,5 +25,11 @@ dotfiles_mapping:
     dir_mode: "u=rwx"
     dir_owner: "{{ ansible_real_user_id }}"
     dir_group: "{{ ansible_real_group_id }}"
+  curlrc:
+    src: "{{ dotfiles_location }}/.curlrc"
+    dest: "{{ ansible_user_dir }}/.curlrc"
+  wgetrc:
+    src: "{{ dotfiles_location }}/.wgetrc"
+    dest: "{{ ansible_user_dir }}/.wgetrc"
 
 ...
