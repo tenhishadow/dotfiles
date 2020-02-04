@@ -1,15 +1,19 @@
+if empty(glob('~/.vim/plugged'))
+  autocmd VimEnter * PlugInstall --sync | source ${MYVIMRC}
+endif
+
 call plug#begin('~/.vim/plugged')
-Plug 'scrooloose/nerdtree'
-Plug 'Xuyuanp/nerdtree-git-plugin'
-Plug 'tpope/vim-sensible'
-Plug 'itchyny/lightline.vim'
-Plug 'ntpeters/vim-better-whitespace'
-Plug 'editorconfig/editorconfig-vim'
-Plug 'airblade/vim-gitgutter'
-Plug 'junegunn/vim-easy-align'
-Plug 'nathanaelkane/vim-indent-guides'
-Plug 'tomtom/tcomment_vim'
-Plug 'terryma/vim-multiple-cursors'
+  Plug 'scrooloose/nerdtree'
+  Plug 'Xuyuanp/nerdtree-git-plugin'
+  Plug 'tpope/vim-sensible'
+  Plug 'itchyny/lightline.vim'
+  Plug 'ntpeters/vim-better-whitespace'
+  Plug 'editorconfig/editorconfig-vim'
+  Plug 'airblade/vim-gitgutter'
+  Plug 'junegunn/vim-easy-align'
+  Plug 'nathanaelkane/vim-indent-guides'
+  Plug 'tomtom/tcomment_vim'
+  Plug 'terryma/vim-multiple-cursors'
 call plug#end()
 
 set nocompatible
@@ -46,7 +50,7 @@ set showmode
 " per plugin
 " NERDTree
 let NERDTreeAutoDeleteBuffer = 1 " Automatically delete the buffer of the file you just deleted with NerdTree
-let NERDTreeShowHidden=1 " show hidden files
-let NERDTreeQuitOnOpen = 1 " Closing automatically
+let NERDTreeShowHidden = 1       " show hidden files
+let NERDTreeQuitOnOpen = 1       " Closing automatically
 let NERDTreeMinimalUI = 1
 let NERDTreeDirArrows = 1
