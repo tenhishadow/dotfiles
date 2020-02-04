@@ -32,4 +32,17 @@
         state: link
       with_dict: "{{ dotfiles_mapping }}"
 
+    - name: manage vim-plug
+      block:
+        - name: check/create vim-plugin dir
+          file:
+            path: "{{ vim_plug_dir }}"
+            state: directory
+            mode: "u=rwx,g=rx"
+        - name: check/install vim-plug
+          get_url:
+            url: "{{ vim_plug_src }}"
+            dest: "{{ vim_plug_dir }}/plug.vim"
+            mode: "u=rw,g=r,o=r"
+
 ...
