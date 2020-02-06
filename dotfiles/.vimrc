@@ -14,6 +14,7 @@ call plug#begin('~/.vim/plugged')
   Plug 'nathanaelkane/vim-indent-guides'
   Plug 'tomtom/tcomment_vim'
   Plug 'terryma/vim-multiple-cursors'
+  Plug 'dense-analysis/ale' " https://github.com/dense-analysis/ale
 call plug#end()
 
 set nocompatible
