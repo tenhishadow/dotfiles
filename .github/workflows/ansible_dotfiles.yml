@@ -1,0 +1,29 @@
+---
+
+name: ansible_exec
+
+on: [push, pull_request]
+
+jobs:
+  ansible_exec:
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+    runs-on: ${{ matrix.os }}
+
+    steps:
+
+      - name: do checkout
+        uses: actions/checkout@master
+
+      - name: install virtualenv package
+        run: "sudo pip install virtualenv || sudo pip3 install virtualenv"
+
+      - name: just do it!
+        run: bash exec.sh
+        env:
+          ANSIBLE_FORCE_COLOR: true
+
+...
