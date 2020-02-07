@@ -2,6 +2,8 @@
 
 Ansible automation for my dotfiles
 
+![ansible_exec](https://github.com/tenhishadow/dotfiles/workflows/ansible_exec/badge.svg)
+
 # requirements
 * python
 * python virtualenv

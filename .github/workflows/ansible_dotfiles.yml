@@ -22,6 +22,8 @@ jobs:
         run: "sudo pip install virtualenv || sudo pip3 install virtualenv"
 
       - name: just do it!
-        run: ./exec.sh
+        run: bash exec.sh
+        env:
+          ANSIBLE_FORCE_COLOR: true
 
 ...
