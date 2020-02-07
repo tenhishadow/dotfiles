@@ -3,7 +3,7 @@ if empty(glob('~/.vim/plugged'))
 endif
 
 call plug#begin('~/.vim/plugged')
-  Plug 'junegunn/vim-easy-align'          " very easy align
+  Plug 'junegunn/vim-easy-align' " very easy align
   Plug 'scrooloose/nerdtree'
   Plug 'Xuyuanp/nerdtree-git-plugin'
   Plug 'tpope/vim-sensible'
@@ -15,7 +15,7 @@ call plug#begin('~/.vim/plugged')
   Plug 'nathanaelkane/vim-indent-guides'
   Plug 'tomtom/tcomment_vim'
   Plug 'terryma/vim-multiple-cursors'
-  Plug 'dense-analysis/ale'               " https://github.com/dense-analysis/ale
+  Plug 'dense-analysis/ale'      " https://github.com/dense-analysis/ale
   Plug 'hashivim/vim-terraform'
   Plug 'hashivim/vim-packer'
   Plug 'hashivim/vim-vagrant'
@@ -61,11 +61,11 @@ au BufNewFile,BufRead Matchfile     set ft=ruby
 
 " per plugin
 " NERDTree
-let NERDTreeAutoDeleteBuffer = 1  " Automatically delete the buffer of the file you just deleted with NerdTree
-let NERDTreeShowHidden = 1        " show hidden files
-let NERDTreeQuitOnOpen = 1        " Closing automatically
-let NERDTreeMinimalUI = 1
-let NERDTreeDirArrows = 1
+let NERDTreeAutoDeleteBuffer = 1 " Automatically delete the buffer of the file you just deleted with NerdTree
+let NERDTreeShowHidden       = 1 " show hidden files
+let NERDTreeQuitOnOpen       = 1 " Closing automatically
+let NERDTreeMinimalUI        = 1
+let NERDTreeDirArrows        = 1
 
 " EasyAlign
 " Start interactive EasyAlign in visual mode (e.g. vipga)
