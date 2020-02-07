@@ -49,6 +49,12 @@ nnoremap <F2> :set invpaste paste?<CR>
 set pastetoggle=<F2>
 set showmode
 
+" filetypes
+" Fastlane
+au BufNewFile,BufRead Appfile       set ft=ruby
+au BufNewFile,BufRead Fastfile      set ft=ruby
+au BufNewFile,BufRead Matchfile     set ft=ruby
+
 " per plugin
 " NERDTree
 let NERDTreeAutoDeleteBuffer = 1  " Automatically delete the buffer of the file you just deleted with NerdTree
