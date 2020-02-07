@@ -32,9 +32,11 @@ fi
 
 # enable color support of ls and also add handy aliases
 if [ -x /usr/bin/dircolors ]; then
-  [[ -r " ~/.dircolors" ]] && \
-    eval "$(dircolors -b ~/.dircolors)" || \
+  if [[ -r " ~/.dircolors" ]]; then
+    eval "$(dircolors -b ~/.dircolors)"
+  else
     eval "$(dircolors -b)"
+  fi
   alias dir='dir --color=auto'
   alias egrep='egrep --color=auto'
   alias fgrep='fgrep --color=auto'
