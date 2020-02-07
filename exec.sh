@@ -2,14 +2,16 @@
 
 # vars
 ANSIBLE_VENV_DIR="./ansible_venv"
+MITOGEN_STRATEGY="mitogen_linear"
 
 # functions
 function fn_mitogen {
-  ANSIBLE_STRATEGY_PLUGINS=$( find  "${ANSIBLE_VENV_DIR}" -type d -name strategy | grep mitogen )
-  if [[ -d $ANSIBLE_STRATEGY_PLUGINS ]]
+  ANSIBLE_STRATEGY_PLUGINS=$( find "${ANSIBLE_VENV_DIR}" -type d -name strategy | grep mitogen )
+  if { [[ -d "${ANSIBLE_STRATEGY_PLUGINS}" ]] &&
+       [[ -r "${ANSIBLE_STRATEGY_PLUGINS}/${MITOGEN_STRATEGY}.py" ]]; }
   then
     export ANSIBLE_STRATEGY_PLUGINS
-    export ANSIBLE_STRATEGY="mitogen_linear"
+    export ANSIBLE_STRATEGY=${MITOGEN_STRATEGY}
   fi
 }
 
