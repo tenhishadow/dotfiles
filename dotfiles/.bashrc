@@ -1,7 +1,7 @@
 # .bashrc
 
 # Source global definitions
-[[ -f /etc/bashrc ]] &&  . /etc/bashrc
+[[ -r /etc/bashrc ]] && source /etc/bashrc
 
 # If not running interactively, don't do anything
 case $- in
@@ -32,13 +32,14 @@ fi
 
 # enable color support of ls and also add handy aliases
 if [ -x /usr/bin/dircolors ]; then
-  test -r ~/.dircolors && eval "$(dircolors -b ~/.dircolors)" || eval "$(dircolors -b)"
-  alias ls='ls --color=auto'
+  [[ -r " ~/.dircolors" ]] && \
+    eval "$(dircolors -b ~/.dircolors)" || \
+    eval "$(dircolors -b)"
   alias dir='dir --color=auto'
-  alias vdir='vdir --color=auto'
-  alias grep='grep --color=auto'
-  alias fgrep='fgrep --color=auto'
   alias egrep='egrep --color=auto'
+  alias fgrep='fgrep --color=auto'
+  alias grep='grep --color=auto'
+  alias ls='ls --color=auto'
 fi
 
 ### Functions
@@ -77,30 +78,25 @@ function __parse_git_dirty {
   fi
 }
 
-# My aliases
+# Aliases
 alias ls='ls --color=auto'
 alias ll='ls -l'
-
-# editor
-export EDITOR=vim
-export VISUAL=vim
-
-
-# for terraform
+## terraform
 alias terraform-hook='for i in *.tf; do terraform fmt $i; done && terraform-docs --sort-inputs-by-required md ./ > README.md'
 
-# for git gpg
-export GPG_TTY=$(tty)
 
-# for golang
+# Vars
+## bash prompt
+export PS1="\[\e[33m\]\u\[\e[m\]\[\e[36m\]@\[\e[m\]\[\e[32m\]\h\[\e[m\]\[\e[31m\]:\[\e[m\]\[\e[36m\]\W\[\e[m\]\[\e[31;43m\]\$(__parse_git_branch)\[\e[m\]\[\e[32m\]\\$\[\e[m\] "
+## colored GCC warnings and errors
+export GCC_COLORS='error=01;31:warning=01;35:note=01;36:caret=01;32:locus=01:quote=01'
+## golang
 export PATH=$PATH:/usr/local/go/bin
 export GOPATH=$HOME/go
 export PATH=$GOPATH/bin:$PATH
+## editor
+export EDITOR="vim"
+export VISUAL="vim"
+# for git gpg
+GPG_TTY=$( tty ) && export GPG_TTY
 
-# Vars
-
-## bash prompt
-export PS1="\[\e[33m\]\u\[\e[m\]\[\e[36m\]@\[\e[m\]\[\e[32m\]\h\[\e[m\]\[\e[31m\]:\[\e[m\]\[\e[36m\]\W\[\e[m\]\[\e[31;43m\]\$(__parse_git_branch)\[\e[m\]\[\e[32m\]\\$\[\e[m\] "
-
-## colored GCC warnings and errors
-export GCC_COLORS='error=01;31:warning=01;35:note=01;36:caret=01;32:locus=01:quote=01'
