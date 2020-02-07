@@ -16,6 +16,10 @@ call plug#begin('~/.vim/plugged')
   Plug 'tomtom/tcomment_vim'
   Plug 'terryma/vim-multiple-cursors'
   Plug 'dense-analysis/ale'               " https://github.com/dense-analysis/ale
+  Plug 'hashivim/vim-terraform'
+  Plug 'hashivim/vim-packer'
+  Plug 'hashivim/vim-vagrant'
+  Plug 'glench/vim-jinja2-syntax'
 call plug#end()
 
 set nocompatible
