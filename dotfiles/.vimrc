@@ -20,6 +20,7 @@ call plug#begin('~/.vim/plugged')
   Plug 'hashivim/vim-packer'
   Plug 'hashivim/vim-vagrant'
   Plug 'glench/vim-jinja2-syntax'
+  Plug 'raimon49/requirements.txt.vim'
 call plug#end()
 
 set nocompatible
