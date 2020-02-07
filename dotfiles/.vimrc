@@ -3,24 +3,23 @@ if empty(glob('~/.vim/plugged'))
 endif
 
 call plug#begin('~/.vim/plugged')
-  Plug 'junegunn/vim-easy-align' " very easy align
-  Plug 'scrooloose/nerdtree'
   Plug 'Xuyuanp/nerdtree-git-plugin'
-  Plug 'tpope/vim-sensible'
-  Plug 'itchyny/lightline.vim'
-  Plug 'ntpeters/vim-better-whitespace'
-  Plug 'editorconfig/editorconfig-vim'
   Plug 'airblade/vim-gitgutter'
-  Plug 'junegunn/vim-easy-align'
-  Plug 'nathanaelkane/vim-indent-guides'
-  Plug 'tomtom/tcomment_vim'
-  Plug 'terryma/vim-multiple-cursors'
   Plug 'dense-analysis/ale'      " https://github.com/dense-analysis/ale
-  Plug 'hashivim/vim-terraform'
-  Plug 'hashivim/vim-packer'
-  Plug 'hashivim/vim-vagrant'
+  Plug 'editorconfig/editorconfig-vim'
   Plug 'glench/vim-jinja2-syntax'
+  Plug 'hashivim/vim-packer'
+  Plug 'hashivim/vim-terraform'
+  Plug 'hashivim/vim-vagrant'
+  Plug 'itchyny/lightline.vim'
+  Plug 'junegunn/vim-easy-align' " very easy align
+  Plug 'nathanaelkane/vim-indent-guides'
+  Plug 'ntpeters/vim-better-whitespace'
   Plug 'raimon49/requirements.txt.vim'
+  Plug 'scrooloose/nerdtree'
+  Plug 'terryma/vim-multiple-cursors'
+  Plug 'tomtom/tcomment_vim'
+  Plug 'tpope/vim-sensible'
 call plug#end()
 
 set nocompatible
