@@ -7,19 +7,25 @@ call plug#begin('~/.vim/plugged')
   Plug 'airblade/vim-gitgutter'
   Plug 'dense-analysis/ale'      " https://github.com/dense-analysis/ale
   Plug 'editorconfig/editorconfig-vim'
-  Plug 'glench/vim-jinja2-syntax'
-  Plug 'hashivim/vim-packer'
-  Plug 'hashivim/vim-terraform'
-  Plug 'hashivim/vim-vagrant'
   Plug 'itchyny/lightline.vim'
   Plug 'junegunn/vim-easy-align' " very easy align
   Plug 'nathanaelkane/vim-indent-guides'
   Plug 'ntpeters/vim-better-whitespace'
-  Plug 'raimon49/requirements.txt.vim'
   Plug 'scrooloose/nerdtree'
   Plug 'terryma/vim-multiple-cursors'
   Plug 'tomtom/tcomment_vim'
   Plug 'tpope/vim-sensible'
+  " by lang
+  "" mikrotik
+  Plug 'zainin/vim-mikrotik'
+  "" jinja
+  Plug 'glench/vim-jinja2-syntax'
+  "" hashicorp
+  Plug 'hashivim/vim-packer'
+  Plug 'hashivim/vim-terraform'
+  Plug 'hashivim/vim-vagrant'
+  "" python
+  Plug 'raimon49/requirements.txt.vim'
 call plug#end()
 
 set nocompatible
