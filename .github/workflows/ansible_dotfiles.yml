@@ -18,11 +18,15 @@ jobs:
       - name: do checkout
         uses: actions/checkout@master
 
-      - name: install virtualenv package
+      - name: deps | python version
+        uses: actions/setup-python@v1
+        with:
+          python-version: '3.x'
+
+      - name: deps | virtualenv
         run: |
-          curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
-          sudo python get-pip.py --force-reinstall
-          sudo pip install virtualenv || sudo pip3 install virtualenv
+          python -m pip install --upgrade pip
+          pip install virtualenv
 
       - name: just do it!
         run: bash exec.sh
