@@ -1,4 +1,5 @@
 #!/bin/bash
+set -eo pipefail
 
 # vars
 ANSIBLE_VENV_DIR="./ansible_venv"
@@ -16,7 +17,8 @@ function fn_mitogen {
 }
 
 # check for venv || create it
-[[ ! -r "${ANSIBLE_VENV_DIR}/bin/activate" ]] && virtualenv ${ANSIBLE_VENV_DIR}
+[[ ! -r "${ANSIBLE_VENV_DIR}/bin/activate" ]] && \
+  virtualenv ${ANSIBLE_VENV_DIR}
 
 # shellcheck disable=SC1090
 source ${ANSIBLE_VENV_DIR}/bin/activate
