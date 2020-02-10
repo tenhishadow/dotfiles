@@ -19,7 +19,10 @@ jobs:
         uses: actions/checkout@master
 
       - name: install virtualenv package
-        run: "sudo pip install virtualenv || sudo pip3 install virtualenv"
+        run: |
+          curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
+          sudo python get-pip.py --force-reinstall
+          sudo pip install virtualenv || sudo pip3 install virtualenv
 
       - name: just do it!
         run: bash exec.sh
