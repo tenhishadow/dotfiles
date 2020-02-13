@@ -1,4 +1,6 @@
-if empty(glob('~/.vim/plugged'))
+if !filereadable($HOME . '/.vim/autoload/plug.vim')
+  silent !mkdir -p ~/.vim/{autoload,plugged} >/dev/null 2>&1
+  silent !curl -fLo ~/.vim/autoload/plug.vim https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim >/dev/null 2>&1
   autocmd VimEnter * PlugInstall --sync | source ${MYVIMRC}
 endif
 

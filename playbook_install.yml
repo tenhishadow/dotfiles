@@ -32,24 +32,12 @@
         state: link
       with_dict: "{{ dotfiles_mapping }}"
 
-    - name: manage vim-plug
-      block:
-        - name: check/create vim-plugin dir
-          file:
-            path: "{{ vim_plug_dir }}"
-            state: directory
-            mode: "u=rwx,g=rx"
-        - name: check/install vim-plug
-          get_url:
-            url: "{{ vim_plug_src }}"
-            dest: "{{ vim_plug_dir }}/plug.vim"
-            mode: "u=rw,g=r,o=r"
-        - name: add cronjob for auto update
-          cron:
-            name: vim-plug update/upgrade
-            job: 'vim +PlugUpgrade +PlugUpdate +qa!'
-            special_time: weekly
-          ignore_errors: true  # if cron not presented
-          no_log: true  # it doesnt matter
+    - name: manage vim-plug update
+      cron:
+        name: vim-plug update/upgrade
+        job: 'vim +PlugUpgrade +PlugUpdate +qa!'
+        special_time: weekly
+      ignore_errors: true  # if cron not presented
+      no_log: true         # it doesnt matter
 
 ...
