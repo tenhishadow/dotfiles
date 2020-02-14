@@ -5,22 +5,28 @@ if !filereadable($HOME . '/.vim/autoload/plug.vim')
 endif
 
 call plug#begin('~/.vim/plugged')
+  Plug 'itchyny/lightline.vim'
+
+  Plug 'scrooloose/nerdtree'
   Plug 'Xuyuanp/nerdtree-git-plugin'
+
   Plug 'airblade/vim-gitgutter'
+
   Plug 'dense-analysis/ale'      " https://github.com/dense-analysis/ale
   Plug 'editorconfig/editorconfig-vim'
-  Plug 'itchyny/lightline.vim'
   Plug 'junegunn/vim-easy-align' " very easy align
   Plug 'nathanaelkane/vim-indent-guides'
   Plug 'ntpeters/vim-better-whitespace'
-  Plug 'scrooloose/nerdtree'
   Plug 'terryma/vim-multiple-cursors'
   Plug 'tomtom/tcomment_vim'
   Plug 'tpope/vim-sensible'
-  Plug 'tpope/vim-markdown'
+
   " theme
   Plug 'tomasr/molokai'
+  Plug 'jacoborus/tender.vim'
+
   " by lang
+  Plug 'tpope/vim-markdown'
   "" mikrotik
   Plug 'zainin/vim-mikrotik'
   "" jinja
@@ -36,7 +42,15 @@ call plug#end()
 set nocompatible
 syntax on                         " show syntax highlighting
 filetype plugin indent on
-colorscheme molokai
+
+if filereadable($HOME . '/.vim/plugged/molokai/colors/molokai.vim')
+  colorscheme molokai
+  let g:lightline = { 'colorscheme': 'molokai' }
+else
+  autocmd VimEnter * PlugInstall --sync | source ${MYVIMRC}
+  colorscheme koehler
+  let g:lightline = { 'colorscheme': 'koehler' }
+endif
 
 set autoread                      " re-read changed file
 set autoindent
