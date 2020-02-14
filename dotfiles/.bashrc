@@ -1,6 +1,8 @@
+#!/bin/bash
 # .bashrc
 
 # Source global definitions
+# shellcheck disable=SC1091
 [[ -r /etc/bashrc ]] && source /etc/bashrc
 
 # If not running interactively, don't do anything
@@ -9,35 +11,29 @@ case $- in
   *) return;;
 esac
 
-# Basic bash config
-
 ## History config
 ### don't put duplicate lines or lines starting with space in the history.
-HISTCONTROL="ignoreboth"
+HISTCONTROL="ignoreboth:erasedups"
 ### append to the history file, don't overwrite it
 shopt -s histappend
 ### for setting history length see HISTSIZE and HISTFILESIZE in bash
 HISTSIZE="5000"
-HISTFILESIZE="20000"
+HISTFILESIZE=${HISTSIZE}
+HISTTIMEFORMAT="%h %d %H:%M:%S >  "
 ### check the window size after each command and, if necessary, update the values of LINES and COLUMNS.
 shopt -s checkwinsize
 
-# make less more friendly for non-text input files, see lesspipe
-[ -x /usr/bin/lesspipe ] && eval "$(SHELL=/bin/sh lesspipe)"
-
 # set variable identifying the chroot you work in (used in the prompt below)
-if [ -z "${debian_chroot:-}" ] && [ -r /etc/debian_chroot ]; then
+{ [[ -z "${debian_chroot:-}" ]] && [[ -r /etc/debian_chroot ]]; } && \
   debian_chroot=$(cat /etc/debian_chroot)
-fi
 
 # enable color support of ls and also add handy aliases
-if [ -x /usr/bin/dircolors ]; then
+if { [[ -x /usr/bin/dircolors ]] && [[ ! "$OSTYPE" == "darwin"* ]]; }; then
   if [[ -r " ~/.dircolors" ]]; then
     eval "$(dircolors -b ~/.dircolors)"
   else
     eval "$(dircolors -b)"
   fi
-  alias dir='dir --color=auto'
   alias egrep='egrep --color=auto'
   alias fgrep='fgrep --color=auto'
   alias grep='grep --color=auto'
@@ -48,18 +44,18 @@ fi
 # get current branch in git repo
 function __parse_git_branch() {
   BRANCH=$( git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/\1/' )
-  [[ ! "${BRANCH}" == "" ]] && STAT=$( __parse_git_dirty ) && echo "[${BRANCH}${STAT}]"
+  [[ ! "${BRANCH}" == "" ]] && STAT=$( __parse_git_dirty ) && printf '%s\n' "[${BRANCH}${STAT}]"
 }
 
 # get current status of git repo
 function __parse_git_dirty {
   status=$( git status 2>&1 | tee )
-  dirty=$( echo -n "${status}" 2> /dev/null | grep "modified:" &> /dev/null; echo "$?" )
-  untracked=$( echo -n "${status}" 2> /dev/null | grep "Untracked files" &> /dev/null; echo "$?" )
-  ahead=$( echo -n "${status}" 2> /dev/null | grep "Your branch is ahead of" &> /dev/null; echo "$?" )
-  newfile=$( echo -n "${status}" 2> /dev/null | grep "new file:" &> /dev/null; echo "$?" )
-  renamed=$( echo -n "${status}" 2> /dev/null | grep "renamed:" &> /dev/null; echo "$?" )
-  deleted=$( echo -n "${status}" 2> /dev/null | grep "deleted:" &> /dev/null; echo "$?" )
+  dirty=$( printf '%s' "${status}" 2> /dev/null | grep "modified:" &> /dev/null; printf '%s\n' "$?" )
+  untracked=$( printf '%s'/ "${status}" 2> /dev/null | grep "Untracked files" &> /dev/null; printf '%s\n' "$?" )
+  ahead=$( printf '%s'/ "${status}" 2> /dev/null | grep "Your branch is ahead of" &> /dev/null; printf '%s\n' "$?" )
+  newfile=$( printf '%s'/ "${status}" 2> /dev/null | grep "new file:" &> /dev/null; printf '%s\n' "$?" )
+  renamed=$( printf '%s'/ "${status}" 2> /dev/null | grep "renamed:" &> /dev/null; printf '%s\n' "$?" )
+  deleted=$( printf '%s'/ "${status}" 2> /dev/null | grep "deleted:" &> /dev/null; printf '%s\n' "$?" )
   bits=''
   if [ "${renamed}" == "0" ]
     then bits=">${bits}"
@@ -74,18 +70,15 @@ function __parse_git_dirty {
   elif [ "${dirty}" == "0" ]
     then bits="!${bits}"
   elif [ ! "${bits}" == "" ]
-    then echo " ${bits}"
+    then printf '%s\n' " ${bits}"
   else
-    echo ""
+    printf '%s\n' ""
   fi
 }
 
 # Aliases
-alias ls='ls --color=auto'
 alias ll='ls -l'
-## terraform
-alias terraform-hook='for i in *.tf; do terraform fmt $i; done && terraform-docs --sort-inputs-by-required md ./ > README.md'
-
+alias wget='wget -c'
 
 # Vars
 ## bash prompt
