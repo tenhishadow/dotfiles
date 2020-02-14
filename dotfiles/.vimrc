@@ -17,6 +17,9 @@ call plug#begin('~/.vim/plugged')
   Plug 'terryma/vim-multiple-cursors'
   Plug 'tomtom/tcomment_vim'
   Plug 'tpope/vim-sensible'
+  Plug 'tpope/vim-markdown'
+  " theme
+  Plug 'tomasr/molokai'
   " by lang
   "" mikrotik
   Plug 'zainin/vim-mikrotik'
@@ -33,7 +36,7 @@ call plug#end()
 set nocompatible
 syntax on                         " show syntax highlighting
 filetype plugin indent on
-colorscheme koehler
+colorscheme molokai
 
 set autoread                      " re-read changed file
 set autoindent
