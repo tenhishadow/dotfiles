@@ -83,6 +83,9 @@ set showmode
 au BufNewFile,BufRead Appfile       set ft=ruby
 au BufNewFile,BufRead Fastfile      set ft=ruby
 au BufNewFile,BufRead Matchfile     set ft=ruby
+" ansible
+au BufNewFile,BufRead .ansible-lint set ft=yaml
+au BufNewFile,BufRead .yamllint     set ft=yaml
 
 " per plugin
 " NERDTree
