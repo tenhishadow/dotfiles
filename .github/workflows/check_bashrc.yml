@@ -23,7 +23,7 @@ jobs:
 
       - name: source config
         run: "source dotfiles/.bashrc"
-        shell: "bash --verbose -x"
+        shell: "bash"
 
       - name: print env
         run: "env"
