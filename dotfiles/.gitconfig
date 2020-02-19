@@ -17,6 +17,7 @@
 [merge]
   # show original change, incoming change, and unchanged
   conflictstyle = diff3
+	tool = vimdiff
 [http]
 	sslverify = false
 
@@ -72,3 +73,5 @@
 # itechart gg
 [includeIf "gitdir:/home/tenhi/projects/itechart_gg/"]
   path = ~/projects/itechart_gg/.gitconfig
+[diff]
+	tool = vimdiff
