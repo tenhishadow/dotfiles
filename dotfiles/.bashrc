@@ -85,13 +85,19 @@ alias wget='wget -c'
 export PS1="\[\e[33m\]\u\[\e[m\]\[\e[36m\]@\[\e[m\]\[\e[32m\]\h\[\e[m\]\[\e[31m\]:\[\e[m\]\[\e[36m\]\W\[\e[m\]\[\e[31;43m\]\$(__parse_git_branch)\[\e[m\]\[\e[32m\]\\$\[\e[m\] "
 ## colored GCC warnings and errors
 export GCC_COLORS='error=01;31:warning=01;35:note=01;36:caret=01;32:locus=01:quote=01'
+
 export PATH=$GOPATH/bin:$PATH
 [[ $( systemd-path user-binaries ) ]] && \
   PATH="$(systemd-path user-binaries):$PATH" && \
   export PATH
+
+## for sshd agent
+#SSH_AUTH_SOCK="$XDG_RUNTIME_DIR/ssh-agent.socket"
+#  export SSH_AUTH_SOCK # FIXME for jump
+
 ## editor
 export EDITOR="vim"
 export VISUAL="vim"
 # for git gpg
-GPG_TTY=$( tty ) && export GPG_TTY
-
+GPG_TTY=$( tty )
+  export GPG_TTY
