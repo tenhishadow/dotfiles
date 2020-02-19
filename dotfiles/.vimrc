@@ -39,6 +39,8 @@ call plug#begin('~/.vim/plugged')
 call plug#end()
 
 set nocompatible
+set shell=bash
+set ttyfast
 syntax on
 filetype plugin indent on
 
@@ -55,6 +57,11 @@ else
   autocmd VimEnter * PlugInstall --sync | source ${MYVIMRC}
   colorscheme koehler
   let g:lightline = { 'colorscheme': 'koehler' }
+endif
+
+" Ignore whitespace in vimdiff.
+if &diff
+  set diffopt+=iwhite
 endif
 
 set autoread                      " re-read changed file
