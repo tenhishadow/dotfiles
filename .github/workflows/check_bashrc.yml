@@ -1,0 +1,32 @@
+---
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  check_bashrc:
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+    runs-on: ${{ matrix.os }}
+
+    steps:
+
+      - name: do checkout
+        uses: actions/checkout@master
+
+      - name: show bash version
+        run: "bash --version"
+
+      - name: source config
+        run: "source dotfiles/.bashrc"
+        shell: "bash --verbose -x"
+
+      - name: print env
+        run: "env"
+        shell: "bash --verbose -x --rcfile dotfiles/.bashrc"
+
+...
