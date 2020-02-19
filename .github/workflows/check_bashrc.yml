@@ -1,0 +1,31 @@
+---
+
+name: 'check | .bashrc'
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  check_bashrc:
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: do checkout
+        uses: actions/checkout@master
+
+      - name: install shellcheck
+        run: |
+          sudo apt-get update
+          sudo apt-get install shellcheck
+
+      - name: show shellcheck version
+        run: |
+          shellcheck --version
+
+      - name: check bashrc
+        run: |
+          shellcheck dotfiles/.bashrc
+
+...

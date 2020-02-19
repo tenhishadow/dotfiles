@@ -1,0 +1,37 @@
+---
+
+name: 'check | .vimrc'
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  check_vimrc:
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: do checkout
+        uses: actions/checkout@master
+
+      - name: deps | python version
+        uses: actions/setup-python@v1
+        with:
+          python-version: '3.x'
+
+      - name: deps | vim-vint
+        run: |
+          python -m pip install --upgrade pip
+          pip install vim-vint
+
+      - name: lint vimrc
+        run: >-
+          vint --color
+          --style
+          dotfiles/.vimrc
+
+# documentation:
+# https://github.com/Vimjas/vint
+# https://github.com/Vimjas/vint/wiki/Vint-linting-policy-summary
+...
