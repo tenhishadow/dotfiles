@@ -85,10 +85,10 @@ alias wget='wget -c'
 export PS1="\[\e[33m\]\u\[\e[m\]\[\e[36m\]@\[\e[m\]\[\e[32m\]\h\[\e[m\]\[\e[31m\]:\[\e[m\]\[\e[36m\]\W\[\e[m\]\[\e[31;43m\]\$(__parse_git_branch)\[\e[m\]\[\e[32m\]\\$\[\e[m\] "
 ## colored GCC warnings and errors
 export GCC_COLORS='error=01;31:warning=01;35:note=01;36:caret=01;32:locus=01:quote=01'
-## golang
-export PATH=$PATH:/usr/local/go/bin
-export GOPATH=$HOME/go
 export PATH=$GOPATH/bin:$PATH
+[[ $( systemd-path user-binaries ) ]] && \
+  PATH="$(systemd-path user-binaries):$PATH" && \
+  export PATH
 ## editor
 export EDITOR="vim"
 export VISUAL="vim"
