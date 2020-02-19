@@ -1,5 +1,7 @@
 ---
 
+name: 'check | .vimrc'
+
 on:
   push:
   pull_request:
@@ -29,4 +31,7 @@ jobs:
           --style
           dotfiles/.vimrc
 
+# documentation:
+# https://github.com/Vimjas/vint
+# https://github.com/Vimjas/vint/wiki/Vint-linting-policy-summary
 ...

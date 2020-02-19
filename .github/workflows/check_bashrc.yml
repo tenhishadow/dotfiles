@@ -1,32 +1,31 @@
 ---
 
+name: 'check | .bashrc'
+
 on:
   push:
   pull_request:
 
 jobs:
   check_bashrc:
-    strategy:
-      matrix:
-        os:
-          - ubuntu-latest
-          - macos-latest
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
 
     steps:
 
       - name: do checkout
         uses: actions/checkout@master
 
-      - name: show bash version
-        run: "bash --version"
+      - name: install shellcheck
+        run: |
+          sudo apt-get update
+          sudo apt-get install shellcheck
 
-      - name: source config
-        run: "source dotfiles/.bashrc"
-        shell: "bash"
+      - name: show shellcheck version
+        run: |
+          shellcheck --version
 
-      - name: print env
-        run: "env"
-        shell: "bash --verbose -x --rcfile dotfiles/.bashrc"
+      - name: check bashrc
+        run: |
+          shellcheck dotfiles/.bashrc
 
 ...
