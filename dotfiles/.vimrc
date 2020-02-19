@@ -33,8 +33,9 @@ call plug#begin('~/.vim/plugged')
   Plug 'glench/vim-jinja2-syntax'
   "" hashicorp
   Plug 'hashivim/vim-packer'
-  Plug 'hashivim/vim-terraform'
   Plug 'hashivim/vim-vagrant'
+  Plug 'hashivim/vim-terraform'
+  Plug 'juliosueiras/vim-terraform-completion'
   "" python
   Plug 'raimon49/requirements.txt.vim'
 call plug#end()
@@ -42,6 +43,11 @@ call plug#end()
 set nocompatible
 syntax on                         " show syntax highlighting
 filetype plugin indent on
+
+" jump to the last position when reopening a file
+if has("autocmd")
+  au BufReadPost * if line("'\"") > 1 && line("'\"") <= line("$") | exe "normal! g'\"" | endif
+endif
 
 if filereadable($HOME . '/.vim/plugged/molokai/colors/molokai.vim')
   colorscheme molokai
