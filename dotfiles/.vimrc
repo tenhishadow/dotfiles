@@ -5,27 +5,25 @@ if !filereadable($HOME . '/.vim/autoload/plug.vim')
 endif
 
 call plug#begin('~/.vim/plugged')
-  Plug 'itchyny/lightline.vim'
-
+  " basic
+  Plug 'itchyny/lightline.vim'            " statusline/tabline
   Plug 'scrooloose/nerdtree'
+  " git
   Plug 'Xuyuanp/nerdtree-git-plugin'
-
   Plug 'airblade/vim-gitgutter'
-
-  Plug 'dense-analysis/ale'      " https://github.com/dense-analysis/ale
+  " format
   Plug 'editorconfig/editorconfig-vim'
-  Plug 'junegunn/vim-easy-align' " very easy align
+  Plug 'junegunn/vim-easy-align'          " very easy align
   Plug 'nathanaelkane/vim-indent-guides'
   Plug 'ntpeters/vim-better-whitespace'
   Plug 'terryma/vim-multiple-cursors'
   Plug 'tomtom/tcomment_vim'
   Plug 'tpope/vim-sensible'
-
+  Plug 'dense-analysis/ale'               " https://github.com/dense-analysis/ale
   " theme
   Plug 'tomasr/molokai'
   Plug 'jacoborus/tender.vim'
-
-  " by lang
+  " language
   Plug 'tpope/vim-markdown'
   "" mikrotik
   Plug 'zainin/vim-mikrotik'
@@ -33,16 +31,25 @@ call plug#begin('~/.vim/plugged')
   Plug 'glench/vim-jinja2-syntax'
   "" hashicorp
   Plug 'hashivim/vim-packer'
-  Plug 'hashivim/vim-terraform'
   Plug 'hashivim/vim-vagrant'
+  Plug 'hashivim/vim-terraform'
+  Plug 'juliosueiras/vim-terraform-completion'
   "" python
   Plug 'raimon49/requirements.txt.vim'
 call plug#end()
 
 set nocompatible
-syntax on                         " show syntax highlighting
+set shell=bash
+set ttyfast
+syntax on
 filetype plugin indent on
 
+" jump to the last position when reopening a file
+if has("autocmd")
+  au BufReadPost * if line("'\"") > 1 && line("'\"") <= line("$") | exe "normal! g'\"" | endif
+endif
+
+" set theme
 if filereadable($HOME . '/.vim/plugged/molokai/colors/molokai.vim')
   colorscheme molokai
   let g:lightline = { 'colorscheme': 'molokai' }
@@ -50,6 +57,11 @@ else
   autocmd VimEnter * PlugInstall --sync | source ${MYVIMRC}
   colorscheme koehler
   let g:lightline = { 'colorscheme': 'koehler' }
+endif
+
+" Ignore whitespace in vimdiff.
+if &diff
+  set diffopt+=iwhite
 endif
 
 set autoread                      " re-read changed file
@@ -83,6 +95,9 @@ set showmode
 au BufNewFile,BufRead Appfile       set ft=ruby
 au BufNewFile,BufRead Fastfile      set ft=ruby
 au BufNewFile,BufRead Matchfile     set ft=ruby
+" ansible
+au BufNewFile,BufRead .ansible-lint set ft=yaml
+au BufNewFile,BufRead .yamllint     set ft=yaml
 
 " per plugin
 " NERDTree
@@ -92,7 +107,7 @@ let NERDTreeQuitOnOpen       = 1 " Closing automatically
 let NERDTreeMinimalUI        = 1
 let NERDTreeDirArrows        = 1
 
-" EasyAlign
+" EasyAlign maps
 " Start interactive EasyAlign in visual mode (e.g. vipga)
 xmap ga <Plug>(EasyAlign)
 " Start interactive EasyAlign for a motion/text object (e.g. gaip)
