@@ -2,7 +2,8 @@
 set -eo pipefail
 
 # vars
-ANSIBLE_VENV_DIR="./ansible_venv"
+SCRIPT_DIR=$( dirname "$(readlink -f "$0")" )
+ANSIBLE_VENV_DIR="${SCRIPT_DIR}/ansible_venv"
 MITOGEN_STRATEGY="mitogen_linear"
 
 # functions
@@ -18,14 +19,15 @@ function fn_mitogen {
 
 # check for venv || create it
 [[ ! -r "${ANSIBLE_VENV_DIR}/bin/activate" ]] && \
-  virtualenv ${ANSIBLE_VENV_DIR} --system-site-packages
+  virtualenv "${ANSIBLE_VENV_DIR}" --system-site-packages
 
 # shellcheck disable=SC1090
-source ${ANSIBLE_VENV_DIR}/bin/activate
+source "${ANSIBLE_VENV_DIR}/bin/activate"
 
-pip install -r requirements.txt
+pip install -r "${SCRIPT_DIR}/requirements.txt"
 
 fn_mitogen
 
-ansible-playbook playbook_install.yml
+ansible-playbook "${SCRIPT_DIR}/playbook_install.yml" \
+  -i "${SCRIPT_DIR}/inventory"
 
