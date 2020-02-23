@@ -38,4 +38,12 @@ dotfiles_mapping:
     dir_mode: "u=rwx"
     dir_owner: "{{ ansible_real_user_id }}"
     dir_group: "{{ ansible_real_group_id }}"
+  konsole_colorscheme:
+    src: "{{ dotfiles_location }}/blink.colorscheme"
+    dest: "{{ ansible_user_dir }}/.local/share/konsole/blink.colorscheme"
+    dir_path: "{{ ansible_user_dir }}/.local/share/konsole"
+    dir_mode: "u=rwx"
+    dir_owner: "{{ ansible_real_user_id }}"
+    dir_group: "{{ ansible_real_group_id }}"
+
 ...
