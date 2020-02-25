@@ -43,36 +43,34 @@ fi
 ### Functions
 # get current branch in git repo
 function __parse_git_branch() {
-  BRANCH=$( git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/\1/' )
-  [[ ! "${BRANCH}" == "" ]] && STAT=$( __parse_git_dirty ) && printf '%s\n' "[${BRANCH}${STAT}]"
+  if [[ -x $( command -v git ) ]]; then
+    BRANCH=$( git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/\1/' )
+    [[ -n "${BRANCH}" ]] && printf '%s' "[ $( __parse_git_dirty )${BRANCH} ]"
+    else
+      return
+  fi
 }
-
 # get current status of git repo
 function __parse_git_dirty {
-  status=$( git status 2>&1 | tee )
+  status=$( LC_ALL=C git status 2>&1 | tee )
   dirty=$( printf '%s' "${status}" 2> /dev/null | grep "modified:" &> /dev/null; printf '%s\n' "$?" )
   untracked=$( printf '%s'/ "${status}" 2> /dev/null | grep "Untracked files" &> /dev/null; printf '%s\n' "$?" )
   ahead=$( printf '%s'/ "${status}" 2> /dev/null | grep "Your branch is ahead of" &> /dev/null; printf '%s\n' "$?" )
   newfile=$( printf '%s'/ "${status}" 2> /dev/null | grep "new file:" &> /dev/null; printf '%s\n' "$?" )
   renamed=$( printf '%s'/ "${status}" 2> /dev/null | grep "renamed:" &> /dev/null; printf '%s\n' "$?" )
   deleted=$( printf '%s'/ "${status}" 2> /dev/null | grep "deleted:" &> /dev/null; printf '%s\n' "$?" )
-  bits=''
-  if [ "${renamed}" == "0" ]
-    then bits=">${bits}"
-  elif [ "${ahead}" == "0" ]
-    then bits="*${bits}"
-  elif [ "${newfile}" == "0" ]
-    then bits="+${bits}"
-  elif [ "${untracked}" == "0" ]
-    then bits="?${bits}"
-  elif [ "${deleted}" == "0" ]
-    then bits="x${bits}"
-  elif [ "${dirty}" == "0" ]
-    then bits="!${bits}"
-  elif [ ! "${bits}" == "" ]
-    then printf '%s\n' " ${bits}"
+  unset bits
+
+  [[ "${renamed}" == "0" ]]   && bits=">${bits}"
+  [[ "${ahead}" == "0" ]]     && bits="*${bits}"
+  [[ "${newfile}" == "0" ]]   && bits="+${bits}"
+  [[ "${untracked}" == "0" ]] && bits="?${bits}"
+  [[ "${deleted}" == "0" ]]   && bits="x${bits}"
+  [[ "${dirty}" == "0" ]]     && bits="!${bits}"
+  if [[ -n "${bits}" ]]; then
+    printf '%s' "${bits} | "
   else
-    printf '%s\n' ""
+    return
   fi
 }
 
