@@ -91,10 +91,6 @@ export PATH=$GOPATH/bin:$PATH
   PATH="$(systemd-path user-binaries):$PATH" && \
   export PATH
 
-## for sshd agent
-#SSH_AUTH_SOCK="$XDG_RUNTIME_DIR/ssh-agent.socket"
-#  export SSH_AUTH_SOCK # FIXME for jump
-
 ## editor
 export EDITOR="vim"
 export VISUAL="vim"
