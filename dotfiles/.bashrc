@@ -68,7 +68,7 @@ function __parse_git_dirty {
   [[ "${deleted}" == "0" ]]   && bits="x${bits}"
   [[ "${dirty}" == "0" ]]     && bits="!${bits}"
   if [[ -n "${bits}" ]]; then
-    printf '%s' "${bits} | "
+    printf '%s' "${bits} "
   else
     return
   fi
