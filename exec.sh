@@ -19,7 +19,7 @@ function fn_mitogen {
 
 # check for venv || create it
 [[ ! -r "${ANSIBLE_VENV_DIR}/bin/activate" ]] && \
-  virtualenv "${ANSIBLE_VENV_DIR}" --system-site-packages
+  python -m virtualenv "${ANSIBLE_VENV_DIR}" --system-site-packages
 
 # shellcheck disable=SC1090
 source "${ANSIBLE_VENV_DIR}/bin/activate"
