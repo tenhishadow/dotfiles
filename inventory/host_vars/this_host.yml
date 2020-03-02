@@ -38,8 +38,22 @@ dotfiles_mapping:
     dir_mode: "u=rwx"
     dir_owner: "{{ ansible_real_user_id }}"
     dir_group: "{{ ansible_real_group_id }}"
+  mc_ini:
+    src: "{{ dotfiles_location }}/.config/mc/ini"
+    dest: "{{ ansible_user_dir }}/.config/mc/ini"
+    dir_path: "{{ ansible_user_dir }}/.config/mc"
+    dir_mode: "u=rwx"
+    dir_owner: "{{ ansible_real_user_id }}"
+    dir_group: "{{ ansible_real_group_id }}"
+  mc_panels_ini:
+    src: "{{ dotfiles_location }}/.config/mc/panels.ini"
+    dest: "{{ ansible_user_dir }}/.config/mc/panels.ini"
+    dir_path: "{{ ansible_user_dir }}/.config/mc"
+    dir_mode: "u=rwx"
+    dir_owner: "{{ ansible_real_user_id }}"
+    dir_group: "{{ ansible_real_group_id }}"
   konsole_colorscheme:
-    src: "{{ dotfiles_location }}/blink.colorscheme"
+    src: "{{ dotfiles_location }}/.local/share/konsole/blink.colorscheme"
     dest: "{{ ansible_user_dir }}/.local/share/konsole/blink.colorscheme"
     dir_path: "{{ ansible_user_dir }}/.local/share/konsole"
     dir_mode: "u=rwx"
