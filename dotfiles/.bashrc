@@ -84,6 +84,8 @@ export PS1="\[\e[33m\]\u\[\e[m\]\[\e[36m\]@\[\e[m\]\[\e[32m\]\h\[\e[m\]\[\e[31m\
 ## colored GCC warnings and errors
 export GCC_COLORS='error=01;31:warning=01;35:note=01;36:caret=01;32:locus=01:quote=01'
 
+GOPATH="${HOME}/go" && export GOPATH
+[[ ! -d "${GOPATH}" ]] && mkdir "${GOPATH}"
 export PATH=$GOPATH/bin:$PATH
 [[ $( systemd-path user-binaries ) ]] && \
   PATH="$(systemd-path user-binaries):$PATH" && \
