@@ -6,6 +6,9 @@ dotfiles_mapping:
   bashrc:
     src: "{{ dotfiles_location }}/.bashrc"
     dest: "{{ ansible_user_dir }}/.bashrc"
+  bash_profile:
+    src: "{{ dotfiles_location }}/.bash_profile"
+    dest: "{{ ansible_user_dir }}/.bash_profile"
   editorconfig:
     src: "{{ dotfiles_location }}/.editorconfig"
     dest: "{{ ansible_user_dir }}/.editorconfig"
