@@ -6,10 +6,7 @@
 [[ -r /etc/bashrc ]] && source /etc/bashrc
 
 # If not running interactively, don't do anything
-case $- in
-  *i*) ;;
-  *) return;;
-esac
+[[ $- == *i* ]] || return
 
 ## History config
 ### don't put duplicate lines or lines starting with space in the history.
