@@ -1,10 +1,13 @@
 # common
 [core]
   excludesfile = ~/.gitignore_global
+	editor = vim
 [gpg]
   program = gpg
 [commit]
   gpgsign = true
+[diff]
+	tool = vimdiff
 [tag]
   forceSignAnnotated = true
 [grep]
@@ -42,13 +45,13 @@
   newNormal = green bold
   newHighlight = green bold 22
 
-[github]
-  user = tenhishadow
-
 [user]
   email = "adm@tenhi.dev"
   name = "tenhishadow"
   signingkey = "44E4A3C59E86E715C1CBE9B40D779E8EB9CE3D4D"
+
+[github]
+  user = tenhishadow
 
 [alias]
   fps = push --no-verify -f
@@ -61,7 +64,6 @@
   prune = fetch --prune
 
 # project related
-
 # personal github
 [includeIf "gitdir:~/projects/my_github/"]
   path = ~/projects/my_github/.gitconfig
@@ -73,5 +75,3 @@
 # itechart gg
 [includeIf "gitdir:/home/tenhi/projects/itechart_gg/"]
   path = ~/projects/itechart_gg/.gitconfig
-[diff]
-	tool = vimdiff
