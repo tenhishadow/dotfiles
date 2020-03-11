@@ -84,13 +84,16 @@ export GCC_COLORS='error=01;31:warning=01;35:note=01;36:caret=01;32:locus=01:quo
 GOPATH="${HOME}/go" && export GOPATH
 [[ ! -d "${GOPATH}" ]] && mkdir "${GOPATH}"
 export PATH=$GOPATH/bin:$PATH
-[[ $( systemd-path user-binaries ) ]] && \
-  PATH="$(systemd-path user-binaries):$PATH" && \
-  export PATH
+
+if [[ "${OSTYPE}" != darwin* ]]; then
+  [[ $( systemd-path user-binaries ) ]] && \
+    PATH="$(systemd-path user-binaries):$PATH" && \
+      export PATH
+fi
 
 ## editor
 export EDITOR="vim"
-export VISUAL="vim"
+export VISUAL="${EDITOR}"
 # for git gpg
 GPG_TTY=$( tty )
   export GPG_TTY
