@@ -48,7 +48,7 @@
 [user]
   email = "adm@tenhi.dev"
   name = "tenhishadow"
-  signingkey = "44E4A3C59E86E715C1CBE9B40D779E8EB9CE3D4D"
+  signingkey = "8FB5A21521CD0F81EDE9B40C8720FFD4BB09C635"
 
 [github]
   user = tenhishadow
