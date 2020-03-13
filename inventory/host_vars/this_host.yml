@@ -58,6 +58,9 @@ dotfiles_mapping:
   konsolerc:
     src: "{{ dotfiles_location }}/.config/konsolerc"
     dest: "{{ ansible_user_dir }}/.config/konsolerc"
+  konsole_profile:
+    src: "{{ dotfiles_location }}/.local/share/konsole/main.profile"
+    dest: "{{ ansible_user_dir }}/.local/share/konsole/main.profile"
   konsole_colorscheme:
     src: "{{ dotfiles_location }}/.local/share/konsole/blink.colorscheme"
     dest: "{{ ansible_user_dir }}/.local/share/konsole/blink.colorscheme"

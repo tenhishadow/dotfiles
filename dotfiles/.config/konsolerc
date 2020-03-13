@@ -1,8 +1,8 @@
 [Desktop Entry]
-DefaultProfile=
+DefaultProfile=main.profile
 
 [Favorite Profiles]
-Favorites=
+Favorites=main.profile
 
 [MainWindow]
 State=AAAA/wAAAAD9AAAAAAAAB4AAAAPZAAAABAAAAAQAAAAIAAAACPwAAAAA
