@@ -1,0 +1,15 @@
+[Desktop Entry]
+DefaultProfile=
+
+[Dialogs]
+FirstRun=false
+
+[Favorite Profiles]
+Favorites=
+
+[Notification Messages]
+ShowPasteHugeTextWarning=false
+
+[Shortcuts]
+new-session=Ctrl+T
+view-full-screen=Alt+Return

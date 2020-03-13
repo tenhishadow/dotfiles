@@ -55,6 +55,9 @@ dotfiles_mapping:
     dir_mode: "u=rwx"
     dir_owner: "{{ ansible_real_user_id }}"
     dir_group: "{{ ansible_real_group_id }}"
+  konsolerc:
+    src: "{{ dotfiles_location }}/.config/konsolerc"
+    dest: "{{ ansible_user_dir }}/.config/konsolerc"
   konsole_colorscheme:
     src: "{{ dotfiles_location }}/.local/share/konsole/blink.colorscheme"
     dest: "{{ ansible_user_dir }}/.local/share/konsole/blink.colorscheme"
@@ -62,6 +65,12 @@ dotfiles_mapping:
     dir_mode: "u=rwx"
     dir_owner: "{{ ansible_real_user_id }}"
     dir_group: "{{ ansible_real_group_id }}"
+  yakuakerc:
+    src: "{{ dotfiles_location }}/.config/yakuakerc"
+    dest: "{{ ansible_user_dir }}/.config/yakuakerc"
+  yakuake.notifyrc:
+    src: "{{ dotfiles_location }}/.config/yakuake.notifyrc"
+    dest: "{{ ansible_user_dir }}/.config/yakuake.notifyrc"
   pam_env:
     src: "{{ dotfiles_location }}/.pam_environment"
     dest: "{{ ansible_user_dir }}/.pam_environment"
