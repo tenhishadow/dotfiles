@@ -1,3 +1,6 @@
+[Appearance]
+TerminalHighlightOnManualActivation=true
+
 [Desktop Entry]
 DefaultProfile=main.profile
 
@@ -13,3 +16,8 @@ ShowPasteHugeTextWarning=false
 [Shortcuts]
 new-session=Ctrl+T
 view-full-screen=Alt+Return
+
+[Window]
+DynamicTabTitles=true
+Height=40
+Width=100
