@@ -1,77 +1,74 @@
 # common
 [core]
-  excludesfile = ~/.gitignore_global
-	editor = vim
+    excludesfile = ~/.gitignore_global
+  	editor       = vim
 [gpg]
-  program = gpg
+    program = gpg
 [commit]
-  gpgsign = true
+    gpgsign = true
 [diff]
-	tool = vimdiff
+  	tool = vimdiff
 [tag]
-  forceSignAnnotated = true
+    forceSignAnnotated = true
 [grep]
-  lineNumber = true
+    lineNumber = true
 [help]
     autocorrect = 1
 [submodule]
-  recurse = true
-  fetchJobs = 2
+    recurse = true
+    fetchJobs = 2
 [merge]
-  # show original change, incoming change, and unchanged
-  conflictstyle = diff3
-	tool = vimdiff
+    conflictstyle = diff3 # show original change, incoming change, and unchanged
+  	tool          = vimdiff
 [http]
-	sslverify = false
+  	sslverify = false
 
 [color]
-  ui = auto
+    ui = auto
 [color "branch"]
-  current = yellow reverse
-  local = yellow
-  remote = green
+    current = yellow reverse
+    local   = yellow
+    remote  = green
 [color "diff"]
-  meta = yellow bold
-  frag = magenta bold
-  old = red bold
-  new = green bold
+    frag = magenta bold
+    meta = yellow bold
+    new  = green bold
+    old  = red bold
 [color "status"]
-  added = yellow
-  changed = green
-  untracked = cyan
+    added = yellow
+    changed = green
+    untracked = cyan
 [color "diff-highlight"]
-  oldNormal = red bold
-  oldHighlight = red bold 52
-  newNormal = green bold
-  newHighlight = green bold 22
+    oldNormal    = red bold
+    oldHighlight = red bold 52
+    newNormal    = green bold
+    newHighlight = green bold 22
 
 [user]
-  email = "adm@tenhi.dev"
-  name = "tenhishadow"
-  signingkey = "8FB5A21521CD0F81EDE9B40C8720FFD4BB09C635"
+    email      = "adm@tenhi.dev"
+    name       = "tenhishadow"
+    signingkey = "8FB5A21521CD0F81EDE9B40C8720FFD4BB09C635"
 
 [github]
-  user = tenhishadow
+    user = tenhishadow
 
 [alias]
-  fps = push --no-verify -f
-  cadd = commit --no-edit --no-verify --amend
-  # easier to read log
-  glog = log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset'
-  # undo last commit but keep staging
-  undo = reset --soft HEAD^
-  # deletes any local branch which has been deleted from the remote
-  prune = fetch --prune
+    cadd  = commit --no-edit --no-verify --amend
+    fps   = push --no-verify -f
+    glog  = log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset'
+    prune = fetch --prune
+    pushn = push --no-verify
+    undo  = reset --soft HEAD^
 
 # project related
 # personal github
 [includeIf "gitdir:~/projects/my_github/"]
-  path = ~/projects/my_github/.gitconfig
+    path = ~/projects/my_github/.gitconfig
 
 # itechart
 [includeIf "gitdir:~/projects/itechart/"]
-  path = ~/projects/itechart/.gitconfig
+    path = ~/projects/itechart/.gitconfig
 
 # itechart gg
 [includeIf "gitdir:/home/tenhi/projects/itechart_gg/"]
-  path = ~/projects/itechart_gg/.gitconfig
+    path = ~/projects/itechart_gg/.gitconfig

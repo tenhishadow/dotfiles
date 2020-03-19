@@ -39,6 +39,8 @@ augroup gr_install_plugins
     Plug 'juliosueiras/vim-terraform-completion'
     "" python
     Plug 'raimon49/requirements.txt.vim'
+    "" ruby
+    Plug 'vim-ruby/vim-ruby'
   call plug#end()
 augroup END
 " vint: next-line -ProhibitSetNoCompatible
