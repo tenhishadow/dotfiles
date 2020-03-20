@@ -22,9 +22,9 @@ dotfiles_mapping:
     src: "{{ dotfiles_location }}/.vimrc"
     dest: "{{ ansible_user_dir }}/.vimrc"
   gpg_agent:
-    src: "{{ dotfiles_location }}/.gnugpg/gpg-agent.conf"
-    dest: "{{ ansible_user_dir }}/.gnugpg/gpg-agent.conf"
-    dir_path: "{{ ansible_user_dir }}/.gnugpg"
+    src: "{{ dotfiles_location }}/.gnupg/gpg-agent.conf"
+    dest: "{{ ansible_user_dir }}/.gnupg/gpg-agent.conf"
+    dir_path: "{{ ansible_user_dir }}/.gnupg"
     dir_mode: "u=rwx"
     dir_owner: "{{ ansible_real_user_id }}"
     dir_group: "{{ ansible_real_group_id }}"
