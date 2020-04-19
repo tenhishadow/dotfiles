@@ -14,6 +14,7 @@ augroup gr_install_plugins
     " git
     Plug 'Xuyuanp/nerdtree-git-plugin'
     Plug 'airblade/vim-gitgutter'
+    Plug 'gisphm/vim-gitignore'
     " format
     Plug 'editorconfig/editorconfig-vim'
     Plug 'junegunn/vim-easy-align'          " very easy align
