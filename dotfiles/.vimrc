@@ -102,13 +102,15 @@ set pastetoggle=<F2>
 set showmode
 
 augroup gr_filetype " filetypes
-" Fastlane
-au BufNewFile,BufRead Appfile       set ft=ruby
-au BufNewFile,BufRead Fastfile      set ft=ruby
-au BufNewFile,BufRead Matchfile     set ft=ruby
-" ansible
-au BufNewFile,BufRead .ansible-lint set ft=yaml
-au BufNewFile,BufRead .yamllint     set ft=yaml
+  " Fastlane
+  au BufNewFile,BufRead Appfile       set ft=ruby
+  au BufNewFile,BufRead Fastfile      set ft=ruby
+  au BufNewFile,BufRead Matchfile     set ft=ruby
+  " ansible
+  au BufNewFile,BufRead .ansible-lint set ft=yaml
+  au BufNewFile,BufRead .yamllint     set ft=yaml
+  " terragrunt
+  au BufNewFile,BufRead terragrunt.hcl set ft=terraform
 augroup END
 " per plugin
 " NERDTree
