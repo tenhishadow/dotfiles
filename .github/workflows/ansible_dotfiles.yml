@@ -19,18 +19,20 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-
       - name: do checkout
         uses: actions/checkout@master
 
-      - name: deps | pipenv deps
-        uses: VaultVulp/action-pipenv@v2.0.1
+      - name: deps | python version
+        uses: actions/setup-python@v1
         with:
-          command: install
+          python-version: '3.x'
 
-      - name: install
-        uses: VaultVulp/action-pipenv@v2.0.1
-        with:
-          command: run install
+      - name: deps | pipenv
+        uses: dschep/install-pipenv-action@v1
+
+      - name: just do it!
+        run: pipenv run install
+        env:
+          ANSIBLE_FORCE_COLOR: true
 
 ...
