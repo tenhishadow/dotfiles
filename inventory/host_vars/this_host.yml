@@ -84,4 +84,11 @@ dotfiles_mapping:
   pam_env:
     src: "{{ dotfiles_location }}/.pam_environment"
     dest: "{{ ansible_user_dir }}/.pam_environment"
+  ssh_config:
+    src: "{{ dotfiles_location }}/.ssh/config"
+    dest: "{{ ansible_user_dir }}/.ssh/config"
+    dir_path: "{{ ansible_user_dir }}/.ssh"
+    dir_mode: "u=rwx"
+    dir_owner: "{{ ansible_real_user_id }}"
+    dir_group: "{{ ansible_real_group_id }}"
 ...
