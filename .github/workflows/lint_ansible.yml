@@ -1,0 +1,27 @@
+---
+
+name: 'lint | ansible'
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  lint_ansible:
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: do checkout
+        uses: actions/checkout@master
+
+      - name: Lint Ansible Playbook
+        uses: ansible/ansible-lint-action@master
+        with:
+          targets: |
+            playbook_install.yml
+          override-deps: |
+            ansible==2.9.2
+            ansible-lint==4.2.0
+
+...
