@@ -23,19 +23,14 @@ jobs:
       - name: do checkout
         uses: actions/checkout@master
 
-      - name: deps | python version
-        uses: actions/setup-python@v1
+      - name: deps | pipenv deps
+        uses: VaultVulp/action-pipenv@v2.0.1
         with:
-          python-version: '3.x'
+          command: install
 
-      - name: deps | virtualenv
-        run: |
-          python -m pip install --upgrade pip
-          pip install virtualenv
-
-      - name: just do it!
-        run: bash exec.sh
-        env:
-          ANSIBLE_FORCE_COLOR: true
+      - name: install
+        uses: VaultVulp/action-pipenv@v2.0.1
+        with:
+          command: run install
 
 ...
