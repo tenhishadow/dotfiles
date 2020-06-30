@@ -1,4 +1,10 @@
 if !filereadable($HOME . '/.vim/autoload/plug.vim')
+  if !executable("curl")
+    echoerr "You have to install curl or first install vim-plug yourself!"
+    execute "q!"
+  endif
+  echo "..installing Vim-Plug..."
+  echo ""
   silent !mkdir -p ~/.vim/{autoload,plugged} >/dev/null 2>&1
   silent !curl -fLo ~/.vim/autoload/plug.vim https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim >/dev/null 2>&1
   augroup gr_install_and_reload
