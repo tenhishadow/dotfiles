@@ -111,6 +111,8 @@ augroup gr_filetype " filetypes
   au BufNewFile,BufRead .yamllint     set ft=yaml
   " terragrunt
   au BufNewFile,BufRead terragrunt.hcl set ft=terraform
+  " custom ssh configs
+  au BufNewFile,BufRead ~/.ssh/config.d/* set ft=sshconfig
 augroup END
 " per plugin
 " NERDTree

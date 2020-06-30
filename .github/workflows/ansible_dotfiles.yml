@@ -28,13 +28,16 @@ jobs:
         with:
           python-version: '3.x'
 
-      - name: deps | virtualenv
+      - name: deps | install pipenv
         run: |
           python -m pip install --upgrade pip
-          pip install virtualenv
+          pip install pipenv
+
+      - name: deps | pipenv install
+        run: pipenv install
 
       - name: just do it!
-        run: bash exec.sh
+        run: pipenv run install
         env:
           ANSIBLE_FORCE_COLOR: true
 
