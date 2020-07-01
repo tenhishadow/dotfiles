@@ -50,6 +50,7 @@ augroup gr_install_plugins
     Plug 'vim-ruby/vim-ruby'
   call plug#end()
 augroup END
+
 " vint: next-line -ProhibitSetNoCompatible
 set nocompatible
 set shell=bash
@@ -81,32 +82,39 @@ if &diff
   set diffopt+=iwhite
 endif
 
-set autoread                      " re-read changed file
+au BufEnter * set fo-=c fo-=r fo-=o                    " stop annoying auto commenting on new lines
+highlight Comment gui=italic cterm=italic              " italic comments
 set autoindent
-set smartindent
-set termguicolors                 " show me all the colors please
-set smartindent
-set tabstop=2                     " set indent to 2 spaces
+set autoread          " re-read changed file
+set backspace=2       " make backspace work like most other programs
+set clipboard=unnamed " use the system clipboard
+set expandtab         " use spaces, not tab characters
+set history=1000      " history limit
+set hlsearch          " highlight all search matches
+set ignorecase        " ignore case in search
+set incsearch         " show search results as I type
+set lazyredraw        " no redraw wihle executing macros,...
+set mouse-=a          " do not use visual mode for mouse select
+set number            " show line numbers
+set redrawtime=10000  " redraw time
+set ruler             " show row and column in footer
 set shiftwidth=2
+set showmatch         " show bracket matches
+set smartcase         " pay attention to case when caps are used
+set smartindent
+set smartindent
 set smarttab
-set expandtab                     " use spaces, not tab characters
-set ignorecase                    " ignore case in search
-set showmatch                     " show bracket matches
-set hlsearch                      " highlight all search matches
-set number                        " show line numbers
-set smartcase                     " pay attention to case when caps are used
-set incsearch                     " show search results as I type
-set ruler                         " show row and column in footer
-set clipboard=unnamed             " use the system clipboard
-set wildmenu                      " enable bash style tab completion
+set synmaxcol=180     " avoid very slow redrawing
+set tabstop=2         " set indent to 2 spaces
+set termguicolors     " show me all the colors please
+set wildmenu          " enable bash style tab completion
 set wildmode=list:longest,full
-set backspace=2                   " make backspace work like most other programs
-set mouse-=a                      " do not use visual mode for mouse select
 
 nnoremap <F2> :set invpaste paste?<CR>
 set pastetoggle=<F2>
 set showmode
 
+" redefine filetypes
 augroup gr_filetype " filetypes
   " Fastlane
   au BufNewFile,BufRead Appfile       set ft=ruby
@@ -120,15 +128,17 @@ augroup gr_filetype " filetypes
   " custom ssh configs
   au BufNewFile,BufRead ~/.ssh/config.d/* set ft=sshconfig
 augroup END
-" per plugin
-" NERDTree
-let NERDTreeAutoDeleteBuffer = 1 " Automatically delete the buffer of the file you just deleted with NerdTree
-let NERDTreeShowHidden       = 1 " show hidden files
-let NERDTreeQuitOnOpen       = 1 " Closing automatically
-let NERDTreeMinimalUI        = 1
-let NERDTreeDirArrows        = 1
 
-" EasyAlign maps
+" per plugin configuration
+
+"" NERDTree
+let NERDTreeAutoDeleteBuffer = 1 " Automatically delete the buffer of the file you just deleted with NerdTree
+let NERDTreeDirArrows        = 1
+let NERDTreeMinimalUI        = 1
+let NERDTreeQuitOnOpen       = 1 " Closing automatically
+let NERDTreeShowHidden       = 1 " show hidden files
+
+"" EasyAlign maps
 " Start interactive EasyAlign in visual mode (e.g. vipga)
 xmap ga <Plug>(EasyAlign)
 " Start interactive EasyAlign for a motion/text object (e.g. gaip)
