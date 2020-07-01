@@ -1,10 +1,9 @@
 if !filereadable($HOME . '/.vim/autoload/plug.vim')
-  if !executable("curl")
-    echoerr "You have to install curl or first install vim-plug yourself!"
-    execute "q!"
+  if !executable('curl')
+    echoerr 'ERR: you have to install curl or first install vim-plug yourself!'
+    execute 'q!'
   endif
-  echo "..installing Vim-Plug..."
-  echo ""
+  echo 'DBG: installing Vim-Plug...'
   silent !mkdir -p ~/.vim/{autoload,plugged} >/dev/null 2>&1
   silent !curl -fLo ~/.vim/autoload/plug.vim https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim >/dev/null 2>&1
   augroup gr_install_and_reload
@@ -22,7 +21,7 @@ augroup gr_install_plugins
     Plug 'airblade/vim-gitgutter'
     Plug 'gisphm/vim-gitignore'
     " format
-    Plug 'editorconfig/editorconfig-vim'
+    Plug 'editorconfig/editorconfig-vim'    " support .editorconfig in vim
     Plug 'junegunn/vim-easy-align'          " very easy align
     Plug 'nathanaelkane/vim-indent-guides'
     Plug 'ntpeters/vim-better-whitespace'
@@ -33,7 +32,9 @@ augroup gr_install_plugins
     " theme
     Plug 'tomasr/molokai'
     Plug 'jacoborus/tender.vim'
+
     " language
+    "" markdown
     Plug 'tpope/vim-markdown'
     "" mikrotik
     Plug 'zainin/vim-mikrotik'
@@ -82,8 +83,12 @@ if &diff
   set diffopt+=iwhite
 endif
 
-au BufEnter * set fo-=c fo-=r fo-=o                    " stop annoying auto commenting on new lines
+augroup gr_hacks
+  au BufEnter * set fo-=c fo-=r fo-=o                    " stop annoying auto commenting on new lines
+augroup END
+
 highlight Comment gui=italic cterm=italic              " italic comments
+
 set autoindent
 set autoread          " re-read changed file
 set backspace=2       " make backspace work like most other programs
