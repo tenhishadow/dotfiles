@@ -1,6 +1,6 @@
 ---
 
-name: 'check | .bashrc'
+name: 'lint_bashrc'
 
 on:
   push:
@@ -24,7 +24,7 @@ jobs:
         run: |
           shellcheck --version
 
-      - name: check bashrc
+      - name: lint | .bashrc
         run: |
           shellcheck dotfiles/.bashrc
 

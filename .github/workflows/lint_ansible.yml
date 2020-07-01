@@ -1,6 +1,6 @@
 ---
 
-name: 'lint | ansible'
+name: 'lint_ansible'
 
 on:
   push:
@@ -15,7 +15,7 @@ jobs:
       - name: do checkout
         uses: actions/checkout@master
 
-      - name: Lint Ansible Playbook
+      - name: lint | ansible playbook
         uses: ansible/ansible-lint-action@master
         with:
           targets: |
