@@ -72,3 +72,5 @@
 # itechart gg
 [includeIf "gitdir:/home/tenhi/projects/itechart_gg/"]
     path = ~/projects/itechart_gg/.gitconfig
+[pull]
+	rebase = false
