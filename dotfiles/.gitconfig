@@ -1,76 +1,62 @@
 # common
 [core]
-    excludesfile = ~/.gitignore_global
-  	editor       = vim
-[gpg]
-    program = gpg
-[commit]
-    gpgsign = true
-[diff]
-  	tool = vimdiff
-[tag]
-    forceSignAnnotated = true
-[grep]
-    lineNumber = true
-[help]
-    autocorrect = 1
-[submodule]
-    recurse = true
-    fetchJobs = 2
-[merge]
-    conflictstyle = diff3 # show original change, incoming change, and unchanged
-  	tool          = vimdiff
-[http]
-  	sslverify = false
-
-[color]
-    ui = auto
-[color "branch"]
-    current = yellow reverse
-    local   = yellow
-    remote  = green
-[color "diff"]
-    frag = magenta bold
-    meta = yellow bold
-    new  = green bold
-    old  = red bold
-[color "status"]
-    added = yellow
-    changed = green
-    untracked = cyan
-[color "diff-highlight"]
-    oldNormal    = red bold
-    oldHighlight = red bold 52
-    newNormal    = green bold
-    newHighlight = green bold 22
-
-[user]
-    email      = "adm@tenhi.dev"
-    name       = "tenhishadow"
-    signingkey = "8FB5A21521CD0F81EDE9B40C8720FFD4BB09C635"
-
-[github]
-    user = tenhishadow
-
-[alias]
-    cadd  = commit --no-edit --no-verify --amend
-    fps   = push --no-verify -f
-    glog  = log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset'
-    prune = fetch --prune
-    pushn = push --no-verify
-    undo  = reset --soft HEAD^
-
-# project related
-# personal github
-[includeIf "gitdir:~/projects/my_github/"]
-    path = ~/projects/my_github/.gitconfig
-
-# itechart
-[includeIf "gitdir:~/projects/itechart/"]
-    path = ~/projects/itechart/.gitconfig
-
-# itechart gg
-[includeIf "gitdir:/home/tenhi/projects/itechart_gg/"]
-    path = ~/projects/itechart_gg/.gitconfig
+	editor             = vim
 [pull]
-	rebase = false
+	rebase             = false
+[gpg]
+  program            = gpg
+[commit]
+  gpgsign            = false
+[diff]
+  tool               = vimdiff
+[tag]
+  forceSignAnnotated = true
+[grep]
+  lineNumber         = true
+[help]
+  autocorrect        = 1
+[submodule]
+  recurse            = true
+  fetchJobs          = 2
+[merge]
+  conflictstyle      = diff3 # show original change, incoming change, and unchanged
+  tool               = vimdiff
+[http]
+  sslverify          = false
+[color]
+  ui                 = auto
+[color "branch"]
+  current            = yellow reverse
+  local              = yellow
+  remote             = green
+[color "diff"]
+  frag               = magenta bold
+  meta               = yellow bold
+  new                = green bold
+  old                = red bold
+[color "status"]
+  added              = yellow
+  changed            = green
+  untracked          = cyan
+[color "diff-highlight"]
+  oldNormal          = red bold
+  oldHighlight       = red bold 52
+  newNormal          = green bold
+  newHighlight       = green bold 22
+[alias]
+  cadd               = commit --no-edit --no-verify --amend
+  fps                = push --no-verify -f
+  glog               = log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset'
+  prune              = fetch --prune
+  pushn              = push --no-verify
+  undo               = reset --soft HEAD^
+# defaults
+[user]
+  email              = "adm@tenhi.dev"
+  name               = "tenhishadow"
+  signingkey         = "8FB5A21521CD0F81EDE9B40C8720FFD4BB09C635"
+[github]
+  user               = tenhishadow
+# project-related
+[includeIf "gitdir:~/projects/itechart_gg/"]
+  path               = ~/projects/itechart_gg/.gitconfig
