@@ -91,4 +91,12 @@ dotfiles_mapping:
     dir_mode: "u=rwx"
     dir_owner: "{{ ansible_real_user_id }}"
     dir_group: "{{ ansible_real_group_id }}"
+  ssh_config_examples:
+    src: "{{ dotfiles_location }}/.ssh/config.d/examples"
+    dest: "{{ ansible_user_dir }}/.ssh/config.d/examples"
+    dir_path: "{{ ansible_user_dir }}/.ssh/config.d"
+    dir_mode: "u=rwx"
+    dir_owner: "{{ ansible_real_user_id }}"
+    dir_group: "{{ ansible_real_group_id }}"
+
 ...
