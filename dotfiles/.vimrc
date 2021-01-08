@@ -11,15 +11,21 @@ if !filereadable($HOME . '/.vim/autoload/plug.vim')
   augroup END
 endif
 
+if !filereadable($HOME . '/.vim/undodir')
+  silent !mkdir -p ~/.vim/undodir >/dev/null 2>&1
+endif
+
 augroup gr_install_plugins
   call plug#begin('~/.vim/plugged')
     " basic
     Plug 'itchyny/lightline.vim'            " statusline/tabline
     Plug 'scrooloose/nerdtree'
+    Plug 'mbbill/undotree'
     " git
     Plug 'Xuyuanp/nerdtree-git-plugin'
     Plug 'airblade/vim-gitgutter'
     Plug 'gisphm/vim-gitignore'
+    Plug 'tpope/vim-fugitive'
     " format
     Plug 'editorconfig/editorconfig-vim'    " support .editorconfig in vim
     Plug 'junegunn/vim-easy-align'          " very easy align
@@ -89,7 +95,7 @@ augroup END
 
 highlight Comment gui=italic cterm=italic              " italic comments
 
-set autoindent
+set smartindent
 set autoread          " re-read changed file
 set backspace=2       " make backspace work like most other programs
 set clipboard=unnamed " use the system clipboard
@@ -110,10 +116,15 @@ set smartindent
 set smartindent
 set smarttab
 set synmaxcol=180     " avoid very slow redrawing
-set tabstop=2         " set indent to 2 spaces
+set tabstop=2 softtabstop=2         " set indent to 2 spaces
 set termguicolors     " show me all the colors please
 set wildmenu          " enable bash style tab completion
 set wildmode=list:longest,full
+" for undo
+set noswapfile
+set nobackup
+set undodir=~/.vim/undodir
+set undofile
 
 nnoremap <F2> :set invpaste paste?<CR>
 set pastetoggle=<F2>
