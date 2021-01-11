@@ -50,13 +50,7 @@
   prune              = fetch --prune
   pushn              = push --no-verify
   undo               = reset --soft HEAD^
-# defaults
-[user]
-  email              = "adm@tenhi.dev"
-  name               = "tenhishadow"
-  signingkey         = "8FB5A21521CD0F81EDE9B40C8720FFD4BB09C635"
-[github]
-  user               = tenhishadow
+
 # project-related
-[includeIf "gitdir:~/projects/itechart_gg/"]
-  path               = ~/projects/itechart_gg/.gitconfig
+[include]
+  path               = ~/projects/.gitconfig
