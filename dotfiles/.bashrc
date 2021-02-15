@@ -11,12 +11,11 @@
 ## History config
 ### don't put duplicate lines or lines starting with space in the history.
 HISTCONTROL="ignoreboth:erasedups"
-### append to the history file, don't overwrite it
-shopt -s histappend
-### for setting history length see HISTSIZE and HISTFILESIZE in bash
-HISTSIZE="5000"
+HISTSIZE="10000"
 HISTFILESIZE=${HISTSIZE}
 HISTTIMEFORMAT="%h %d %H:%M:%S >  "
+### append to the history file, don't overwrite it
+shopt -s histappend
 ### check the window size after each command and, if necessary, update the values of LINES and COLUMNS.
 shopt -s checkwinsize
 
@@ -74,26 +73,40 @@ function __parse_git_dirty {
 # Aliases
 alias ll='ls -l'
 alias wget='wget -c'
+alias aws-whoami='aws sts get-caller-identity'
 
 # Vars
 ## bash prompt
 export PS1="\[\e[33m\]\u\[\e[m\]\[\e[36m\]@\[\e[m\]\[\e[32m\]\h\[\e[m\]\[\e[31m\]:\[\e[m\]\[\e[36m\]\W\[\e[m\]\[\e[31;43m\]\$(__parse_git_branch)\[\e[m\]\[\e[32m\]\\$\[\e[m\] "
 ## colored GCC warnings and errors
 export GCC_COLORS='error=01;31:warning=01;35:note=01;36:caret=01;32:locus=01:quote=01'
-
-GOPATH="${HOME}/go" && export GOPATH
-[[ ! -d "${GOPATH}" ]] && mkdir "${GOPATH}"
-export PATH=$GOPATH/bin:$PATH
-
-if [[ "${OSTYPE}" != darwin* ]]; then
-  [[ $( systemd-path user-binaries ) ]] && \
-    PATH="$(systemd-path user-binaries):$PATH" && \
-      export PATH
-fi
-
 ## editor
 export EDITOR="vim"
 export VISUAL="${EDITOR}"
 # for git gpg
 GPG_TTY=$( tty )
   export GPG_TTY
+
+# PATH extends
+## systemd user-binaries
+if [[ "${OSTYPE}" != darwin* ]]; then
+  [[ $(systemd-path user-binaries) ]] && \
+    PATH="$(systemd-path user-binaries):$PATH"
+fi
+# ## ruby-rvm
+# [[ -x "$HOME/.rvm/bin/rvm" ]] && PATH="$PATH:$HOME/.rvm/bin"  # ruby-rvm - bin
+# # shellcheck disable=SC1090
+# [[ -s "$HOME/.rvm/scripts/rvm" ]] && source "$HOME/.rvm/scripts/rvm" # ruby-rvm - load *as a function*
+## rbenv
+[[ -x $( command -v rbenv ) ]] && \
+  eval "$(rbenv init -)"
+
+## go
+GOPATH="${HOME}/go" && \
+  export GOPATH
+[[ ! -d "${GOPATH}" ]] && \
+  mkdir "${GOPATH}"
+PATH=$GOPATH/bin:$PATH
+
+## final PATH export
+export PATH
