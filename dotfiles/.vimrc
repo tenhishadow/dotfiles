@@ -40,6 +40,7 @@ augroup gr_install_plugins
     Plug 'jacoborus/tender.vim'
 
     " language
+    Plug 'Valloric/YouCompleteMe', { 'do': './install.py' }
     "" markdown
     Plug 'tpope/vim-markdown'
     "" mikrotik
@@ -125,16 +126,28 @@ set noswapfile
 set nobackup
 set undodir=~/.vim/undodir
 set undofile
+nnoremap <leader>u ::UndotreeShow<CR>
 
 nnoremap <F2> :set invpaste paste?<CR>
 set pastetoggle=<F2>
 set showmode
 
+" other remaps
+let mapleader = ""
+" nnoremap <leader>h :wincmd h<CR>
+" nnoremap <leader>j :wincmd j<CR>
+" nnoremap <leader>k :wincmd k<CR>
+" nnoremap <leader>l :wincmd l<CR>
+" panel resize
+nnoremap <silent><leader>= :vertical resize +5<CR>
+nnoremap <silent><leader>- :vertical resize -5<CR>
+
+
 " redefine filetypes
 augroup gr_filetype " filetypes
   " Fastlane
   au BufNewFile,BufRead Appfile       set ft=ruby
-  au BufNewFile,BufRead Fastfile      set ft=ruby
+  au BufNewFile,BufRead Fastfile*     set ft=ruby
   au BufNewFile,BufRead Matchfile     set ft=ruby
   " ansible
   au BufNewFile,BufRead .ansible-lint set ft=yaml
