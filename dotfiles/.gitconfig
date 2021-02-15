@@ -50,6 +50,8 @@
   prune              = fetch --prune
   pushn              = push --no-verify
   undo               = reset --soft HEAD^
+  cls                = !git clean -fd && git reset --hard
+  fix                = !git add -A && git commit -m fix && git push
 
 # project-related
 [include]
