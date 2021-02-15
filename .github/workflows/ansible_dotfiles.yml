@@ -5,9 +5,6 @@ name: ansible_exec
 on:
   push:
   pull_request:
-  schedule:
-    - cron: '5 13 * * *'
-
 
 jobs:
   ansible_exec:
