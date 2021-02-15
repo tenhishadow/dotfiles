@@ -133,7 +133,7 @@ set pastetoggle=<F2>
 set showmode
 
 " other remaps
-let mapleader = ""
+let mapleader = ''
 " nnoremap <leader>h :wincmd h<CR>
 " nnoremap <leader>j :wincmd j<CR>
 " nnoremap <leader>k :wincmd k<CR>
