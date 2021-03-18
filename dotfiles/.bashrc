@@ -34,6 +34,18 @@ if { [[ -x /usr/bin/dircolors ]] && [[ ! "$OSTYPE" == "darwin"* ]]; }; then
   alias fgrep='fgrep --color=auto'
   alias grep='grep --color=auto'
   alias ls='ls --color=auto'
+  alias ip='ip -color=auto'
+  alias diff='diff --color=auto'
+
+  man() {
+    LESS_TERMCAP_md=$'\e[01;31m' \
+    LESS_TERMCAP_me=$'\e[0m' \
+    LESS_TERMCAP_so=$'\e[01;44;33m' \
+    LESS_TERMCAP_se=$'\e[0m' \
+    LESS_TERMCAP_us=$'\e[01;32m' \
+    LESS_TERMCAP_ue=$'\e[0m' \
+    command man "$@"
+  }
 fi
 
 ### Functions
@@ -74,7 +86,9 @@ function __parse_git_dirty {
 alias ll='ls -l'
 alias wget='wget -c'
 alias aws-whoami='aws sts get-caller-identity'
-
+alias open='xdg-open'
+alias copy='xclip -selection clipboard -in'
+alias paste='xclip -selection clipboard -out'
 # Vars
 ## bash prompt
 export PS1="\[\e[33m\]\u\[\e[m\]\[\e[36m\]@\[\e[m\]\[\e[32m\]\h\[\e[m\]\[\e[31m\]:\[\e[m\]\[\e[36m\]\W\[\e[m\]\[\e[31;43m\]\$(__parse_git_branch)\[\e[m\]\[\e[32m\]\\$\[\e[m\] "
