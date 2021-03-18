@@ -9,6 +9,8 @@
       assert:
         that:
           - dotfiles_mapping is defined
+      tags:
+        - configs
 
     - name: manage dirs for dotfiles
       file:
@@ -23,6 +25,8 @@
         - item.value.dir_mode is defined
         - item.value.dir_owner is defined
         - item.value.dir_group is defined
+      tags:
+        - configs
 
     - name: create symlinks for dotfiles
       file:
@@ -31,6 +35,8 @@
         force: true
         state: link
       with_dict: "{{ dotfiles_mapping }}"
+      tags:
+        - configs
 
     - name: manage vim-plug update
       cron:

@@ -11,3 +11,4 @@ ansible-lint = "*"
 
 [scripts]
 install = "ansible-playbook playbook_install.yml"
+configs = "ansible-playbook playbook_install.yml --tags configs"

@@ -14,3 +14,6 @@ Yes, I manage it with Ansible and for me it's not overkill
 ## installation
 
 * ```pipenv run install```
+
+## manage configs only
+* ```pipenv run configs```
