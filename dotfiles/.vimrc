@@ -54,8 +54,11 @@ augroup gr_install_plugins
     Plug 'juliosueiras/vim-terraform-completion'
     "" python
     Plug 'raimon49/requirements.txt.vim'
+    Plug 'pearofducks/ansible-vim', { 'do': './UltiSnips/generate.sh' }
     "" ruby
     Plug 'vim-ruby/vim-ruby'
+    "" nginx
+    Plug 'chr4/nginx.vim'
   call plug#end()
 augroup END
 
