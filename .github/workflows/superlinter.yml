@@ -1,6 +1,6 @@
 ---
 
-name: 'lint_bashrc'
+name: 'github-super-linter'
 
 on:
   push:
