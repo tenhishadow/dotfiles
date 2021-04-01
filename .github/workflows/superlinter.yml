@@ -1,0 +1,19 @@
+---
+
+name: 'lint_bashrc'
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  check_bashrc:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+      - name: Scan Code Base
+        uses: github/super-linter@v3      
+        
+...
