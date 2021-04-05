@@ -122,5 +122,9 @@ GOPATH="${HOME}/go" && \
   mkdir "${GOPATH}"
 PATH=$GOPATH/bin:$PATH
 
+## set hashicorp autocompletion
+[[ -x $( command -v vault ) ]] && \
+  complete -C /usr/bin/vault vault
+
 ## final PATH export
 export PATH
