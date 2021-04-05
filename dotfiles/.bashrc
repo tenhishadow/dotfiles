@@ -124,9 +124,9 @@ PATH=$GOPATH/bin:$PATH
 
 ## set hashicorp autocompletions
 [[ -x $( command -v vault ) ]] && \
-  complete -C $( command -v vault ) vault
+  complete -C "$( command -v vault )" vault
 [[ -x $( command -v consul ) ]] && \
-  complete -C $( command -v consul ) consul
+  complete -C "$( command -v consul )" consul
 
 ## final PATH export
 export PATH
