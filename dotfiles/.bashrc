@@ -127,6 +127,9 @@ PATH=$GOPATH/bin:$PATH
   complete -C "$( command -v vault )" vault
 [[ -x $( command -v consul ) ]] && \
   complete -C "$( command -v consul )" consul
+## set github completion
+[[ -x $( command -v gh ) ]] && \
+  eval "$( gh completion -s bash )"
 
 ## final PATH export
 export PATH
