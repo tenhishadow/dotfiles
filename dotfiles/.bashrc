@@ -89,6 +89,9 @@ alias aws-whoami='aws sts get-caller-identity'
 alias open='xdg-open'
 alias copy='xclip -selection clipboard -in'
 alias paste='xclip -selection clipboard -out'
+# better cat
+[[ -x $( command -v bat ) ]] && \
+  alias cat='bat -pf --paging=never'
 # Vars
 ## bash prompt
 export PS1="\[\e[33m\]\u\[\e[m\]\[\e[36m\]@\[\e[m\]\[\e[32m\]\h\[\e[m\]\[\e[31m\]:\[\e[m\]\[\e[36m\]\W\[\e[m\]\[\e[31;43m\]\$(__parse_git_branch)\[\e[m\]\[\e[32m\]\\$\[\e[m\] "
@@ -100,6 +103,8 @@ export VISUAL="${EDITOR}"
 # for git gpg
 GPG_TTY=$( tty )
   export GPG_TTY
+PAGER="less -RF"
+  export PAGER
 
 # PATH extends
 ## systemd user-binaries
@@ -123,10 +128,10 @@ GOPATH="${HOME}/go" && \
 PATH=$GOPATH/bin:$PATH
 
 ## set hashicorp autocompletions
-[[ -x $( command -v vault ) ]] && \
-  complete -C "$( command -v vault )" vault
-[[ -x $( command -v consul ) ]] && \
-  complete -C "$( command -v consul )" consul
+for hashicorp_tool in consul terraform vault; do
+  [[ -x $( command -v ${hashicorp_tool} ) ]] && \
+    complete -C "$( command -v ${hashicorp_tool} )" ${hashicorp_tool}
+done
 ## set github completion
 [[ -x $( command -v gh ) ]] && \
   eval "$( gh completion -s bash )"
