@@ -15,21 +15,13 @@ jobs:
       - name: do checkout
         uses: actions/checkout@master
 
-      - name: deps | python version
-        uses: actions/setup-python@v1
+      - name: vint
+        uses: reviewdog/action-vint@v1
         with:
-          python-version: '3.x'
-
-      - name: deps | vim-vint
-        run: |
-          python -m pip install --upgrade pip
-          pip install vim-vint
-
-      - name: lint | .vimrc
-        run: >-
-          vint --color
-          --style
-          dotfiles/.vimrc
+          github_token: ${{ secrets.github_token }}
+          reporter: github-pr-review
+          
+          
 
 # documentation:
 # https://github.com/Vimjas/vint
