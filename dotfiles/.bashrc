@@ -37,6 +37,15 @@ if { [[ -x /usr/bin/dircolors ]] && [[ ! "$OSTYPE" == "darwin"* ]]; }; then
   alias ip='ip -color=auto'
   alias diff='diff --color=auto'
 
+  # not an alias, but mne pokher
+  recit() {
+    cvlc \
+      -I dummy -q \
+      --screen-fps=24.000000 --live-caching=300 screen:// \
+      --sout "#transcode{vcodec=h264,acodec=mpga,channels=2,samplerate=44100}:standard{mux=mp4,dst="${HOME}/rec-$(date +%Y-%m-%d-%H%M).mp4",access=file}" \
+      vlc://quit
+  }
+
   man() {
     LESS_TERMCAP_md=$'\e[01;31m' \
     LESS_TERMCAP_me=$'\e[0m' \
@@ -89,6 +98,8 @@ alias aws-whoami='aws sts get-caller-identity'
 alias open='xdg-open'
 alias copy='xclip -selection clipboard -in'
 alias paste='xclip -selection clipboard -out'
+alias kube-temp='kubectl run -it --rm --image centos:7 tmp-${RANDOM} -- bash'
+
 # better cat
 [[ -x $( command -v bat ) ]] && \
   alias cat='bat -pf --paging=never'
