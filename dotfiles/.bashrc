@@ -37,6 +37,15 @@ if { [[ -x /usr/bin/dircolors ]] && [[ ! "$OSTYPE" == "darwin"* ]]; }; then
   alias ip='ip -color=auto'
   alias diff='diff --color=auto'
 
+  # not an alias, but mne pokher
+  recit() {
+    cvlc \
+      -I dummy -q \
+      --screen-fps=24.000000 --live-caching=300 screen:// \
+      --sout "#transcode{vcodec=h264,acodec=mpga,channels=2,samplerate=44100}:standard{mux=mp4,dst="${HOME}/rec-$(date +%Y-%m-%d-%H%M).mp4",access=file}" \
+      vlc://quit
+  }
+
   man() {
     LESS_TERMCAP_md=$'\e[01;31m' \
     LESS_TERMCAP_me=$'\e[0m' \
@@ -89,6 +98,11 @@ alias aws-whoami='aws sts get-caller-identity'
 alias open='xdg-open'
 alias copy='xclip -selection clipboard -in'
 alias paste='xclip -selection clipboard -out'
+alias kube-temp='kubectl run -it --rm --image centos:7 tmp-${RANDOM} -- bash'
+
+# better cat
+[[ -x $( command -v bat ) ]] && \
+  alias cat='bat -pf --paging=never'
 # Vars
 ## bash prompt
 export PS1="\[\e[33m\]\u\[\e[m\]\[\e[36m\]@\[\e[m\]\[\e[32m\]\h\[\e[m\]\[\e[31m\]:\[\e[m\]\[\e[36m\]\W\[\e[m\]\[\e[31;43m\]\$(__parse_git_branch)\[\e[m\]\[\e[32m\]\\$\[\e[m\] "
@@ -100,6 +114,8 @@ export VISUAL="${EDITOR}"
 # for git gpg
 GPG_TTY=$( tty )
   export GPG_TTY
+PAGER="less -RF"
+  export PAGER
 
 # PATH extends
 ## systemd user-binaries
@@ -123,10 +139,10 @@ GOPATH="${HOME}/go" && \
 PATH=$GOPATH/bin:$PATH
 
 ## set hashicorp autocompletions
-[[ -x $( command -v vault ) ]] && \
-  complete -C "$( command -v vault )" vault
-[[ -x $( command -v consul ) ]] && \
-  complete -C "$( command -v consul )" consul
+for hashicorp_tool in consul terraform vault; do
+  [[ -x $( command -v ${hashicorp_tool} ) ]] && \
+    complete -C "$( command -v ${hashicorp_tool} )" ${hashicorp_tool}
+done
 ## set github completion
 [[ -x $( command -v gh ) ]] && \
   eval "$( gh completion -s bash )"
