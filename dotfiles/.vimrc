@@ -3,7 +3,7 @@ if !filereadable($HOME . '/.vim/autoload/plug.vim')
     echoerr 'ERR: you have to install curl or first install vim-plug yourself!'
     execute 'q!'
   endif
-  echo 'DBG: installing Vim-Plug...'
+  " echo 'DBG: installing Vim-Plug...'
   silent !mkdir -p ~/.vim/{autoload,plugged} >/dev/null 2>&1
   silent !curl -fLo ~/.vim/autoload/plug.vim https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim >/dev/null 2>&1
   augroup gr_install_and_reload
@@ -43,6 +43,7 @@ augroup gr_install_plugins
     Plug 'Valloric/YouCompleteMe', { 'do': './install.py' }
     "" markdown
     Plug 'tpope/vim-markdown'
+    Plug 'iamcco/markdown-preview.nvim', { 'do': { -> mkdp#util#install() }, 'for': ['markdown', 'vim-plug']}  " :MarkdownPreview
     "" mikrotik
     Plug 'zainin/vim-mikrotik'
     "" jinja
@@ -67,6 +68,17 @@ set nocompatible
 set shell=bash
 set ttyfast
 syntax on
+
+" folding
+set foldmethod=syntax
+set foldlevelstart=1
+
+let javaScript_fold=1         " JavaScript
+let perl_fold=1               " Perl
+let ruby_fold=1               " Ruby
+let sh_fold_enabled=1         " sh
+let vimsyn_folding='af'       " Vim script
+let xml_syntax_folding=1      " XML
 filetype plugin indent on
 
 " jump to the last position when reopening a file
@@ -159,6 +171,8 @@ augroup gr_filetype " filetypes
   au BufNewFile,BufRead terragrunt.hcl set ft=terraform
   " custom ssh configs
   au BufNewFile,BufRead ~/.ssh/config.d/* set ft=sshconfig
+  " docker
+  au BufNewFile,BufRead Dockerfile*     set ft=dockerfile
 augroup END
 
 " per plugin configuration
