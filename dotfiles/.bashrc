@@ -42,18 +42,8 @@ if { [[ -x /usr/bin/dircolors ]] && [[ ! "$OSTYPE" == "darwin"* ]]; }; then
     cvlc \
       -I dummy -q \
       --screen-fps=24.000000 --live-caching=300 screen:// \
-      --sout "#transcode{vcodec=h264,acodec=mpga,channels=2,samplerate=44100}:standard{mux=mp4,dst="${HOME}/rec-$(date +%Y-%m-%d-%H%M).mp4",access=file}" \
+      --sout "#transcode{vcodec=h264,acodec=mpga,channels=2,samplerate=44100}:standard{mux=mp4,dst=""${HOME}/rec-$(date +%Y-%m-%d-%H%M).mp4"",access=file}" \
       vlc://quit
-  }
-
-  man() {
-    LESS_TERMCAP_md=$'\e[01;31m' \
-    LESS_TERMCAP_me=$'\e[0m' \
-    LESS_TERMCAP_so=$'\e[01;44;33m' \
-    LESS_TERMCAP_se=$'\e[0m' \
-    LESS_TERMCAP_us=$'\e[01;32m' \
-    LESS_TERMCAP_ue=$'\e[0m' \
-    command man "$@"
   }
 fi
 
@@ -114,6 +104,32 @@ export VISUAL="${EDITOR}"
 # for git gpg
 GPG_TTY=$( tty )
   export GPG_TTY
+LESS_TERMCAP_mb=$(tput bold; tput setaf 2) # green
+LESS_TERMCAP_md=$(tput bold; tput setaf 6) # cyan
+LESS_TERMCAP_me=$(tput sgr0)
+LESS_TERMCAP_so=$(tput bold; tput setaf 3; tput setab 4) # yellow on blue
+LESS_TERMCAP_se=$(tput rmso; tput sgr0)
+LESS_TERMCAP_us=$(tput smul; tput bold; tput setaf 7) # white
+LESS_TERMCAP_ue=$(tput rmul; tput sgr0)
+LESS_TERMCAP_mr=$(tput rev)
+LESS_TERMCAP_mh=$(tput dim)
+LESS_TERMCAP_ZN=$(tput ssubm)
+LESS_TERMCAP_ZV=$(tput rsubm)
+LESS_TERMCAP_ZO=$(tput ssupm)
+LESS_TERMCAP_ZW=$(tput rsupm)
+export LESS_TERMCAP_mb
+export LESS_TERMCAP_md
+export LESS_TERMCAP_me
+export LESS_TERMCAP_so
+export LESS_TERMCAP_se
+export LESS_TERMCAP_us
+export LESS_TERMCAP_ue
+export LESS_TERMCAP_mr
+export LESS_TERMCAP_mh
+export LESS_TERMCAP_ZN
+export LESS_TERMCAP_ZV
+export LESS_TERMCAP_ZO
+export LESS_TERMCAP_ZW
 PAGER="less -RF"
   export PAGER
 
@@ -123,10 +139,7 @@ if [[ "${OSTYPE}" != darwin* ]]; then
   [[ $(systemd-path user-binaries) ]] && \
     PATH="$(systemd-path user-binaries):$PATH"
 fi
-# ## ruby-rvm
-# [[ -x "$HOME/.rvm/bin/rvm" ]] && PATH="$PATH:$HOME/.rvm/bin"  # ruby-rvm - bin
-# # shellcheck disable=SC1090
-# [[ -s "$HOME/.rvm/scripts/rvm" ]] && source "$HOME/.rvm/scripts/rvm" # ruby-rvm - load *as a function*
+
 ## rbenv
 [[ -x $( command -v rbenv ) ]] && \
   eval "$(rbenv init -)"
@@ -138,14 +151,22 @@ GOPATH="${HOME}/go" && \
   mkdir "${GOPATH}"
 PATH=$GOPATH/bin:$PATH
 
-## set hashicorp autocompletions
-for hashicorp_tool in consul terraform vault; do
+###
+# completions
+## complete hashicorp-tools
+for hashicorp_tool in consul terraform vault packer; do
   [[ -x $( command -v ${hashicorp_tool} ) ]] && \
     complete -C "$( command -v ${hashicorp_tool} )" ${hashicorp_tool}
 done
-## set github completion
+## complete github cli
 [[ -x $( command -v gh ) ]] && \
   eval "$( gh completion -s bash )"
+# complete awscli
+[[ -x "$( command -v aws_completer )" ]] && \
+  complete -C "$( command -v aws_completer )" aws
+# complete pipenv
+[[ -x "$( command -v pipenv )" ]] && \
+  eval "$( pipenv --completion )"
 
 ## final PATH export
 export PATH
