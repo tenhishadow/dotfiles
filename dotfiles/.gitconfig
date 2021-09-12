@@ -1,8 +1,8 @@
 # common
 [core]
-	editor             = vim
+  editor             = vim
 [pull]
-	rebase             = false
+  rebase             = false
 [gpg]
   program            = gpg
 [commit]
