@@ -39,10 +39,13 @@ if { [[ -x /usr/bin/dircolors ]] && [[ ! "$OSTYPE" == "darwin"* ]]; }; then
 
   # not an alias, but mne pokher
   recit() {
+    __SCREEN_RECORD_DIR="${HOME}/Videos/screen-rec"
+    [[ ! -d ${__SCREEN_RECORD_DIR} ]] &&
+      mkdir -p "${__SCREEN_RECORD_DIR}"
     cvlc \
       -I dummy -q \
       --screen-fps=24.000000 --live-caching=300 screen:// \
-      --sout "#transcode{vcodec=h264,acodec=mpga,channels=2,samplerate=44100}:standard{mux=mp4,dst=""${HOME}/rec-$(date +%Y-%m-%d-%H%M).mp4"",access=file}" \
+      --sout "#transcode{vcodec=h264,acodec=mpga,channels=2,samplerate=44100}:standard{mux=mp4,dst=""${__SCREEN_RECORD_DIR}/rec-$(date +%Y-%m-%d-%H%M).mp4"",access=file}" \
       vlc://quit
   }
   poc() {
