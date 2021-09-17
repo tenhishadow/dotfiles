@@ -45,6 +45,12 @@ if { [[ -x /usr/bin/dircolors ]] && [[ ! "$OSTYPE" == "darwin"* ]]; }; then
       --sout "#transcode{vcodec=h264,acodec=mpga,channels=2,samplerate=44100}:standard{mux=mp4,dst=""${HOME}/rec-$(date +%Y-%m-%d-%H%M).mp4"",access=file}" \
       vlc://quit
   }
+  poc() {
+    POCDIR="/tmp/${RANDOM}"
+    mkdir -p ${POCDIR}
+    cd ${POCDIR} || exit 1
+    PS1=PoC-${POCDIR}-${PS1}
+  }
 fi
 
 ### Functions
