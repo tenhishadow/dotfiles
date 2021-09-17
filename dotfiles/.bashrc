@@ -165,8 +165,8 @@ done
 [[ -x "$( command -v aws_completer )" ]] && \
   complete -C "$( command -v aws_completer )" aws
 # complete pipenv
-[[ -x "$( command -v pipenv )" ]] && \
-  eval "$( pipenv --completion )"
+# [[ -x "$( command -v pipenv )" ]] && \
+#   eval "$( pipenv --completion )"
 
 ## final PATH export
 export PATH
