@@ -25,6 +25,14 @@ jobs:
         with:
           python-version: '3.x'
 
+      - name: cache | pip
+        uses: actions/cache@v2
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
       - name: deps | install pipenv
         run: |
           python -m pip install --upgrade pip
