@@ -117,6 +117,7 @@ set backspace=2       " make backspace work like most other programs
 set clipboard=unnamed " use the system clipboard
 set expandtab         " use spaces, not tab characters
 set history=1000      " history limit
+set viminfo='100,<500,s10,h
 set hlsearch          " highlight all search matches
 set ignorecase        " ignore case in search
 set incsearch         " show search results as I type

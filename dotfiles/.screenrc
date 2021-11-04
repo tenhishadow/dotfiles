@@ -4,3 +4,7 @@ shell -${SHELL}
 caption always "%3n %t%? @%u%?%? [%h]%?%=%c"
 defscrollback 40000
 startup_message off
+# 256 color xterm
+attrcolor b ".I"
+termcapinfo xterm 'Co#256:AB=\E[48;5;%dm:AF=\E[38;5;%dm'
+defbce "on"

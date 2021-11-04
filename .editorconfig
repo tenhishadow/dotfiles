@@ -14,8 +14,11 @@ trim_trailing_whitespace = true
 # A file must end with an empty line - this is good for version control systems
 insert_final_newline = true
 # A line should not have more than this amount of chars (not supported by all plugins)
-max_line_length = 100
+max_line_length = 150
 
 [{Makefile,**.mk}]
 # Use tabs for indentation (Makefiles require tabs)
 indent_style = tab
+
+[Pipfile.lock]
+max_line_length = unset

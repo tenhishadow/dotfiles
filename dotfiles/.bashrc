@@ -49,10 +49,30 @@ if { [[ -x /usr/bin/dircolors ]] && [[ ! "$OSTYPE" == "darwin"* ]]; }; then
       vlc://quit
   }
   poc() {
-    POCDIR="/tmp/${RANDOM}"
-    mkdir -p ${POCDIR}
-    cd ${POCDIR} || exit 1
-    PS1=PoC-${POCDIR}-${PS1}
+    POCCTL="/tmp/poc-${USER}"
+    case "${1}" in
+    "")
+      POCDIR="/tmp/${RANDOM}"
+      mkdir -p ${POCDIR}
+      echo "${POCDIR}" >> "${POCCTL}"
+      cd ${POCDIR} || exit 1
+      PS1="PoC-${POCDIR}-${PS1}"
+      ;;
+    "list")
+      echo "PoC dirs:"
+      [[ -r ${POCCTL} ]] && cat "${POCCTL}"
+      ;;
+    *)
+      echo "4to?"
+      ;;
+    esac
+  }
+  duu() {
+    find . \
+      -maxdepth 1 \
+      -exec \
+        du -sm '{}' \; | \
+      sort -n
   }
 fi
 
@@ -173,9 +193,6 @@ done
 # complete awscli
 [[ -x "$( command -v aws_completer )" ]] && \
   complete -C "$( command -v aws_completer )" aws
-# complete pipenv
-# [[ -x "$( command -v pipenv )" ]] && \
-#   eval "$( pipenv --completion )"
 
 ## final PATH export
 export PATH
