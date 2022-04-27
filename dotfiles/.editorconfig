@@ -13,6 +13,9 @@ max_line_length = 150
 [*.svg]
 insert_final_newline = false
 
+[*.md]
+max_line_length = 80
+
 [{.gitconfig,.gitconfig.local}]
 indent_style = space
 indent_size = 2
