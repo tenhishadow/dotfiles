@@ -53,7 +53,7 @@
   cls                = !git clean -fd && git reset --hard
   fix                = !git add -A && git commit -m fix && git push
 [push]
-	autoSetupRemote = true
+  autoSetupRemote    = true
 
 # project-related
 [include]
