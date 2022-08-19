@@ -96,14 +96,14 @@ function aws-whoami() {
 
 # record screen with vlc
 function recit() {
-  __SCREEN_RECORD_DIR="${HOME}/Videos/screen-rec"
+  __SCREEN_RECORD_DIR="${HOME}/Videos/RecScreen"
   [[ ! -d ${__SCREEN_RECORD_DIR} ]] &&
     mkdir -p "${__SCREEN_RECORD_DIR}"
   cvlc \
     -I dummy -q \
     --screen-fps=24.000000 --live-caching=300 screen:// \
     --input-slave=pulse://alsa_output.pci-0000_00_14.2.analog-stereo.monitor \
-    --sout "#transcode{vcodec=h264,acodec=mpga,channels=2,samplerate=44100}:standard{mux=mp4,dst=""${__SCREEN_RECORD_DIR}/rec-$(date +%Y-%m-%d-%H%M).mp4"",access=file}" \
+    --sout "#transcode{vcodec=h264,acodec=mpga,channels=2,samplerate=44100}:standard{mux=mp4,dst=""${__SCREEN_RECORD_DIR}/rec-${1}-$(date +%Y-%m-%d-%H%M).mp4"",access=file}" \
     vlc://quit
 }
 
