@@ -49,7 +49,12 @@ augroup gr_install_plugins
     "" jinja
     Plug 'glench/vim-jinja2-syntax'
     "" hashicorp
-    Plug 'hashivim/vim-hashicorp-tools'
+    Plug 'hashivim/vim-consul'
+    Plug 'hashivim/vim-nomadproject'
+    Plug 'hashivim/vim-packer'
+    Plug 'hashivim/vim-terraform'
+    Plug 'hashivim/vim-vagrant'
+    Plug 'hashivim/vim-vaultproject'
     "" python
     Plug 'raimon49/requirements.txt.vim'
     Plug 'pearofducks/ansible-vim', { 'do': './UltiSnips/generate.sh' }
