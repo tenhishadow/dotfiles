@@ -62,6 +62,8 @@ augroup gr_install_plugins
     Plug 'vim-ruby/vim-ruby'
     "" nginx
     Plug 'chr4/nginx.vim'
+    "" go
+    Plug 'fatih/vim-go', {'do': ':GoInstallBinaries'}
   call plug#end()
 augroup END
 

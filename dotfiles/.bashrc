@@ -103,7 +103,7 @@ function recit() {
     -I dummy -q \
     --screen-fps=24.000000 --live-caching=300 screen:// \
     --input-slave=pulse://alsa_output.pci-0000_00_14.2.analog-stereo.monitor \
-    --sout "#transcode{vcodec=h264,acodec=mpga,channels=2,samplerate=44100}:standard{mux=mp4,dst=""${__SCREEN_RECORD_DIR}/rec-${1}-$(date +%Y-%m-%d-%H%M).mp4"",access=file}" \
+    --sout "#transcode{vcodec=h264,acodec=mpga,channels=2,samplerate=48000}:standard{mux=mp4,dst=""${__SCREEN_RECORD_DIR}/rec-${1}-$(date +%Y-%m-%d-%H%M).mp4"",access=file}" \
     vlc://quit
 }
 
@@ -226,3 +226,5 @@ if test -n "$KITTY_INSTALLATION_DIR" -a -e "$KITTY_INSTALLATION_DIR/shell-integr
 
 ## final PATH export
 export PATH
+
+[[ -s "/home/tenhi/.gvm/scripts/gvm" ]] && source "/home/tenhi/.gvm/scripts/gvm"
