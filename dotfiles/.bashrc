@@ -220,11 +220,15 @@ done
 # complete awscli
 [[ -x "$( command -v aws_completer )" ]] && \
   complete -C "$( command -v aws_completer )" aws
+# GVM is the Go Version Manager
+[[ -s "${HOME}/.gvm/scripts/gvm" ]] && source "${HOME}/.gvm/scripts/gvm"
+
+# ssh-agent
+SSH_AUTH_SOCK=/run/user/$(id -u)/ssh-agent.socket
+export SSH_AUTH_SOCK;
 # BEGIN_KITTY_SHELL_INTEGRATION
 if test -n "$KITTY_INSTALLATION_DIR" -a -e "$KITTY_INSTALLATION_DIR/shell-integration/bash/kitty.bash"; then source "$KITTY_INSTALLATION_DIR/shell-integration/bash/kitty.bash"; fi
 # END_KITTY_SHELL_INTEGRATION
 
 ## final PATH export
 export PATH
-
-[[ -s "/home/tenhi/.gvm/scripts/gvm" ]] && source "/home/tenhi/.gvm/scripts/gvm"
