@@ -7,7 +7,6 @@ verify_ssl = true
 
 [packages]
 ansible = "*"
-ansible-lint = "*"
 
 [scripts]
 install = "ansible-playbook playbook_install.yml"
