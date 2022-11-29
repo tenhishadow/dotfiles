@@ -11,11 +11,12 @@ Yes, I manage it with Ansible and for me it's not overkill
 
 * python
 * python pipenv
+* ```pipenv install```
 
 ## installation
 
-* ```pipenv run install```
+* ```pipenv install && pipenv run install```
 
 ## manage configs only
 
-* ```pipenv run configs```
+* ```pipenv install && pipenv run configs```
