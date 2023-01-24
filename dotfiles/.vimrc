@@ -178,6 +178,9 @@ augroup gr_filetype " filetypes
   au BufNewFile,BufRead ~/.ssh/config.d/* set ft=sshconfig
   " docker
   au BufNewFile,BufRead Dockerfile*     set ft=dockerfile
+  " fucking xml
+  au FileType xml setlocal foldmethod=syntax
+  let g:xml_syntax_folding=1
 augroup END
 
 " per plugin configuration
