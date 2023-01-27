@@ -73,6 +73,7 @@ function __parse_git_dirty {
 }
 
 # find and sort files by size in directory( current by default )
+# shellcheck disable=SC2317  # Don't warn about unreachable commands in this function
 function duu() {
   find . \
     -maxdepth 1 \
