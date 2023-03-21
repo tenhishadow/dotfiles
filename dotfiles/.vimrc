@@ -46,8 +46,6 @@ augroup gr_install_plugins
     Plug 'iamcco/markdown-preview.nvim', { 'do': { -> mkdp#util#install() }, 'for': ['markdown', 'vim-plug']}  " :MarkdownPreview
     "" mikrotik
     Plug 'zainin/vim-mikrotik'
-    "" jinja
-    Plug 'glench/vim-jinja2-syntax'
     "" hashicorp
     Plug 'hashivim/vim-consul'
     Plug 'hashivim/vim-nomadproject'
@@ -55,15 +53,10 @@ augroup gr_install_plugins
     Plug 'hashivim/vim-terraform'
     Plug 'hashivim/vim-vagrant'
     Plug 'hashivim/vim-vaultproject'
-    "" python
-    Plug 'raimon49/requirements.txt.vim'
-    Plug 'pearofducks/ansible-vim', { 'do': './UltiSnips/generate.sh' }
     "" ruby
     Plug 'vim-ruby/vim-ruby'
     "" nginx
     Plug 'chr4/nginx.vim'
-    "" go
-    Plug 'fatih/vim-go', {'do': ':GoInstallBinaries'}
   call plug#end()
 augroup END
 
