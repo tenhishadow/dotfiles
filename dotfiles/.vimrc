@@ -57,6 +57,8 @@ augroup gr_install_plugins
     Plug 'vim-ruby/vim-ruby'
     "" nginx
     Plug 'chr4/nginx.vim'
+    "" CloudFormation
+    Plug 'speshak/vim-cfn'
   call plug#end()
 augroup END
 
