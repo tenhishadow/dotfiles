@@ -10,10 +10,12 @@
 
 ## History config
 ### don't put duplicate lines or lines starting with space in the history.
-HISTCONTROL="ignoreboth:erasedups"
-HISTSIZE="10000"
+HISTCONTROL="ignoreboth"
+HISTSIZE="30000"
 HISTFILESIZE=${HISTSIZE}
 HISTTIMEFORMAT="%h %d %H:%M:%S >  "
+# Ensure synchronization between shells by appending history after each command
+PROMPT_COMMAND="history -a;$PROMPT_COMMAND"
 ### append to the history file, don't overwrite it
 shopt -s histappend
 ### check the window size after each command and, if necessary, update the values of LINES and COLUMNS.
@@ -42,10 +44,8 @@ fi
 # get current branch in git repo
 function __parse_git_branch() {
   if [[ -x $( command -v git ) ]]; then
-    BRANCH=$( git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/\1/' )
-    [[ -n "${BRANCH}" ]] && printf '%s' "[ $( __parse_git_dirty )${BRANCH} ]"
-    else
-      return
+    branch=$( git symbolic-ref HEAD 2>/dev/null | awk -F '/' '{print $NF}' )
+    [[ -n "${branch}" ]] && printf '%s' "[ $( __parse_git_dirty )${branch} ]"
   fi
 }
 # get current status of git repo
@@ -164,33 +164,30 @@ export VISUAL="${EDITOR}"
 # for git gpg
 GPG_TTY=$( tty )
   export GPG_TTY
-LESS_TERMCAP_mb=$(tput bold; tput setaf 2) # green
-LESS_TERMCAP_md=$(tput bold; tput setaf 6) # cyan
-LESS_TERMCAP_me=$(tput sgr0)
-LESS_TERMCAP_so=$(tput bold; tput setaf 3; tput setab 4) # yellow on blue
-LESS_TERMCAP_se=$(tput rmso; tput sgr0)
-LESS_TERMCAP_us=$(tput smul; tput bold; tput setaf 7) # white
-LESS_TERMCAP_ue=$(tput rmul; tput sgr0)
-LESS_TERMCAP_mr=$(tput rev)
-LESS_TERMCAP_mh=$(tput dim)
-LESS_TERMCAP_ZN=$(tput ssubm)
-LESS_TERMCAP_ZV=$(tput rsubm)
-LESS_TERMCAP_ZO=$(tput ssupm)
-LESS_TERMCAP_ZW=$(tput rsupm)
-export LESS_TERMCAP_mb
-export LESS_TERMCAP_md
-export LESS_TERMCAP_me
-export LESS_TERMCAP_so
-export LESS_TERMCAP_se
-export LESS_TERMCAP_us
-export LESS_TERMCAP_ue
-export LESS_TERMCAP_mr
-export LESS_TERMCAP_mh
-export LESS_TERMCAP_ZN
-export LESS_TERMCAP_ZV
-export LESS_TERMCAP_ZO
-export LESS_TERMCAP_ZW
-PAGER="less -RF"
+
+set_less_termcap() {
+    local var_name=$1
+    shift
+    value=$(tput "$@")
+    export "$var_name"="$value"
+}
+
+# Set LESS_TERMCAP variables with specific colors
+set_less_termcap LESS_TERMCAP_ZN ssubm                # ZN (subscript) | Changes text to subscript
+set_less_termcap LESS_TERMCAP_ZO ssupm                # ZO (superscript) | Changes text to superscript
+set_less_termcap LESS_TERMCAP_ZV rsubm                # ZV (end subscript) | Resets subscript mode to default
+set_less_termcap LESS_TERMCAP_ZW rsupm                # ZW (end superscript) | Resets superscript mode to default
+set_less_termcap LESS_TERMCAP_mb bold setaf 3         # mb (blink) | High-intensity yellow
+set_less_termcap LESS_TERMCAP_md bold setaf 10        # md (bold) | High-intensity green
+set_less_termcap LESS_TERMCAP_me sgr0                 # me (end mode) | Resets all attributes to default
+set_less_termcap LESS_TERMCAP_mh dim                  # mh (half-bright) | Makes text half as bright
+set_less_termcap LESS_TERMCAP_mr rev                  # mr (reverse) | Inverts foreground and background colors
+set_less_termcap LESS_TERMCAP_se rmso sgr0            # se (end standout) | Resets standout mode to default
+set_less_termcap LESS_TERMCAP_so bold setaf 7 setab 4 # so (standout) | White text on a blue background
+set_less_termcap LESS_TERMCAP_ue rmul sgr0            # ue (end underline) | Resets underline mode to default
+set_less_termcap LESS_TERMCAP_us smul setaf 15        # us (start underline) | High-intensity white
+
+PAGER="less -RFMIX"
   export PAGER
 
 # PATH extends
@@ -224,6 +221,19 @@ done
 # complete awscli
 [[ -x "$( command -v aws_completer )" ]] && \
   complete -C "$( command -v aws_completer )" aws
+# complete kubectl
+# shellcheck disable=SC1090
+[[ -x "$( command -v kubectl 2>/dev/null)" ]] && \
+  source <(kubectl completion bash)
+# complete docker
+# shellcheck disable=SC1090
+[[ -x "$( command -v docker )" ]] && \
+  source /usr/share/bash-completion/bash_completion && \
+  source <(docker completion bash)
+# complete helm
+# shellcheck disable=SC1090
+[[ -x "$( command -v helm )" ]] && \
+  source <(helm completion bash 2>/dev/null)
 # GVM is the Go Version Manager
 [[ -s "${HOME}/.gvm/scripts/gvm" ]] && source "${HOME}/.gvm/scripts/gvm"
 
