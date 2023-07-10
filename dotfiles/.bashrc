@@ -149,6 +149,7 @@ alias open='xdg-open'
 alias copy='xclip -selection clipboard -in'
 alias paste='xclip -selection clipboard -out'
 alias kube-temp='kubectl run -it --rm --image centos:7 tmp-${RANDOM} -- bash'
+alias archupdate='yay -Syu --noconfirm; yay -Scc --noconfirm'
 
 # better cat
 # [[ -x $( command -v bat ) ]] && \
