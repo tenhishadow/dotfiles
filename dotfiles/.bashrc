@@ -250,6 +250,3 @@ if test -n "$KITTY_INSTALLATION_DIR" -a -e "$KITTY_INSTALLATION_DIR/shell-integr
 
 ## final PATH export
 export PATH
-
-# OCTAVIA CLI 0.44.4
-OCTAVIA_ENV_FILE=/home/tenhi/.octavia
