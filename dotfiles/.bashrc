@@ -101,15 +101,10 @@ function recit() {
   [[ ! -d ${__SCREEN_RECORD_DIR} ]] &&
     mkdir -p "${__SCREEN_RECORD_DIR}"
   _REC_OUT=$(pactl get-default-sink)
-
-
-
-
   cvlc \
     -I dummy -q \
     --screen-fps=24.000000 --live-caching=300 screen:// \
     --input-slave="pulse://${_REC_OUT}.monitor" \
-    --input-slave="pulse://${_REC_IN}" \
     --sout "#transcode{vcodec=h264,acodec=aac,channels=2,samplerate=48000}:standard{mux=mp4,dst=""${__SCREEN_RECORD_DIR}/rec-${1}-$(date +%Y-%m-%d-%H%M).mp4"",access=file}" \
     vlc://quit
 }
