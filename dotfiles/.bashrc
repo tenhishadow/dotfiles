@@ -1,5 +1,6 @@
 #!/bin/bash
 # .bashrc
+# shellcheck disable=SC2155
 
 # Source global definitions
 # shellcheck disable=SC1091
@@ -20,6 +21,7 @@ PROMPT_COMMAND="history -a;$PROMPT_COMMAND"
 shopt -s histappend
 ### check the window size after each command and, if necessary, update the values of LINES and COLUMNS.
 shopt -s checkwinsize
+shopt -s promptvars
 
 # set variable identifying the chroot you work in (used in the prompt below)
 { [[ -z "${debian_chroot:-}" ]] && [[ -r /etc/debian_chroot ]]; } && \
@@ -41,35 +43,41 @@ if { [[ -x /usr/bin/dircolors ]] && [[ ! "$OSTYPE" == "darwin"* ]]; }; then
 fi
 
 ### Functions
-# get current branch in git repo
-function __parse_git_branch() {
-  if [[ -x $( command -v git ) ]]; then
-    branch=$( git symbolic-ref HEAD 2>/dev/null | awk -F '/' '{print $NF}' )
-    [[ -n "${branch}" ]] && printf '%s' "[ $( __parse_git_dirty )${branch} ]"
-  fi
-}
-# get current status of git repo
-function __parse_git_dirty {
-  status=$( LC_ALL=C git status 2>&1 | tee )
-  dirty=$( printf '%s' "${status}" 2> /dev/null | grep "modified:" &> /dev/null; printf '%s\n' "$?" )
-  untracked=$( printf '%s'/ "${status}" 2> /dev/null | grep "Untracked files" &> /dev/null; printf '%s\n' "$?" )
-  ahead=$( printf '%s'/ "${status}" 2> /dev/null | grep "Your branch is ahead of" &> /dev/null; printf '%s\n' "$?" )
-  newfile=$( printf '%s'/ "${status}" 2> /dev/null | grep "new file:" &> /dev/null; printf '%s\n' "$?" )
-  renamed=$( printf '%s'/ "${status}" 2> /dev/null | grep "renamed:" &> /dev/null; printf '%s\n' "$?" )
-  deleted=$( printf '%s'/ "${status}" 2> /dev/null | grep "deleted:" &> /dev/null; printf '%s\n' "$?" )
-  unset bits
-
-  [[ "${renamed}" == "0" ]]   && bits=">${bits}"
-  [[ "${ahead}" == "0" ]]     && bits="*${bits}"
-  [[ "${newfile}" == "0" ]]   && bits="+${bits}"
-  [[ "${untracked}" == "0" ]] && bits="?${bits}"
-  [[ "${deleted}" == "0" ]]   && bits="x${bits}"
-  [[ "${dirty}" == "0" ]]     && bits="!${bits}"
-  if [[ -n "${bits}" ]]; then
-    printf '%s' "${bits} "
-  else
+___git_status() {
+  # check | git
+  local git_dir
+  git_dir=$(git rev-parse --git-dir 2>/dev/null)
+  if [[ ! $(command -v git) || ! -d "$git_dir" ]]; then
     return
   fi
+  # get branch
+  local branch
+  if [[ -f "${git_dir}/HEAD" ]]; then
+    branch=$(awk 'BEGIN {FS="/"} /ref: refs\/heads\// {print $NF}' "${git_dir}/HEAD")
+  else
+    branch="detached"
+  fi
+  # get branch stats
+  local stats=$(git rev-list --count --left-right "HEAD...@{upstream}" 2>/dev/null)
+  local ahead behind
+  read -r behind ahead <<< "${stats}"
+  local status_output=""
+  local stashes=$(git stash list 2>/dev/null | awk 'END {print NR}')
+  local conflicts=$(git diff --name-only --diff-filter=U 2>/dev/null | awk 'END {print NR}')
+  local staged=$(git diff --cached --name-only 2>/dev/null | awk 'END {print NR}')
+  local unstaged=$(git diff --name-only 2>/dev/null | awk 'END {print NR}')
+  local untracked=$(git ls-files --others --exclude-standard 2>/dev/null | awk 'END {print NR}')
+
+  (( ahead > 0 )) && status_output+="⇡${ahead} "
+  (( behind > 0 )) && status_output+="⇣${behind} "
+  (( stashes > 0 )) && status_output+="*${stashes} "
+  (( conflicts > 0 )) && status_output+="~${conflicts} "
+  (( staged > 0 )) && status_output+="+${staged} "
+  (( unstaged > 0 )) && status_output+="!${unstaged} "
+  (( untracked > 0 )) && status_output+="?${untracked} "
+
+  # make an output
+  printf "\e[100;96m[ %s %s ]\e[0m " "$status_output" "$branch"
 }
 
 # find and sort files by size in directory( current by default )
@@ -118,7 +126,7 @@ function poc() {
     mkdir -p ${POCDIR}
     echo "${POCDIR}" >> "${POCCTL}"
     cd ${POCDIR} || exit 1
-    PS1="PoC-${POCDIR}-${PS1}"
+    PS1="\[\e[44;37m\][ PoC \${POCDIR} ]\[\e[0m\] ${PS1}"
     ;;
   "list")
     echo "PoC dirs:"
@@ -149,12 +157,16 @@ alias paste='xclip -selection clipboard -out'
 alias kube-temp='kubectl run -it --rm --image debian:bookworm tmp-${RANDOM} -- bash'
 alias archupdate='yay -Syu --noconfirm; yay -Scc --noconfirm'
 
-# better cat
-# [[ -x $( command -v bat ) ]] && \
-#   alias cat='bat -pf --paging=never'
 # Vars
 ## bash prompt
-export PS1="\[\e[33m\]\u\[\e[m\]\[\e[36m\]@\[\e[m\]\[\e[32m\]\h\[\e[m\]\[\e[31m\]:\[\e[m\]\[\e[36m\]\W\[\e[m\]\[\e[31;43m\]\$(__parse_git_branch)\[\e[m\]\[\e[32m\]\\$\[\e[m\] "
+PS1='$(___git_status)'                           # git status
+PS1+='\[\033[01;32m\]\u@\h\[\033[00m\] '         # green user@host
+PS1+='\[\033[01;34m\]\w\[\033[00m\]'             # blue current working directory
+PS1+='\n\[\033[01;$((31+!$?))m\]\$\[\033[00m\] ' # green/red (success/error) $/# (normal/root)
+PS1+='\[\e]0;\u@\h: \w\a\]'                      # terminal title: user@host: dir
+
+export PS1
+
 ## colored GCC warnings and errors
 export GCC_COLORS='error=01;31:warning=01;35:note=01;36:caret=01;32:locus=01:quote=01'
 ## editor
@@ -236,12 +248,13 @@ done
 # GVM is the Go Version Manager
 [[ -s "${HOME}/.gvm/scripts/gvm" ]] && source "${HOME}/.gvm/scripts/gvm"
 
-# ssh-agent
-SSH_AUTH_SOCK=/run/user/$(id -u)/ssh-agent.socket
-export SSH_AUTH_SOCK;
 # BEGIN_KITTY_SHELL_INTEGRATION
 if test -n "$KITTY_INSTALLATION_DIR" -a -e "$KITTY_INSTALLATION_DIR/shell-integration/bash/kitty.bash"; then source "$KITTY_INSTALLATION_DIR/shell-integration/bash/kitty.bash"; fi
 # END_KITTY_SHELL_INTEGRATION
+
+# ssh-agent
+SSH_AUTH_SOCK=/run/user/$(id -u)/ssh-agent.socket
+export SSH_AUTH_SOCK;
 
 ## final PATH export
 export PATH
