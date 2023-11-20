@@ -53,7 +53,7 @@ ___git_status() {
   # get branch
   local branch
   if [[ -f "${git_dir}/HEAD" ]]; then
-    branch=$(awk 'BEGIN {FS="/"} /ref: refs\/heads\// {print $NF}' "${git_dir}/HEAD")
+    branch=$( awk -F 'ref: refs/heads/' '{print $NF}' "${git_dir}/HEAD")
   else
     branch="detached"
   fi

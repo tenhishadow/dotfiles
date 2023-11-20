@@ -44,6 +44,9 @@ augroup gr_install_plugins
     " language
     Plug 'sheerun/vim-polyglot'
     Plug 'Valloric/YouCompleteMe', { 'do': './install.py' }
+    "" python
+    Plug 'plytophogy/vim-virtualenv'
+    " Plug 'PieterjanMontens/vim-pipenv'
     "" markdown
     Plug 'tpope/vim-markdown'
     Plug 'iamcco/markdown-preview.nvim', { 'do': { -> mkdp#util#install() }, 'for': ['markdown', 'vim-plug']}  " :MarkdownPreview
