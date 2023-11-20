@@ -21,6 +21,8 @@ augroup gr_install_plugins
     Plug 'itchyny/lightline.vim'            " statusline/tabline
     Plug 'scrooloose/nerdtree'
     Plug 'mbbill/undotree'
+    Plug 'vim-airline/vim-airline'
+    Plug 'vim-airline/vim-airline-themes'
     " git
     Plug 'Xuyuanp/nerdtree-git-plugin'
     Plug 'airblade/vim-gitgutter'
@@ -40,6 +42,7 @@ augroup gr_install_plugins
     Plug 'jacoborus/tender.vim'
 
     " language
+    Plug 'sheerun/vim-polyglot'
     Plug 'Valloric/YouCompleteMe', { 'do': './install.py' }
     "" markdown
     Plug 'tpope/vim-markdown'
