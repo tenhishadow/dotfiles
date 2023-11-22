@@ -42,12 +42,15 @@ dotfiles_mapping:
     src: "{{ dotfiles_location }}/.wgetrc"
     dest: "{{ ansible_user_dir }}/.wgetrc"
   yamllint:
-    src: "{{ dotfiles_location }}/.config/yamllint/config"
+    src: "{{ dotfiles_location }}/.yamllint"
     dest: "{{ ansible_user_dir }}/.config/yamllint/config"
     dir_path: "{{ ansible_user_dir }}/.config/yamllint"
     dir_mode: "u=rwx"
     dir_owner: "{{ ansible_real_user_id }}"
     dir_group: "{{ ansible_real_group_id }}"
+  yamllint_root:
+    src: "{{ dotfiles_location }}/.yamllint"
+    dest: "{{ ansible_user_dir }}/.yamllint"
   pam_env:
     src: "{{ dotfiles_location }}/.pam_environment"
     dest: "{{ ansible_user_dir }}/.pam_environment"

@@ -147,6 +147,46 @@ function duu() {
     sort -n
 }
 
+function change_git_remote_protocol() {
+    local origin_url=$(git remote get-url origin 2>/dev/null)
+    local status=$?
+    local protocol_type
+    local new_url
+
+    [[ $status -ne 0 ]] \
+      && echo "Failed to get git remote URL" \
+      && return 1
+
+    # check current proto
+    if [[ $origin_url =~ ^https:// ]]; then
+        protocol_type="https"
+    elif [[ $origin_url =~ ^git@ ]]; then
+        protocol_type="ssh"
+    else
+        echo "Unknown protocol type"
+        return 1
+    fi
+
+    case $1 in
+        "ssh")
+            if [ "$protocol_type" == "https" ]; then
+                new_url=$(echo "$origin_url" | awk -F'/' '{print "git@"$3":"$4"/"$5}')
+                git remote set-url origin "$new_url"
+            fi
+            ;;
+        "https")
+            if [ "$protocol_type" == "ssh" ]; then
+                new_url=$(echo "$origin_url" | awk -F':' '{sub(/^git@/, "", $1); print "https://"$1"/"$2}')
+                git remote set-url origin "$new_url"
+            fi
+            ;;
+        *)
+            echo "Invalid argument. Use 'ssh' or 'https'."
+            return 1
+            ;;
+    esac
+}
+
 # Aliases
 alias ll='ls -l'
 alias wget='wget -c'
@@ -157,6 +197,7 @@ alias paste='xclip -selection clipboard -out'
 alias kube-temp='kubectl run -it --rm --image debian:bookworm tmp-${RANDOM} -- bash'
 alias archupdate='yay -Syu --noconfirm; yay -Scc --noconfirm'
 alias dotfiles-update='cd ~/.dotfiles/ && git pull && pipenv sync && pipenv run install'
+alias ans-workstation-update='cd ~/.ans-workstation/ && git pull && pipenv sync && pipenv run install'
 
 # Vars
 ## bash prompt

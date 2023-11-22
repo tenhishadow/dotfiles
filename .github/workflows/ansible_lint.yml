@@ -1,21 +1,13 @@
 ---
 
-name: ansible_exec
+name: ansible_lint
 
 on:
-  push:
-    branches:
-      - master
   pull_request:
 
 jobs:
-  ansible_exec:
-    strategy:
-      matrix:
-        os:
-          - ubuntu-latest
-          - macos-latest
-    runs-on: ${{ matrix.os }}
+  ansible_lint:
+    runs-on: ubuntu-latest
 
     steps:
 
@@ -31,9 +23,9 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ~/.cache/pip
-          key: ${{ runner.os }}-pip
+          key: lint-pip
           restore-keys: |
-            ${{ runner.os }}-pip-
+            lint-pip-
 
       - name: deps | install pipenv
         run: |
@@ -41,10 +33,10 @@ jobs:
           pip install pipenv
 
       - name: deps | pipenv install
-        run: pipenv install
+        run: pipenv install --dev
 
-      - name: just do it!
-        run: pipenv run install
+      - name: lint
+        run: pipenv run lint
         env:
           ANSIBLE_FORCE_COLOR: true
 
