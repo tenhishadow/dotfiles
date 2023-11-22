@@ -1,13 +1,15 @@
 [[source]]
-name = "pypi"
-url = "https://pypi.org/simple"
-verify_ssl = true
+name         = "pypi"
+url          = "https://pypi.org/simple"
+verify_ssl   = true
 
 [dev-packages]
+ansible-lint = "*"
 
 [packages]
-ansible = "*"
+ansible      = "*"
 
 [scripts]
-install = "ansible-playbook playbook_install.yml"
-configs = "ansible-playbook playbook_install.yml --tags configs"
+lint         = "ansible-lint playbook_install.yml"
+install      = "ansible-playbook playbook_install.yml"
+configs      = "ansible-playbook playbook_install.yml --tags configs"
