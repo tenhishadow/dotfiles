@@ -7,7 +7,6 @@ on:
 
 jobs:
   ansible_lint:
-    strategy:
     runs-on: ubuntu-latest
 
     steps:
