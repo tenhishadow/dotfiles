@@ -1,5 +1,7 @@
 # this is just a comment
 skip_list:
+  - name[play]
+  - ignore-errors
   - name[casing]
   - fqcn[action-core]
   - fqcn[action]
