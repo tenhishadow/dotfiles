@@ -156,6 +156,7 @@ alias copy='xclip -selection clipboard -in'
 alias paste='xclip -selection clipboard -out'
 alias kube-temp='kubectl run -it --rm --image debian:bookworm tmp-${RANDOM} -- bash'
 alias archupdate='yay -Syu --noconfirm; yay -Scc --noconfirm'
+alias dotfiles-update='cd ~/.dotfiles/ && git pull && pipenv sync && pipenv run install'
 
 # Vars
 ## bash prompt
