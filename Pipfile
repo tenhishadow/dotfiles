@@ -5,9 +5,11 @@ verify_ssl   = true
 
 [dev-packages]
 ansible-lint = "*"
+yamllint     = "*"
 
 [packages]
 ansible      = "*"
+jmespath = "*"
 
 [scripts]
 lint         = "ansible-lint playbook_install.yml"
