@@ -55,6 +55,10 @@
 [push]
   autoSetupRemote    = true
 
+[url "git@github.com:"]
+  pushInsteadOf = https://github.com/
+  pushInsteadOf = git://github.com/
+
 # project-related
 [include]
   path               = ~/projects/.gitconfig
