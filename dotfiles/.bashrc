@@ -23,25 +23,6 @@ shopt -s histappend
 shopt -s checkwinsize
 shopt -s promptvars
 
-# set variable identifying the chroot you work in (used in the prompt below)
-{ [[ -z "${debian_chroot:-}" ]] && [[ -r /etc/debian_chroot ]]; } && \
-  debian_chroot=$(cat /etc/debian_chroot)
-
-# enable color support of ls and also add handy aliases
-if { [[ -x /usr/bin/dircolors ]] && [[ ! "$OSTYPE" == "darwin"* ]]; }; then
-  if [[ -r " ~/.dircolors" ]]; then
-    eval "$(dircolors -b ~/.dircolors)"
-  else
-    eval "$(dircolors -b)"
-  fi
-  alias egrep='egrep --color=auto'
-  alias fgrep='fgrep --color=auto'
-  alias grep='grep --color=auto'
-  alias ls='ls --color=auto'
-  alias ip='ip -color=auto'
-  alias diff='diff --color=auto'
-fi
-
 ### Functions
 ___git_status() {
   # check | git
@@ -188,6 +169,13 @@ function change_git_remote_protocol() {
 }
 
 # Aliases
+
+alias egrep='egrep --color=auto'
+alias fgrep='fgrep --color=auto'
+alias grep='grep --color=auto'
+alias ls='ls --color=auto'
+alias ip='ip -color=auto'
+alias diff='diff --color=auto'
 alias ll='ls -l'
 alias wget='wget -c'
 alias aws-whereami='aws configure get region'
@@ -218,27 +206,20 @@ export VISUAL="${EDITOR}"
 GPG_TTY=$( tty )
   export GPG_TTY
 
-set_less_termcap() {
-    local var_name=$1
-    shift
-    value=$(tput "$@")
-    export "$var_name"="$value"
-}
-
-# Set LESS_TERMCAP variables with specific colors
-set_less_termcap LESS_TERMCAP_ZN ssubm                # ZN (subscript) | Changes text to subscript
-set_less_termcap LESS_TERMCAP_ZO ssupm                # ZO (superscript) | Changes text to superscript
-set_less_termcap LESS_TERMCAP_ZV rsubm                # ZV (end subscript) | Resets subscript mode to default
-set_less_termcap LESS_TERMCAP_ZW rsupm                # ZW (end superscript) | Resets superscript mode to default
-set_less_termcap LESS_TERMCAP_mb bold setaf 3         # mb (blink) | High-intensity yellow
-set_less_termcap LESS_TERMCAP_md bold setaf 10        # md (bold) | High-intensity green
-set_less_termcap LESS_TERMCAP_me sgr0                 # me (end mode) | Resets all attributes to default
-set_less_termcap LESS_TERMCAP_mh dim                  # mh (half-bright) | Makes text half as bright
-set_less_termcap LESS_TERMCAP_mr rev                  # mr (reverse) | Inverts foreground and background colors
-set_less_termcap LESS_TERMCAP_se rmso sgr0            # se (end standout) | Resets standout mode to default
-set_less_termcap LESS_TERMCAP_so bold setaf 7 setab 4 # so (standout) | White text on a blue background
-set_less_termcap LESS_TERMCAP_ue rmul sgr0            # ue (end underline) | Resets underline mode to default
-set_less_termcap LESS_TERMCAP_us smul setaf 15        # us (start underline) | High-intensity white
+export LESS_TERMCAP_mb=$(tput bold; tput setaf 2) # green
+export LESS_TERMCAP_md=$(tput bold; tput setaf 6) # cyan
+export LESS_TERMCAP_me=$(tput sgr0)
+export LESS_TERMCAP_so=$(tput bold; tput setaf 3; tput setab 4) # yellow on blue
+export LESS_TERMCAP_se=$(tput rmso; tput sgr0)
+export LESS_TERMCAP_us=$(tput smul; tput bold; tput setaf 7) # white
+export LESS_TERMCAP_ue=$(tput rmul; tput sgr0)
+export LESS_TERMCAP_mr=$(tput rev)
+export LESS_TERMCAP_mh=$(tput dim)
+export LESS_TERMCAP_ZN=$(tput ssubm)
+export LESS_TERMCAP_ZV=$(tput rsubm)
+export LESS_TERMCAP_ZO=$(tput ssupm)
+export LESS_TERMCAP_ZW=$(tput rsupm)
+export GROFF_NO_SGR=1         # For Konsole and Gnome-terminal
 
 PAGER="less -RFMIX"
   export PAGER
