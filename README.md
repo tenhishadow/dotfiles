@@ -23,4 +23,4 @@ _INSTALL_DIR="$HOME/.dotfiles" \
 
 [ans-workstation](https://github.com/tenhishadow/ans-workstation)
 
-it configures the workstation and also includes this repo
+it configures the workstation and also includes this repository
