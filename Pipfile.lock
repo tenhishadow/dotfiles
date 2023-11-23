@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "6648eff9828a0569c0be63e83ff111765cbe7d04fd077f6def8fce5d4edb956b"
+            "sha256": "a13379da94f4554b5849c0e3109b4a041a69d5e09417e5128b2bceb51cb8aa44"
         },
         "pipfile-spec": 6,
         "requires": {},
@@ -125,6 +125,15 @@
             ],
             "markers": "python_version >= '3.7'",
             "version": "==3.1.2"
+        },
+        "jmespath": {
+            "hashes": [
+                "sha256:02e2e4cc71b5bcab88332eebf907519190dd9e6e82107fa7f83b1003a6252980",
+                "sha256:90261b206d6defd58fdd5e85f478bf633a2901798906be2ad389150c5c60edbe"
+            ],
+            "index": "pypi",
+            "markers": "python_version >= '3.7'",
+            "version": "==1.0.1"
         },
         "markupsafe": {
             "hashes": [
@@ -958,7 +967,7 @@
                 "sha256:f481f16baec5290e45aebdc2a5168ebc6d35189ae6fea7a58787613a25f6e875",
                 "sha256:fff3573c2db359f091e1589c3d7c5fc2f86f5bdb6f24252c2d8e539d4e45f412"
             ],
-            "markers": "platform_python_implementation == 'CPython' and python_version < '3.13'",
+            "markers": "python_version < '3.13' and platform_python_implementation == 'CPython'",
             "version": "==0.2.8"
         },
         "subprocess-tee": {

@@ -19,7 +19,9 @@
         mode: "{{ item.value.dir_mode }}"
         owner: "{{ item.value.dir_owner }}"
         group: "{{ item.value.dir_group }}"
-      with_dict: "{{ dotfiles_mapping }}"
+      loop: "{{ dotfiles_mapping | dict2items }}"
+      loop_control:
+        label: "{{ item | json_query('value.dir_path') }}"
       when:
         - item.value.dir_path is defined
         - item.value.dir_mode is defined
@@ -34,7 +36,9 @@
         dest: "{{ item.value.dest }}"
         force: true
         state: link
-      with_dict: "{{ dotfiles_mapping }}"
+      loop: "{{ dotfiles_mapping | dict2items }}"
+      loop_control:
+        label: "{{ item | json_query('value.dest') }}"
       tags:
         - configs
 
