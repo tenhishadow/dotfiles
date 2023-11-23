@@ -75,5 +75,12 @@ dotfiles_mapping:
     dir_mode: "u=rwx"
     dir_owner: "{{ ansible_real_user_id }}"
     dir_group: "{{ ansible_real_group_id }}"
+  htoprc:
+    src: "{{ dotfiles_location }}/.config/htop/htoprc"
+    dest: "{{ ansible_user_dir }}/.config/htop/htoprc"
+    dir_path: "{{ ansible_user_dir }}/.config/htop"
+    dir_mode: "u=rwx"
+    dir_owner: "{{ ansible_real_user_id }}"
+    dir_group: "{{ ansible_real_group_id }}"
 
 ...
