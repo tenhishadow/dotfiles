@@ -45,7 +45,7 @@
     - name: dotfiles | cronjob for vim-plug update
       cron:
         name: vim-plug update/upgrade
-        job: 'vim +PlugUpgrade +PlugUpdate +qa! >/dev/null'
+        job: 'vim -E -c "PlugUpgrade | PlugUpdate | qa!" >/dev/null 2>/dev/null'
         special_time: weekly
       ignore_errors: true  # if cron not presented
       no_log: true         # it doesnt matter
