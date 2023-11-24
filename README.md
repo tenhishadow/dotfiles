@@ -18,7 +18,6 @@ sudo pacman -Sy --noconfirm python-pipenv python-setuptools
 ```bash
 
 _INSTALL_DIR="$HOME/.dotfiles" \
-  && yay -Sy --noconfirm python-pipenv python-setuptools \
   && git clone https://github.com/tenhishadow/dotfiles.git $_INSTALL_DIR \
   && cd $_INSTALL_DIR \
   && pipenv install \
