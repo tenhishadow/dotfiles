@@ -3,7 +3,6 @@
 name: 'lint_vimrc'
 
 on:
-  push:
   pull_request:
 
 jobs:
