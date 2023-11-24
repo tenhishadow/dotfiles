@@ -1,6 +1,7 @@
 #!/bin/bash
 # .bashrc
 # shellcheck disable=SC2155
+# vim:ft=bash
 
 # Source global definitions
 # shellcheck disable=SC1091
@@ -191,10 +192,7 @@ function top() {
 }
 
 # Aliases
-
-alias egrep='egrep --color=auto'
-alias fgrep='fgrep --color=auto'
-alias grep='grep --color=auto'
+alias grep='ugrep'
 alias ls='ls --color=auto'
 alias ip='ip -color=auto'
 alias diff='diff --color=auto'
@@ -292,7 +290,10 @@ done
   source <(helm completion bash 2>/dev/null)
 # GVM is the Go Version Manager
 [[ -s "${HOME}/.gvm/scripts/gvm" ]] && source "${HOME}/.gvm/scripts/gvm"
-
+# complete fzf
+for fzf_config in key-bindings completion; do
+  [[ -r "/usr/share/fzf/${fzf_config}.bash" ]] && source "/usr/share/fzf/${fzf_config}.bash"
+done
 # BEGIN_KITTY_SHELL_INTEGRATION
 if test -n "$KITTY_INSTALLATION_DIR" -a -e "$KITTY_INSTALLATION_DIR/shell-integration/bash/kitty.bash"; then source "$KITTY_INSTALLATION_DIR/shell-integration/bash/kitty.bash"; fi
 # END_KITTY_SHELL_INTEGRATION

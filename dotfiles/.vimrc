@@ -23,6 +23,7 @@ augroup gr_install_plugins
     Plug 'mbbill/undotree'
     Plug 'vim-airline/vim-airline'
     Plug 'vim-airline/vim-airline-themes'
+    Plug 'junegunn/fzf.vim'
     " git
     Plug 'Xuyuanp/nerdtree-git-plugin'
     Plug 'airblade/vim-gitgutter'
@@ -162,6 +163,8 @@ let mapleader = ''
 " panel resize
 nnoremap <silent><leader>= :vertical resize +5<CR>
 nnoremap <silent><leader>- :vertical resize -5<CR>
+" fzf search
+nnoremap <C-r> :Files<Cr>
 
 
 " redefine filetypes

@@ -1,6 +1,10 @@
 # common
 [core]
   editor             = vim
+  excludesfile       = "~/.gitignore"
+	commitGraph        = true
+	untrackedCache     = true
+
 [pull]
   rebase             = false
 [gpg]
@@ -56,8 +60,8 @@
   autoSetupRemote    = true
 
 [url "git@github.com:"]
-  pushInsteadOf = https://github.com/
-  pushInsteadOf = git://github.com/
+  pushInsteadOf      = https://github.com/
+  pushInsteadOf      = git://github.com/
 
 # project-related
 [include]
