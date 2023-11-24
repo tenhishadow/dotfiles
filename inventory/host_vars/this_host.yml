@@ -16,7 +16,7 @@ dotfiles_mapping:
     src: "{{ dotfiles_location }}/.gitconfig"
     dest: "{{ ansible_user_dir }}/.gitconfig"
   gitignore:
-    src: "{{ dotfiles_location }}/.gitignore"
+    src: ".gitignore"
     dest: "{{ ansible_user_dir }}/.gitignore"
   screenrc:
     src: "{{ dotfiles_location }}/.screenrc"
