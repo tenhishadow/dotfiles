@@ -2,8 +2,8 @@
 [core]
   editor             = vim
   excludesfile       = "~/.gitignore"
-	commitGraph        = true
-	untrackedCache     = true
+  commitGraph        = true
+  untrackedCache     = true
 
 [pull]
   rebase             = false

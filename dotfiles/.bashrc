@@ -292,6 +292,7 @@ done
 [[ -s "${HOME}/.gvm/scripts/gvm" ]] && source "${HOME}/.gvm/scripts/gvm"
 # complete fzf
 for fzf_config in key-bindings completion; do
+  # shellcheck disable=SC1090
   [[ -r "/usr/share/fzf/${fzf_config}.bash" ]] && source "/usr/share/fzf/${fzf_config}.bash"
 done
 # BEGIN_KITTY_SHELL_INTEGRATION
