@@ -6,12 +6,18 @@ Special repository for configuring dotfiles with Ansible
 [![ansible_exec](https://github.com/tenhishadow/dotfiles/workflows/ansible_exec/badge.svg)](https://github.com/tenhishadow/dotfiles/actions?query=workflow%3Aansible_exec)
 [![github-super-linter](https://github.com/tenhishadow/dotfiles/actions/workflows/github-super-linter.yml/badge.svg)](https://github.com/tenhishadow/dotfiles/actions/workflows/github-super-linter.yml)
 
-## installation
+## install deps
+
+```bash
+sudo pacman -Sy --noconfirm python-pipenv python-setuptools
+```
+
+
+## install
 
 ```bash
 
 _INSTALL_DIR="$HOME/.dotfiles" \
-  && yay -Sy --noconfirm python-pipenv python-setuptools \
   && git clone https://github.com/tenhishadow/dotfiles.git $_INSTALL_DIR \
   && cd $_INSTALL_DIR \
   && pipenv install \
