@@ -168,6 +168,28 @@ function change_git_remote_protocol() {
     esac
 }
 
+# choose which top to exec
+function top() {
+  case $1 in
+    "-c")
+      # shellcheck disable=SC2091
+      $( which top )
+      return
+      ;;
+  esac
+
+  if [[ -x $(command -v bashtop) ]]; then bashtop
+  elif [[ -x $(command -v bpytop) ]]; then bpytop
+  elif [[ -x $(command -v htop) ]]; then htop
+  elif [[ -x $(which top) ]]; then
+    # shellcheck disable=SC2091
+    $( which top)
+  else
+    echo "no top installed"
+    return 1
+  fi
+}
+
 # Aliases
 
 alias egrep='egrep --color=auto'
