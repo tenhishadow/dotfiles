@@ -3,7 +3,6 @@
 name: 'github-super-linter'
 
 on:
-  push:
   pull_request:
 
 jobs:

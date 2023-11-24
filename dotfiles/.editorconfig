@@ -1,38 +1,24 @@
 root = true
 
 [*]
+# Use spaces for indentation
 indent_style = space
+# Each indent should contain 2 spaces
 indent_size = 2
-tab_width = 2
+# Use Unix line endings
 end_of_line = lf
+# The files are utf-8 encoded
 charset = utf-8
+# No whitespace at the end of line
 trim_trailing_whitespace = true
+# A file must end with an empty line - this is good for version control systems
 insert_final_newline = true
-max_line_length = 180
-
-[*.svg]
-insert_final_newline = false
-
-[*.md]
-max_line_length = 80
-
-[{.gitconfig,.gitconfig.local}]
-indent_style = space
-indent_size = 2
-tab_width = 2
-end_of_line = lf
-charset = utf-8
-trim_trailing_whitespace = true
-insert_final_newline = true
-
-[*.yml]
-indent_style = space
-indent_size = 2
-
-[*.py]
-indent_style = space
-indent_size = 4
-max_line_length = 119
+# A line should not have more than this amount of chars (not supported by all plugins)
+max_line_length = 200
 
 [{Makefile,**.mk}]
+# Use tabs for indentation (Makefiles require tabs)
 indent_style = tab
+
+[Pipfile.lock]
+max_line_length = unset
