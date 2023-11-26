@@ -9,7 +9,8 @@ Special repository for configuring dotfiles with Ansible
 ## install deps
 
 ```bash
-sudo pacman -Sy --noconfirm python-pipenv python-setuptools
+sudo pacman -Sy --noconfirm python-pipenv python-setuptools \
+|| sudo apt install git pipenv -y
 ```
 
 
