@@ -299,10 +299,5 @@ done
 if test -n "$KITTY_INSTALLATION_DIR" -a -e "$KITTY_INSTALLATION_DIR/shell-integration/bash/kitty.bash"; then source "$KITTY_INSTALLATION_DIR/shell-integration/bash/kitty.bash"; fi
 # END_KITTY_SHELL_INTEGRATION
 
-# configure ssh-agent only if not ssh session
-[[ -z "$SSH_CONNECTION" ]] \
-  && SSH_AUTH_SOCK="${XDG_RUNTIME_DIR}/ssh-agent.socket" \
-  && export SSH_AUTH_SOCK
-
 ## final PATH export
 export PATH
