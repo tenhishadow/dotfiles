@@ -19,30 +19,27 @@ augroup gr_install_plugins
   call plug#begin('~/.vim/plugged')
     " basic
     Plug 'itchyny/lightline.vim'            " statusline/tabline
-    Plug 'scrooloose/nerdtree'
     Plug 'mbbill/undotree'
-    Plug 'vim-airline/vim-airline'
-    Plug 'vim-airline/vim-airline-themes'
     Plug 'junegunn/fzf.vim'
     " git
-    Plug 'Xuyuanp/nerdtree-git-plugin'
-    Plug 'airblade/vim-gitgutter'
-    Plug 'gisphm/vim-gitignore'
-    Plug 'tpope/vim-fugitive'
+    " Plug 'airblade/vim-gitgutter'
+    " Plug 'gisphm/vim-gitignore'
+    " Plug 'tpope/vim-fugitive'
     " format
     Plug 'editorconfig/editorconfig-vim'    " support .editorconfig in vim
     Plug 'junegunn/vim-easy-align'          " very easy align
     Plug 'nathanaelkane/vim-indent-guides'
     Plug 'ntpeters/vim-better-whitespace'
-    Plug 'terryma/vim-multiple-cursors'
+    " Plug 'terryma/vim-multiple-cursors'
     Plug 'tomtom/tcomment_vim'              " gcc to {un}comment
     Plug 'tpope/vim-sensible'
-    Plug 'dense-analysis/ale'               " https://github.com/dense-analysis/ale
     " theme
     Plug 'tomasr/molokai'
     Plug 'jacoborus/tender.vim'
+    Plug 'morhetz/gruvbox'
 
     " language
+    Plug 'dense-analysis/ale'               " https://github.com/dense-analysis/ale
     Plug 'sheerun/vim-polyglot'
     Plug 'Valloric/YouCompleteMe', { 'do': './install.py' }
     "" python
@@ -95,9 +92,23 @@ if has('autocmd')
 endif
 
 " set theme
-if filereadable($HOME . '/.vim/plugged/molokai/colors/molokai.vim')
-  colorscheme molokai
-  let g:lightline = { 'colorscheme': 'molokai' }
+if filereadable($HOME . '/.vim/plugged/gruvbox/colors/gruvbox.vim')
+  syntax enable
+  colorscheme gruvbox
+  if (has("termguicolors"))
+   set termguicolors
+  endif
+  " https://github.com/kovidgoyal/kitty/issues/108#issuecomment-320492663
+  " vim hardcodes background color erase even if the terminfo file does
+  " not contain bce (not to mention that libvte based terminals
+  " incorrectly contain bce in their terminfo files). This causes
+  " incorrect background rendering when using a color theme with a
+  " background color.
+  let &t_ut=''
+  set bg=dark
+  let g:lightline = { 'colorscheme': 'gruvbox' }
+  " ale config
+  let g:gruvbox_guisp_fallback = 'bg'
 else
   augroup gr_source
     autocmd VimEnter * PlugInstall --sync | source ${MYVIMRC}
@@ -148,24 +159,18 @@ set noswapfile
 set nobackup
 set undodir=~/.vim/undodir
 set undofile
-nnoremap <leader>u ::UndotreeShow<CR>
-
-nnoremap <F2> :set invpaste paste?<CR>
 set pastetoggle=<F2>
 set showmode
 
-" other remaps
-let mapleader = ''
-" nnoremap <leader>h :wincmd h<CR>
-" nnoremap <leader>j :wincmd j<CR>
-" nnoremap <leader>k :wincmd k<CR>
-" nnoremap <leader>l :wincmd l<CR>
+" remaps
+let mapleader = ' '
 " panel resize
 nnoremap <silent><leader>= :vertical resize +5<CR>
 nnoremap <silent><leader>- :vertical resize -5<CR>
+nnoremap <leader>u ::UndotreeShow<CR>
+nnoremap <F2> :set invpaste paste?<CR>
 " fzf search
 nnoremap <C-r> :Files<Cr>
-
 
 " redefine filetypes
 augroup gr_filetype " filetypes
@@ -188,14 +193,6 @@ augroup gr_filetype " filetypes
 augroup END
 
 " per plugin configuration
-
-"" NERDTree
-let NERDTreeAutoDeleteBuffer = 1 " Automatically delete the buffer of the file you just deleted with NerdTree
-let NERDTreeDirArrows        = 1
-let NERDTreeMinimalUI        = 1
-let NERDTreeQuitOnOpen       = 1 " Closing automatically
-let NERDTreeShowHidden       = 1 " show hidden files
-
 "" EasyAlign maps
 " Start interactive EasyAlign in visual mode (e.g. vipga)
 xmap ga <Plug>(EasyAlign)
