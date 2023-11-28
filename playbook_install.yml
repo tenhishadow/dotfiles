@@ -57,4 +57,9 @@
         special_time: hourly
       ignore_errors: true # if cron not presented
 
+    - name: Migrating away from .pam_environment
+      file:
+        path: "{{ ansible_user_dir }}/.pam_environment"
+        state: absent
+
 ...

@@ -54,9 +54,6 @@ dotfiles_mapping:
   yamllint_root:
     src: "{{ dotfiles_location }}/.yamllint"
     dest: "{{ ansible_user_dir }}/.yamllint"
-  pam_env:
-    src: "{{ dotfiles_location }}/.pam_environment"
-    dest: "{{ ansible_user_dir }}/.pam_environment"
   ssh_config:
     src: "{{ dotfiles_location }}/.ssh/config"
     dest: "{{ ansible_user_dir }}/.ssh/config"
