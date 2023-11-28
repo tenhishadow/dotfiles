@@ -206,6 +206,7 @@ alias kube-temp='kubectl run -it --rm --image debian:bookworm tmp-${RANDOM} -- b
 alias archupdate='yay -Syu --noconfirm; yay -Scc --noconfirm'
 alias dotfiles-update='cd ~/.dotfiles/ && git pull && pipenv sync && pipenv run install'
 alias ans-workstation-update='cd ~/.ans-workstation/ && git pull && pipenv sync && pipenv run install'
+alias vim-cleanup='rm -rf ~/.vim/autoload/ ~/.vim/plugged/'
 
 # Vars
 ## bash prompt
