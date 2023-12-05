@@ -21,6 +21,7 @@ augroup gr_install_plugins
     Plug 'itchyny/lightline.vim'            " statusline/tabline
     Plug 'mbbill/undotree'
     Plug 'junegunn/fzf.vim'
+    Plug 'vimwiki/vimwiki'
     " git
     " Plug 'airblade/vim-gitgutter'
     " Plug 'gisphm/vim-gitignore'
@@ -96,7 +97,7 @@ if filereadable($HOME . '/.vim/plugged/gruvbox/colors/gruvbox.vim')
   syntax enable
   colorscheme gruvbox
   if (has("termguicolors"))
-   set termguicolors
+    set termguicolors
   endif
   " https://github.com/kovidgoyal/kitty/issues/108#issuecomment-320492663
   " vim hardcodes background color erase even if the terminfo file does
