@@ -21,6 +21,7 @@ augroup gr_install_plugins
     Plug 'itchyny/lightline.vim'            " statusline/tabline
     Plug 'mbbill/undotree'
     Plug 'junegunn/fzf.vim'
+    Plug 'vimwiki/vimwiki'
     " git
     " Plug 'airblade/vim-gitgutter'
     " Plug 'gisphm/vim-gitignore'
