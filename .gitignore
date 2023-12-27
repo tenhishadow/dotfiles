@@ -44,3 +44,15 @@ override.tf.json
 # Ignore CLI configuration files
 .terraformrc
 terraform.rc
+
+# ignore temp files
+*~
+
+# KDE directory preferences
+.directory
+
+# Debug files
+*.dSYM/
+
+# python virtual env
+.venv

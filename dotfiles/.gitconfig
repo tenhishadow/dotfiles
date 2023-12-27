@@ -1,20 +1,29 @@
-# common
 [core]
   editor             = vim
   excludesfile       = "~/.gitignore"
   commitGraph        = true
   untrackedCache     = true
-	preloadindex = true
-
+	preloadindex       = true
+[alias]
+  cadd               = commit --no-edit --no-verify --amend
+  fps                = push --no-verify -f
+  glog               = log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset'
+  prune              = fetch --prune
+  pushn              = push --no-verify
+  undo               = reset --soft HEAD^
+  cls                = !git clean -fd && git reset --hard
+  fix                = !git add -A && git commit -m fix && git push
 [pull]
   rebase             = false
+[push]
+  autoSetupRemote    = true
 [gpg]
   program            = gpg
 [commit]
   gpgsign            = false
 [diff]
   tool               = vimdiff
-	parallel = 8
+	parallel           = 8
 [tag]
   forceSignAnnotated = true
 [grep]
@@ -49,34 +58,18 @@
   oldHighlight       = red bold 52
   newNormal          = green bold
   newHighlight       = green bold 22
-[alias]
-  cadd               = commit --no-edit --no-verify --amend
-  fps                = push --no-verify -f
-  glog               = log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset'
-  prune              = fetch --prune
-  pushn              = push --no-verify
-  undo               = reset --soft HEAD^
-  cls                = !git clean -fd && git reset --hard
-  fix                = !git add -A && git commit -m fix && git push
-[push]
-  autoSetupRemote    = true
-
+[filter "lfs"]
+	clean              = git-lfs clean -- %f
+	smudge             = git-lfs smudge -- %f
+	process            = git-lfs filter-process
+	required           = true
+[gc]
+	threads            = 8
+[pack]
+	threads            = 8
 [url "git@github.com:"]
   pushInsteadOf      = https://github.com/
   pushInsteadOf      = git://github.com/
-
-[filter "lfs"]
-	clean = git-lfs clean -- %f
-	smudge = git-lfs smudge -- %f
-	process = git-lfs filter-process
-	required = true
-
-[gc]
-	threads = 8
-
-[pack]
-	threads = 8
-
 # project-related
 [include]
   path               = ~/projects/.gitconfig
