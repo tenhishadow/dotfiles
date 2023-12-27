@@ -22,3 +22,6 @@ indent_style = tab
 
 [Pipfile.lock]
 max_line_length = unset
+
+[{**.yaml,**.yml}]
+max_line_length = unset
