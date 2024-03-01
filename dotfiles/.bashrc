@@ -207,6 +207,8 @@ alias archupdate='yay -Syu --noconfirm; yay -Scc --noconfirm'
 alias dotfiles-update='cd ~/.dotfiles/ && git pull && pipenv sync && pipenv run install'
 alias ans-workstation-update='cd ~/.ans-workstation/ && git pull && pipenv sync && pipenv run install'
 alias vim-cleanup='rm -rf ~/.vim/autoload/ ~/.vim/plugged/'
+alias tgfmt='terragrunt hclfmt --terragrunt-diff -all'
+alias tfmt='terraform fmt -recursive -diff'
 
 # Vars
 ## bash prompt
@@ -241,7 +243,7 @@ export LESS_TERMCAP_ZV=$(tput rsubm)
 export LESS_TERMCAP_ZO=$(tput ssupm)
 export LESS_TERMCAP_ZW=$(tput rsupm)
 export GROFF_NO_SGR=1         # For Konsole and Gnome-terminal
-
+# shellcheck disable=SC2016
 export LESS='-R --use-color -Dd+r$Du+b$'
 
 PAGER="less -RFMIX"

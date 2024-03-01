@@ -190,6 +190,7 @@ augroup gr_filetype " filetypes
   au BufNewFile,BufRead Dockerfile*     set ft=dockerfile
   " fucking xml
   au FileType xml setlocal foldmethod=syntax
+  au BufNewFile,BufRead *.j2 set ft=jinja2
   let g:xml_syntax_folding=1
 augroup END
 
