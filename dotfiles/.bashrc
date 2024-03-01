@@ -207,6 +207,8 @@ alias archupdate='yay -Syu --noconfirm; yay -Scc --noconfirm'
 alias dotfiles-update='cd ~/.dotfiles/ && git pull && pipenv sync && pipenv run install'
 alias ans-workstation-update='cd ~/.ans-workstation/ && git pull && pipenv sync && pipenv run install'
 alias vim-cleanup='rm -rf ~/.vim/autoload/ ~/.vim/plugged/'
+alias tgfmt='terragrunt hclfmt --terragrunt-diff -all'
+alias tfmt='terraform fmt -recursive -diff'
 
 # Vars
 ## bash prompt
