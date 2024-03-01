@@ -243,8 +243,8 @@ export LESS_TERMCAP_ZV=$(tput rsubm)
 export LESS_TERMCAP_ZO=$(tput ssupm)
 export LESS_TERMCAP_ZW=$(tput rsupm)
 export GROFF_NO_SGR=1         # For Konsole and Gnome-terminal
-
-export LESS="-R --use-color -Dd+r$Du+b$"
+# shellcheck disable=SC2154
+export LESS='-R --use-color -Dd+r$Du+b$'
 
 PAGER="less -RFMIX"
   export PAGER
