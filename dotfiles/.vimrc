@@ -190,8 +190,16 @@ augroup gr_filetype " filetypes
   au BufNewFile,BufRead Dockerfile*     set ft=dockerfile
   " fucking xml
   au FileType xml setlocal foldmethod=syntax
+  " ansible
   au BufNewFile,BufRead *.j2 set ft=jinja2
+
   let g:xml_syntax_folding=1
+augroup END
+
+" auto-format on exit
+augroup gr_hashicorp_autoformat
+  autocmd!
+  autocmd BufWritePost *.tf !terraform fmt %
 augroup END
 
 " per plugin configuration
