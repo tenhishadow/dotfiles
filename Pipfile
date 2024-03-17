@@ -11,6 +11,7 @@ yamllint     = "*"
 ansible      = "*"
 jmespath = "*"
 pysocks = "*"
+requests = {extras = ["socks"], version = "*"}
 
 [scripts]
 lint         = "ansible-lint playbook_install.yml"
