@@ -10,6 +10,7 @@ yamllint     = "*"
 [packages]
 ansible      = "*"
 jmespath = "*"
+pysocks = "*"
 
 [scripts]
 lint         = "ansible-lint playbook_install.yml"
