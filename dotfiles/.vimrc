@@ -200,6 +200,7 @@ augroup END
 augroup gr_hashicorp_autoformat
   autocmd!
   autocmd BufWritePost *.tf !terraform fmt %
+  autocmd BufWritePost *.hcl !terragrunt hclfmt %
 augroup END
 
 " per plugin configuration
