@@ -1,6 +1,5 @@
 ---
-
-name: 'lint_vimrc'
+name: "lint_vimrc"
 
 permissions:
   contents: read
@@ -13,7 +12,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-
       - name: do checkout
         uses: actions/checkout@master
 
@@ -22,8 +20,6 @@ jobs:
         with:
           github_token: ${{ secrets.github_token }}
           reporter: github-pr-review
-
 # documentation:
 # https://github.com/Vimjas/vint
 # https://github.com/Vimjas/vint/wiki/Vint-linting-policy-summary
-...

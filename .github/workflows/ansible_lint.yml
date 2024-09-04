@@ -1,5 +1,4 @@
 ---
-
 name: ansible_lint
 
 permissions:
@@ -13,14 +12,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-
       - name: do checkout
         uses: actions/checkout@master
 
       - name: deps | python version
         uses: actions/setup-python@v5
         with:
-          python-version: '3.x'
+          python-version: "3.x"
 
       - name: cache | pip
         uses: actions/cache@v4
@@ -42,5 +40,3 @@ jobs:
         run: pipenv run lint
         env:
           ANSIBLE_FORCE_COLOR: true
-
-...

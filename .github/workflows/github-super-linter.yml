@@ -1,6 +1,5 @@
 ---
-
-name: 'github-super-linter'
+name: "github-super-linter"
 
 permissions:
   contents: read
@@ -24,5 +23,3 @@ jobs:
           VALIDATE_ALL_CODEBASE: true
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VALIDATE_SHELL_SHFMT: false
-
-...

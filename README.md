@@ -13,7 +13,6 @@ sudo pacman -Sy --noconfirm python-pipenv python-setuptools \
 || sudo apt install git pipenv -y
 ```
 
-
 ## install
 
 ```bash
