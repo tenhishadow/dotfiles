@@ -2,6 +2,9 @@
 
 name: 'lint_vimrc'
 
+permissions:
+  contents: read
+
 on:
   pull_request:
 

@@ -2,6 +2,9 @@
 
 name: ansible_exec
 
+permissions:
+  contents: read
+
 on:
   push:
     branches:
