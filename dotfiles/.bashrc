@@ -62,6 +62,21 @@ ___git_status() {
   printf "\e[100;96m[ %s %s ]\e[0m " "$status_output" "$branch"
 }
 
+# git cleanup | remove all, but not default branch
+# TBD
+# function git_clean_to_default() {
+#   [[ ! -d '.git' ]] \
+#     && echo 'not a git repo' \
+#     && return
+#   local _default_git_branch=$(git symbolic-ref refs/remotes/origin/HEAD \
+#     | sed 's#refs/remotes/origin/##' )
+#   # checkout to default one
+#   # git checkout $_default_git_branch
+#   for i in $(git branch --format="%(refname:short)" | grep -v $_default_git_branch); do
+#     echo removing $i
+#   done
+# }
+
 # find and sort files by size in directory( current by default )
 # shellcheck disable=SC2317  # Don't warn about unreachable commands in this function
 function duu() {
