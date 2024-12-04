@@ -4,6 +4,7 @@ on:
 
 jobs:
   labeler:
+    # checkov:skip=CKV2_GHA_1: required
     permissions:
       contents: read
       pull-requests: write

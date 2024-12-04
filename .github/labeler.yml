@@ -1,5 +1,4 @@
 ---
-
 ansible:
   - changed-files:
       - any-glob-to-any-file:
@@ -24,5 +23,3 @@ dotfiles:
   - changed-files:
       - any-glob-to-any-file:
           - "dotfiles/**/*"
-
-...
