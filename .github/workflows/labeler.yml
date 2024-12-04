@@ -5,7 +5,7 @@ on:
 jobs:
   labeler:
     permissions:
-    # checkov:skip=CKV2_GHA_1: required
+      # checkov:skip=CKV2_GHA_1: required for specific actions
       contents: read
       pull-requests: write
     runs-on: ubuntu-latest
