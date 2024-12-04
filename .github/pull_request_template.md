@@ -1,8 +1,8 @@
-## Changes
+# Changes
 
-| File          | Change Description        |
-| ------------- | ------------------------- |
-| bashrc        |                           |
-| vimrc         |                           |
-| deps          |                           |
-| ansible       |                           |
+| File    | Change Description |
+| ------- | ------------------ |
+| bashrc  |                    |
+| vimrc   |                    |
+| deps    |                    |
+| ansible |                    |

@@ -3,13 +3,13 @@ ansible:
   - changed-files:
       - any-glob-to-any-file:
           - "ansible.cfg"
-          - "inventory/**/*"
+          - "inventory/**"
           - "playbook_install.yml"
 
 ci:
   - changed-files:
       - any-glob-to-any-file:
-          - "github/**/*"
+          - "github/**"
 deps:
   - changed-files:
       - any-glob-to-any-file:
@@ -23,3 +23,7 @@ dotfiles:
   - changed-files:
       - any-glob-to-any-file:
           - "dotfiles/**/*"
+bashrc:
+  - changed-files:
+      - any-glob-to-any-file:
+          - "dotfiles/.bashrc"
