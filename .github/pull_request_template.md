@@ -2,5 +2,7 @@
 
 bashrc:
 vimrc:
-ansible:
 deps:
+
+dotfiles:
+ansible:
