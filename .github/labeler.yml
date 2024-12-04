@@ -1,0 +1,29 @@
+---
+ansible:
+  - changed-files:
+      - any-glob-to-any-file:
+          - "ansible.cfg"
+          - "inventory/**"
+          - "playbook_install.yml"
+
+ci:
+  - changed-files:
+      - any-glob-to-any-file:
+          - "github/**"
+dependencies:
+  - changed-files:
+      - any-glob-to-any-file:
+          - "Pipfile"
+          - "Pipfile.lock"
+          - "renovate.json"
+documentation:
+  - changed-files:
+      - any-glob-to-any-file: "README.md"
+dotfiles:
+  - changed-files:
+      - any-glob-to-any-file:
+          - "dotfiles/**/*"
+bashrc:
+  - changed-files:
+      - any-glob-to-any-file:
+          - "dotfiles/.bashrc"
