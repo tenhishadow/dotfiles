@@ -4,8 +4,8 @@ on:
 
 jobs:
   labeler:
-    # checkov:skip=CKV2_GHA_1: required
     permissions:
+    # checkov:skip=CKV2_GHA_1: required
       contents: read
       pull-requests: write
     runs-on: ubuntu-latest
