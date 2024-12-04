@@ -222,9 +222,11 @@ alias archupdate='yay -Syu --noconfirm; yay -Scc --noconfirm'
 alias arch-rekey='sudo pacman-key --refresh-keys'
 alias dotfiles-update='cd ~/.dotfiles/ && git pull && pipenv sync && pipenv run install'
 alias ans-workstation-update='cd ~/.ans-workstation/ && git pull && pipenv sync && pipenv run install'
-alias vim-cleanup='rm -rf ~/.vim/autoload/ ~/.vim/plugged/'
 alias tgfmt='terragrunt hclfmt --terragrunt-diff -all'
 alias tfmt='terraform fmt -recursive -diff'
+## clear
+alias clear-journald='sudo journalctl --rotate && sudo journalctl --vacuum-time=1s'
+alias clear-vim='rm -rf ~/.vim/autoload/ ~/.vim/plugged/'
 
 # Vars
 ## bash prompt
