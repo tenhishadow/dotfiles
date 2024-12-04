@@ -1,8 +1,8 @@
-## changes:
+## Changes
 
-bashrc:
-vimrc:
-deps:
-
-dotfiles:
-ansible:
+| File          | Change Description        |
+| ------------- | ------------------------- |
+| bashrc        |                           |
+| vimrc         |                           |
+| deps          |                           |
+| ansible       |                           |
