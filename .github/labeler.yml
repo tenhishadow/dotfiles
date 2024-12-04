@@ -10,13 +10,13 @@ ci:
   - changed-files:
       - any-glob-to-any-file:
           - "github/**"
-deps:
+dependencies:
   - changed-files:
       - any-glob-to-any-file:
           - "Pipfile"
           - "Pipfile.lock"
           - "renovate.json"
-docs:
+documentation:
   - changed-files:
       - any-glob-to-any-file: "README.md"
 dotfiles:
