@@ -206,13 +206,18 @@ function top() {
   fi
 }
 
-# temperature
 function temp() {
-  echo "Disks"
+  printf "dev\t\ttype\ttemp\tserial\t\t\t\t\tmodel\n"
   for disk in /dev/sd[a-z] /dev/nvme[0-9]; do
-    [[ -c "$disk" ]] \
+    [[ -c "$disk" || -b "$disk" ]] \
       && sudo smartctl --all --json "$disk" \
-        | jq -r '"\(.device.info_name) \(.temperature.current)C \(.model_name) \(.serial_number)"'
+        | jq -r '
+          .device.name + "\t" +
+          .device.type + "\t" +
+          (.temperature.current | tostring) + "C\t" +
+          .serial_number + "\t\t\t" +
+          .model_name
+          '
   done
 }
 
