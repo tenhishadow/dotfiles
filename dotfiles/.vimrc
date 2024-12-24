@@ -71,6 +71,7 @@ augroup END
 set nocompatible
 set shell=bash
 set ttyfast
+set fileformat=unix
 syntax on
 
 " folding
@@ -182,6 +183,7 @@ augroup gr_filetype " filetypes
   " ansible
   au BufNewFile,BufRead .ansible-lint set ft=yaml
   au BufNewFile,BufRead .yamllint     set ft=yaml
+  au BufNewFile,BufRead *.j2 set ft=jinja2
   " terragrunt
   au BufNewFile,BufRead terragrunt.hcl set ft=terraform
   " custom ssh configs
@@ -190,8 +192,9 @@ augroup gr_filetype " filetypes
   au BufNewFile,BufRead Dockerfile*     set ft=dockerfile
   " fucking xml
   au FileType xml setlocal foldmethod=syntax
-  " ansible
-  au BufNewFile,BufRead *.j2 set ft=jinja2
+  " markdown
+  au FileType markdown setlocal endofline
+
 
   let g:xml_syntax_folding=1
 augroup END
