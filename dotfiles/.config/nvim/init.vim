@@ -1,18 +1,18 @@
-if !filereadable($HOME . '/.vim/autoload/plug.vim')
-  if !executable('curl')
-    echoerr 'ERR: you have to install curl or first install vim-plug yourself!'
-    execute 'q!'
-  endif
-  " echo 'DBG: installing Vim-Plug...'
-  silent !mkdir -p ~/.vim/{autoload,plugged} >/dev/null 2>&1
-  silent !curl -fLo ~/.vim/autoload/plug.vim https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim >/dev/null 2>&1
-  augroup gr_install_and_reload
-    autocmd VimEnter * PlugInstall --sync | source ${MYVIMRC}
-  augroup END
-endif
+"if !filereadable($HOME . '/.vim/autoload/plug.vim')
+"  if !executable('curl')
+"    echoerr 'ERR: you have to install curl or first install vim-plug yourself!'
+"    execute 'q!'
+"  endif
+"  " echo 'DBG: installing Vim-Plug...'
+"  silent !mkdir -p ~/.vim/{autoload,plugged} >/dev/null 2>&1
+"  silent !curl -fLo ~/.vim/autoload/plug.vim https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim >/dev/null 2>&1
+"  augroup gr_install_and_reload
+"    autocmd VimEnter * PlugInstall --sync | source ${MYVIMRC}
+"  augroup END
+"endif
 
-if !filereadable($HOME . '/.vim/undodir')
-  silent !mkdir -p ~/.vim/undodir >/dev/null 2>&1
+if !filereadable($HOME . '/.nvim/undodir')
+  silent !mkdir -p ~/.nvim/undodir >/dev/null 2>&1
 endif
 
 augroup gr_install_plugins
@@ -22,47 +22,40 @@ augroup gr_install_plugins
     Plug 'mbbill/undotree'
     Plug 'junegunn/fzf.vim'
     Plug 'vimwiki/vimwiki'
-    " git
-    " Plug 'airblade/vim-gitgutter'
-    " Plug 'gisphm/vim-gitignore'
-    " Plug 'tpope/vim-fugitive'
-    " format
+    "" format
     Plug 'editorconfig/editorconfig-vim'    " support .editorconfig in vim
     Plug 'junegunn/vim-easy-align'          " very easy align
     Plug 'nathanaelkane/vim-indent-guides'
     Plug 'ntpeters/vim-better-whitespace'
-    " Plug 'terryma/vim-multiple-cursors'
-    Plug 'tomtom/tcomment_vim'              " gcc to {un}comment
-    Plug 'tpope/vim-sensible'
-    " theme
+    "Plug 'tpope/vim-sensible'
+    "" theme
     Plug 'tomasr/molokai'
     Plug 'jacoborus/tender.vim'
     Plug 'morhetz/gruvbox'
-
-    " language
+    "" language
     Plug 'dense-analysis/ale'               " https://github.com/dense-analysis/ale
     Plug 'sheerun/vim-polyglot'
-    Plug 'Valloric/YouCompleteMe', { 'do': './install.py' }
-    "" python
+    "Plug 'Valloric/YouCompleteMe', { 'do': './install.py' }
+    """ python
     Plug 'plytophogy/vim-virtualenv'
-    " Plug 'PieterjanMontens/vim-pipenv'
-    "" markdown
+    "" Plug 'PieterjanMontens/vim-pipenv'
+    """ markdown
     Plug 'tpope/vim-markdown'
     Plug 'iamcco/markdown-preview.nvim', { 'do': { -> mkdp#util#install() }, 'for': ['markdown', 'vim-plug']}  " :MarkdownPreview
-    "" mikrotik
+    """ mikrotik
     Plug 'zainin/vim-mikrotik'
-    "" hashicorp
+    """ hashicorp
     Plug 'hashivim/vim-consul'
     Plug 'hashivim/vim-nomadproject'
     Plug 'hashivim/vim-packer'
     Plug 'hashivim/vim-terraform'
     Plug 'hashivim/vim-vagrant'
     Plug 'hashivim/vim-vaultproject'
-    "" ruby
+    """ ruby
     Plug 'vim-ruby/vim-ruby'
-    "" nginx
+    """ nginx
     Plug 'chr4/nginx.vim'
-    "" CloudFormation
+    """ CloudFormation
     Plug 'speshak/vim-cfn'
   call plug#end()
 augroup END
@@ -87,17 +80,17 @@ let xml_syntax_folding=1      " XML
 filetype plugin indent on
 
 " jump to the last position when reopening a file
-if has('autocmd')
-  augroup gr_autocmd
-    au BufReadPost * if line("'\"") > 1 && line("'\"") <= line("$") | exe "normal! g'\"" | endif
-  augroup END
-endif
+"if has('autocmd')
+"  augroup gr_autocmd
+"    au BufReadPost * if line("'\"") > 1 && line("'\"") <= line("$") | exe "normal! g'\"" | endif
+"  augroup END
+"endif
 
 " set theme
 if filereadable($HOME . '/.vim/plugged/gruvbox/colors/gruvbox.vim')
   syntax enable
   colorscheme gruvbox
-  if (has("termguicolors"))
+  if (has('termguicolors'))
     set termguicolors
   endif
   " https://github.com/kovidgoyal/kitty/issues/108#issuecomment-320492663
@@ -107,7 +100,7 @@ if filereadable($HOME . '/.vim/plugged/gruvbox/colors/gruvbox.vim')
   " incorrect background rendering when using a color theme with a
   " background color.
   let &t_ut=''
-  set bg=dark
+  set background=dark
   let g:lightline = { 'colorscheme': 'gruvbox' }
   " ale config
   let g:gruvbox_guisp_fallback = 'bg'
@@ -124,9 +117,9 @@ if &diff
   set diffopt+=iwhite
 endif
 
-augroup gr_hacks
-  au BufEnter * set fo-=c fo-=r fo-=o                    " stop annoying auto commenting on new lines
-augroup END
+"augroup gr_hacks
+"  au BufEnter * set fo-=c fo-=r fo-=o                    " stop annoying auto commenting on new lines
+"augroup END
 
 highlight Comment gui=italic cterm=italic              " italic comments
 
@@ -159,7 +152,7 @@ set wildmode=list:longest,full
 " for undo
 set noswapfile
 set nobackup
-set undodir=~/.vim/undodir
+set undodir=~/.nvim/undodir
 set undofile
 set pastetoggle=<F2>
 set showmode
