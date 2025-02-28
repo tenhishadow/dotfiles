@@ -41,8 +41,9 @@
       tags:
         - configs
 
-    - name: dotfiles | cronjob for vim-plug update
+    - name: dotfiles | remove old cron job for vim
       cron:
+        state: absent
         name: vim-plug update/upgrade
         job: 'vim -E -c "PlugUpgrade | PlugUpdate | qa!" >/dev/null 2>/dev/null'
         special_time: weekly
