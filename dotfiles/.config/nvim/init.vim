@@ -1,13 +1,11 @@
-if !filereadable($HOME . '/.nvim/autoload/plug.vim')
+if !filereadable(stdpath('data') . '/site/autoload/plug.vim')
   if !executable('curl')
     echoerr 'ERR: you have to install curl or first install vim-plug yourself!'
     execute 'q!'
   endif
-  " echo 'DBG: installing Vim-Plug...'
-  silent !mkdir -p ~/.nvim/{autoload,plugged} >/dev/null 2>&1
-  silent !curl -fLo ~/.nvim/autoload/plug.vim https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim >/dev/null 2>&1
+  execute 'silent !curl -fLo ' . stdpath('data') . '/site/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim >/dev/null 2>&1'
   augroup gr_install_and_reload
-    autocmd VimEnter * PlugInstall --sync | source ${MYVIMRC}
+    autocmd VimEnter * PlugInstall --sync | source $MYVIMRC
   augroup END
 endif
 
