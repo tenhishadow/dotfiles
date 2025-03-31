@@ -236,4 +236,6 @@ let g:ycm_language_server =
             \   }
             \ ]
 
+let g:mkdp_filetypes = ['markdown', 'vimwiki']
+
 lua require('lsp')

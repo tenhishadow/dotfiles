@@ -25,10 +25,9 @@ cmp.setup({
 local capabilities = require('cmp_nvim_lsp').default_capabilities()
 
 -- List of LSP servers you use
--- local servers = { 'bashls', 'pyright', 'terraformls', 'solargraph', 'yamlls', 'dockerls' }
 local servers = {
   'bashls', 'pyright', 'terraformls', 'solargraph', 'yamlls', 'dockerls',
-  'ansiblels', 'jsonls', 'marksman', 'gopls', 'systemd_language_server'
+  'ansiblels', 'jsonls', 'gopls'
 }
 
 -- Iterate and setup each server
