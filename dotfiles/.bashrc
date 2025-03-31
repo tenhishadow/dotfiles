@@ -62,21 +62,6 @@ ___git_status() {
   printf "\e[100;96m[ %s %s ]\e[0m " "$status_output" "$branch"
 }
 
-# git cleanup | remove all, but not default branch
-# TBD
-# function git_clean_to_default() {
-#   [[ ! -d '.git' ]] \
-#     && echo 'not a git repo' \
-#     && return
-#   local _default_git_branch=$(git symbolic-ref refs/remotes/origin/HEAD \
-#     | sed 's#refs/remotes/origin/##' )
-#   # checkout to default one
-#   # git checkout $_default_git_branch
-#   for i in $(git branch --format="%(refname:short)" | grep -v $_default_git_branch); do
-#     echo removing $i
-#   done
-# }
-
 # find and sort files by size in directory( current by default )
 # shellcheck disable=SC2317  # Don't warn about unreachable commands in this function
 function duu() {
@@ -239,6 +224,10 @@ alias dotfiles-update='cd ~/.dotfiles/ && git pull && pipenv sync && pipenv run 
 alias ans-workstation-update='cd ~/.ans-workstation/ && git pull && pipenv sync && pipenv run install'
 alias tgfmt='terragrunt hclfmt --terragrunt-diff -all'
 alias tfmt='terraform fmt -recursive -diff'
+alias vim='nvim'
+alias vimdiff='nvim -d'
+alias nmap-fast='sudo nmap -sS -p- -T5 -Pn'
+alias nmap-slow='sudo nmap -sS -p- -T0 -Pn'
 ## clear
 alias clear-journald='sudo journalctl --rotate && sudo journalctl --vacuum-time=1s'
 alias clear-vim='rm -rf ~/.vim/autoload/ ~/.vim/plugged/'
@@ -299,6 +288,10 @@ GOPATH="${HOME}/go" && \
 [[ ! -d "${GOPATH}" ]] && \
   mkdir "${GOPATH}"
 PATH=$GOPATH/bin:$PATH
+
+## google cloud
+[[ ! -d "/opt/google-cloud-cli/bin" ]] && \
+  PATH="$PATH:/opt/google-cloud-cli/bin"
 
 ###
 # completions

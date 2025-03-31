@@ -15,7 +15,7 @@ dotfiles_mapping:
     src: "{{ dotfiles_location }}/.gitconfig"
     dest: "{{ ansible_user_dir }}/.gitconfig"
   gitignore:
-    src: "{{ playbook_dir }}/.gitignore"
+    src: "{{ dotfiles_location }}/.gitignore"
     dest: "{{ ansible_user_dir }}/.gitignore"
   screenrc:
     src: "{{ dotfiles_location }}/.screenrc"
@@ -95,3 +95,20 @@ dotfiles_mapping:
     dir_mode: "u=rwx"
     dir_owner: "{{ ansible_real_user_id }}"
     dir_group: "{{ ansible_real_group_id }}"
+  nvim_init:
+    src: "{{ dotfiles_location }}/.config/nvim/init.vim"
+    dest: "{{ ansible_user_dir }}/.config/nvim/init.vim"
+    dir_path: "{{ ansible_user_dir }}/.config/nvim"
+    dir_mode: "u=rwx"
+    dir_owner: "{{ ansible_real_user_id }}"
+    dir_group: "{{ ansible_real_group_id }}"
+  nvim_lua_lsp:
+    src:       "{{ dotfiles_location }}/.config/nvim/lua/lsp.lua"
+    dest:      "{{ ansible_user_dir }}/.config/nvim/lua/lsp.lua"
+    dir_path:  "{{ ansible_user_dir }}/.config/nvim/lua"
+    dir_mode:  "u=rwx"
+    dir_owner: "{{ ansible_real_user_id }}"
+    dir_group: "{{ ansible_real_group_id }}"
+  pylintrc:
+    src: "{{ dotfiles_location }}/.pylintrc"
+    dest: "{{ ansible_user_dir }}/.pylintrc"
