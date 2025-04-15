@@ -96,10 +96,17 @@ dotfiles_mapping:
     dir_owner: "{{ ansible_real_user_id }}"
     dir_group: "{{ ansible_real_group_id }}"
   nvim_init:
-    src: "{{ dotfiles_location }}/.config/nvim/init.vim"
-    dest: "{{ ansible_user_dir }}/.config/nvim/init.vim"
+    src: "{{ dotfiles_location }}/.config/nvim/init.lua"
+    dest: "{{ ansible_user_dir }}/.config/nvim/init.lua"
     dir_path: "{{ ansible_user_dir }}/.config/nvim"
     dir_mode: "u=rwx"
+    dir_owner: "{{ ansible_real_user_id }}"
+    dir_group: "{{ ansible_real_group_id }}"
+  nvim_lua_setup:
+    src:       "{{ dotfiles_location }}/.config/nvim/lua/setup.lua"
+    dest:      "{{ ansible_user_dir }}/.config/nvim/lua/setup.lua"
+    dir_path:  "{{ ansible_user_dir }}/.config/nvim/lua"
+    dir_mode:  "u=rwx"
     dir_owner: "{{ ansible_real_user_id }}"
     dir_group: "{{ ansible_real_group_id }}"
   nvim_lua_lsp:
@@ -109,6 +116,17 @@ dotfiles_mapping:
     dir_mode:  "u=rwx"
     dir_owner: "{{ ansible_real_user_id }}"
     dir_group: "{{ ansible_real_group_id }}"
+  nvim_lua_ft:
+    src:       "{{ dotfiles_location }}/.config/nvim/lua/ft.lua"
+    dest:      "{{ ansible_user_dir }}/.config/nvim/lua/ft.lua"
+    dir_path:  "{{ ansible_user_dir }}/.config/nvim/lua"
+    dir_mode:  "u=rwx"
+    dir_owner: "{{ ansible_real_user_id }}"
+    dir_group: "{{ ansible_real_group_id }}"
   pylintrc:
     src: "{{ dotfiles_location }}/.pylintrc"
     dest: "{{ ansible_user_dir }}/.pylintrc"
+
+dotfiles_cleanup:
+  nvim_init_old:
+    dest: "{{ ansible_user_dir }}/.config/nvim/init.vim"
