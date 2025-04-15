@@ -1,4 +1,4 @@
--- ~/.config/nvim/lua/lsp.lua
+local M = {}
 
 local lspconfig = require('lspconfig')
 local cmp = require('cmp')
@@ -55,3 +55,4 @@ vim.diagnostic.config({
   float = { border = 'rounded', source = 'always' },
 })
 
+return M

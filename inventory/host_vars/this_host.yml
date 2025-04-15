@@ -123,10 +123,17 @@ dotfiles_mapping:
     dir_mode:  "u=rwx"
     dir_owner: "{{ ansible_real_user_id }}"
     dir_group: "{{ ansible_real_group_id }}"
+  nvim_lua_fold:
+    src:       "{{ dotfiles_location }}/.config/nvim/lua/fold.lua"
+    dest:      "{{ ansible_user_dir }}/.config/nvim/lua/fold.lua"
+    dir_path:  "{{ ansible_user_dir }}/.config/nvim/lua"
+    dir_mode:  "u=rwx"
+    dir_owner: "{{ ansible_real_user_id }}"
+    dir_group: "{{ ansible_real_group_id }}"
   pylintrc:
     src: "{{ dotfiles_location }}/.pylintrc"
     dest: "{{ ansible_user_dir }}/.pylintrc"
 
 dotfiles_cleanup:
-  nvim_init_old:
-    dest: "{{ ansible_user_dir }}/.config/nvim/init.vim"
+  - "{{ ansible_user_dir }}/.config/nvim/init.vim"
+  - "{{ ansible_user_dir }}/.nvim"

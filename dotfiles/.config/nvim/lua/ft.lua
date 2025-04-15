@@ -1,3 +1,5 @@
+local M = {}
+
 local function set_filetype(patterns, ft)
   vim.api.nvim_create_autocmd({ "BufRead", "BufNewFile" }, {
     pattern = patterns,
@@ -9,17 +11,23 @@ end
 
 -- ansible
 set_filetype({
-  "**/{defaults,handlers,meta,tasks,templates,tests,vars}/**/*.{yml,yaml}",
+  "**/roles/*/tasks/*.yml",
+  "**/roles/*/handlers/*.yml",
+  "**/roles/*/meta/*.yml",
+  "**/roles/*/defaults/*.yml",
+  "**/roles/*/templates/*.yml",
+  "**/roles/*/tests/*.yml",
+  "**/roles/*/vars/*.yml",
   "**/playbook*.{yml,yaml}",
 }, "yaml.ansible")
 
 -- fastlane
 set_filetype({
-  "**/playbook*.{yml,yaml}",
   "**/Appfile",
   "**/Fastfile*",
   "**/Matchfile"
 }, "ruby")
+
 
 -- autoformat on exit
 vim.api.nvim_create_autocmd("BufWritePost", {
@@ -30,3 +38,5 @@ vim.api.nvim_create_autocmd("BufWritePost", {
   pattern = "*.hcl",
   command = "!terragrunt hclfmt <afile>"
 })
+
+return M

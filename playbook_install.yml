@@ -41,6 +41,14 @@
       tags:
         - configs
 
+    - name: remove old configs/dirs
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop: "{{ dotfiles_cleanup }}"
+      tags:
+        - configs
+
     - name: dotfiles | remove old cron job for vim
       cron:
         state: present
