@@ -143,7 +143,6 @@ if vim.opt.diff:get() then
   vim.opt.diffopt:append("iwhite")
 end
 
-vim.api.nvim_set_hl(0, "Comment", { italic = true })
 -- Автоматический отступ при создании новой строки.
 vim.opt.smartindent = true
 -- Автоматически перезагружать файл, если он был изменён снаружи.
