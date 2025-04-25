@@ -31,7 +31,8 @@ set_filetype({
 -- yaml
 set_filetype({
   "**/.kube/config",
-  "**/.yamllint"
+  "**/.yamllint",
+  "**/.ansible-lint"
 }, "yaml")
 
 -- autoformat on exit
