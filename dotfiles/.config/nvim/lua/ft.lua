@@ -28,6 +28,11 @@ set_filetype({
   "**/Matchfile"
 }, "ruby")
 
+-- yaml
+set_filetype({
+  "**/.kube/config",
+  "**/.yamllint"
+}, "yaml")
 
 -- autoformat on exit
 vim.api.nvim_create_autocmd("BufWritePost", {
