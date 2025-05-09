@@ -12,7 +12,7 @@ rules:
     max-spaces-after: 1
   comments:
     level: warning
-    require-starting-space: true
+    require-starting-space: false
     min-spaces-from-content: 1
     ignore-shebangs: true
   comments-indentation: disable
