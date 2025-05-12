@@ -9,7 +9,7 @@ yamllint     = "*"
 
 [packages]
 ansible      = "*"
-jmespath = "*"
+jmespath     = "*"
 
 [scripts]
 lint         = "ansible-lint playbook_install.yml"
