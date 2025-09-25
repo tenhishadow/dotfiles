@@ -1,25 +1,26 @@
-# ---
-# name: "github-super-linter"
-#
-# permissions:
-#   contents: read
-#
-# on:
-#   pull_request:
-#
-# jobs:
-#   github-super-linter:
-#     runs-on: ubuntu-latest
-#
-#     steps:
-#       - name: Checkout Code
-#         uses: actions/checkout@v4
-#         with:
-#           fetch-depth: 0
-#
-#       - name: Scan Code Base
-#         uses: github/super-linter/slim@v7
-#         env:
-#           VALIDATE_ALL_CODEBASE: true
-#           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#           VALIDATE_SHELL_SHFMT: false
+---
+name: "github-super-linter"
+
+permissions:
+  contents: read
+
+on:
+  pull_request:
+
+jobs:
+  github-super-linter:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@master
+        with:
+          fetch-depth: 0
+
+      - name: Scan Code Base
+        uses: github/super-linter/slim@v7
+        env:
+          VALIDATE_ALL_CODEBASE: true
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VALIDATE_SHELL_SHFMT: false
+          VALIDATE_LUA: false

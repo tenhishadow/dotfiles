@@ -41,12 +41,20 @@
       tags:
         - configs
 
+    - name: remove old configs/dirs
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop: "{{ dotfiles_cleanup }}"
+      tags:
+        - configs
+
     - name: dotfiles | remove old cron job for vim
       cron:
         state: present
         name: vim-plug update/upgrade
-        job: 'nvim --headless +PlugUpgrade +PlugUpdate +qa'
-        special_time: weekly
+        job: 'nvim --headless "+Lazy! upgrade" "+Lazy! sync" +qa > ~/.nvim.log 2>&1'
+        special_time: daily
       ignore_errors: true # if cron not presented
       no_log: true # it doesnt matter
 
