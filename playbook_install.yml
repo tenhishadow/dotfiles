@@ -53,7 +53,7 @@
       cron:
         state:        present
         name:         vim-plug update/upgrade
-        job:          'nvim --headless "+Lazy! upgrade" "+Lazy! sync" +qa'
+        job:          'nvim --headless "+Lazy! upgrade" "+Lazy! sync" +qa > ~/.nvim.log 2>&1'
         special_time: daily
       ignore_errors: true # if cron not presented
       no_log: true # it doesnt matter
