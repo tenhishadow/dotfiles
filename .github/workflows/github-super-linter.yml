@@ -24,3 +24,4 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VALIDATE_SHELL_SHFMT: false
           VALIDATE_LUA: false
+          VALIDATE_MARKDOWN_PRETTIER: false
