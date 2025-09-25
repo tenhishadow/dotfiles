@@ -174,7 +174,7 @@ function top() {
   case $1 in
     "-c")
       # shellcheck disable=SC2091
-      $( which top )
+      $( type -P top )
       return
       ;;
   esac
@@ -182,9 +182,9 @@ function top() {
   if [[ -x $(type -P bashtop) ]]; then bashtop
   elif [[ -x $(type -P bpytop) ]]; then bpytop
   elif [[ -x $(type -P htop) ]]; then htop
-  elif [[ -x $(which top) ]]; then
+  elif [[ -x $(type -P top) ]]; then
     # shellcheck disable=SC2091
-    $( which top)
+    $( type -P top)
   else
     echo "no top installed"
     return 1
