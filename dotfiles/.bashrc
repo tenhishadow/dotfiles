@@ -29,7 +29,7 @@ ___git_status() {
   # check | git
   local git_dir
   git_dir=$(git rev-parse --git-dir 2>/dev/null)
-  if [[ ! $(command -v git) || ! -d "$git_dir" ]]; then
+  if [[ ! $(type -P git) || ! -d "$git_dir" ]]; then
     return
   fi
   # get branch
@@ -74,10 +74,10 @@ function duu() {
 
 # AWS: user/account-id
 function aws-whoami() {
-  [[ ! $( command -v aws ) ]] && \
+  [[ ! $( type -P aws ) ]] && \
     printf '%s\n' 'please install AWS CLI' && \
     return 1
-  [[ ! $( command -v jq ) ]] && \
+  [[ ! $( type -P jq ) ]] && \
     printf '%s\n' 'please install jq' && \
     return 1
   aws sts get-caller-identity \
@@ -179,9 +179,9 @@ function top() {
       ;;
   esac
 
-  if [[ -x $(command -v bashtop) ]]; then bashtop
-  elif [[ -x $(command -v bpytop) ]]; then bpytop
-  elif [[ -x $(command -v htop) ]]; then htop
+  if [[ -x $(type -P bashtop) ]]; then bashtop
+  elif [[ -x $(type -P bpytop) ]]; then bpytop
+  elif [[ -x $(type -P htop) ]]; then htop
   elif [[ -x $(which top) ]]; then
     # shellcheck disable=SC2091
     $( which top)
@@ -279,7 +279,7 @@ if [[ "${OSTYPE}" != darwin* ]]; then
 fi
 
 ## rbenv
-[[ -x $( command -v rbenv ) ]] && \
+[[ -x $( type -P rbenv ) ]] && \
   eval "$(rbenv init -)"
 
 ## go
@@ -297,27 +297,27 @@ PATH=$GOPATH/bin:$PATH
 # completions
 ## complete hashicorp-tools
 for hashicorp_tool in consul terraform vault packer; do
-  [[ -x $( command -v ${hashicorp_tool} ) ]] && \
-    complete -C "$( command -v ${hashicorp_tool} )" ${hashicorp_tool}
+  [[ -x $( type -P ${hashicorp_tool} ) ]] && \
+    complete -C "$( type -P ${hashicorp_tool} )" ${hashicorp_tool}
 done
 ## complete github cli
-[[ -x $( command -v gh ) ]] && \
+[[ -x $( type -P gh ) ]] && \
   eval "$( gh completion -s bash )"
 # complete awscli
-[[ -x "$( command -v aws_completer )" ]] && \
-  complete -C "$( command -v aws_completer )" aws
+[[ -x "$( type -P aws_completer )" ]] && \
+  complete -C "$( type -P aws_completer )" aws
 # complete kubectl
 # shellcheck disable=SC1090
-[[ -x "$( command -v kubectl 2>/dev/null)" ]] && \
+[[ -x "$( type -P kubectl 2>/dev/null)" ]] && \
   source <(kubectl completion bash)
 # complete docker
 # shellcheck disable=SC1090
-[[ -x "$( command -v docker )" ]] && \
+[[ -x "$( type -P docker )" ]] && \
   source /usr/share/bash-completion/bash_completion && \
   source <(docker completion bash)
 # complete helm
 # shellcheck disable=SC1090
-[[ -x "$( command -v helm )" ]] && \
+[[ -x "$( type -P helm )" ]] && \
   source <(helm completion bash 2>/dev/null)
 # GVM is the Go Version Manager
 [[ -s "${HOME}/.gvm/scripts/gvm" ]] && source "${HOME}/.gvm/scripts/gvm"
