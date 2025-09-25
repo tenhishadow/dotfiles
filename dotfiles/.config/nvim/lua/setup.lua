@@ -170,8 +170,8 @@ vim.api.nvim_create_autocmd("BufReadPost", {
   callback = function()
     local last_line = vim.fn.line("'\"")
     if last_line >= 1
-       and last_line <= vim.fn.line("$")
-       and not string.match(vim.bo.filetype, "commit")
+      and last_line <= vim.fn.line("$")
+      and not string.match(vim.bo.filetype, "commit")
     then
       vim.cmd("normal! g`\"")
     end

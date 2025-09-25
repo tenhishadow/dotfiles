@@ -89,10 +89,10 @@ dotfiles_mapping:
     dir_owner: "{{ ansible_real_user_id }}"
     dir_group: "{{ ansible_real_group_id }}"
   user-dirs:
-    src:       "{{ dotfiles_location }}/.config/user-dirs.dirs"
-    dest:      "{{ ansible_user_dir }}/.config/user-dirs.dirs"
-    dir_path:  "{{ ansible_user_dir }}/.config"
-    dir_mode:  "u=rwx"
+    src: "{{ dotfiles_location }}/.config/user-dirs.dirs"
+    dest: "{{ ansible_user_dir }}/.config/user-dirs.dirs"
+    dir_path: "{{ ansible_user_dir }}/.config"
+    dir_mode: "u=rwx"
     dir_owner: "{{ ansible_real_user_id }}"
     dir_group: "{{ ansible_real_group_id }}"
   environment_d:
@@ -110,8 +110,8 @@ dotfiles_mapping:
     dir_owner: "{{ ansible_real_user_id }}"
     dir_group: "{{ ansible_real_group_id }}"
   nvim_lua:
-    src:       "{{ dotfiles_location }}/.config/nvim/lua/"
-    dest:      "{{ ansible_user_dir }}/.config/nvim/lua"
+    src: "{{ dotfiles_location }}/.config/nvim/lua/"
+    dest: "{{ ansible_user_dir }}/.config/nvim/lua"
     # dir_path:  "{{ ansible_user_dir }}/.config/nvim/lua"
     # dir_mode:  "u=rwx"
     # dir_owner: "{{ ansible_real_user_id }}"
