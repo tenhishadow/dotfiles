@@ -237,6 +237,7 @@ alias nmap-slow='sudo nmap -sS -p- -T0 -Pn'
 ## clear
 alias clear-journald='sudo journalctl --rotate && sudo journalctl --vacuum-time=1s'
 alias clear-vim='rm -rf ~/.vim/autoload/ ~/.vim/plugged/'
+alias clear-nvim='rm -rf $HOME/.local/share/nvim $HOME/.config/nvim $HOME/.cache/nvim'
 
 # Vars
 ## bash prompt
