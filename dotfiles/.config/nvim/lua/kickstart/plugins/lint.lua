@@ -5,9 +5,19 @@ return {
     event = { 'BufReadPre', 'BufNewFile' },
     config = function()
       local lint = require 'lint'
-      lint.linters_by_ft = {
-        markdown = { 'markdownlint' },
-      }
+
+      -- Extendable mapping: core markdown + DevOps-focused linters
+      lint.linters_by_ft = lint.linters_by_ft or {}
+      lint.linters_by_ft.markdown = { 'markdownlint' }
+
+      -- YAML / Ansible
+      lint.linters_by_ft.yaml = { 'yamllint' }
+
+      -- Docker
+      lint.linters_by_ft.dockerfile = { 'hadolint' }
+
+      -- Terraform (if tflint is installed)
+      lint.linters_by_ft.terraform = { 'tflint' }
 
       -- To allow other plugins to add linters to require('lint').linters_by_ft,
       -- instead set linters_by_ft like this:
