@@ -84,6 +84,12 @@ function aws-whoami() {
     | jq -r '.Arn' \
     | awk -F ':' '{ print $NF, $(NF-1)}'
 }
+function az-whoami() {
+  [[ ! $( type -P az ) ]] && \
+    printf '%s\n' 'please install az' && \
+    return 1
+  az account show
+}
 
 # record screen with vlc
 function recit() {
@@ -215,14 +221,14 @@ alias ll='ls -l'
 alias wget='wget -c'
 alias aws-whereami='aws configure get region'
 alias open='xdg-open'
-alias copy='xclip -selection clipboard -in'
-alias paste='xclip -selection clipboard -out'
+alias copy='wl-copy'
+alias paste='wl-paste'
 alias kube-temp='kubectl run -it --rm --image debian:trixie tmp-${RANDOM} -- bash'
 alias archupdate='yay -Syu --noconfirm; yay -Scc --noconfirm'
 alias arch-rekey='sudo pacman-key --refresh-keys'
 alias dotfiles-update='cd ~/.dotfiles/ && git pull && pipenv sync && pipenv run install'
 alias ans-workstation-update='cd ~/.ans-workstation/ && git pull && pipenv sync && pipenv run install'
-alias tgfmt='terragrunt hclfmt --terragrunt-diff -all'
+alias tgfmt='terragrunt hcl format --non-interactive'
 alias tfmt='terraform fmt -recursive -diff'
 alias vim='nvim'
 alias vimdiff='nvim -d'
