@@ -147,6 +147,9 @@ dotfiles_mapping:
   pylintrc:
     src: "{{ dotfiles_location }}/.pylintrc"
     dest: "{{ ansible_user_dir }}/.pylintrc"
+  mplayer:
+    src: "{{ dotfiles_location }}/.mplayer/config"
+    dest: "{{ ansible_user_dir }}/.mplayer/config"
 
 dotfiles_cleanup:
   - "{{ ansible_user_dir }}/.config/nvim/init.vim"
