@@ -11,12 +11,12 @@ return {
   -- FZF core + vim integration
   {
     "junegunn/fzf",
-    build = function()
-      -- Build only if shell tools are available (for portability)
-      if vim.fn.executable("bash") == 1 then
-        vim.fn.system({ "./install", "--bin" })
-      end
-    end,
+    -- build = function()
+    --   -- Build only if shell tools are available (for portability)
+    --   if vim.fn.executable("bash") == 1 then
+    --     vim.fn.system({ "./install", "--bin" })
+    --   end
+    -- end,
   },
   {
     "junegunn/fzf.vim",

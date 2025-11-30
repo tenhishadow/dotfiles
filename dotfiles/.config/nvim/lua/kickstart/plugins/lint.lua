@@ -6,60 +6,92 @@ return {
     config = function()
       local lint = require 'lint'
 
-      -- Extendable mapping: core markdown + DevOps-focused linters
-      lint.linters_by_ft = lint.linters_by_ft or {}
-      lint.linters_by_ft.markdown = { 'markdownlint' }
+      -------------------------------------------------------------------
+      -- Start from a clean mapping and explicitly opt in the linters
+      -- that are relevant for DevOps / DevSecOps / Python / data work.
+      -------------------------------------------------------------------
+      lint.linters_by_ft = {}
 
+      -------------------------------------------------------------------
+      -- Helper: register a linter only if its executable is available.
+      -------------------------------------------------------------------
+      local function enable(ft, linter, cmd)
+        cmd = cmd or linter
+        if vim.fn.executable(cmd) == 1 then
+          local current = lint.linters_by_ft[ft] or {}
+          table.insert(current, linter)
+          lint.linters_by_ft[ft] = current
+        end
+      end
+
+      -------------------------------------------------------------------
+      -- Markdown via markdownlint-cli2
+      -------------------------------------------------------------------
+      if vim.fn.executable('markdownlint-cli2') == 1 then
+        local ml = lint.linters.markdownlint or require('lint.linters.markdownlint')
+        ml.cmd = 'markdownlint-cli2'
+        lint.linters.markdownlint = ml
+        enable('markdown', 'markdownlint', 'markdownlint-cli2')
+      end
+
+      -------------------------------------------------------------------
+      -- Python
+      -------------------------------------------------------------------
+      enable('python', 'ruff', 'ruff')
+
+      -------------------------------------------------------------------
+      -- Shell / Bash / Zsh
+      -------------------------------------------------------------------
+      enable('sh',   'shellcheck', 'shellcheck')
+      enable('bash', 'shellcheck', 'shellcheck')
+      enable('zsh',  'shellcheck', 'shellcheck')
+
+      -------------------------------------------------------------------
       -- YAML / Ansible
-      lint.linters_by_ft.yaml = { 'yamllint' }
+      -------------------------------------------------------------------
+      enable('yaml',    'yamllint',     'yamllint')
+      enable('ansible', 'ansible_lint', 'ansible-lint')
 
-      -- Docker
-      lint.linters_by_ft.dockerfile = { 'hadolint' }
+      -------------------------------------------------------------------
+      -- Docker / containers
+      -------------------------------------------------------------------
+      enable('dockerfile', 'hadolint', 'hadolint')
 
-      -- Terraform (if tflint is installed)
-      lint.linters_by_ft.terraform = { 'tflint' }
+      -------------------------------------------------------------------
+      -- Terraform / HCL / Terragrunt
+      -------------------------------------------------------------------
+      enable('terraform', 'tflint', 'tflint')
+      enable('hcl',       'tflint', 'tflint')
 
-      -- To allow other plugins to add linters to require('lint').linters_by_ft,
-      -- instead set linters_by_ft like this:
-      -- lint.linters_by_ft = lint.linters_by_ft or {}
-      -- lint.linters_by_ft['markdown'] = { 'markdownlint' }
+      -------------------------------------------------------------------
+      -- JSON (lint) – keep it simple with jsonlint.
+      -- Biome is used as a *formatter* via conform.nvim instead.
+      -------------------------------------------------------------------
+      enable('json', 'jsonlint', 'jsonlint')
+
+      -------------------------------------------------------------------
+      -- Lua (for Neovim config / tools)
+      -------------------------------------------------------------------
+      enable('lua', 'luacheck', 'luacheck')
+
+      -------------------------------------------------------------------
+      -- SQL / data engineering
+      -------------------------------------------------------------------
+      enable('sql', 'sqlfluff', 'sqlfluff')
+
+      -------------------------------------------------------------------
+      -- GitLab and other special linters
       --
-      -- However, note that this will enable a set of default linters,
-      -- which will cause errors unless these tools are available:
-      -- {
-      --   clojure = { "clj-kondo" },
-      --   dockerfile = { "hadolint" },
-      --   inko = { "inko" },
-      --   janet = { "janet" },
-      --   json = { "jsonlint" },
-      --   markdown = { "vale" },
-      --   rst = { "vale" },
-      --   ruby = { "ruby" },
-      --   terraform = { "tflint" },
-      --   text = { "vale" }
-      -- }
-      --
-      -- You can disable the default linters by setting their filetypes to nil:
-      -- lint.linters_by_ft['clojure'] = nil
-      -- lint.linters_by_ft['dockerfile'] = nil
-      -- lint.linters_by_ft['inko'] = nil
-      -- lint.linters_by_ft['janet'] = nil
-      -- lint.linters_by_ft['json'] = nil
-      -- lint.linters_by_ft['markdown'] = nil
-      -- lint.linters_by_ft['rst'] = nil
-      -- lint.linters_by_ft['ruby'] = nil
-      -- lint.linters_by_ft['terraform'] = nil
-      -- lint.linters_by_ft['text'] = nil
+      -- You can register custom linters here, for example wrapping
+      -- `glab ci lint` or GitLab API calls, then opt them in via
+      --   enable('yaml', 'gitlab_ci', 'your-binary')
+      -------------------------------------------------------------------
 
-      -- Create autocommand which carries out the actual linting
-      -- on the specified events.
       local lint_augroup = vim.api.nvim_create_augroup('lint', { clear = true })
+
       vim.api.nvim_create_autocmd({ 'BufEnter', 'BufWritePost', 'InsertLeave' }, {
         group = lint_augroup,
         callback = function()
-          -- Only run the linter in buffers that you can modify in order to
-          -- avoid superfluous noise, notably within the handy LSP pop-ups that
-          -- describe the hovered symbol using Markdown.
           if vim.bo.modifiable then
             lint.try_lint()
           end
