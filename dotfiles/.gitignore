@@ -56,3 +56,5 @@ terraform.rc
 
 # python virtual env
 .venv
+
+.ansible
