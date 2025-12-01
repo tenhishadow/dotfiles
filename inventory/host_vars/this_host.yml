@@ -1,5 +1,6 @@
 ---
 dotfiles_location: "{{ playbook_dir }}/dotfiles"
+dotfiles_dir_mode: "u=rwx,g=,o="
 
 dotfiles_mapping:
   bashrc:
@@ -27,14 +28,14 @@ dotfiles_mapping:
     src: "{{ dotfiles_location }}/.gnupg/gpg.conf"
     dest: "{{ ansible_user_dir }}/.gnupg/gpg.conf"
     dir_path: "{{ ansible_user_dir }}/.gnupg"
-    dir_mode: "u=rwx,g=,o="
+    dir_mode: "{{ dotfiles_dir_mode }}"
     dir_owner: "{{ ansible_real_user_id }}"
     dir_group: "{{ ansible_real_group_id }}"
   gpg_agent:
     src: "{{ dotfiles_location }}/.gnupg/gpg-agent.conf"
     dest: "{{ ansible_user_dir }}/.gnupg/gpg-agent.conf"
     dir_path: "{{ ansible_user_dir }}/.gnupg"
-    dir_mode: "u=rwx,g=,o="
+    dir_mode: "{{ dotfiles_dir_mode }}"
     dir_owner: "{{ ansible_real_user_id }}"
     dir_group: "{{ ansible_real_group_id }}"
   curlrc:
@@ -47,7 +48,7 @@ dotfiles_mapping:
     src: "{{ dotfiles_location }}/.yamllint"
     dest: "{{ ansible_user_dir }}/.config/yamllint/config"
     dir_path: "{{ ansible_user_dir }}/.config/yamllint"
-    dir_mode: "u=rwx"
+    dir_mode: "{{ dotfiles_dir_mode }}"
     dir_owner: "{{ ansible_real_user_id }}"
     dir_group: "{{ ansible_real_group_id }}"
   yamllint_root:
@@ -57,14 +58,14 @@ dotfiles_mapping:
     src: "{{ dotfiles_location }}/.ssh/config"
     dest: "{{ ansible_user_dir }}/.ssh/config"
     dir_path: "{{ ansible_user_dir }}/.ssh"
-    dir_mode: "u=rwx"
+    dir_mode: "{{ dotfiles_dir_mode }}"
     dir_owner: "{{ ansible_real_user_id }}"
     dir_group: "{{ ansible_real_group_id }}"
   ssh_config_examples:
     src: "{{ dotfiles_location }}/.ssh/config.d/examples"
     dest: "{{ ansible_user_dir }}/.ssh/config.d/examples"
     dir_path: "{{ ansible_user_dir }}/.ssh/config.d"
-    dir_mode: "u=rwx"
+    dir_mode: "{{ dotfiles_dir_mode }}"
     dir_owner: "{{ ansible_real_user_id }}"
     dir_group: "{{ ansible_real_group_id }}"
   kitty_config:
@@ -78,78 +79,49 @@ dotfiles_mapping:
     src: "{{ dotfiles_location }}/.config/kitty/theme.conf"
     dest: "{{ ansible_user_dir }}/.config/kitty/theme.conf"
     dir_path: "{{ ansible_user_dir }}/.config/kitty"
-    dir_mode: "u=rwx"
+    dir_mode: "{{ dotfiles_dir_mode }}"
     dir_owner: "{{ ansible_real_user_id }}"
     dir_group: "{{ ansible_real_group_id }}"
   htoprc:
     src: "{{ dotfiles_location }}/.config/htop/htoprc"
     dest: "{{ ansible_user_dir }}/.config/htop/htoprc"
     dir_path: "{{ ansible_user_dir }}/.config/htop"
-    dir_mode: "u=rwx"
+    dir_mode: "{{ dotfiles_dir_mode }}"
     dir_owner: "{{ ansible_real_user_id }}"
     dir_group: "{{ ansible_real_group_id }}"
   user-dirs:
     src: "{{ dotfiles_location }}/.config/user-dirs.dirs"
     dest: "{{ ansible_user_dir }}/.config/user-dirs.dirs"
     dir_path: "{{ ansible_user_dir }}/.config"
-    dir_mode: "u=rwx"
+    dir_mode: "{{ dotfiles_dir_mode }}"
     dir_owner: "{{ ansible_real_user_id }}"
     dir_group: "{{ ansible_real_group_id }}"
   environment_d:
     src: "{{ dotfiles_location }}/.config/environment.d/99-dotfiles.conf"
     dest: "{{ ansible_user_dir }}/.config/environment.d/99-dotfiles.conf"
     dir_path: "{{ ansible_user_dir }}/.config/environment.d"
-    dir_mode: "u=rwx"
+    dir_mode: "{{ dotfiles_dir_mode }}"
     dir_owner: "{{ ansible_real_user_id }}"
     dir_group: "{{ ansible_real_group_id }}"
   nvim_init:
     src: "{{ dotfiles_location }}/.config/nvim/init.lua"
     dest: "{{ ansible_user_dir }}/.config/nvim/init.lua"
     dir_path: "{{ ansible_user_dir }}/.config/nvim"
-    dir_mode: "u=rwx"
+    dir_mode: "{{ dotfiles_dir_mode }}"
     dir_owner: "{{ ansible_real_user_id }}"
     dir_group: "{{ ansible_real_group_id }}"
   nvim_lua:
     src: "{{ dotfiles_location }}/.config/nvim/lua/"
     dest: "{{ ansible_user_dir }}/.config/nvim/lua"
-    # dir_path:  "{{ ansible_user_dir }}/.config/nvim/lua"
-    # dir_mode:  "u=rwx"
-    # dir_owner: "{{ ansible_real_user_id }}"
-    # dir_group: "{{ ansible_real_group_id }}"
-  # nvim_lua_setup:
-  #   src:       "{{ dotfiles_location }}/.config/nvim/lua/setup.lua"
-  #   dest:      "{{ ansible_user_dir }}/.config/nvim/lua/setup.lua"
-  #   dir_path:  "{{ ansible_user_dir }}/.config/nvim/lua"
-  #   dir_mode:  "u=rwx"
-  #   dir_owner: "{{ ansible_real_user_id }}"
-  #   dir_group: "{{ ansible_real_group_id }}"
-  # nvim_lua_lsp:
-  #   src:       "{{ dotfiles_location }}/.config/nvim/lua/lsp.lua"
-  #   dest:      "{{ ansible_user_dir }}/.config/nvim/lua/lsp.lua"
-  #   dir_path:  "{{ ansible_user_dir }}/.config/nvim/lua"
-  #   dir_mode:  "u=rwx"
-  #   dir_owner: "{{ ansible_real_user_id }}"
-  #   dir_group: "{{ ansible_real_group_id }}"
-  # nvim_lua_ft:
-  #   src:       "{{ dotfiles_location }}/.config/nvim/lua/ft.lua"
-  #   dest:      "{{ ansible_user_dir }}/.config/nvim/lua/ft.lua"
-  #   dir_path:  "{{ ansible_user_dir }}/.config/nvim/lua"
-  #   dir_mode:  "u=rwx"
-  #   dir_owner: "{{ ansible_real_user_id }}"
-  #   dir_group: "{{ ansible_real_group_id }}"
-  # nvim_lua_fold:
-  #   src:       "{{ dotfiles_location }}/.config/nvim/lua/fold.lua"
-  #   dest:      "{{ ansible_user_dir }}/.config/nvim/lua/fold.lua"
-  #   dir_path:  "{{ ansible_user_dir }}/.config/nvim/lua"
-  #   dir_mode:  "u=rwx"
-  #   dir_owner: "{{ ansible_real_user_id }}"
-  #   dir_group: "{{ ansible_real_group_id }}"
   pylintrc:
     src: "{{ dotfiles_location }}/.pylintrc"
     dest: "{{ ansible_user_dir }}/.pylintrc"
   mplayer:
     src: "{{ dotfiles_location }}/.mplayer/config"
     dest: "{{ ansible_user_dir }}/.mplayer/config"
+    dir_mode: "{{ dotfiles_dir_mode }}"
+    dir_owner: "{{ ansible_real_user_id }}"
+    dir_group: "{{ ansible_real_group_id }}"
 
 dotfiles_cleanup:
   - "{{ ansible_user_dir }}/.config/nvim/init.vim"
