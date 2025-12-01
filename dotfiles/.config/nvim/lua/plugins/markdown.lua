@@ -1,16 +1,15 @@
 return {
   -- Markdown syntax / motions
-  { "tpope/vim-markdown" },
+  { "preservim/vim-markdown" },
 
   -- Live Markdown preview in browser
   {
     "iamcco/markdown-preview.nvim",
     ft = { "markdown", "vimwiki" },
     build = function()
-      -- Be conservative: only try to install if npm exists,
-      -- so config works on barebones machines too.
+      -- Only try to install if npm is available, for portability.
       if vim.fn.executable("npm") == 1 then
-        vim.fn.system("cd app && npm install")
+        vim.fn["mkdp#util#install"]()
       end
     end,
     init = function()
