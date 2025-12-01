@@ -178,6 +178,9 @@ end
 
 local SYSTEMD_SERVER = "systemd_ls"  -- modern name in nvim-lspconfig
 
+-- SchemaStore (optional, for JSON/YAML schemas)
+local ok_schemastore, schemastore = pcall(require, "schemastore")
+
 ----------------------------------------------------------------------
 -- Server-specific configs, gated by actual binaries in the system
 ----------------------------------------------------------------------
@@ -215,10 +218,29 @@ if has_any("bash-language-server") then
 end
 
 ----------------------------------------------------------------------
--- YAML
+-- YAML (with SchemaStore if available)
 ----------------------------------------------------------------------
 if has_any("yaml-language-server") then
-  add_server("yamlls")
+  local yaml_settings = {
+    redhat = { telemetry = { enabled = false } },
+    yaml = {
+      keyOrdering = false,
+      format = { enable = true },
+      validate = true,
+      schemaStore = {
+        enable = false, -- we use schemastore.nvim instead
+        url = "",
+      },
+    },
+  }
+
+  if ok_schemastore then
+    yaml_settings.yaml.schemas = schemastore.yaml.schemas()
+  end
+
+  add_server("yamlls", {
+    settings = yaml_settings,
+  })
 end
 
 ----------------------------------------------------------------------
@@ -243,10 +265,23 @@ if has_any("ansible-language-server") then
 end
 
 ----------------------------------------------------------------------
--- JSON
+-- JSON (with SchemaStore if available)
 ----------------------------------------------------------------------
 if has_any({ "vscode-json-language-server", "vscode-json-languageserver", "vscode-json-language-server-cli" }) then
-  add_server("jsonls")
+  local json_settings = {
+    json = {
+      format = { enable = true },
+      validate = { enable = true },
+    },
+  }
+
+  if ok_schemastore then
+    json_settings.json.schemas = schemastore.json.schemas()
+  end
+
+  add_server("jsonls", {
+    settings = json_settings,
+  })
 end
 
 ----------------------------------------------------------------------
@@ -287,6 +322,13 @@ if has_any("typescript-language-server") then
   add_server(TS_SERVER, {
     cmd = { "typescript-language-server", "--stdio" },
   })
+end
+
+----------------------------------------------------------------------
+-- Helm (Helm charts)
+----------------------------------------------------------------------
+if has_any({ "helm_ls", "helm-ls" }) then
+  add_server("helm_ls")
 end
 
 ----------------------------------------------------------------------
