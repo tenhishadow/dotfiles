@@ -1,7 +1,8 @@
 --- # https://yamllint.readthedocs.io/en/stable/rules.html#module-yamllint.rules.comments
 
 rules:
-  braces: disable
+  braces:
+    max-spaces-inside: 1
   brackets: disable
   colons:
     max-spaces-before: 0

@@ -35,14 +35,8 @@ set_filetype({
   "**/.ansible-lint"
 }, "yaml")
 
--- autoformat on exit
-vim.api.nvim_create_autocmd("BufWritePost", {
-  pattern = "*.tf",
-  command = "!terraform fmt <afile>"
-})
-vim.api.nvim_create_autocmd("BufWritePost", {
-  pattern = "*.hcl",
-  command = "!terragrunt hclfmt <afile>"
-})
+
+-- Terraform / HCL formatting is handled by conform.nvim (see plugins/format.lua).
+-- If you prefer shell commands, you can reintroduce autocmds here guarded by executable() checks.
 
 return M

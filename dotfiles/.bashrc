@@ -29,7 +29,7 @@ ___git_status() {
   # check | git
   local git_dir
   git_dir=$(git rev-parse --git-dir 2>/dev/null)
-  if [[ ! $(command -v git) || ! -d "$git_dir" ]]; then
+  if [[ ! $(type -P git) || ! -d "$git_dir" ]]; then
     return
   fi
   # get branch
@@ -74,15 +74,21 @@ function duu() {
 
 # AWS: user/account-id
 function aws-whoami() {
-  [[ ! $( command -v aws ) ]] && \
+  [[ ! $( type -P aws ) ]] && \
     printf '%s\n' 'please install AWS CLI' && \
     return 1
-  [[ ! $( command -v jq ) ]] && \
+  [[ ! $( type -P jq ) ]] && \
     printf '%s\n' 'please install jq' && \
     return 1
   aws sts get-caller-identity \
     | jq -r '.Arn' \
     | awk -F ':' '{ print $NF, $(NF-1)}'
+}
+function az-whoami() {
+  [[ ! $( type -P az ) ]] && \
+    printf '%s\n' 'please install az' && \
+    return 1
+  az account show
 }
 
 # record screen with vlc
@@ -174,17 +180,17 @@ function top() {
   case $1 in
     "-c")
       # shellcheck disable=SC2091
-      $( which top )
+      $( type -P top )
       return
       ;;
   esac
 
-  if [[ -x $(command -v bashtop) ]]; then bashtop
-  elif [[ -x $(command -v bpytop) ]]; then bpytop
-  elif [[ -x $(command -v htop) ]]; then htop
-  elif [[ -x $(which top) ]]; then
+  if [[ -x $(type -P bashtop) ]]; then bashtop
+  elif [[ -x $(type -P bpytop) ]]; then bpytop
+  elif [[ -x $(type -P htop) ]]; then htop
+  elif [[ -x $(type -P top) ]]; then
     # shellcheck disable=SC2091
-    $( which top)
+    $( type -P top)
   else
     echo "no top installed"
     return 1
@@ -215,14 +221,14 @@ alias ll='ls -l'
 alias wget='wget -c'
 alias aws-whereami='aws configure get region'
 alias open='xdg-open'
-alias copy='xclip -selection clipboard -in'
-alias paste='xclip -selection clipboard -out'
-alias kube-temp='kubectl run -it --rm --image debian:bookworm tmp-${RANDOM} -- bash'
+alias copy='wl-copy'
+alias paste='wl-paste'
+alias kube-temp='kubectl run -it --rm --image debian:trixie tmp-${RANDOM} -- bash'
 alias archupdate='yay -Syu --noconfirm; yay -Scc --noconfirm'
 alias arch-rekey='sudo pacman-key --refresh-keys'
 alias dotfiles-update='cd ~/.dotfiles/ && git pull && pipenv sync && pipenv run install'
 alias ans-workstation-update='cd ~/.ans-workstation/ && git pull && pipenv sync && pipenv run install'
-alias tgfmt='terragrunt hclfmt --terragrunt-diff -all'
+alias tgfmt='terragrunt hcl format --non-interactive'
 alias tfmt='terraform fmt -recursive -diff'
 alias vim='nvim'
 alias vimdiff='nvim -d'
@@ -231,6 +237,7 @@ alias nmap-slow='sudo nmap -sS -p- -T0 -Pn'
 ## clear
 alias clear-journald='sudo journalctl --rotate && sudo journalctl --vacuum-time=1s'
 alias clear-vim='rm -rf ~/.vim/autoload/ ~/.vim/plugged/'
+alias clear-nvim='rm -rf $HOME/.local/share/nvim $HOME/.config/nvim $HOME/.cache/nvim $HOME/.local/state/nvim/'
 
 # Vars
 ## bash prompt
@@ -279,7 +286,7 @@ if [[ "${OSTYPE}" != darwin* ]]; then
 fi
 
 ## rbenv
-[[ -x $( command -v rbenv ) ]] && \
+[[ -x $( type -P rbenv ) ]] && \
   eval "$(rbenv init -)"
 
 ## go
@@ -297,27 +304,27 @@ PATH=$GOPATH/bin:$PATH
 # completions
 ## complete hashicorp-tools
 for hashicorp_tool in consul terraform vault packer; do
-  [[ -x $( command -v ${hashicorp_tool} ) ]] && \
-    complete -C "$( command -v ${hashicorp_tool} )" ${hashicorp_tool}
+  [[ -x $( type -P ${hashicorp_tool} ) ]] && \
+    complete -C "$( type -P ${hashicorp_tool} )" ${hashicorp_tool}
 done
 ## complete github cli
-[[ -x $( command -v gh ) ]] && \
+[[ -x $( type -P gh ) ]] && \
   eval "$( gh completion -s bash )"
 # complete awscli
-[[ -x "$( command -v aws_completer )" ]] && \
-  complete -C "$( command -v aws_completer )" aws
+[[ -x "$( type -P aws_completer )" ]] && \
+  complete -C "$( type -P aws_completer )" aws
 # complete kubectl
 # shellcheck disable=SC1090
-[[ -x "$( command -v kubectl 2>/dev/null)" ]] && \
+[[ -x "$( type -P kubectl 2>/dev/null)" ]] && \
   source <(kubectl completion bash)
 # complete docker
 # shellcheck disable=SC1090
-[[ -x "$( command -v docker )" ]] && \
+[[ -x "$( type -P docker )" ]] && \
   source /usr/share/bash-completion/bash_completion && \
   source <(docker completion bash)
 # complete helm
 # shellcheck disable=SC1090
-[[ -x "$( command -v helm )" ]] && \
+[[ -x "$( type -P helm )" ]] && \
   source <(helm completion bash 2>/dev/null)
 # GVM is the Go Version Manager
 [[ -s "${HOME}/.gvm/scripts/gvm" ]] && source "${HOME}/.gvm/scripts/gvm"
