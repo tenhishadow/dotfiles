@@ -3,14 +3,12 @@ name         = "pypi"
 url          = "https://pypi.org/simple"
 verify_ssl   = true
 
-[dev-packages]
-ansible-lint = "*"
-yamllint     = "*"
-
 [packages]
-ansible      = "*"
+ansible-core = "*"
+ansible-lint = "*"
 jmespath     = "*"
 vim-vint     = "*"
+yamllint     = "*"
 
 [scripts]
 lint         = "ansible-lint playbook_install.yml"
