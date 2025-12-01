@@ -10,7 +10,7 @@ yamllint     = "*"
 [packages]
 ansible      = "*"
 jmespath     = "*"
-vim-vint = "*"
+vim-vint     = "*"
 
 [scripts]
 lint         = "ansible-lint playbook_install.yml"
