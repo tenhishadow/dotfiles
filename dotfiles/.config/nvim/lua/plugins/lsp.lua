@@ -11,6 +11,7 @@ return {
       "williamboman/mason.nvim",
       "williamboman/mason-lspconfig.nvim",
       "WhoIsSethDaniel/mason-tool-installer.nvim",
+      "b0o/schemastore.nvim"
     },
     config = function()
       -- mason: manage external LSP / formatters / linters
