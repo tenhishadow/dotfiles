@@ -110,6 +110,9 @@ dotfiles_mapping:
     dir_mode: "{{ dotfiles_dir_mode }}"
     dir_owner: "{{ ansible_real_user_id }}"
     dir_group: "{{ ansible_real_group_id }}"
+  nvim_lazy_lock:
+    src: "{{ dotfiles_location }}/.config/nvim/lazy-lock.json"
+    dest: "{{ ansible_user_dir }}/.config/nvim/lazy-lock.json"
   nvim_lua:
     src: "{{ dotfiles_location }}/.config/nvim/lua/"
     dest: "{{ ansible_user_dir }}/.config/nvim/lua"

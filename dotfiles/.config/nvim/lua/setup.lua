@@ -1,4 +1,4 @@
--- init.lua
+-- lua/setup.lua
 -- Core Neovim setup: undo directory, leaders, basic options, and lazy.nvim bootstrap.
 
 ----------------------------------------------------------------------
@@ -83,10 +83,4 @@ end
 ----------------------------------------------------------------------
 vim.keymap.set("n", "<F2>", ":set invpaste paste?<CR>", { silent = true })
 
--- NOTE:
--- EasyAlign mappings are provided by the plugin spec in
--- lua/plugins/format.lua using:
---   { "ga", "<Plug>(EasyAlign)", mode = { "n", "x" }, remap = true }
--- so we do NOT remap them here.
-
--- No module return needed for init.lua; it is executed, not required.
+-- This module is executed for side effects; it does not need to return anything.

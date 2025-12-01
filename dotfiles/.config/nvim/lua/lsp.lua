@@ -1,10 +1,21 @@
 -- lua/lsp.lua
+-- LSP server configuration, diagnostics and keymaps.
+
 local M = {}
 
 ----------------------------------------------------------------------
--- Optional: require nvim-lspconfig (used for older Neovim API)
+-- Detect whether the new Neovim 0.11+ LSP API is available
 ----------------------------------------------------------------------
-local has_lspconfig, lspconfig = pcall(require, "lspconfig")
+local has_new_lsp = vim.lsp and vim.lsp.config and vim.lsp.enable
+
+----------------------------------------------------------------------
+-- Optional: require nvim-lspconfig only on older Neovim
+-- (to avoid the deprecated framework warning on 0.11+)
+----------------------------------------------------------------------
+local has_lspconfig, lspconfig = false, nil
+if not has_new_lsp then
+  has_lspconfig, lspconfig = pcall(require, "lspconfig")
+end
 
 ----------------------------------------------------------------------
 -- Helper to configure LSP servers for both the new API (0.11+)
@@ -14,7 +25,7 @@ local function lsp_setup(server, opts)
   opts = opts or {}
 
   -- Neovim 0.11+ style (vim.lsp.config / vim.lsp.enable)
-  if vim.lsp and vim.lsp.enable and vim.lsp.config then
+  if has_new_lsp then
     vim.lsp.config(server, opts)
     vim.lsp.enable(server)
     return
@@ -27,39 +38,20 @@ local function lsp_setup(server, opts)
 end
 
 ----------------------------------------------------------------------
--- nvim-cmp (optional / lazy-safe setup)
-----------------------------------------------------------------------
-local has_cmp, cmp = pcall(require, "cmp")
-if has_cmp then
-  local ok_snip, luasnip = pcall(require, "luasnip")
-  cmp.setup({
-    snippet = {
-      expand = function(args)
-        if ok_snip then
-          luasnip.lsp_expand(args.body)
-        end
-      end,
-    },
-    mapping = cmp.mapping.preset.insert({
-      ["<C-Space>"] = cmp.mapping.complete(),
-      ["<CR>"] = cmp.mapping.confirm({ select = true }),
-    }),
-    sources = cmp.config.sources({
-      { name = "nvim_lsp" },
-      ok_snip and { name = "luasnip" } or nil,
-      { name = "path" },
-    }),
-  })
-end
-
-----------------------------------------------------------------------
--- CAPABILITIES (extended with cmp support when available)
+-- CAPABILITIES (extended with completion engine support)
 ----------------------------------------------------------------------
 local capabilities = vim.lsp.protocol.make_client_capabilities()
 do
-  local ok_cmpcaps, cmp_lsp = pcall(require, "cmp_nvim_lsp")
-  if ok_cmpcaps then
-    capabilities = cmp_lsp.default_capabilities(capabilities)
+  -- Prefer blink.cmp if installed
+  local ok_blink, blink = pcall(require, "blink.cmp")
+  if ok_blink and blink.get_lsp_capabilities then
+    capabilities = blink.get_lsp_capabilities(capabilities)
+  else
+    -- Fallback to cmp_nvim_lsp if blink.cmp is not available
+    local ok_cmpcaps, cmp_lsp = pcall(require, "cmp_nvim_lsp")
+    if ok_cmpcaps then
+      capabilities = cmp_lsp.default_capabilities(capabilities)
+    end
   end
 end
 
@@ -161,5 +153,226 @@ local function on_attach(client, bufnr)
   end
 end
 
-----------------------
+----------------------------------------------------------------------
+-- Helper: check whether any of the given binaries exist in $PATH
+----------------------------------------------------------------------
+local function has_any(cmds)
+  if type(cmds) == "string" then
+    cmds = { cmds }
+  end
+  for _, cmd in ipairs(cmds) do
+    if vim.fn.executable(cmd) == 1 then
+      return true
+    end
+  end
+  return false
+end
+
+----------------------------------------------------------------------
+-- Resolve server names that changed in recent nvim-lspconfig versions
+-- On Neovim 0.11+ we do not require('lspconfig'), so we just prefer the
+-- modern "ts_ls" name. On older setups we fall back to detection via
+-- lspconfig if available.
+----------------------------------------------------------------------
+local TS_SERVER
+if has_new_lsp then
+  TS_SERVER = "ts_ls"
+elseif has_lspconfig and lspconfig and lspconfig.ts_ls then
+  TS_SERVER = "ts_ls"
+else
+  TS_SERVER = "tsserver"
+end
+
+local SYSTEMD_SERVER = "systemd_ls"  -- modern name in nvim-lspconfig
+
+----------------------------------------------------------------------
+-- SchemaStore (optional, for JSON/YAML schemas)
+----------------------------------------------------------------------
+local ok_schemastore, schemastore = pcall(require, "schemastore")
+
+----------------------------------------------------------------------
+-- Server-specific configs, gated by actual binaries in the system
+----------------------------------------------------------------------
+local server_configs = {}
+
+local function add_server(name, cfg)
+  server_configs[name] = cfg or {}
+end
+
+----------------------------------------------------------------------
+-- Python: prefer pyright; fall back to pylsp with black plugin
+----------------------------------------------------------------------
+if has_any({ "pyright-langserver", "pyright" }) then
+  add_server("pyright", {})
+elseif has_any("pylsp") then
+  add_server("pylsp", {
+    settings = {
+      pylsp = {
+        plugins = {
+          black       = { enabled = true },
+          pycodestyle = { enabled = false },
+          mccabe      = { enabled = false },
+          pyflakes    = { enabled = false },
+        },
+      },
+    },
+  })
+end
+
+----------------------------------------------------------------------
+-- Bash
+----------------------------------------------------------------------
+if has_any("bash-language-server") then
+  add_server("bashls")
+end
+
+----------------------------------------------------------------------
+-- YAML (with SchemaStore if available)
+----------------------------------------------------------------------
+if has_any("yaml-language-server") then
+  local yaml_settings = {
+    redhat = { telemetry = { enabled = false } },
+    yaml = {
+      keyOrdering = false,
+      format = { enable = true },
+      validate = true,
+      schemaStore = {
+        enable = false, -- we use schemastore.nvim instead
+        url = "",
+      },
+    },
+  }
+
+  if ok_schemastore then
+    yaml_settings.yaml.schemas = schemastore.yaml.schemas()
+  end
+
+  add_server("yamlls", {
+    settings = yaml_settings,
+  })
+end
+
+----------------------------------------------------------------------
+-- Terraform / HCL
+----------------------------------------------------------------------
+if has_any("terraform-ls") then
+  add_server("terraformls")
+end
+
+----------------------------------------------------------------------
+-- Docker
+----------------------------------------------------------------------
+if has_any("docker-langserver") then
+  add_server("dockerls")
+end
+
+----------------------------------------------------------------------
+-- Ansible
+----------------------------------------------------------------------
+if has_any("ansible-language-server") then
+  add_server("ansiblels")
+end
+
+----------------------------------------------------------------------
+-- JSON (with SchemaStore if available)
+----------------------------------------------------------------------
+if has_any({ "vscode-json-language-server", "vscode-json-languageserver", "vscode-json-language-server-cli" }) then
+  local json_settings = {
+    json = {
+      format = { enable = true },
+      validate = { enable = true },
+    },
+  }
+
+  if ok_schemastore then
+    json_settings.json.schemas = schemastore.json.schemas()
+  end
+
+  add_server("jsonls", {
+    settings = json_settings,
+  })
+end
+
+----------------------------------------------------------------------
+-- Go
+----------------------------------------------------------------------
+if has_any("gopls") then
+  add_server("gopls")
+end
+
+----------------------------------------------------------------------
+-- Lua (for Neovim config)
+----------------------------------------------------------------------
+if has_any("lua-language-server") then
+  add_server("lua_ls", {
+    settings = {
+      Lua = {
+        diagnostics = {
+          globals = { "vim" },
+        },
+        workspace = {
+          checkThirdParty = false,
+          -- Restrict workspace to Neovim runtime + config instead of $HOME
+          library = {
+            vim.env.VIMRUNTIME,
+            vim.fn.stdpath("config"),
+          },
+        },
+        telemetry = { enable = false },
+      },
+    },
+  })
+end
+
+----------------------------------------------------------------------
+-- TypeScript / JavaScript
+----------------------------------------------------------------------
+if has_any("typescript-language-server") then
+  add_server(TS_SERVER, {
+    cmd = { "typescript-language-server", "--stdio" },
+  })
+end
+
+----------------------------------------------------------------------
+-- Helm (Helm charts)
+----------------------------------------------------------------------
+if has_any({ "helm_ls", "helm-ls" }) then
+  add_server("helm_ls")
+end
+
+----------------------------------------------------------------------
+-- ESLint (for JS/TS projects)
+----------------------------------------------------------------------
+if has_any({ "vscode-eslint-language-server", "eslint-language-server" }) then
+  add_server("eslint")
+end
+
+----------------------------------------------------------------------
+-- Systemd unit files
+----------------------------------------------------------------------
+if has_any("systemd-language-server") then
+  add_server(SYSTEMD_SERVER)
+end
+
+----------------------------------------------------------------------
+-- Ruby (ruby-lsp)
+----------------------------------------------------------------------
+if has_any("ruby-lsp") then
+  add_server("ruby_lsp")
+end
+
+----------------------------------------------------------------------
+-- Apply base options and configure all detected servers
+----------------------------------------------------------------------
+local base_opts = {
+  capabilities = capabilities,
+  on_attach = on_attach,
+}
+
+for server, cfg in pairs(server_configs) do
+  local opts = vim.tbl_deep_extend("force", base_opts, cfg or {})
+  lsp_setup(server, opts)
+end
+
+return M
 

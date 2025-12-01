@@ -3,7 +3,9 @@ if vim.fn.has("nvim-0.8") == 0 then
 end
 
 return {
-  -- Core LSP client configuration (servers are wired in lua/lsp.lua)
+  --------------------------------------------------------------------
+  -- Core LSP + Mason (servers wired in lua/lsp.lua)
+  --------------------------------------------------------------------
   {
     "neovim/nvim-lspconfig",
     event = { "BufReadPre", "BufNewFile" },
@@ -11,13 +13,16 @@ return {
       "williamboman/mason.nvim",
       "williamboman/mason-lspconfig.nvim",
       "WhoIsSethDaniel/mason-tool-installer.nvim",
+      "b0o/schemastore.nvim",
     },
     config = function()
       -- mason: manage external LSP / formatters / linters
-      require("mason").setup()
+      local mason = require "mason"
+      mason.setup()
 
-      -- Ensure core language servers are installed; setup happens in lua/lsp.lua
-      require("mason-lspconfig").setup({
+      -- mason-lspconfig: install LSP servers
+      local mason_lspconfig = require "mason-lspconfig"
+      mason_lspconfig.setup({
         ensure_installed = {
           "bashls",
           "pyright",
@@ -30,10 +35,14 @@ return {
           "gopls",
         },
         automatic_installation = true,
+        -- We use lua/lsp.lua to configure/enable servers, so let it
+        -- handle vim.lsp.enable() instead of mason-lspconfig.
+        automatic_enable = false,
       })
 
-      -- Dev tools: formatters / linters for Python + DevOps
-      require("mason-tool-installer").setup({
+      -- mason-tool-installer: install non-LSP tools (formatters/linters)
+      local mason_tool_installer = require "mason-tool-installer"
+      mason_tool_installer.setup({
         ensure_installed = {
           -- Python
           "pyright",
@@ -41,21 +50,21 @@ return {
           "black",
           "isort",
 
-          -- Terraform
-          "terraformls",
+          -- Terraform / HCL
+          "terraform-ls",
           "tflint",
 
           -- YAML / Ansible
-          "yamlls",
+          "yaml-language-server",
           "yamllint",
           "ansible-language-server",
           "ansible-lint",
 
           -- Docker
-          "dockerls",
+          "dockerfile-language-server",
           "hadolint",
 
-          -- Go (for tooling)
+          -- Go
           "gopls",
         },
         auto_update = false,
@@ -64,46 +73,50 @@ return {
     end,
   },
 
-  -- Completion engine
+  --------------------------------------------------------------------
+  -- blink.cmp: completion engine (replaces nvim-cmp)
+  --------------------------------------------------------------------
   {
-    "hrsh7th/nvim-cmp",
+    "saghen/blink.cmp",
+    version = "1.*",
     event = "InsertEnter",
     dependencies = {
-      "hrsh7th/cmp-nvim-lsp",
-      "hrsh7th/cmp-path",
+      -- Snippets (optional, but useful)
       "L3MON4D3/LuaSnip",
-      "saadparwaiz1/cmp_luasnip",
+      "rafamadriz/friendly-snippets",
     },
-    config = function()
-      local cmp = require("cmp")
-      local luasnip = require("luasnip")
+    opts = {
+      keymap = {
+        -- Default preset: <Tab>/<S-Tab> navigate, <CR> confirm, etc.
+        preset = "default",
+      },
+      completion = {
+        documentation = {
+          auto_show = true,
+          auto_show_delay_ms = 200,
+        },
+        menu = {
+          border = "rounded",
+        },
+      },
+      signature = {
+        enabled = true,
+      },
+      sources = {
+        -- Basic set: LSP + paths + buffer words
+        default = { "lsp", "path", "buffer" },
+      },
+    },
+    config = function(_, opts)
+      local blink = require "blink.cmp"
+      blink.setup(opts)
 
-      cmp.setup({
-        snippet = {
-          expand = function(args)
-            luasnip.lsp_expand(args.body)
-          end,
-        },
-        mapping = cmp.mapping.preset.insert({
-          ["<CR>"] = cmp.mapping.confirm({ select = true }),
-          ["<C-Space>"] = cmp.mapping.complete(),
-        }),
-        sources = {
-          { name = "nvim_lsp" },
-          { name = "path" },
-          { name = "luasnip" },
-        },
-      })
+      -- Load VSCode-style snippets if LuaSnip is available
+      local ok, luasnip = pcall(require, "luasnip")
+      if ok then
+        require("luasnip.loaders.from_vscode").lazy_load()
+      end
     end,
   },
-
-  -- Expose cmp capabilities to LSP
-  { "hrsh7th/cmp-nvim-lsp" },
-
-  -- Path completion
-  { "hrsh7th/cmp-path" },
-
-  -- Snippets
-  { "L3MON4D3/LuaSnip" },
-  { "saadparwaiz1/cmp_luasnip" },
 }
+
