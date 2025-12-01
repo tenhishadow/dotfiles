@@ -30,6 +30,7 @@ return {
           "gopls",
         },
         automatic_installation = true,
+        automatic_enable = true
       })
 
       -- Dev tools: formatters / linters for Python + DevOps
