@@ -119,6 +119,7 @@ dotfiles_mapping:
   mplayer:
     src: "{{ dotfiles_location }}/.mplayer/config"
     dest: "{{ ansible_user_dir }}/.mplayer/config"
+    dir_path: "{{ ansible_user_dir }}/.mplayer"
     dir_mode: "{{ dotfiles_dir_mode }}"
     dir_owner: "{{ ansible_real_user_id }}"
     dir_group: "{{ ansible_real_group_id }}"
