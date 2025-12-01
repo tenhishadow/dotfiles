@@ -38,13 +38,20 @@ local function lsp_setup(server, opts)
 end
 
 ----------------------------------------------------------------------
--- CAPABILITIES (extended with cmp support when available)
+-- CAPABILITIES (extended with completion engine support)
 ----------------------------------------------------------------------
 local capabilities = vim.lsp.protocol.make_client_capabilities()
 do
-  local ok_cmpcaps, cmp_lsp = pcall(require, "cmp_nvim_lsp")
-  if ok_cmpcaps then
-    capabilities = cmp_lsp.default_capabilities(capabilities)
+  -- Prefer blink.cmp if installed
+  local ok_blink, blink = pcall(require, "blink.cmp")
+  if ok_blink and blink.get_lsp_capabilities then
+    capabilities = blink.get_lsp_capabilities(capabilities)
+  else
+    -- Fallback to cmp_nvim_lsp if blink.cmp is not available
+    local ok_cmpcaps, cmp_lsp = pcall(require, "cmp_nvim_lsp")
+    if ok_cmpcaps then
+      capabilities = cmp_lsp.default_capabilities(capabilities)
+    end
   end
 end
 
@@ -178,7 +185,9 @@ end
 
 local SYSTEMD_SERVER = "systemd_ls"  -- modern name in nvim-lspconfig
 
+----------------------------------------------------------------------
 -- SchemaStore (optional, for JSON/YAML schemas)
+----------------------------------------------------------------------
 local ok_schemastore, schemastore = pcall(require, "schemastore")
 
 ----------------------------------------------------------------------
