@@ -42,7 +42,7 @@ jobs:
           pip install pipenv
 
       - name: deps | pipenv install
-        run: pipenv install
+        run: pipenv install --dev --deploy --bare --ignore-pipfile
 
       - name: just do it!
         run: pipenv run install

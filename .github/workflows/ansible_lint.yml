@@ -34,7 +34,7 @@ jobs:
           pip install pipenv
 
       - name: deps | pipenv install
-        run: pipenv install --dev
+        run: pipenv install --dev --deploy --bare --ignore-pipfile
 
       - name: lint
         run: pipenv run lint
