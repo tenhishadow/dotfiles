@@ -9,7 +9,10 @@ return {
     build = function()
       -- Only try to install if npm is available, for portability.
       if vim.fn.executable("npm") == 1 then
-        vim.fn["mkdp#util#install"]()
+        -- Protect against "Unknown function: mkdp#util#install"
+        pcall(function()
+          vim.fn["mkdp#util#install"]()
+        end)
       end
     end,
     init = function()
@@ -17,3 +20,4 @@ return {
     end,
   },
 }
+

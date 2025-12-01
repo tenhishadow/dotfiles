@@ -4,9 +4,18 @@
 local M = {}
 
 ----------------------------------------------------------------------
--- Optional: require nvim-lspconfig (used for older Neovim API)
+-- Detect whether the new Neovim 0.11+ LSP API is available
 ----------------------------------------------------------------------
-local has_lspconfig, lspconfig = pcall(require, "lspconfig")
+local has_new_lsp = vim.lsp and vim.lsp.config and vim.lsp.enable
+
+----------------------------------------------------------------------
+-- Optional: require nvim-lspconfig only on older Neovim
+-- (to avoid the deprecated framework warning on 0.11+)
+----------------------------------------------------------------------
+local has_lspconfig, lspconfig = false, nil
+if not has_new_lsp then
+  has_lspconfig, lspconfig = pcall(require, "lspconfig")
+end
 
 ----------------------------------------------------------------------
 -- Helper to configure LSP servers for both the new API (0.11+)
@@ -16,7 +25,7 @@ local function lsp_setup(server, opts)
   opts = opts or {}
 
   -- Neovim 0.11+ style (vim.lsp.config / vim.lsp.enable)
-  if vim.lsp and vim.lsp.enable and vim.lsp.config then
+  if has_new_lsp then
     vim.lsp.config(server, opts)
     vim.lsp.enable(server)
     return
@@ -154,14 +163,17 @@ end
 
 ----------------------------------------------------------------------
 -- Resolve server names that changed in recent nvim-lspconfig versions
+-- On Neovim 0.11+ we do not require('lspconfig'), so we just prefer the
+-- modern "ts_ls" name. On older setups we fall back to detection via
+-- lspconfig if available.
 ----------------------------------------------------------------------
-local TS_SERVER = "tsserver"
-if has_lspconfig then
-  if lspconfig.ts_ls then
-    TS_SERVER = "ts_ls"
-  elseif lspconfig.tsserver then
-    TS_SERVER = "tsserver"
-  end
+local TS_SERVER
+if has_new_lsp then
+  TS_SERVER = "ts_ls"
+elseif has_lspconfig and lspconfig and lspconfig.ts_ls then
+  TS_SERVER = "ts_ls"
+else
+  TS_SERVER = "tsserver"
 end
 
 local SYSTEMD_SERVER = "systemd_ls"  -- modern name in nvim-lspconfig
@@ -312,3 +324,4 @@ for server, cfg in pairs(server_configs) do
 end
 
 return M
+
