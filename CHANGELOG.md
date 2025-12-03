@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/tenhishadow/dotfiles/compare/v1.1.0...v1.2.0) (2025-12-03)
+
+
+### Features
+
+* detect terragrunt files as terraform in neovim ([2bae543](https://github.com/tenhishadow/dotfiles/commit/2bae5430714f6c1c367dee7c52c9180cb8999ac6))
+
 ## [1.1.0](https://github.com/tenhishadow/dotfiles/compare/v1.0.1...v1.1.0) (2025-09-25)
 
 
