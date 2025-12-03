@@ -22,7 +22,7 @@
 [commit]
   gpgsign            = false
 [diff]
-  tool               = vimdiff
+  tool               = nvim
   parallel           = 8
 [tag]
   forceSignAnnotated = true
@@ -35,7 +35,7 @@
   fetchJobs          = 2
 [merge]
   conflictstyle      = diff3 # show original change, incoming change, and unchanged
-  tool               = vimdiff
+  tool               = nvim
 [http]
   sslverify          = false
 [color]
