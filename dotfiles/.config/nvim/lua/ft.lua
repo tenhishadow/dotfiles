@@ -36,7 +36,11 @@ set_filetype({
 }, "yaml")
 
 
--- Terraform / HCL formatting is handled by conform.nvim (see plugins/format.lua).
--- If you prefer shell commands, you can reintroduce autocmds here guarded by executable() checks.
+-- Terragrunt
+set_filetype({
+  "**/terragrunt.hcl",
+  "**/.terragrunt.hcl",
+  "**/root.hcl"
+}, "terraform")
 
 return M

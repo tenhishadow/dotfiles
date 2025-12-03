@@ -35,14 +35,14 @@ ___git_status() {
   # get branch
   local branch
   if [[ -f "${git_dir}/HEAD" ]]; then
-    branch=$( awk -F 'ref: refs/heads/' '{print $NF}' "${git_dir}/HEAD")
+    branch=$(awk -F 'ref: refs/heads/' '{print $NF}' "${git_dir}/HEAD")
   else
     branch="detached"
   fi
   # get branch stats
   local stats=$(git rev-list --count --left-right "HEAD...@{upstream}" 2>/dev/null)
   local ahead behind
-  read -r behind ahead <<< "${stats}"
+  read -r behind ahead <<<"${stats}"
   local status_output=""
   local stashes=$(git stash list 2>/dev/null | awk 'END {print NR}')
   local conflicts=$(git diff --name-only --diff-filter=U 2>/dev/null | awk 'END {print NR}')
@@ -50,13 +50,13 @@ ___git_status() {
   local unstaged=$(git diff --name-only 2>/dev/null | awk 'END {print NR}')
   local untracked=$(git ls-files --others --exclude-standard 2>/dev/null | awk 'END {print NR}')
 
-  (( ahead > 0 )) && status_output+="⇡${ahead} "
-  (( behind > 0 )) && status_output+="⇣${behind} "
-  (( stashes > 0 )) && status_output+="*${stashes} "
-  (( conflicts > 0 )) && status_output+="~${conflicts} "
-  (( staged > 0 )) && status_output+="+${staged} "
-  (( unstaged > 0 )) && status_output+="!${unstaged} "
-  (( untracked > 0 )) && status_output+="?${untracked} "
+  ((ahead > 0)) && status_output+="⇡${ahead} "
+  ((behind > 0)) && status_output+="⇣${behind} "
+  ((stashes > 0)) && status_output+="*${stashes} "
+  ((conflicts > 0)) && status_output+="~${conflicts} "
+  ((staged > 0)) && status_output+="+${staged} "
+  ((unstaged > 0)) && status_output+="!${unstaged} "
+  ((untracked > 0)) && status_output+="?${untracked} "
 
   # make an output
   printf "\e[100;96m[ %s %s ]\e[0m " "$status_output" "$branch"
@@ -68,25 +68,25 @@ function duu() {
   find . \
     -maxdepth 1 \
     -exec \
-      du -sm '{}' \; | \
+    du -sm '{}' \; |
     sort -n
 }
 
 # AWS: user/account-id
 function aws-whoami() {
-  [[ ! $( type -P aws ) ]] && \
-    printf '%s\n' 'please install AWS CLI' && \
+  [[ ! $(type -P aws) ]] &&
+    printf '%s\n' 'please install AWS CLI' &&
     return 1
-  [[ ! $( type -P jq ) ]] && \
-    printf '%s\n' 'please install jq' && \
+  [[ ! $(type -P jq) ]] &&
+    printf '%s\n' 'please install jq' &&
     return 1
-  aws sts get-caller-identity \
-    | jq -r '.Arn' \
-    | awk -F ':' '{ print $NF, $(NF-1)}'
+  aws sts get-caller-identity |
+    jq -r '.Arn' |
+    awk -F ':' '{ print $NF, $(NF-1)}'
 }
 function az-whoami() {
-  [[ ! $( type -P az ) ]] && \
-    printf '%s\n' 'please install az' && \
+  [[ ! $(type -P az) ]] &&
+    printf '%s\n' 'please install az' &&
     return 1
   az account show
 }
@@ -112,7 +112,7 @@ function poc() {
   "")
     POCDIR="/tmp/${RANDOM}"
     mkdir -p ${POCDIR}
-    echo "${POCDIR}" >> "${POCCTL}"
+    echo "${POCDIR}" >>"${POCCTL}"
     cd ${POCDIR} || exit 1
     PS1="\[\e[44;37m\][ PoC \${POCDIR} ]\[\e[0m\] ${PS1}"
     ;;
@@ -131,66 +131,69 @@ function duu() {
   find . \
     -maxdepth 1 \
     -exec \
-      du -sm '{}' \; | \
+    du -sm '{}' \; |
     sort -n
 }
 
 function change_git_remote_protocol() {
-    local origin_url=$(git remote get-url origin 2>/dev/null)
-    local status=$?
-    local protocol_type
-    local new_url
+  local origin_url=$(git remote get-url origin 2>/dev/null)
+  local status=$?
+  local protocol_type
+  local new_url
 
-    [[ $status -ne 0 ]] \
-      && echo "Failed to get git remote URL" \
-      && return 1
+  [[ $status -ne 0 ]] &&
+    echo "Failed to get git remote URL" &&
+    return 1
 
-    # check current proto
-    if [[ $origin_url =~ ^https:// ]]; then
-        protocol_type="https"
-    elif [[ $origin_url =~ ^git@ ]]; then
-        protocol_type="ssh"
-    else
-        echo "Unknown protocol type"
-        return 1
+  # check current proto
+  if [[ $origin_url =~ ^https:// ]]; then
+    protocol_type="https"
+  elif [[ $origin_url =~ ^git@ ]]; then
+    protocol_type="ssh"
+  else
+    echo "Unknown protocol type"
+    return 1
+  fi
+
+  case $1 in
+  "ssh")
+    if [ "$protocol_type" == "https" ]; then
+      new_url=$(echo "$origin_url" | awk -F'/' '{print "git@"$3":"$4"/"$5}')
+      git remote set-url origin "$new_url"
     fi
-
-    case $1 in
-        "ssh")
-            if [ "$protocol_type" == "https" ]; then
-                new_url=$(echo "$origin_url" | awk -F'/' '{print "git@"$3":"$4"/"$5}')
-                git remote set-url origin "$new_url"
-            fi
-            ;;
-        "https")
-            if [ "$protocol_type" == "ssh" ]; then
-                new_url=$(echo "$origin_url" | awk -F':' '{sub(/^git@/, "", $1); print "https://"$1"/"$2}')
-                git remote set-url origin "$new_url"
-            fi
-            ;;
-        *)
-            echo "Invalid argument. Use 'ssh' or 'https'."
-            return 1
-            ;;
-    esac
+    ;;
+  "https")
+    if [ "$protocol_type" == "ssh" ]; then
+      new_url=$(echo "$origin_url" | awk -F':' '{sub(/^git@/, "", $1); print "https://"$1"/"$2}')
+      git remote set-url origin "$new_url"
+    fi
+    ;;
+  *)
+    echo "Invalid argument. Use 'ssh' or 'https'."
+    return 1
+    ;;
+  esac
 }
 
 # choose which top to exec
 function top() {
   case $1 in
-    "-c")
-      # shellcheck disable=SC2091
-      $( type -P top )
-      return
-      ;;
+  "-c")
+    # shellcheck disable=SC2091
+    $(type -P top)
+    return
+    ;;
   esac
 
-  if [[ -x $(type -P bashtop) ]]; then bashtop
-  elif [[ -x $(type -P bpytop) ]]; then bpytop
-  elif [[ -x $(type -P htop) ]]; then htop
+  if [[ -x $(type -P bashtop) ]]; then
+    bashtop
+  elif [[ -x $(type -P bpytop) ]]; then
+    bpytop
+  elif [[ -x $(type -P htop) ]]; then
+    htop
   elif [[ -x $(type -P top) ]]; then
     # shellcheck disable=SC2091
-    $( type -P top)
+    $(type -P top)
   else
     echo "no top installed"
     return 1
@@ -200,9 +203,9 @@ function top() {
 function temp() {
   printf "dev\t\ttype\ttemp\tserial\t\t\t\t\tmodel\n"
   for disk in /dev/sd[a-z] /dev/nvme[0-9]; do
-    [[ -c "$disk" || -b "$disk" ]] \
-      && sudo smartctl --all --json "$disk" \
-        | jq -r '
+    [[ -c "$disk" || -b "$disk" ]] &&
+      sudo smartctl --all --json "$disk" |
+      jq -r '
           .device.name + "\t" +
           .device.type + "\t" +
           (.temperature.current | tostring) + "C\t" +
@@ -252,79 +255,99 @@ export PS1
 ## colored GCC warnings and errors
 export GCC_COLORS='error=01;31:warning=01;35:note=01;36:caret=01;32:locus=01:quote=01'
 ## editor
-export EDITOR="vim"
+export EDITOR="nvim"
 export VISUAL="${EDITOR}"
 # for git gpg
-GPG_TTY=$( tty )
-  export GPG_TTY
+GPG_TTY=$(tty)
+export GPG_TTY
 
-export LESS_TERMCAP_mb=$(tput bold; tput setaf 2) # green
-export LESS_TERMCAP_md=$(tput bold; tput setaf 6) # cyan
+export LESS_TERMCAP_mb=$(
+  tput bold
+  tput setaf 2
+) # green
+export LESS_TERMCAP_md=$(
+  tput bold
+  tput setaf 6
+) # cyan
 export LESS_TERMCAP_me=$(tput sgr0)
-export LESS_TERMCAP_so=$(tput bold; tput setaf 3; tput setab 4) # yellow on blue
-export LESS_TERMCAP_se=$(tput rmso; tput sgr0)
-export LESS_TERMCAP_us=$(tput smul; tput bold; tput setaf 7) # white
-export LESS_TERMCAP_ue=$(tput rmul; tput sgr0)
+export LESS_TERMCAP_so=$(
+  tput bold
+  tput setaf 3
+  tput setab 4
+) # yellow on blue
+export LESS_TERMCAP_se=$(
+  tput rmso
+  tput sgr0
+)
+export LESS_TERMCAP_us=$(
+  tput smul
+  tput bold
+  tput setaf 7
+) # white
+export LESS_TERMCAP_ue=$(
+  tput rmul
+  tput sgr0
+)
 export LESS_TERMCAP_mr=$(tput rev)
 export LESS_TERMCAP_mh=$(tput dim)
 export LESS_TERMCAP_ZN=$(tput ssubm)
 export LESS_TERMCAP_ZV=$(tput rsubm)
 export LESS_TERMCAP_ZO=$(tput ssupm)
 export LESS_TERMCAP_ZW=$(tput rsupm)
-export GROFF_NO_SGR=1         # For Konsole and Gnome-terminal
+export GROFF_NO_SGR=1 # For Konsole and Gnome-terminal
 # shellcheck disable=SC2016
 export LESS='-R --use-color -Dd+r$Du+b$'
 
 PAGER="less -RFMIX"
-  export PAGER
+export PAGER
 
 # PATH extends
 ## systemd user-binaries
 if [[ "${OSTYPE}" != darwin* ]]; then
-  [[ $(systemd-path user-binaries) ]] && \
+  [[ $(systemd-path user-binaries) ]] &&
     PATH="$(systemd-path user-binaries):$PATH"
 fi
 
 ## rbenv
-[[ -x $( type -P rbenv ) ]] && \
+[[ -x $(type -P rbenv) ]] &&
   eval "$(rbenv init -)"
 
 ## go
-GOPATH="${HOME}/go" && \
+GOPATH="${HOME}/go" &&
   export GOPATH
-[[ ! -d "${GOPATH}" ]] && \
+[[ ! -d "${GOPATH}" ]] &&
   mkdir "${GOPATH}"
 PATH=$GOPATH/bin:$PATH
 
 ## google cloud
-[[ ! -d "/opt/google-cloud-cli/bin" ]] && \
+[[ ! -d "/opt/google-cloud-cli/bin" ]] &&
   PATH="$PATH:/opt/google-cloud-cli/bin"
 
 ###
 # completions
 ## complete hashicorp-tools
 for hashicorp_tool in consul terraform vault packer; do
-  [[ -x $( type -P ${hashicorp_tool} ) ]] && \
-    complete -C "$( type -P ${hashicorp_tool} )" ${hashicorp_tool}
+  [[ -x $(type -P ${hashicorp_tool}) ]] &&
+    complete -C "$(type -P ${hashicorp_tool})" ${hashicorp_tool}
 done
 ## complete github cli
-[[ -x $( type -P gh ) ]] && \
-  eval "$( gh completion -s bash )"
+[[ -x $(type -P gh) ]] &&
+  eval "$(gh completion -s bash)"
 # complete awscli
-[[ -x "$( type -P aws_completer )" ]] && \
-  complete -C "$( type -P aws_completer )" aws
+[[ -x "$(type -P aws_completer)" ]] &&
+  complete -C "$(type -P aws_completer)" aws
 # complete kubectl
 # shellcheck disable=SC1090
-[[ -x "$( type -P kubectl 2>/dev/null)" ]] && \
+[[ -x "$(type -P kubectl 2>/dev/null)" ]] &&
   source <(kubectl completion bash)
 # complete docker
 # shellcheck disable=SC1090
-[[ -x "$( type -P docker )" ]] && \
-  source /usr/share/bash-completion/bash_completion && \
+[[ -x "$(type -P docker)" ]] &&
+  source /usr/share/bash-completion/bash_completion &&
   source <(docker completion bash)
 # complete helm
 # shellcheck disable=SC1090
-[[ -x "$( type -P helm )" ]] && \
+[[ -x "$(type -P helm)" ]] &&
   source <(helm completion bash 2>/dev/null)
 # GVM is the Go Version Manager
 [[ -s "${HOME}/.gvm/scripts/gvm" ]] && source "${HOME}/.gvm/scripts/gvm"
