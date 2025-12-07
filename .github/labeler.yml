@@ -3,7 +3,7 @@ ansible:
   - changed-files:
       - any-glob-to-any-file:
           - "ansible.cfg"
-          - "inventory/**"
+          - "inventory/**/*"
           - "playbook_install.yml"
 ci:
   - changed-files:
