@@ -6,6 +6,7 @@ return {
   {
     "iamcco/markdown-preview.nvim",
     ft = { "markdown", "vimwiki" },
+    cmd = { "MarkdownPreview", "MarkdownPreviewToggle", "MarkdownPreviewStop" },
     build = function()
       -- Only try to install if npm is available, for portability.
       if vim.fn.executable("npm") == 1 then
@@ -17,6 +18,9 @@ return {
     end,
     init = function()
       vim.g.mkdp_filetypes = { "markdown", "vimwiki" }
+
+      vim.g.mkdp_auto_start = 0
+      vim.g.mkdp_auto_close = 1
     end,
   },
 }
