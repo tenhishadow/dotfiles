@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/tenhishadow/dotfiles/compare/v1.2.0...v1.3.0) (2025-12-07)
+
+
+### Features
+
+* improve neovim markdown and cursor UX ([#85](https://github.com/tenhishadow/dotfiles/issues/85)) ([c00f175](https://github.com/tenhishadow/dotfiles/commit/c00f175a19488e934145303372ca12f34445a83d))
+
 ## [1.2.0](https://github.com/tenhishadow/dotfiles/compare/v1.1.0...v1.2.0) (2025-12-03)
 
 ### Features
