@@ -3,13 +3,12 @@ ansible:
   - changed-files:
       - any-glob-to-any-file:
           - "ansible.cfg"
-          - "inventory/**"
+          - "inventory/**/*"
           - "playbook_install.yml"
-
 ci:
   - changed-files:
       - any-glob-to-any-file:
-          - "github/**"
+          - ".github/**/*"
 dependencies:
   - changed-files:
       - any-glob-to-any-file:
@@ -23,6 +22,10 @@ dotfiles:
   - changed-files:
       - any-glob-to-any-file:
           - "dotfiles/**/*"
+nvim:
+  - changed-files:
+      - any-glob-to-any-file:
+          - "dotfiles/.config/nvim/**/*"
 bashrc:
   - changed-files:
       - any-glob-to-any-file:
