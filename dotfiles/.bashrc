@@ -215,6 +215,23 @@ function temp() {
   done
 }
 
+function check_nvme() {
+  [[ ! -x $(type -P nvme) ]] &&
+    echo "ERR: nvme-cli is not installed" &&
+    return 1
+  [[ -z "${1}" ]] &&
+    echo "ERR: arg1 is required (disk)" &&
+    return 1
+  [[ ! -c "${1}" ]] &&
+    echo "ERR: arg1 must be nvme root device" &&
+    return 1
+  sudo nvme id-ctrl "${1}"
+  sudo nvme smart-log "${1}"
+  sudo nvme error-log "${1}" --log-entries=64
+  sudo nvme id-ctrl "${1}" | grep -iE 'oncs|fna|vwc|sanicap'
+  sudo nvme get-log "${1}" --log-id=2 --log-len=512 --raw-binary | hexdump -C | head -n 40
+}
+
 # Aliases
 alias grep='ugrep'
 alias ls='ls --color=auto'
