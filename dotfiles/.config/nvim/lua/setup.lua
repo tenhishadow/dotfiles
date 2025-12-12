@@ -64,7 +64,10 @@ require("lazy").setup({
   },
 
   -- Keep plugins up to date in the background
-  checker = { enabled = true },
+  checker = {
+    enabled = true,
+    notify = false
+  },
 
   -- Reload config on change without spamming notifications
   change_detection = { enabled = true, notify = false },
