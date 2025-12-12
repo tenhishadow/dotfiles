@@ -26,3 +26,4 @@ jobs:
           VALIDATE_LUA: false
           VALIDATE_MARKDOWN: false
           VALIDATE_MARKDOWN_PRETTIER: false
+          VALIDATE_NATURAL_LANGUAGE: false
