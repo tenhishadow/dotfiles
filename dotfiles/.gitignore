@@ -58,3 +58,4 @@ terraform.rc
 .venv
 
 .ansible
+**/.kiro/*
