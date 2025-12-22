@@ -84,6 +84,7 @@ function aws-whoami() {
     jq -r '.Arn' |
     awk -F ':' '{ print $NF, $(NF-1)}'
 }
+
 function az-whoami() {
   [[ ! $(type -P az) ]] &&
     printf '%s\n' 'please install az' &&
@@ -126,15 +127,6 @@ function poc() {
   esac
 }
 
-# du
-function duu() {
-  find . \
-    -maxdepth 1 \
-    -exec \
-    du -sm '{}' \; |
-    sort -n
-}
-
 function change_git_remote_protocol() {
   local origin_url=$(git remote get-url origin 2>/dev/null)
   local status=$?
@@ -157,13 +149,13 @@ function change_git_remote_protocol() {
 
   case $1 in
   "ssh")
-    if [ "$protocol_type" == "https" ]; then
+    if [[ "$protocol_type" == "https" ]]; then
       new_url=$(echo "$origin_url" | awk -F'/' '{print "git@"$3":"$4"/"$5}')
       git remote set-url origin "$new_url"
     fi
     ;;
   "https")
-    if [ "$protocol_type" == "ssh" ]; then
+    if [[ "$protocol_type" == "ssh" ]]; then
       new_url=$(echo "$origin_url" | awk -F':' '{sub(/^git@/, "", $1); print "https://"$1"/"$2}')
       git remote set-url origin "$new_url"
     fi
@@ -201,10 +193,13 @@ function top() {
 }
 
 function temp() {
+  [[ ! $(type -P smartctl) ]] &&
+    echo "smartctl not found. Please install smartmontools." &&
+    return 1
   printf "dev\t\ttype\ttemp\tserial\t\t\t\t\tmodel\n"
   for disk in /dev/sd[a-z] /dev/nvme[0-9]; do
     [[ -c "$disk" || -b "$disk" ]] &&
-      sudo smartctl --all --json "$disk" |
+      sudo smartctl --all --json "$disk" 2>/dev/null |
       jq -r '
           .device.name + "\t" +
           .device.type + "\t" +
@@ -216,7 +211,7 @@ function temp() {
 }
 
 function check_nvme() {
-  [[ ! -x $(type -P nvme) ]] &&
+  [[ ! $(type -P nvme) ]] &&
     echo "ERR: nvme-cli is not installed" &&
     return 1
   [[ -z "${1}" ]] &&
@@ -233,7 +228,7 @@ function check_nvme() {
 }
 
 # Aliases
-alias grep='ugrep'
+[[ $(type -P ugrep) ]] && alias grep='ugrep'
 alias ls='ls --color=auto'
 alias ip='ip -color=auto'
 alias diff='diff --color=auto'
