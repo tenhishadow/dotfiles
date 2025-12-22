@@ -15,6 +15,16 @@ tasks:
     cmds:
       - uv sync --all-extras --dev
     silent: true
+  pre-deps:
+    cmd: >-
+      false
+      ||
+      echo 123 && echo 333
+    #   sudo pacman -Sy --noconfirm python-pipenv python-setuptools
+    #   ||
+    #   sudo apt install git pipenv -y
+    # && apt-get update \
+    # && apt-get install -y --no-install-recommends \
   default:
     deps: [deps]
     cmds:
@@ -30,3 +40,42 @@ tasks:
   upgrade:
     cmds:
       - uv sync --upgrade
+  
+  lint-vim:
+    desc: "Lint vim configuration files"
+    deps: [deps]
+    cmds:
+      - uv run vint dotfiles/.vimrc
+    sources:
+      - dotfiles/.vimrc
+    preconditions:
+      - sh: test -f dotfiles/.vimrc
+        msg: "dotfiles/.vimrc not found"
+  
+  lint-yaml:
+    desc: "Lint YAML files"
+    deps: [deps]
+    cmds:
+      - uv run yamllint .
+    sources:
+      - "**/*.yml"
+      - "**/*.yaml"
+      - ".yamllint"
+  
+  lint-all:
+    desc: "Run all linting tasks"
+    deps: [lint, lint-vim, lint-yaml]
+  
+  test:
+    desc: "Run all tests and linting"
+    deps: [lint-all]
+    cmds:
+      - echo "All tests passed!"
+  
+  clean:
+    desc: "Clean up generated files and caches"
+    cmds:
+      - rm -rf .venv
+      - rm -rf .task
+      - find . -name "*.pyc" -delete
+      - find . -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null || true
