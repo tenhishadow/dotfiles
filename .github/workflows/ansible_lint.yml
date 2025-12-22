@@ -12,31 +12,38 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: do checkout
-        uses: actions/checkout@master
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - name: deps | python version
-        uses: actions/setup-python@v6
+      - name: Setup Python
+        uses: actions/setup-python@v5
         with:
           python-version: "3.x"
 
-      - name: cache | pip
-        uses: actions/cache@v5
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
         with:
-          path: ~/.cache/pip
-          key: lint-pip
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      - name: Install Task
+        uses: arduino/setup-task@v2
+        with:
+          version: 3.x
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Cache Task dependencies
+        uses: actions/cache@v4
+        with:
+          path: .venv
+          key: ${{ runner.os }}-venv-${{ hashFiles('uv.lock') }}
           restore-keys: |
-            lint-pip-
+            ${{ runner.os }}-venv-
 
-      - name: deps | install pipenv
-        run: |
-          python -m pip install --upgrade pip
-          pip install pipenv
+      - name: Install dependencies
+        run: task deps
 
-      - name: deps | pipenv install
-        run: pipenv install --deploy --bare --ignore-pipfile
-
-      - name: lint
-        run: pipenv run lint
+      - name: Run Ansible lint
+        run: task lint
         env:
           ANSIBLE_FORCE_COLOR: true
