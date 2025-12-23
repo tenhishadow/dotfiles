@@ -41,5 +41,6 @@ tasks:
     cmds:
       - uv sync --upgrade
   nvim:
+    deps: [deps]
     cmds:
       - nvim --headless "+Lazy! sync" +qa
