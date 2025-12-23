@@ -17,14 +17,9 @@ tasks:
     silent: true
   pre-deps:
     cmd: >-
-      false
+      sudo pacman -Sy --noconfirm python-pipenv python-setuptools
       ||
       echo 123 && echo 333
-    #   sudo pacman -Sy --noconfirm python-pipenv python-setuptools
-    #   ||
-    #   sudo apt install git pipenv -y
-    # && apt-get update \
-    # && apt-get install -y --no-install-recommends \
   default:
     deps: [deps]
     generates:
@@ -51,3 +46,4 @@ tasks:
       - nvim --headless "+Lazy! sync" +qa
       - nvim --headless "+checkhealth" +qa
       - nvim --headless "+checkhealth vim.lsp" +qa
+      - nvim
