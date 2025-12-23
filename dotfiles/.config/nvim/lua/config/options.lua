@@ -20,13 +20,15 @@ vim.g.maplocalleader = "\\"
 ----------------------------------------------------------------------
 -- Basic options
 ----------------------------------------------------------------------
-vim.opt.shell = "bash"
+-- Set shell to bash if available (for better cross-platform compatibility)
+if vim.fn.executable("bash") == 1 then
+  vim.opt.shell = "bash"
+end
+
 vim.opt.termguicolors = true      -- enable truecolor before colorscheme
 vim.opt.background = "dark"
 vim.opt.number = true             -- show absolute line numbers
 vim.opt.relativenumber = false    -- relative numbers (optional)
 
--- Diff tweaks
-if vim.opt.diff:get() then
-  vim.opt.diffopt:append("iwhite")
-end
+-- Diff tweaks (always add iwhite for less noise in diffs)
+vim.opt.diffopt:append("iwhite")

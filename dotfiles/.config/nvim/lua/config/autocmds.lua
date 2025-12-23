@@ -2,9 +2,16 @@
 -- Autocommands and events
 
 ----------------------------------------------------------------------
+-- Create augroup for user config
+----------------------------------------------------------------------
+local group = vim.api.nvim_create_augroup("UserConfig", { clear = false })
+
+----------------------------------------------------------------------
 -- Restore cursor position when reopening files
 ----------------------------------------------------------------------
 vim.api.nvim_create_autocmd("BufReadPost", {
+  group = group,
+  desc = "Restore cursor position",
   callback = function(args)
     local bufnr = args.buf
 
