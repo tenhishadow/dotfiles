@@ -2,7 +2,6 @@ return {
   -- Treesitter for better syntax highlighting
   {
     "nvim-treesitter/nvim-treesitter",
-    build = ":TSUpdate",
     event = { "BufReadPost", "BufNewFile" },
     config = function()
       -- Check if treesitter configs module is available
@@ -25,17 +24,13 @@ return {
           "json",
           "markdown",
           "markdown_inline",
-          "terraform",
-          "dockerfile",
-          "gitignore",
-          "gitcommit",
         },
 
         -- Install parsers synchronously (only applied to `ensure_installed`)
         sync_install = false,
 
-        -- Automatically install missing parsers when entering buffer
-        auto_install = true,
+        -- Don't automatically install missing parsers (for reproducibility)
+        auto_install = false,
 
         -- List of parsers to ignore installing
         ignore_install = {},
@@ -46,7 +41,7 @@ return {
           -- Disable for large files (performance)
           disable = function(lang, buf)
             local max_filesize = 100 * 1024 -- 100 KB
-            local ok_stat, stats = pcall(vim.loop.fs_stat, vim.api.nvim_buf_get_name(buf))
+            local ok_stat, stats = pcall((vim.uv or vim.loop).fs_stat, vim.api.nvim_buf_get_name(buf))
             if ok_stat and stats and stats.size > max_filesize then
               return true
             end
@@ -61,22 +56,7 @@ return {
           -- Disable for problematic languages
           disable = { "python", "yaml" },
         },
-
-        incremental_selection = {
-          enable = true,
-          keymaps = {
-            init_selection = "<C-space>",
-            node_incremental = "<C-space>",
-            scope_incremental = "<C-s>",
-            node_decremental = "<M-space>",
-          },
-        },
       })
-
-      -- Enable folding based on treesitter (optional)
-      vim.opt.foldmethod = "expr"
-      vim.opt.foldexpr = "nvim_treesitter#foldexpr()"
-      vim.opt.foldenable = false -- Start with folds open
     end,
   },
 }
