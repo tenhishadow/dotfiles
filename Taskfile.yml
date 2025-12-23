@@ -27,6 +27,11 @@ tasks:
     # && apt-get install -y --no-install-recommends \
   default:
     deps: [deps]
+    generates:
+      - $HOME/.gnupg
+      - $HOME/.config/kitty
+      - $HOME/.config/nvim
+      - $HOME/.mplayer
     cmds:
       - uv run ansible-playbook {{.playbook}}
   lint:
@@ -41,8 +46,8 @@ tasks:
     cmds:
       - uv sync --upgrade
   nvim:
-    deps: [deps]
+    deps: [default]
     cmds:
       - nvim --headless "+Lazy! sync" +qa
       - nvim --headless "+checkhealth" +qa
-      # - nvim --startuptime /tmp/nvim-startup.log --headless +qa
+      - nvim --headless "+checkhealth vim.lsp" +qa
