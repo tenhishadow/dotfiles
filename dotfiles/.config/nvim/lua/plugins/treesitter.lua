@@ -4,14 +4,16 @@ return {
     "nvim-treesitter/nvim-treesitter",
     event = { "BufReadPost", "BufNewFile" },
     config = function()
-      -- Check if treesitter configs module is available
-      local ok, configs = pcall(require, "nvim-treesitter.configs")
-      if not ok then
-        vim.notify("nvim-treesitter.configs not found", vim.log.levels.WARN)
+      -- Try modern API first, then fall back to legacy
+      local ok_modern, ts_config = pcall(require, "nvim-treesitter.config")
+      local ok_legacy, ts_configs = pcall(require, "nvim-treesitter.configs")
+      
+      if not ok_modern and not ok_legacy then
+        vim.notify("nvim-treesitter configuration module not found", vim.log.levels.WARN)
         return
       end
 
-      configs.setup({
+      local setup_config = {
         -- Install parsers for common languages
         ensure_installed = {
           "lua",
@@ -56,7 +58,14 @@ return {
           -- Disable for problematic languages
           disable = { "python", "yaml" },
         },
-      })
+      }
+
+      -- Use the available API
+      if ok_legacy then
+        ts_configs.setup(setup_config)
+      elseif ok_modern then
+        ts_config.setup(setup_config)
+      end
     end,
   },
 }
