@@ -7,4 +7,3 @@ pcall(function() require('custom.keymaps') end)
 pcall(function() require('custom.autocmds') end)
 
 return {}
-

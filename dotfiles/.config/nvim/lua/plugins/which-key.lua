@@ -5,7 +5,7 @@ return {
     event = "VeryLazy", -- Lazy load to avoid startup cost
     config = function()
       local wk = require("which-key")
-      
+
       wk.setup({
         preset = "modern",
         delay = 1000,

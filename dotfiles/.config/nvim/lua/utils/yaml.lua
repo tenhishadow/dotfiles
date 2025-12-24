@@ -34,4 +34,3 @@ function M.statusline()
 end
 
 return M
-

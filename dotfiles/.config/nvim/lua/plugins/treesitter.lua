@@ -7,7 +7,7 @@ return {
       -- Try modern API first, then fall back to legacy
       local ok_modern, ts_config = pcall(require, "nvim-treesitter.config")
       local ok_legacy, ts_configs = pcall(require, "nvim-treesitter.configs")
-      
+
       if not ok_modern and not ok_legacy then
         vim.notify("nvim-treesitter configuration module not found", vim.log.levels.WARN)
         return
