@@ -1,5 +1,5 @@
 ---
-name: ansible_exec
+name: ansible
 
 permissions:
   contents: read
@@ -11,35 +11,25 @@ on:
   pull_request:
 
 jobs:
-  ansible_exec:
-    strategy:
-      matrix:
-        os:
-          - ubuntu-latest
-          - macos-latest
-    runs-on: ${{ matrix.os }}
-
+  ansible_lint:
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.x"
-
       - name: Install uv
         uses: astral-sh/setup-uv@v3
         with:
           enable-cache: true
           cache-dependency-glob: "uv.lock"
-
       - name: Install Task
         uses: arduino/setup-task@v2
         with:
           version: 3.x
           repo-token: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Cache Task dependencies
         uses: actions/cache@v4
         with:
@@ -47,10 +37,43 @@ jobs:
           key: ${{ runner.os }}-venv-${{ hashFiles('uv.lock') }}
           restore-keys: |
             ${{ runner.os }}-venv-
-
       - name: Install dependencies
         run: task deps
-
+      - name: Run Ansible playbook
+        run: task lint
+  ansible_exec:
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+      - name: Install Task
+        uses: arduino/setup-task@v2
+        with:
+          version: 3.x
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Cache Task dependencies
+        uses: actions/cache@v4
+        with:
+          path: .venv
+          key: ${{ runner.os }}-venv-${{ hashFiles('uv.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-venv-
+      - name: Install dependencies
+        run: task deps
       - name: Run Ansible playbook
         run: task default
         env:
