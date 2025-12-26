@@ -1,6 +1,6 @@
 [project]
 name = "dotfiles"
-version = "v1.4.0"
+version = "1.4.0"
 dependencies = [
     "ansible-lint",
     "ansible",
