@@ -43,7 +43,7 @@ tasks:
   nvim:
     deps: [default]
     cmds:
-      - nvim --headless "+Lazy! sync" +qa
+      - nvim --headless "+Lazy! restore" +qa
       - nvim --headless "+checkhealth" +qa
       - nvim --headless "+checkhealth vim.lsp" +qa
       - nvim
