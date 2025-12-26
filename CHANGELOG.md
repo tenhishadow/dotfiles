@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.0](https://github.com/tenhishadow/dotfiles/compare/v1.3.0...v1.4.0) (2025-12-26)
+
+
+### Features
+
+* migrate to uv and modernize development environment ([a50e428](https://github.com/tenhishadow/dotfiles/commit/a50e42870989b3ea0e45ac60ef553c4bfe32f602))
+
 ## [1.3.0](https://github.com/tenhishadow/dotfiles/compare/v1.2.0...v1.3.0) (2025-12-07)
 
 
