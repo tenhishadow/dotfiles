@@ -35,3 +35,16 @@ repos:
     hooks:
       - id: detect-secrets
         exclude: dotfiles/.config/nvim/lazy-lock.json
+  - repo: https://github.com/zizmorcore/zizmor-pre-commit
+    rev: v1.19.0
+    hooks:
+      - id: zizmor
+  - repo: local
+    hooks:
+      - id: yaml-prettier
+        name: run prettier
+        language: system
+        files: ^.*$
+        types_or: [yaml]
+        entry: |
+          bash -c 'prettier "${@}" --write'
