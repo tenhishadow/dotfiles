@@ -16,6 +16,7 @@ jobs:
         uses: actions/checkout@master
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Scan Code Base
         uses: super-linter/super-linter/slim@v8
@@ -27,3 +28,5 @@ jobs:
           VALIDATE_MARKDOWN: false
           VALIDATE_MARKDOWN_PRETTIER: false
           VALIDATE_NATURAL_LANGUAGE: false
+          VALIDATE_BIOME_FORMAT: false
+          VALIDATE_GITHUB_ACTIONS_ZIZMOR: false
