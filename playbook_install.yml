@@ -53,7 +53,7 @@
       cron:
         state: present
         name: vim-plug update/upgrade
-        job: 'nvim --headless "+Lazy! sync" +qa > ~/.nvim.log 2>&1'
+        job: 'nvim --headless "+Lazy! restore" +qa > ~/.nvim.log 2>&1'
         special_time: daily
       ignore_errors: true # if cron not presented
       no_log: true # it doesnt matter
@@ -61,11 +61,11 @@
     - name: dotfiles | cronjob for update
       cron:
         name: dotfiles updates
-        job: "cd {{ ansible_user_dir }}/.dotfiles && git pull >/dev/null 2>/dev/null"
+        job: "cd {{ ansible_facts.user_dir }}/.dotfiles && git pull >/dev/null 2>/dev/null"
         special_time: hourly
       ignore_errors: true # if cron not presented
 
     - name: Migrating away from .pam_environment
       file:
-        path: "{{ ansible_user_dir }}/.pam_environment"
+        path: "{{ ansible_facts.user_dir }}/.pam_environment"
         state: absent
