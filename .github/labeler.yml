@@ -12,9 +12,9 @@ ci:
 dependencies:
   - changed-files:
       - any-glob-to-any-file:
-          - "Pipfile"
-          - "Pipfile.lock"
+          - "pyproject.toml"
           - "renovate.json"
+          - "uv.lock"
 documentation:
   - changed-files:
       - any-glob-to-any-file: "README.md"

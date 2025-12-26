@@ -84,6 +84,7 @@ function aws-whoami() {
     jq -r '.Arn' |
     awk -F ':' '{ print $NF, $(NF-1)}'
 }
+
 function az-whoami() {
   [[ ! $(type -P az) ]] &&
     printf '%s\n' 'please install az' &&
@@ -126,15 +127,6 @@ function poc() {
   esac
 }
 
-# du
-function duu() {
-  find . \
-    -maxdepth 1 \
-    -exec \
-    du -sm '{}' \; |
-    sort -n
-}
-
 function change_git_remote_protocol() {
   local origin_url=$(git remote get-url origin 2>/dev/null)
   local status=$?
@@ -157,13 +149,13 @@ function change_git_remote_protocol() {
 
   case $1 in
   "ssh")
-    if [ "$protocol_type" == "https" ]; then
+    if [[ "$protocol_type" == "https" ]]; then
       new_url=$(echo "$origin_url" | awk -F'/' '{print "git@"$3":"$4"/"$5}')
       git remote set-url origin "$new_url"
     fi
     ;;
   "https")
-    if [ "$protocol_type" == "ssh" ]; then
+    if [[ "$protocol_type" == "ssh" ]]; then
       new_url=$(echo "$origin_url" | awk -F':' '{sub(/^git@/, "", $1); print "https://"$1"/"$2}')
       git remote set-url origin "$new_url"
     fi
@@ -201,10 +193,13 @@ function top() {
 }
 
 function temp() {
+  [[ ! $(type -P smartctl) ]] &&
+    echo "smartctl not found. Please install smartmontools." &&
+    return 1
   printf "dev\t\ttype\ttemp\tserial\t\t\t\t\tmodel\n"
   for disk in /dev/sd[a-z] /dev/nvme[0-9]; do
     [[ -c "$disk" || -b "$disk" ]] &&
-      sudo smartctl --all --json "$disk" |
+      sudo smartctl --all --json "$disk" 2>/dev/null |
       jq -r '
           .device.name + "\t" +
           .device.type + "\t" +
@@ -215,8 +210,25 @@ function temp() {
   done
 }
 
+function check_nvme() {
+  [[ ! $(type -P nvme) ]] &&
+    echo "ERR: nvme-cli is not installed" &&
+    return 1
+  [[ -z "${1}" ]] &&
+    echo "ERR: arg1 is required (disk)" &&
+    return 1
+  [[ ! -c "${1}" ]] &&
+    echo "ERR: arg1 must be nvme root device" &&
+    return 1
+  sudo nvme id-ctrl "${1}"
+  sudo nvme smart-log "${1}"
+  sudo nvme error-log "${1}" --log-entries=64
+  sudo nvme id-ctrl "${1}" | grep -iE 'oncs|fna|vwc|sanicap'
+  sudo nvme get-log "${1}" --log-id=2 --log-len=512 --raw-binary | hexdump -C | head -n 40
+}
+
 # Aliases
-alias grep='ugrep'
+[[ $(type -P ugrep) ]] && alias grep='ugrep'
 alias ls='ls --color=auto'
 alias ip='ip -color=auto'
 alias diff='diff --color=auto'
@@ -359,6 +371,10 @@ done
 # BEGIN_KITTY_SHELL_INTEGRATION
 if test -n "$KITTY_INSTALLATION_DIR" -a -e "$KITTY_INSTALLATION_DIR/shell-integration/bash/kitty.bash"; then source "$KITTY_INSTALLATION_DIR/shell-integration/bash/kitty.bash"; fi
 # END_KITTY_SHELL_INTEGRATION
+
+# shellcheck disable=SC1090
+[[ -x "$(type -P checkov)" ]] &&
+  source <(register-python-argcomplete checkov)
 
 ## final PATH export
 export PATH

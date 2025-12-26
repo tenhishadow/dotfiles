@@ -28,3 +28,6 @@ max_line_length = unset
 
 [*.{md,txt}]
 insert_final_newline = true
+
+[uv.lock]
+max_line_length = unset

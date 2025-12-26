@@ -1,0 +1,49 @@
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+
+version: "3"
+
+vars:
+  playbook: playbook_install.yml
+
+tasks:
+  deps:
+    sources:
+      - pyproject.toml
+      - uv.lock
+    generates:
+      - .venv/pyvenv.cfg
+    cmds:
+      - uv sync --all-extras --dev
+    silent: true
+  pre-deps:
+    cmd: >-
+      sudo pacman -Sy --noconfirm python-pipenv python-setuptools
+      ||
+      echo 123 && echo 333
+  default:
+    deps: [deps]
+    generates:
+      - $HOME/.gnupg
+      - $HOME/.config/kitty
+      - $HOME/.config/nvim
+      - $HOME/.mplayer
+    cmds:
+      - uv run ansible-playbook {{.playbook}}
+  lint:
+    deps: [deps]
+    cmds:
+      - uv run ansible-lint {{.playbook}}
+  configs:
+    deps: [deps]
+    cmds:
+      - uv run ansible-playbook {{.playbook}} --tags configs
+  upgrade:
+    cmds:
+      - uv sync --upgrade
+  nvim:
+    deps: [default]
+    cmds:
+      - nvim --headless "+Lazy! restore" +qa
+      - nvim --headless "+checkhealth" +qa
+      - nvim --headless "+checkhealth vim.lsp" +qa
+      - nvim

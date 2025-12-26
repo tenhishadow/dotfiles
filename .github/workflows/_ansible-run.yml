@@ -1,0 +1,62 @@
+name: _ansible-run
+
+permissions:
+  contents: read
+
+on:
+  workflow_call:
+    inputs:
+      os:
+        description: "Runner OS label (e.g., ubuntu-latest, macos-latest)"
+        type: string
+        required: true
+      task_target:
+        description: "Taskfile target to run (e.g., lint, default)"
+        type: string
+        required: true
+      ansible_force_color:
+        description: "Export ANSIBLE_FORCE_COLOR=true for the run"
+        type: boolean
+        required: false
+        default: false
+
+jobs:
+  run:
+    runs-on: ${{ inputs.os }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@master
+        with:
+          persist-credentials: false
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.x"
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+      - name: Install Task
+        uses: arduino/setup-task@v2
+        with:
+          version: 3.x
+          repo-token: ${{ github.token }}
+      - name: Cache venv (.venv)
+        uses: actions/cache@master
+        with:
+          path: .venv
+          key: ${{ runner.os }}-venv-${{ hashFiles('uv.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-venv-
+      - name: Install dependencies
+        run: task deps
+
+      - name: Run Task (with ANSIBLE_FORCE_COLOR)
+        if: ${{ inputs.ansible_force_color }}
+        run: task ${{ inputs.task_target }}
+        env:
+          ANSIBLE_FORCE_COLOR: "true"
+      - name: Run Task
+        if: ${{ !inputs.ansible_force_color }}
+        run: task ${{ inputs.task_target }}

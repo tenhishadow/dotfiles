@@ -6,4 +6,3 @@ skip_list:
   - fqcn[action-core]
   - fqcn[action]
   - var-naming[no-role-prefix]
-
