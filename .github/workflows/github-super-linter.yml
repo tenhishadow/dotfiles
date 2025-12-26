@@ -18,7 +18,7 @@ jobs:
           fetch-depth: 0
 
       - name: Scan Code Base
-        uses: github/super-linter/slim@v8
+        uses: super-linter/super-linter/slim@8
         env:
           VALIDATE_ALL_CODEBASE: true
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
