@@ -1,5 +1,8 @@
 name: _ansible-run
 
+permissions:
+  contents: read
+
 on:
   workflow_call:
     inputs:
