@@ -1,12 +1,12 @@
 "$schema" = 'https://starship.rs/config-schema.json'
 
 format = """
-$username\
-$hostname\
-$directory\
 $git_branch\
 $git_status\
 $git_state\
+$username\
+$hostname\
+$directory\
 $cmd_duration\
 $line_break\
 $python\
@@ -33,8 +33,8 @@ format            = "[$hostname]($style) "
 style             = "blue bold"
 
 [git_branch]
-format            = '[$symbol$branch(:$remote_branch)]($style) '
-style             = "bright-black"
+format            = "[$symbol$branch(:$remote_branch) ]($style)"
+style             = "cyan"
 symbol            = ''
 truncation_length = 300
 
