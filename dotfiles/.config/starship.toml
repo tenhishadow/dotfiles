@@ -13,11 +13,6 @@ $python\
 $character
 """
 
-# [character]
-# success_symbol    = "[❯](green bold)"
-# error_symbol      = "[❯](red bold)"
-# vimcmd_symbol     = "[❮](green)"
-
 [username]
 show_always       = true
 style_user        = "green bold"
