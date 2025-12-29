@@ -21,12 +21,13 @@ jobs:
       - name: Scan Code Base
         uses: super-linter/super-linter/slim@v8
         env:
-          VALIDATE_ALL_CODEBASE: true
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          VALIDATE_SHELL_SHFMT: false
+          VALIDATE_ALL_CODEBASE: true
+          VALIDATE_BIOME_FORMAT: false
+          VALIDATE_EDITORCONFIG: false
+          VALIDATE_GITHUB_ACTIONS_ZIZMOR: false
           VALIDATE_LUA: false
           VALIDATE_MARKDOWN: false
           VALIDATE_MARKDOWN_PRETTIER: false
           VALIDATE_NATURAL_LANGUAGE: false
-          VALIDATE_BIOME_FORMAT: false
-          VALIDATE_GITHUB_ACTIONS_ZIZMOR: false
+          VALIDATE_SHELL_SHFMT: false
