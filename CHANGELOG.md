@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.0](https://github.com/tenhishadow/dotfiles/compare/v1.4.0...v1.5.0) (2025-12-29)
+
+
+### Features
+
+* **starship:** port bashrc git prompt to starship config ([#91](https://github.com/tenhishadow/dotfiles/issues/91)) ([79f0ef5](https://github.com/tenhishadow/dotfiles/commit/79f0ef521b17a08ababc938a660c1719b7adb5e0))
+
 ## [1.4.0](https://github.com/tenhishadow/dotfiles/compare/v1.3.0...v1.4.0) (2025-12-26)
 
 
