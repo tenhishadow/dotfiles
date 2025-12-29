@@ -1,0 +1,66 @@
+"$schema" = 'https://starship.rs/config-schema.json'
+
+format = """
+$custom\
+$username\
+$hostname\
+$directory\
+$line_break\
+$character"""
+
+[username]
+show_always = true
+style_user = "green bold"
+style_root = "red bold"
+format = "[$user]($style)@"
+
+[hostname]
+ssh_only = false
+style = "green bold"
+format = "[$hostname]($style) "
+
+[directory]
+style = "blue bold"
+truncation_length = 3
+truncation_symbol = "…/"
+format = "[$path]($style)"
+
+[character]
+success_symbol = "[\\$](green bold)"
+error_symbol = "[\\$](red bold)"
+vimcmd_symbol = "[❮](green)"
+
+[git_branch]
+disabled = true
+
+[git_status]
+disabled = true
+
+[custom.git_prompt]
+command = "/home/tenhi/.config/starship_git_status.sh"
+when = "git rev-parse --is-inside-work-tree 2> /dev/null"
+# \e[100;96m -> bg:bright-black fg:cyan. 
+# starship style string: "bg:bright-black fg:cyan" works? 
+# "bg:238 fg:87" might be safer for specific colors.
+# Bash 100 is "Bright Black (Dark Gray)". Bash 96 is "Bright Cyan".
+# Let's try standard names first: "bg:bright-black fg:cyan"
+style = "bg:bright-black fg:cyan"
+# The format needs to include the brackets and spaces as per the bashrc: "[ %s %s ] "
+
+# wait, the bashrc had "[ $output $branch ] " where output and branch were variables.
+# My script outputs "$output$branch".
+# Use format inside the module to wrap it.
+# Bashrc: printf "\e[100;96m[ %s %s ]\e[0m "
+# So brackets should be part of the styled output.
+# I will put brackets in the format string.
+format = "[ \\[ $output \\] ]($style) "
+# Wait, checking script output again:
+# script: echo -n "${status_output}${branch}"
+# status_output has space at end of each symbol? "⇡${ahead} "
+# So it's "⇡1 branch".
+# The bashrc used "%s %s" => "$status_output" "$branch"
+# status_output in bashrc had trailing space?
+# ((ahead > 0)) && status_output+="⇡${ahead} " -> Yes.
+# So "⇡1 branch" is correct.
+# And bashrc put brackets around it: "[ ⇡1 branch ]"
+# So starship format: "[ [ $output ] ]($style) "

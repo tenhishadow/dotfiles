@@ -126,6 +126,9 @@ dotfiles_mapping:
     dir_mode: "{{ dotfiles_dir_mode }}"
     dir_owner: "{{ ansible_facts.real_user_id }}"
     dir_group: "{{ ansible_facts.real_group_id }}"
+  starship:
+    src: "{{ dotfiles_location }}/.config/starship.toml"
+    dest: "{{ ansible_facts.user_dir }}/.config/starship.toml"
 
 dotfiles_cleanup:
   - "{{ ansible_facts.user_dir }}/.config/nvim/init.vim"
