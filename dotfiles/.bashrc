@@ -256,13 +256,17 @@ alias clear-nvim='rm -rf $HOME/.local/share/nvim $HOME/.config/nvim $HOME/.cache
 
 # Vars
 ## bash prompt
-PS1='$(___git_status)'                           # git status
-PS1+='\[\033[01;32m\]\u@\h\[\033[00m\] '         # green user@host
-PS1+='\[\033[01;34m\]\w\[\033[00m\]'             # blue current working directory
-PS1+='\n\[\033[01;$((31+!$?))m\]\$\[\033[00m\] ' # green/red (success/error) $/# (normal/root)
-PS1+='\[\e]0;\u@\h: \w\a\]'                      # terminal title: user@host: dir
+if [[ -x $(type -P starship) ]]; then
+  eval "$(starship init bash)"
+else
+  PS1='$(___git_status)'                           # git status
+  PS1+='\[\033[01;32m\]\u@\h\[\033[00m\] '         # green user@host
+  PS1+='\[\033[01;34m\]\w\[\033[00m\]'             # blue current working directory
+  PS1+='\n\[\033[01;$((31+!$?))m\]\$\[\033[00m\] ' # green/red (success/error) $/# (normal/root)
+  PS1+='\[\e]0;\u@\h: \w\a\]'                      # terminal title: user@host: dir
 
-export PS1
+  export PS1
+fi
 
 ## colored GCC warnings and errors
 export GCC_COLORS='error=01;31:warning=01;35:note=01;36:caret=01;32:locus=01:quote=01'
