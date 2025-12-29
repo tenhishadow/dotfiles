@@ -5,12 +5,18 @@ $username\
 $hostname\
 $directory\
 $git_branch\
+$git_status\
 $git_state\
- $git_status\
 $cmd_duration\
 $line_break\
 $python\
-$character"""
+$character
+"""
+
+# [character]
+# success_symbol    = "[❯](green bold)"
+# error_symbol      = "[❯](red bold)"
+# vimcmd_symbol     = "[❮](green)"
 
 [username]
 show_always       = true
@@ -26,14 +32,11 @@ format            = "[$hostname]($style) "
 [directory]
 style             = "blue bold"
 
-[character]
-success_symbol    = "[>](green bold)"
-error_symbol      = "[>](red bold)"
-vimcmd_symbol     = "[<](green)"
-
 [git_branch]
-format            = "[$branch]($style)"
+format            = '[$symbol$branch(:$remote_branch)]($style) '
 style             = "bright-black"
+symbol            = ''
+truncation_length = 300
 
 [git_status]
 format            = "[[(*$conflicted$untracked$modified$staged$renamed$deleted)](218) ($ahead_behind$stashed)]($style)"
