@@ -5,23 +5,19 @@ Special repository for configuring dotfiles with Ansible
 [![ansible](https://github.com/tenhishadow/dotfiles/actions/workflows/ansible.yml/badge.svg)](https://github.com/tenhishadow/dotfiles/actions/workflows/ansible.yml)
 
 
-## install deps
+## install minimal deps
 
 ```bash
-sudo pacman -Sy --noconfirm python-pipenv python-setuptools \
-|| sudo apt install git pipenv -y
+pacman -Sy --noconfirm go-task uv git
 ```
 
 ## install
 
 ```bash
-
 _INSTALL_DIR="$HOME/.dotfiles" \
   && git clone https://github.com/tenhishadow/dotfiles.git $_INSTALL_DIR \
-  && cd $_INSTALL_DIR \
-  && pipenv install \
-  && pipenv run install
-
+  && cd "$HOME/.dotfiles" \
+  && go-task
 ```
 
 ## installation with ans-workstation
