@@ -8,20 +8,16 @@ Special repository for configuring dotfiles with Ansible
 ## install deps
 
 ```bash
-sudo pacman -Sy --noconfirm python-pipenv python-setuptools \
-|| sudo apt install git pipenv -y
+sudo pacman -Sy --noconfirm go-task uv git
 ```
 
 ## install
 
 ```bash
-
 _INSTALL_DIR="$HOME/.dotfiles" \
   && git clone https://github.com/tenhishadow/dotfiles.git $_INSTALL_DIR \
   && cd $_INSTALL_DIR \
-  && pipenv install \
-  && pipenv run install
-
+  && go-task
 ```
 
 ## installation with ans-workstation
