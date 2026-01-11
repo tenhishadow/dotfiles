@@ -183,7 +183,7 @@ else
   TS_SERVER = "tsserver"
 end
 
-local SYSTEMD_SERVER = "systemd_ls"  -- modern name in nvim-lspconfig
+local SYSTEMD_SERVER = "systemd_lsp"  -- modern name in nvim-lspconfig
 
 ----------------------------------------------------------------------
 -- SchemaStore (optional, for JSON/YAML schemas)
