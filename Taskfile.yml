@@ -7,7 +7,6 @@ vars:
 
 tasks:
   deps:
-    deps: [pre-deps]
     sources:
       - pyproject.toml
       - uv.lock
@@ -16,7 +15,7 @@ tasks:
     cmds:
       - uv sync --all-extras --dev
     silent: true
-  pre-deps:
+  os-deps:
     status:
       - sh -c 'type -P uv'
       - sh -c 'type -P git'
@@ -25,7 +24,9 @@ tasks:
       sudo pacman -Sy --noconfirm uv git ||
       pacman -Sy --noconfirm uv git
   default:
-    deps: [deps]
+    deps:
+      - deps
+      - os-deps
     generates:
       - $HOME/.gnupg
       - $HOME/.config/kitty
