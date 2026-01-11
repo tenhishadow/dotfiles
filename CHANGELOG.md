@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.1](https://github.com/tenhishadow/dotfiles/compare/v1.6.0...v1.6.1) (2026-01-11)
+
+
+### Bug Fixes
+
+* **Taskfile:** reconfigure pre-deps ([#97](https://github.com/tenhishadow/dotfiles/issues/97)) ([f261340](https://github.com/tenhishadow/dotfiles/commit/f261340a0f1f6dcf856a099d08a3b05ec62886b2))
+
 ## [1.6.0](https://github.com/tenhishadow/dotfiles/compare/v1.5.0...v1.6.0) (2026-01-11)
 
 
