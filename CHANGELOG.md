@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.0](https://github.com/tenhishadow/dotfiles/compare/v1.5.0...v1.6.0) (2026-01-11)
+
+
+### Features
+
+* fix(ci): switch ansible workflow to shared template ([#95](https://github.com/tenhishadow/dotfiles/issues/95)) ([7b74906](https://github.com/tenhishadow/dotfiles/commit/7b749067f2027e67e4b727825fe9f330b3052181))
+
 ## [1.5.0](https://github.com/tenhishadow/dotfiles/compare/v1.4.0...v1.5.0) (2025-12-29)
 
 
