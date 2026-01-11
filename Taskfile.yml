@@ -15,13 +15,19 @@ tasks:
     cmds:
       - uv sync --all-extras --dev
     silent: true
-  pre-deps:
+  os-deps:
+    status:
+      - sh -c 'type -P uv'
+      - sh -c 'type -P git'
     cmd: >-
-      sudo pacman -Sy --noconfirm python-pipenv python-setuptools
-      ||
-      echo 123 && echo 333
+      yay -Sy --noconfirm uv git ||
+      sudo pacman -Sy --noconfirm uv git ||
+      pacman -Sy --noconfirm uv git ||
+      true
   default:
-    deps: [deps]
+    deps:
+      - deps
+      - os-deps
     generates:
       - $HOME/.gnupg
       - $HOME/.config/kitty
