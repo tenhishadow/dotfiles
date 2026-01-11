@@ -28,4 +28,3 @@ jobs:
     with:
       os: ${{ matrix.os }}
       task_target: default
-
