@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.2](https://github.com/tenhishadow/dotfiles/compare/v1.6.1...v1.6.2) (2026-01-13)
+
+
+### Miscellaneous Chores
+
+* **deps:** update pre-commit hook adrienverge/yamllint to v1.38.0 ([#100](https://github.com/tenhishadow/dotfiles/issues/100)) ([98fa697](https://github.com/tenhishadow/dotfiles/commit/98fa6973e17e8a2e6830df299b09444c73c9d21a))
+
 ## [1.6.1](https://github.com/tenhishadow/dotfiles/compare/v1.6.0...v1.6.1) (2026-01-11)
 
 
