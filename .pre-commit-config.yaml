@@ -21,7 +21,7 @@ repos:
       - id: check-executables-have-shebangs
       - id: detect-private-key
   - repo: https://github.com/adrienverge/yamllint
-    rev: v1.37.1
+    rev: v1.38.0
     hooks:
       - id: yamllint
         args: ["-c", "dotfiles/.yamllint"]
