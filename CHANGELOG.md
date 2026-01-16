@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.3](https://github.com/tenhishadow/dotfiles/compare/v1.6.2...v1.6.3) (2026-01-16)
+
+
+### Miscellaneous Chores
+
+* **deps:** update pre-commit hook zizmorcore/zizmor-pre-commit to v1.21.0 ([#102](https://github.com/tenhishadow/dotfiles/issues/102)) ([1ae3f04](https://github.com/tenhishadow/dotfiles/commit/1ae3f049ac06eadfc5ec53752b7f1daa68122fdd))
+
 ## [1.6.2](https://github.com/tenhishadow/dotfiles/compare/v1.6.1...v1.6.2) (2026-01-13)
 
 
