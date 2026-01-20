@@ -3,49 +3,46 @@
 version: "3"
 
 vars:
-  playbook: playbook_install.yml
+  RUN_PLAYBOOK: "uv run ansible-playbook playbook_install.yml {{.CLI_ARGS}}"
+  DEPS_OS_ARCHLINUX: "uv git"
+  MITOGEN_VARS: "ANSIBLE_STRATEGY=serverscom.mitogen.mitogen_linear"
 
 tasks:
-  deps:
-    sources:
-      - pyproject.toml
-      - uv.lock
-    generates:
-      - .venv/pyvenv.cfg
-    cmds:
-      - uv sync --all-extras --dev
-    silent: true
-  os-deps:
+  deps-os:
     status:
       - sh -c 'type -P uv'
       - sh -c 'type -P git'
     cmd: >-
-      yay -Sy --noconfirm uv git ||
-      sudo pacman -Sy --noconfirm uv git ||
-      pacman -Sy --noconfirm uv git ||
-      true
-  default:
-    deps:
-      - deps
-      - os-deps
-    generates:
-      - $HOME/.gnupg
-      - $HOME/.config/kitty
-      - $HOME/.config/nvim
-      - $HOME/.mplayer
+      $(grep -q Archxx /etc/*release*)
+      && sudo pacman -Sy --noconfirm {{.DEPS_OS_ARCHLINUX}}
+      || ( echo "please manage deps manually" && exit 1)
+  deps-python:
+    silent: true
+    deps: [deps-os]
     cmds:
-      - uv run ansible-playbook {{.playbook}}
-  lint:
-    deps: [deps]
+      - uv sync --frozen --quiet
+  deps-galaxy:
+    silent: true
+    deps: [deps-python]
     cmds:
-      - uv run ansible-lint {{.playbook}}
-  configs:
-    deps: [deps]
-    cmds:
-      - uv run ansible-playbook {{.playbook}} --tags configs
-  upgrade:
+      - "uv run ansible-galaxy install -r requirements.yml"
+  deps-upgrade:
     cmds:
       - uv sync --upgrade
+  lint:
+    deps: [deps-python]
+    cmds:
+      - "uv run ansible-lint"
+  clear:
+    cmd: >-
+      rm -rf
+      .ansible
+      .collections
+      .task
+      .venv
+  default:
+    deps: [deps-galaxy]
+    cmd: "{{.MITOGEN_VARS}} {{.RUN_PLAYBOOK}}"
   nvim:
     deps: [default]
     cmds:

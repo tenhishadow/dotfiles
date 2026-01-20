@@ -1,0 +1,3 @@
+collections:
+  - name: serverscom.mitogen
+    source: https://galaxy.ansible.com

@@ -124,15 +124,6 @@ wheels = [
 ]
 
 [[package]]
-name = "ansicolor"
-version = "0.3.2"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/79/74/630817c7eb1289a1412fcc4faeca74a69760d9c9b0db94fc09c91978a6ac/ansicolor-0.3.2.tar.gz", hash = "sha256:3b840a6b1184b5f1568635b1adab28147947522707d41ceba02d5ed0a0877279", size = 9725, upload-time = "2021-05-05T07:04:18.51Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/30/c7/acf0f7f9ac5e2da2989e570ddf5e4688101e91a90ae5ba3651955fa29fb8/ansicolor-0.3.2-py2.py3-none-any.whl", hash = "sha256:91e9fccea5cf596c39bc015d423ed2dd74c0104fd520a42d7acccb66cbfc39e9", size = 9793, upload-time = "2021-05-05T07:04:16.908Z" },
-]
-
-[[package]]
 name = "attrs"
 version = "25.4.0"
 source = { registry = "https://pypi.org/simple" }
@@ -258,15 +249,6 @@ wheels = [
 ]
 
 [[package]]
-name = "chardet"
-version = "5.2.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/f3/0d/f7b6ab21ec75897ed80c17d79b15951a719226b9fababf1e40ea74d69079/chardet-5.2.0.tar.gz", hash = "sha256:1b3b6ff479a8c414bc3fa2c0852995695c4a026dcd6d0633b2dd092ca39c1cf7", size = 2069618, upload-time = "2023-08-01T19:23:02.662Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/38/6f/f5fbc992a329ee4e0f288c1fe0e2ad9485ed064cac731ed2fe47dcc38cbf/chardet-5.2.0-py3-none-any.whl", hash = "sha256:e1cf59446890a00105fe7b7912492ea04b6e6f06d4b742b2c788469e34c82970", size = 199385, upload-time = "2023-08-01T19:23:00.661Z" },
-]
-
-[[package]]
 name = "click"
 version = "8.3.1"
 source = { registry = "https://pypi.org/simple" }
@@ -367,8 +349,7 @@ dependencies = [
     { name = "ansible", version = "13.2.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
     { name = "ansible-lint" },
     { name = "jmespath" },
-    { name = "vim-vint" },
-    { name = "yamllint" },
+    { name = "mitogen" },
 ]
 
 [package.metadata]
@@ -376,8 +357,7 @@ requires-dist = [
     { name = "ansible" },
     { name = "ansible-lint" },
     { name = "jmespath" },
-    { name = "vim-vint" },
-    { name = "yamllint" },
+    { name = "mitogen" },
 ]
 
 [[package]]
@@ -509,6 +489,15 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/fb/df/5bd7a48c256faecd1d36edc13133e51397e41b73bb77e1a69deab746ebac/markupsafe-3.0.3-cp314-cp314t-win32.whl", hash = "sha256:915c04ba3851909ce68ccc2b8e2cd691618c4dc4c4232fb7982bca3f41fd8c3d", size = 14819, upload-time = "2025-09-27T18:37:26.285Z" },
     { url = "https://files.pythonhosted.org/packages/1a/8a/0402ba61a2f16038b48b39bccca271134be00c5c9f0f623208399333c448/markupsafe-3.0.3-cp314-cp314t-win_amd64.whl", hash = "sha256:4faffd047e07c38848ce017e8725090413cd80cbc23d86e55c587bf979e579c9", size = 15426, upload-time = "2025-09-27T18:37:27.316Z" },
     { url = "https://files.pythonhosted.org/packages/70/bc/6f1c2f612465f5fa89b95bead1f44dcb607670fd42891d8fdcd5d039f4f4/markupsafe-3.0.3-cp314-cp314t-win_arm64.whl", hash = "sha256:32001d6a8fc98c8cb5c947787c5d08b0a50663d139f1305bac5885d98d9b40fa", size = 14146, upload-time = "2025-09-27T18:37:28.327Z" },
+]
+
+[[package]]
+name = "mitogen"
+version = "0.3.37"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/62/b2/3ef117c636f87f47c81440e1c656f5243386e9ccba377a3a9b49263f4b55/mitogen-0.3.37.tar.gz", hash = "sha256:6ac841a1b520c3136062ec930b95f6f4718ed8c3136ef3d7caf1a1d8e92d4823", size = 230618, upload-time = "2026-01-08T16:24:26.086Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/8c/9b/90e8cda843709db7311e23ca31a886bd1a88e3e1d9319a5d7ac4f74f05c9/mitogen-0.3.37-py2.py3-none-any.whl", hash = "sha256:8dec52685a8df5db20bc827815b6ba4d83fd3f19d012c2e5a1d5b2f2b311a07b", size = 289578, upload-time = "2026-01-08T16:24:24.795Z" },
 ]
 
 [[package]]
@@ -824,20 +813,6 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/72/94/1a15dd82efb362ac84269196e94cf00f187f7ed21c242792a923cdb1c61f/typing_extensions-4.15.0.tar.gz", hash = "sha256:0cea48d173cc12fa28ecabc3b837ea3cf6f38c6d1136f85cbaaf598984861466", size = 109391, upload-time = "2025-08-25T13:49:26.313Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/18/67/36e9267722cc04a6b9f15c7f3441c2363321a3ea07da7ae0c0707beb2a9c/typing_extensions-4.15.0-py3-none-any.whl", hash = "sha256:f0fa19c6845758ab08074a0cfa8b7aecb71c999ca73d62883bc25cc018c4e548", size = 44614, upload-time = "2025-08-25T13:49:24.86Z" },
-]
-
-[[package]]
-name = "vim-vint"
-version = "0.3.21"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "ansicolor" },
-    { name = "chardet" },
-    { name = "pyyaml" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/9c/c7/d5fbe5f778edee83cba3aea8cc3308db327e4c161e0656e861b9cc2cb859/vim-vint-0.3.21.tar.gz", hash = "sha256:5dc59b2e5c2a746c88f5f51f3fafea3d639c6b0fdbb116bb74af27bf1c820d97", size = 65889, upload-time = "2019-05-13T23:05:01.995Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/c1/57/b174313406c08fb5a4327e9f288ead04503c00d23c4f1765d88ca451977a/vim_vint-0.3.21-py2.py3-none-any.whl", hash = "sha256:61357ebbb41e909e194a4187419ad72bde9e67cc12eb13b31c578866b99d45c0", size = 89165, upload-time = "2019-05-13T23:05:00.001Z" },
 ]
 
 [[package]]
