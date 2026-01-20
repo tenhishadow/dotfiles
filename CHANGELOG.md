@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.4](https://github.com/tenhishadow/dotfiles/compare/v1.6.3...v1.6.4) (2026-01-20)
+
+
+### Features
+
+* jan-2026 ([#105](https://github.com/tenhishadow/dotfiles/issues/105)) ([7ad61e2](https://github.com/tenhishadow/dotfiles/commit/7ad61e2ebe2dfb50b699fc63c7af57c3d0c884c8))
+
 ## [1.6.3](https://github.com/tenhishadow/dotfiles/compare/v1.6.2...v1.6.3) (2026-01-16)
 
 
