@@ -12,21 +12,22 @@ tasks:
     status:
       - sh -c 'type -P uv'
     cmds:
-      - task: deps-os:arch
-      - task: deps-os:unsupported
-  deps-os:arch:
-    internal: true
-    status:
-      - ! grep -q Arch /etc/*release*
-    cmd: >-
-      sudo pacman -Sy --noconfirm {{.DEPS_OS_ARCHLINUX}}
-      || pacman -Sy --noconfirm {{.DEPS_OS_ARCHLINUX}}
-  deps-os:unsupported:
-    internal: true
-    status:
-      - grep -q Arch /etc/*release*
-    cmds:
-      - echo OS is not supported
+      - which uv
+  #     - task: deps-os:arch
+  #     - task: deps-os:unsupported
+  # deps-os:arch:
+  #   internal: true
+  #   status:
+  #     - ! grep -q Arch /etc/*release*
+  #   cmd: >-
+  #     sudo pacman -Sy --noconfirm {{.DEPS_OS_ARCHLINUX}}
+  #     || pacman -Sy --noconfirm {{.DEPS_OS_ARCHLINUX}}
+  # deps-os:unsupported:
+  #   internal: true
+  #   status:
+  #     - grep -q Arch /etc/*release*
+  #   cmds:
+  #     - echo OS is not supported
 
   deps-python:
     silent: true
