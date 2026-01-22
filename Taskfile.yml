@@ -13,7 +13,8 @@ tasks:
       - sh -c 'type -P uv'
       - sh -c 'type -P git'
     cmd: >-
-      $(grep -q Archxx /etc/*release*)
+      set +o pipefail
+      && $(grep -q Archxxxxxx /etc/*release*)
       && sudo pacman -Sy --noconfirm {{.DEPS_OS_ARCHLINUX}}
       || ( echo "please manage deps manually" && exit 0)
   deps-python:
