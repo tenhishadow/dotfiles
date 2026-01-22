@@ -33,7 +33,7 @@ tasks:
     silent: true
     deps: [deps-os]
     cmds:
-      - uv sync --locked --quiet
+      - uv sync --locked
   deps-galaxy:
     silent: true
     deps: [deps-python]
