@@ -20,7 +20,7 @@ tasks:
     silent: true
     deps: [deps-os]
     cmds:
-      - uv sync --frozen --quiet
+      - uv sync --locked --quiet
   deps-galaxy:
     silent: true
     deps: [deps-python]
