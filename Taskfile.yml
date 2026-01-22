@@ -32,8 +32,13 @@ tasks:
   deps-python:
     silent: true
     deps: [deps-os]
-    cmds:
-      - uv sync --locked
+    cmd: >-
+      uv sync
+      --locked
+      --no-build
+      --no-install-project
+      --no-dev
+      --managed-python
   deps-galaxy:
     silent: true
     deps: [deps-python]
