@@ -14,6 +14,7 @@ tasks:
       - sh -c 'type -P git'
     cmd: >-
       set +o pipefail
+      && set +e
       && $(grep -q Archxxxxxx /etc/*release*)
       && sudo pacman -Sy --noconfirm {{.DEPS_OS_ARCHLINUX}}
       || ( echo "please manage deps manually" && exit 0)
