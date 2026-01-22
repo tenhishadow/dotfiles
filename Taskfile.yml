@@ -11,24 +11,9 @@ tasks:
   deps-os:
     status:
       - $SHELL -c 'type -P uv'
-    cmds:
-      - which uv
-  #     - task: deps-os:arch
-  #     - task: deps-os:unsupported
-  # deps-os:arch:
-  #   internal: true
-  #   status:
-  #     - ! grep -q Arch /etc/*release*
-  #   cmd: >-
-  #     sudo pacman -Sy --noconfirm {{.DEPS_OS_ARCHLINUX}}
-  #     || pacman -Sy --noconfirm {{.DEPS_OS_ARCHLINUX}}
-  # deps-os:unsupported:
-  #   internal: true
-  #   status:
-  #     - grep -q Arch /etc/*release*
-  #   cmds:
-  #     - echo OS is not supported
-
+    cmd: >-
+      sudo pacman -Sy --noconfirm {{.DEPS_OS_ARCHLINUX}}
+      || pacman -Sy --noconfirm {{.DEPS_OS_ARCHLINUX}}
   deps-python:
     silent: true
     deps: [deps-os]
@@ -44,10 +29,10 @@ tasks:
     deps: [deps-python]
     cmds:
       - "uv run ansible-galaxy install -r requirements.yml"
-
   deps-upgrade:
     cmds:
       - uv sync --upgrade
+
   lint:
     deps: [deps-python]
     cmds:
