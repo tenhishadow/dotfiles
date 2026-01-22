@@ -1,12 +1,12 @@
 [project]
+requires-python = ">=3.14"
 name = "dotfiles"
 version = "1.6.4"
 dependencies = [
     "ansible-lint",
     "ansible",
-    "jmespath",
-    "vim-vint",
-    "yamllint",
+    "mitogen",
+    "jmespath"
 ]
 
 [tool.uv]
