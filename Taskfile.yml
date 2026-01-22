@@ -10,7 +10,7 @@ vars:
 tasks:
   deps-os:
     status:
-      - sh -c 'type -P uv'
+      - $SHELL -c 'type -P uv'
     cmds:
       - which uv
   #     - task: deps-os:arch
@@ -39,6 +39,7 @@ tasks:
     deps: [deps-python]
     cmds:
       - "uv run ansible-galaxy install -r requirements.yml"
+
   deps-upgrade:
     cmds:
       - uv sync --upgrade
