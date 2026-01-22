@@ -11,11 +11,23 @@ tasks:
   deps-os:
     status:
       - sh -c 'type -P uv'
+    cmds:
+      - task: deps-os:arch
+      - task: deps-os:unsupported
+  deps-os:arch:
+    internal: true
+    status:
+      - grep -q Arch /etc/*release*
     cmd: >-
-      bash -xc '
-      $(grep -q Arch /etc/*release*)
-      && sudo pacman -Sy --noconfirm {{.DEPS_OS_ARCHLINUX}}
-      || ( echo "please manage deps manually" && exit 0)'
+      sudo pacman -Sy --noconfirm {{.DEPS_OS_ARCHLINUX}}
+      || pacman -Sy --noconfirm {{.DEPS_OS_ARCHLINUX}}
+  deps-os:unsupported:
+    internal: true
+    status:
+      - ! grep -q Arch /etc/*release*
+    cmds:
+      - echo OS is not supported
+
   deps-python:
     silent: true
     deps: [deps-os]
