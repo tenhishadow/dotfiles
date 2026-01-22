@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.5](https://github.com/tenhishadow/dotfiles/compare/v1.6.4...v1.6.5) (2026-01-22)
+
+
+### Features
+
+* mitogen ([#107](https://github.com/tenhishadow/dotfiles/issues/107)) ([f14206b](https://github.com/tenhishadow/dotfiles/commit/f14206baeace1323fb590e76be56a8f7a36c0913))
+
 ## [1.6.4](https://github.com/tenhishadow/dotfiles/compare/v1.6.3...v1.6.4) (2026-01-20)
 
 
