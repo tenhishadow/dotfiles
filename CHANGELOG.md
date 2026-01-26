@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.6](https://github.com/tenhishadow/dotfiles/compare/v1.6.5...v1.6.6) (2026-01-26)
+
+
+### Features
+
+* upgrade deps ([#109](https://github.com/tenhishadow/dotfiles/issues/109)) ([0a55437](https://github.com/tenhishadow/dotfiles/commit/0a5543718e2fe96bec46bad3c90425ad35b68414))
+
 ## [1.6.5](https://github.com/tenhishadow/dotfiles/compare/v1.6.4...v1.6.5) (2026-01-22)
 
 
