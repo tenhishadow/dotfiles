@@ -33,6 +33,7 @@ tasks:
   deps-upgrade:
     cmds:
       - uv sync --upgrade
+      - nvim --headless "+Lazy! sync" +qa
 
   lint:
     deps: [deps-python]
