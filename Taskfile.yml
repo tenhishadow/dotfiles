@@ -4,7 +4,7 @@ version: "3"
 
 vars:
   RUN_PLAYBOOK: "uv run ansible-playbook playbook_install.yml {{.CLI_ARGS}}"
-  DEPS_OS_ARCHLINUX: "uv git"
+  DEPS_OS_ARCHLINUX: "pacman -Sy --noconfirm --needed --noprogressbar uv git"
   MITOGEN_VARS: "ANSIBLE_STRATEGY=serverscom.mitogen.mitogen_linear"
 
 tasks:
@@ -12,8 +12,8 @@ tasks:
     status:
       - $SHELL -c 'type -P uv'
     cmd: >-
-      sudo pacman -Sy --noconfirm {{.DEPS_OS_ARCHLINUX}}
-      || pacman -Sy --noconfirm {{.DEPS_OS_ARCHLINUX}}
+      {{.DEPS_OS_ARCHLINUX}}
+      || sudo {{.DEPS_OS_ARCHLINUX}}
   deps-python:
     silent: true
     deps: [deps-os]
@@ -24,6 +24,7 @@ tasks:
       --no-install-project
       --no-dev
       --managed-python
+      --quiet
   deps-galaxy:
     silent: true
     deps: [deps-python]
@@ -32,6 +33,7 @@ tasks:
   deps-upgrade:
     cmds:
       - uv sync --upgrade
+      - nvim --headless "+Lazy! sync" +qa
 
   lint:
     deps: [deps-python]
