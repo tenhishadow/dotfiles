@@ -183,7 +183,32 @@ else
   TS_SERVER = "tsserver"
 end
 
-local SYSTEMD_SERVER = "systemd_lsp"  -- modern name in nvim-lspconfig
+-- systemd server name changed in some nvim-lspconfig versions
+local SYSTEMD_SERVER
+if has_new_lsp then
+  SYSTEMD_SERVER = "systemd_lsp"
+elseif has_lspconfig and lspconfig and lspconfig.systemd_lsp then
+  SYSTEMD_SERVER = "systemd_lsp"
+elseif has_lspconfig and lspconfig and lspconfig.systemd_ls then
+  SYSTEMD_SERVER = "systemd_ls"
+else
+  SYSTEMD_SERVER = "systemd_lsp"
+end
+
+local function lsp_dirname(path)
+  if vim.fs and vim.fs.dirname then
+    return vim.fs.dirname(path)
+  end
+  return vim.fn.fnamemodify(path, ":p:h")
+end
+
+local function buf_dir(bufnr)
+  local name = vim.api.nvim_buf_get_name(bufnr)
+  if name == "" then
+    return nil
+  end
+  return lsp_dirname(name)
+end
 
 ----------------------------------------------------------------------
 -- SchemaStore (optional, for JSON/YAML schemas)
@@ -351,7 +376,22 @@ end
 -- Systemd unit files
 ----------------------------------------------------------------------
 if has_any("systemd-language-server") then
-  add_server(SYSTEMD_SERVER)
+  local systemd_root_dir
+  if has_new_lsp then
+    systemd_root_dir = function(bufnr, on_dir)
+      on_dir(buf_dir(bufnr))
+    end
+  else
+    systemd_root_dir = function(fname)
+      return lsp_dirname(fname)
+    end
+  end
+
+  add_server(SYSTEMD_SERVER, {
+    cmd = { "systemd-language-server" },
+    filetypes = { "systemd" },
+    root_dir = systemd_root_dir,
+  })
 end
 
 ----------------------------------------------------------------------

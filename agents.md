@@ -167,5 +167,5 @@ The `dotfiles/` directory is the payload that the playbook links into `$HOME`.
 ## Tests and validation
 Required:
 - Neovim config validation: `go-task nvim` (treat as the required test for all Neovim-related changes).
-  - Runs a headless smoke suite in `tests/smoke.lua` that checks filetype detection, LSP attach (when binaries exist), and basic format/lint hooks.
-  - Test fixtures live under `.test/nvim/` and are read by the smoke suite (keep fixtures in sync with `tests/smoke.lua`).
+  - Runs a headless smoke suite in `.test/nvim/smoke.lua` that checks filetype detection, LSP attach (when binaries exist), and basic format/lint hooks.
+  - Test fixtures live under `.test/nvim/` and are read by the smoke suite (keep fixtures in sync with `.test/nvim/smoke.lua`).
