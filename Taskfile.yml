@@ -49,7 +49,7 @@ tasks:
   default:
     deps: [deps-galaxy]
     cmd: "{{.MITOGEN_VARS}} {{.RUN_PLAYBOOK}}"
-  nvim:
+  test:nvim:
     deps: [default]
     cmds:
       - nvim --headless "+Lazy! restore" +qa

@@ -15,7 +15,7 @@ This repository is a self-contained dotfiles installer that uses Ansible to plac
 - `deps-galaxy` installs Ansible collections from `requirements.yml`.
 - `default` runs the playbook via `uv run ansible-playbook playbook_install.yml`, with Mitogen enabled by setting `ANSIBLE_STRATEGY=serverscom.mitogen.mitogen_linear`.
 - `lint` runs `ansible-lint` inside the `uv` environment.
-- `nvim` runs the playbook and then performs Neovim health checks and Lazy plugin restore.
+- `test:nvim` runs the playbook and then performs Neovim health checks and Lazy plugin restore.
 
 Key dependency sources:
 - `pyproject.toml` defines Python dependencies: `ansible`, `ansible-lint`, `mitogen`, `jmespath`.
@@ -161,11 +161,10 @@ The `dotfiles/` directory is the payload that the playbook links into `$HOME`.
 - Install/refresh: `go-task` (runs deps + playbook).
 - Lint Ansible: `task lint`.
 - Clean local caches: `task clear`.
-- Refresh Neovim plugins and health (plus smoke tests): `task nvim`.
-- Open Neovim interactively after install: `task nvim-open`.
+- Refresh Neovim plugins and health (plus smoke tests): `task test:nvim`.
 
 ## Tests and validation
 Required:
-- Neovim config validation: `go-task nvim` (treat as the required test for all Neovim-related changes).
+- Neovim config validation: `go-task test:nvim` (treat as the required test for all Neovim-related changes).
   - Runs a headless smoke suite in `.test/nvim/smoke.lua` that checks filetype detection, LSP attach (when binaries exist), and basic format/lint hooks.
   - Test fixtures live under `.test/nvim/` and are read by the smoke suite (keep fixtures in sync with `.test/nvim/smoke.lua`).
