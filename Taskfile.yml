@@ -52,7 +52,11 @@ tasks:
   nvim:
     deps: [default]
     cmds:
+      - test -d .test/nvim
       - nvim --headless "+Lazy! restore" +qa
       - nvim --headless "+checkhealth" +qa
       - nvim --headless "+checkhealth vim.lsp" +qa
-      - nvim
+      - nvim --headless "+lua dofile('tests/smoke.lua')"
+  nvim-open:
+    deps: [default]
+    cmd: nvim
