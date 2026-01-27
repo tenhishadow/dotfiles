@@ -57,6 +57,3 @@ tasks:
       - nvim --headless "+checkhealth" +qa
       - nvim --headless "+checkhealth vim.lsp" +qa
       - nvim --headless "+lua dofile('tests/smoke.lua')"
-  nvim-open:
-    deps: [default]
-    cmd: nvim
