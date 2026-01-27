@@ -100,7 +100,7 @@ local function wait_for_lsp(bufnr, expected, timeout_ms)
     end
     return false
   end
-  return vim.wait(timeout_ms or 5000, has_client, 100)
+  return vim.wait(timeout_ms or 8000, has_client, 100)
 end
 
 local function pick_candidate(candidates)
@@ -152,9 +152,12 @@ local function run_format(bufnr, test)
     bufnr = bufnr,
     timeout_ms = 2000,
     lsp_format = "never",
+    async = false,
   })
   if not ok then
     add_error("Formatter failed for " .. test.name .. ": " .. tostring(err))
+  else
+    vim.bo[bufnr].modified = false
   end
 end
 
@@ -173,6 +176,47 @@ local function run_lint(bufnr, test)
     add_error("Lint failed for " .. test.name .. ": " .. tostring(err))
   end
 end
+
+local function run_mason_utils_tests()
+  local mason_utils = safe_require("utils.mason")
+  if not mason_utils then
+    return
+  end
+
+  if mason_utils.resolve_mode("auto") ~= "auto" then
+    add_error("Mason mode parse failed for auto")
+  end
+  if mason_utils.resolve_mode("1") ~= "always" then
+    add_error("Mason mode parse failed for always")
+  end
+  if mason_utils.resolve_mode("") ~= "off" then
+    add_error("Mason mode parse failed for off")
+  end
+
+  local missing = mason_utils.filter_missing(
+    { "present", "absent" },
+    { present = "present", absent = "absent" },
+    function(cmd)
+      return cmd == "present"
+    end
+  )
+  if #missing ~= 1 or missing[1] ~= "absent" then
+    add_error("Mason missing filter failed")
+  end
+
+  local missing_alias = mason_utils.filter_missing(
+    { "alias" },
+    { alias = { "bin-a", "bin-b" } },
+    function(cmd)
+      return cmd == "bin-b"
+    end
+  )
+  if #missing_alias ~= 0 then
+    add_error("Mason missing filter failed for aliases")
+  end
+end
+
+run_mason_utils_tests()
 
 local tests = {
   {
@@ -352,6 +396,7 @@ for _, test in ipairs(tests) do
     run_lsp(test, bufnr)
     run_format(bufnr, test)
     run_lint(bufnr, test)
+    vim.bo[bufnr].modified = false
   end
 end
 

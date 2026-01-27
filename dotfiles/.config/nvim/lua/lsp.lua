@@ -379,7 +379,10 @@ if has_any("systemd-language-server") then
   local systemd_root_dir
   if has_new_lsp then
     systemd_root_dir = function(bufnr, on_dir)
-      on_dir(buf_dir(bufnr))
+      local root = buf_dir(bufnr)
+      if root then
+        on_dir(root)
+      end
     end
   else
     systemd_root_dir = function(fname)

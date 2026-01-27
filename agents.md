@@ -126,8 +126,12 @@ The `dotfiles/` directory is the payload that the playbook links into `$HOME`.
 
 ### LSP tooling installation (lua/plugins/lsp.lua)
 - Uses `mason.nvim`, `mason-lspconfig`, and `mason-tool-installer`.
-- `mason-lspconfig` installs a curated list of servers and leaves enablement to `lua/lsp.lua`.
-- `mason-tool-installer` installs a large set of CLI tools (formatters, linters, scanners) on startup.
+- Auto-install via Mason is **disabled by default**.
+- `NVIM_USE_MASON=auto` installs **only missing** tools/servers and keeps system binaries first on `$PATH`.
+- `NVIM_USE_MASON=1` (or `always`) enables full Mason installs and prefers Mason binaries on `$PATH`.
+- `mason-lspconfig` installs a curated list of servers and leaves enablement to `lua/lsp.lua` when Mason is enabled.
+- `mason-tool-installer` installs a large set of CLI tools (formatters, linters, scanners) on startup when Mason is enabled.
+- `mason-nvim-dap` (debug adapters) follows the same `NVIM_USE_MASON` modes and only installs missing `delve` in `auto`.
 
 ### Formatting and linting
 - `plugins/format.lua` configures `conform.nvim` with format-on-save and per-filetype formatters.
@@ -154,7 +158,7 @@ The `dotfiles/` directory is the payload that the playbook links into `$HOME`.
 ## Operational notes and side effects
 - Symlinks are **forced**, so existing files at the destination are replaced.
 - Cron jobs are installed only if `cron` is available (errors are ignored otherwise).
-- Neovim runs can trigger large tool installations via Mason on first use.
+- Neovim runs can trigger large tool installations via Mason only when `NVIM_USE_MASON` is set.
 - The repo is optimized for Arch Linux defaults (pacman in `deps-os`).
 
 ## Common workflows
