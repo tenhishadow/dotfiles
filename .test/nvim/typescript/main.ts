@@ -1,1 +1,5 @@
-const x: number = 1
+function foo(): number {
+  return 1
+}
+
+const y = foo()

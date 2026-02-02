@@ -1,1 +1,2 @@
-print("smoke")
+local foo = 42
+print(foo)

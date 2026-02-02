@@ -40,12 +40,12 @@ repos:
     hooks:
       - id: zizmor
         args: ["-c", ".zizmor.yml"]
-  - repo: local
-    hooks:
-      - id: yaml-prettier
-        name: run prettier
-        language: system
-        files: ^.*$
-        types_or: [yaml]
-        entry: |
-          bash -c 'prettier "${@}" --write'
+  # - repo: local
+  #   hooks:
+  #     - id: yaml-prettier
+  #       name: run prettier
+  #       language: system
+  #       files: ^.*$
+  #       types_or: [yaml]
+  #       entry: |
+  #         bash -c 'prettier "${@}" --write'

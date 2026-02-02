@@ -50,9 +50,20 @@ tasks:
     deps: [deps-galaxy]
     cmd: "{{.MITOGEN_VARS}} {{.RUN_PLAYBOOK}}"
   test:nvim:
-    deps: [default]
+    env:
+      XDG_CONFIG_HOME: "{{.PWD}}/.test/nvim/.config"
+      XDG_DATA_HOME: "{{.PWD}}/.test/nvim/.data"
+      XDG_STATE_HOME: "{{.PWD}}/.test/nvim/.state"
+      XDG_CACHE_HOME: "{{.PWD}}/.test/nvim/.cache"
+      GOENV: "{{.PWD}}/.test/nvim/.state/go/env"
+      NVIM_TS_INSTALL: "auto"
+      NVIM_TS_TIMEOUT_MS: "120000"
     cmds:
-      - nvim --headless "+Lazy! restore" +qa
-      - nvim --headless "+checkhealth" +qa
-      - nvim --headless "+checkhealth vim.lsp" +qa
-      - nvim --headless "+lua dofile('.test/nvim/smoke.lua')"
+      - rm -rf .test/nvim/.config/nvim
+      - mkdir -p .test/nvim/.config .test/nvim/.data .test/nvim/.state .test/nvim/.cache
+      - cp -a dotfiles/.config/nvim .test/nvim/.config/
+      - timeout 300s nvim --headless "+Lazy! restore" +qa
+      - timeout 180s nvim --headless "+lua dofile('.test/nvim/treesitter_install.lua')" +qa
+      - timeout 120s nvim --headless "+checkhealth" +qa
+      - timeout 120s nvim --headless "+checkhealth vim.lsp" +qa
+      - timeout 120s nvim --headless "+lua dofile('.test/nvim/smoke.lua')"

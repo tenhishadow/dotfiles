@@ -15,7 +15,7 @@ This repository is a self-contained dotfiles installer that uses Ansible to plac
 - `deps-galaxy` installs Ansible collections from `requirements.yml`.
 - `default` runs the playbook via `uv run ansible-playbook playbook_install.yml`, with Mitogen enabled by setting `ANSIBLE_STRATEGY=serverscom.mitogen.mitogen_linear`.
 - `lint` runs `ansible-lint` inside the `uv` environment.
-- `test:nvim` runs the playbook and then performs Neovim health checks and Lazy plugin restore.
+- `test:nvim` copies `dotfiles/.config/nvim` into `.test/nvim/.config/nvim`, then runs headless Neovim checks using the isolated XDG dirs under `.test/nvim/`. It restores Lazy plugins, installs Tree-sitter parsers, and executes the smoke suite. Each step is wrapped with a timeout to avoid hangs.
 
 Key dependency sources:
 - `pyproject.toml` defines Python dependencies: `ansible`, `ansible-lint`, `mitogen`, `jmespath`.
@@ -170,5 +170,8 @@ The `dotfiles/` directory is the payload that the playbook links into `$HOME`.
 ## Tests and validation
 Required:
 - Neovim config validation: `go-task test:nvim` (treat as the required test for all Neovim-related changes).
-  - Runs a headless smoke suite in `.test/nvim/smoke.lua` that checks filetype detection, LSP attach (when binaries exist), and basic format/lint hooks.
+  - Runs fully headless with isolated XDG dirs: `.test/nvim/.config` (config copy), `.test/nvim/.data`, `.test/nvim/.state`, `.test/nvim/.cache` (so user config/state is not touched).
+  - Executes Lazy plugin restore, Tree-sitter install, `:checkhealth`, `:checkhealth vim.lsp`, then the smoke suite in `.test/nvim/smoke.lua`.
+  - The smoke suite checks plugin commands, filetype detection, LSP attach + keymaps + hover requests (when binaries exist), Tree-sitter parsers for core filetypes, and basic format/lint hooks.
+  - Tree-sitter install is driven by `.test/nvim/treesitter_install.lua` and controlled by `NVIM_TS_INSTALL` / `NVIM_TS_TIMEOUT_MS`. If install fails, the smoke suite logs skips instead of failing so the test remains deterministic.
   - Test fixtures live under `.test/nvim/` and are read by the smoke suite (keep fixtures in sync with `.test/nvim/smoke.lua`).
