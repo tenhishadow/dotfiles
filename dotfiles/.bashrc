@@ -71,6 +71,14 @@ function duu() {
     du -sm '{}' \; |
     sort -n
 }
+# shellcheck disable=SC2317  # Don't warn about unreachable commands in this function
+function duuh() {
+  find . \
+    -maxdepth 1 \
+    -exec \
+    du -sh '{}' \; |
+    sort -h
+}
 
 # AWS: user/account-id
 function aws-whoami() {
