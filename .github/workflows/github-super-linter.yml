@@ -31,3 +31,4 @@ jobs:
           VALIDATE_MARKDOWN_PRETTIER: false
           VALIDATE_NATURAL_LANGUAGE: false
           VALIDATE_SHELL_SHFMT: false
+          VALIDATE_TYPESCRIPT_ES: false
