@@ -3,6 +3,9 @@
 ## Purpose and scope
 This repository is a self-contained dotfiles installer that uses Ansible to place symlinks into the current user's home directory. The canonical files live under `dotfiles/`, and the playbook builds a deterministic, repeatable setup for shell, editor, terminal, and CLI tooling. The default workflow is designed for a local workstation (no SSH, no sudo by default).
 
+## File maintenance rules
+- For `agents.md`, keep new and edited lines at 80 characters or fewer.
+
 ## Primary entry points
 - `Taskfile.yml` is the main task runner. Running `go-task` (default task) installs Python deps via `uv`, installs Ansible Galaxy collections, then runs the playbook with Mitogen enabled.
 - `playbook_install.yml` is the single Ansible playbook that applies all dotfile changes.
@@ -174,4 +177,7 @@ Required:
   - Executes Lazy plugin restore, Tree-sitter install, `:checkhealth`, `:checkhealth vim.lsp`, then the smoke suite in `.test/nvim/smoke.lua`.
   - The smoke suite checks plugin commands, filetype detection, LSP attach + keymaps + hover requests (when binaries exist), Tree-sitter parsers for core filetypes, and basic format/lint hooks.
   - Tree-sitter install is driven by `.test/nvim/treesitter_install.lua` and controlled by `NVIM_TS_INSTALL` / `NVIM_TS_TIMEOUT_MS`. If install fails, the smoke suite logs skips instead of failing so the test remains deterministic.
-  - Test fixtures live under `.test/nvim/` and are read by the smoke suite (keep fixtures in sync with `.test/nvim/smoke.lua`).
+  - Test fixtures live under `.test/nvim/` and are read by the smoke suite
+    (keep fixtures in sync with `.test/nvim/smoke.lua`).
+  - `terraform` and `terragrunt` fixtures must include a `.terraform` root
+    marker directory for smoke checks.
