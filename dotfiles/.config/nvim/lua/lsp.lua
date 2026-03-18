@@ -2,6 +2,7 @@
 -- LSP server configuration, diagnostics and keymaps.
 
 local M = {}
+local executable_utils = require("utils.executable")
 
 ----------------------------------------------------------------------
 -- Detect whether the new Neovim 0.11+ LSP API is available
@@ -157,15 +158,7 @@ end
 -- Helper: check whether any of the given binaries exist in $PATH
 ----------------------------------------------------------------------
 local function has_any(cmds)
-  if type(cmds) == "string" then
-    cmds = { cmds }
-  end
-  for _, cmd in ipairs(cmds) do
-    if vim.fn.executable(cmd) == 1 then
-      return true
-    end
-  end
-  return false
+  return executable_utils.has_any(cmds)
 end
 
 ----------------------------------------------------------------------

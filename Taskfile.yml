@@ -38,8 +38,8 @@ tasks:
   lint:
     deps: [deps-python]
     cmds:
-      - "uv run ansible-lint"
-      - docker run -e LOG_LEVEL=ERROR -e RUN_LOCAL=true -v $(pwd):/tmp/lint --rm ghcr.io/super-linter/super-linter:latest
+      - "uv run ansible-lint --exclude .test/"
+      - docker run -e LOG_LEVEL=ERROR -e RUN_LOCAL=true -e FILTER_REGEX_EXCLUDE='(^|/)\.test/nvim/' -v $(pwd):/tmp/lint --rm ghcr.io/super-linter/super-linter:v8.5.0
   clear:
     cmd: >-
       rm -rf

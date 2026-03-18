@@ -394,5 +394,8 @@ if test -n "$KITTY_INSTALLATION_DIR" -a -e "$KITTY_INSTALLATION_DIR/shell-integr
 [[ -x $(type -P go-task) ]] &&
   eval "$(go-task --completion bash)"
 
+[[ -x "${HOME}/.bashrc.d/.env" ]] &&
+  source "${HOME}/.bashrc.d/.env"
+
 ## final PATH export
 export PATH

@@ -20,13 +20,14 @@ local function safe_require(name)
   return nil
 end
 
-local function has_exe(cmd)
-  return vim.fn.executable(cmd) == 1
-end
+local executable_utils = safe_require("utils.executable")
 
 local function has_any(cmds)
+  if executable_utils and executable_utils.has_any then
+    return executable_utils.has_any(cmds)
+  end
   for _, cmd in ipairs(cmds or {}) do
-    if has_exe(cmd) then
+    if vim.fn.executable(cmd) == 1 then
       return true
     end
   end
@@ -265,7 +266,7 @@ local function run_lsp(test, bufnr)
   end
   local cand = pick_candidate(test.lsp.candidates)
   if not cand then
-    log("LSP: skip " .. test.name .. " (no binaries)")
+    log("LSP: skip " .. test.name .. " (no healthy binaries)")
     return
   end
   local expected = cand.servers or {}
@@ -473,7 +474,40 @@ local function run_mason_utils_tests()
   end
 end
 
+local function run_executable_utils_tests()
+  if not executable_utils or not executable_utils.command_available then
+    return
+  end
+
+  local available = executable_utils.command_available("present", {
+    is_executable = function(cmd)
+      return cmd == "present"
+    end,
+    runner = function(cmd, probe)
+      return cmd == "present" and probe[1] == "--version"
+    end,
+    probe = { "--version" },
+  })
+  if not available then
+    add_error("Executable availability probe failed")
+  end
+
+  local unavailable = executable_utils.command_available("broken", {
+    is_executable = function(cmd)
+      return cmd == "broken"
+    end,
+    runner = function()
+      return false
+    end,
+    probe = { "--version" },
+  })
+  if unavailable then
+    add_error("Executable availability accepted a broken command")
+  end
+end
+
 run_mason_utils_tests()
+run_executable_utils_tests()
 run_plugin_checks()
 
 local tests = {
