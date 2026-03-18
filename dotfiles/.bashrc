@@ -388,9 +388,11 @@ if test -n "$KITTY_INSTALLATION_DIR" -a -e "$KITTY_INSTALLATION_DIR/shell-integr
 # shellcheck disable=SC1090
 [[ -x "$(type -P checkov)" ]] &&
   source <(register-python-argcomplete checkov)
-## rbenv
+## go-task
 [[ -x $(type -P task) ]] &&
   eval "$(task --completion bash)"
+[[ -x $(type -P go-task) ]] &&
+  eval "$(go-task --completion bash)"
 
 ## final PATH export
 export PATH
