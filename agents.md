@@ -17,7 +17,10 @@ This repository is a self-contained dotfiles installer that uses Ansible to plac
 - `deps-python` runs `uv sync` in locked mode (no dev deps, no project install) to create the Ansible runtime.
 - `deps-galaxy` installs Ansible collections from `requirements.yml`.
 - `default` runs the playbook via `uv run ansible-playbook playbook_install.yml`, with Mitogen enabled by setting `ANSIBLE_STRATEGY=serverscom.mitogen.mitogen_linear`.
-- `lint` runs `ansible-lint` inside the `uv` environment.
+- `lint` runs `ansible-lint` inside the `uv` environment while excluding
+  `.test/`, then runs a pinned `super-linter` Docker image with
+  `.test/nvim` fixtures excluded from repo-wide linting.
+  Note: `task lint` requires Docker for the `super-linter` stage.
 - `test:nvim` copies `dotfiles/.config/nvim` into `.test/nvim/.config/nvim`, then runs headless Neovim checks using the isolated XDG dirs under `.test/nvim/`. It restores Lazy plugins, installs Tree-sitter parsers, and executes the smoke suite. Each step is wrapped with a timeout to avoid hangs.
 
 Key dependency sources:
@@ -123,7 +126,11 @@ The `dotfiles/` directory is the payload that the playbook links into `$HOME`.
 - Builds capabilities from `blink.cmp` when present, otherwise from `cmp_nvim_lsp`.
 - Centralized diagnostics setup (signs, virtual text off, rounded borders).
 - `on_attach` sets LSP keymaps and enables inlay hints only for whitelisted server+filetype pairs.
-- Server enablement is gated on executable presence (`has_any`), so only installed language servers are configured.
+- Server enablement is gated on executable availability (`has_any`), so
+  only usable language servers are configured.
+- Known fragile wrappers such as `systemd-language-server` are probed
+  before enablement so a broken package in `$PATH` does not spam LSP
+  startup failures.
 - Uses SchemaStore (`schemastore.nvim`) for JSON/YAML schemas when available.
 - Handles TS server renames (`tsserver` vs `ts_ls`) based on runtime.
 
@@ -166,7 +173,7 @@ The `dotfiles/` directory is the payload that the playbook links into `$HOME`.
 
 ## Common workflows
 - Install/refresh: `go-task` (runs deps + playbook).
-- Lint Ansible: `task lint`.
+- Lint repo: `task lint`.
 - Clean local caches: `task clear`.
 - Refresh Neovim plugins and health (plus smoke tests): `task test:nvim`.
 
@@ -175,7 +182,9 @@ Required:
 - Neovim config validation: `go-task test:nvim` (treat as the required test for all Neovim-related changes).
   - Runs fully headless with isolated XDG dirs: `.test/nvim/.config` (config copy), `.test/nvim/.data`, `.test/nvim/.state`, `.test/nvim/.cache` (so user config/state is not touched).
   - Executes Lazy plugin restore, Tree-sitter install, `:checkhealth`, `:checkhealth vim.lsp`, then the smoke suite in `.test/nvim/smoke.lua`.
-  - The smoke suite checks plugin commands, filetype detection, LSP attach + keymaps + hover requests (when binaries exist), Tree-sitter parsers for core filetypes, and basic format/lint hooks.
+  - The smoke suite checks plugin commands, filetype detection, LSP
+    attach + keymaps + hover requests (when healthy binaries exist),
+    Tree-sitter parsers for core filetypes, and basic format/lint hooks.
   - Tree-sitter install is driven by `.test/nvim/treesitter_install.lua` and controlled by `NVIM_TS_INSTALL` / `NVIM_TS_TIMEOUT_MS`. If install fails, the smoke suite logs skips instead of failing so the test remains deterministic.
   - Test fixtures live under `.test/nvim/` and are read by the smoke suite
     (keep fixtures in sync with `.test/nvim/smoke.lua`).

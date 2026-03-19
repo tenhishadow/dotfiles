@@ -1,4 +1,6 @@
 .venv
+.ansible
+.collections
 .task/*
 .test/nvim/.config/
 .test/nvim/.data/
