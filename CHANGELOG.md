@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.7](https://github.com/tenhishadow/dotfiles/compare/v1.6.6...v1.6.7) (2026-03-19)
+
+
+### Features
+
+* add headless neovim smoke tests and harden repo tooling ([#111](https://github.com/tenhishadow/dotfiles/issues/111)) ([73f2d05](https://github.com/tenhishadow/dotfiles/commit/73f2d05fd46ba391b07a4f431045e2351478581e))
+
 ## [1.6.6](https://github.com/tenhishadow/dotfiles/compare/v1.6.5...v1.6.6) (2026-01-26)
 
 
