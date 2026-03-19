@@ -39,8 +39,11 @@ tasks:
     deps: [deps-python]
     cmds:
       - "uv run ansible-lint --exclude .test/"
+  superlinter:
+    cmds:
       - >-
         docker run
+        --rm
         -e LOG_LEVEL=ERROR
         -e RUN_LOCAL=true
         -e USE_FIND_ALGORITHM=true
@@ -56,7 +59,6 @@ tasks:
         -e VALIDATE_TRIVY=false
         -e FILTER_REGEX_EXCLUDE='(^|/)\.test/nvim/'
         -v $(pwd):/tmp/lint
-        --rm
         ghcr.io/super-linter/super-linter:v8.5.0
   clear:
     cmd: >-
