@@ -43,6 +43,8 @@ tasks:
         docker run
         -e LOG_LEVEL=ERROR
         -e RUN_LOCAL=true
+        -e USE_FIND_ALGORITHM=true
+        -e VALIDATE_ALL_CODEBASE=true
         -e VALIDATE_BIOME_FORMAT=false
         -e VALIDATE_EDITORCONFIG=false
         -e VALIDATE_GITHUB_ACTIONS_ZIZMOR=false
