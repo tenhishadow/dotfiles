@@ -78,25 +78,31 @@ return {
     },
   },
   config = function()
+    local mason_utils = require "utils.mason"
+    local mason_mode = mason_utils.resolve_mode()
+
     local dap = require 'dap'
     local dapui = require 'dapui'
 
-    require('mason-nvim-dap').setup {
-      -- Makes a best effort to setup the various debuggers with
-      -- reasonable debug configurations
-      automatic_installation = true,
+    if mason_mode ~= "off" then
+      local ensure_installed = { "delve" }
+      if mason_mode == "auto" then
+        ensure_installed = mason_utils.filter_missing(ensure_installed, { delve = { "dlv", "delve" } })
+      end
+      require('mason-nvim-dap').setup {
+        -- Makes a best effort to setup the various debuggers with
+        -- reasonable debug configurations
+        automatic_installation = mason_mode == "always",
 
-      -- You can provide additional configuration to the handlers,
-      -- see mason-nvim-dap README for more information
-      handlers = {},
+        -- You can provide additional configuration to the handlers,
+        -- see mason-nvim-dap README for more information
+        handlers = {},
 
-      -- You'll need to check that you have the required things installed
-      -- online, please don't ask me how to install them :)
-      ensure_installed = {
-        -- Update this to ensure that you have the debuggers for the langs you want
-        'delve',
-      },
-    }
+        -- You'll need to check that you have the required things installed
+        -- online, please don't ask me how to install them :)
+        ensure_installed = ensure_installed,
+      }
+    end
 
     -- Dap UI setup
     -- For more information, see |:help nvim-dap-ui|

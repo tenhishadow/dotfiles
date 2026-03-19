@@ -8,7 +8,7 @@ Special repository for configuring dotfiles with Ansible
 ## install deps
 
 ```bash
-sudo pacman -Sy --noconfirm go-task uv git
+sudo pacman -Sy --noconfirm --needed go-task uv git
 ```
 
 ## install

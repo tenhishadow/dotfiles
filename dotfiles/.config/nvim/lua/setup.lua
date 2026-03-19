@@ -2,6 +2,12 @@
 -- Plugin manager bootstrap and configuration
 
 ----------------------------------------------------------------------
+-- Disable netrw (recommended for file explorers like neo-tree)
+----------------------------------------------------------------------
+vim.g.loaded_netrw = 1
+vim.g.loaded_netrwPlugin = 1
+
+----------------------------------------------------------------------
 -- Bootstrap lazy.nvim
 ----------------------------------------------------------------------
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"

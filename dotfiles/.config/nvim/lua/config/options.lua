@@ -12,6 +12,36 @@ vim.opt.undofile = true
 vim.opt.undodir = undodir
 
 ----------------------------------------------------------------------
+-- Ensure Mason binaries are on PATH (mode-aware)
+----------------------------------------------------------------------
+do
+  local mason_utils = require("utils.mason")
+  local mason_mode = mason_utils.resolve_mode()
+  if mason_mode ~= "off" then
+    local mason_bin = vim.fn.stdpath("data") .. "/mason/bin"
+    if vim.fn.isdirectory(mason_bin) == 1 then
+      local path = vim.env.PATH or ""
+      local sep = (vim.fn.has("win32") == 1) and ";" or ":"
+      if not string.find(path, mason_bin, 1, true) then
+        if mason_mode == "auto" then
+          if path == "" then
+            vim.env.PATH = mason_bin
+          else
+            vim.env.PATH = path .. sep .. mason_bin
+          end
+        else
+          if path == "" then
+            vim.env.PATH = mason_bin
+          else
+            vim.env.PATH = mason_bin .. sep .. path
+          end
+        end
+      end
+    end
+  end
+end
+
+----------------------------------------------------------------------
 -- Leaders (must be set before lazy / any plugins)
 ----------------------------------------------------------------------
 vim.g.mapleader = " "

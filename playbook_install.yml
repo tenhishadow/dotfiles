@@ -56,7 +56,7 @@
         job: 'nvim --headless "+Lazy! restore" +qa > ~/.nvim.log 2>&1'
         special_time: daily
       ignore_errors: true # if cron not presented
-      no_log: true # it doesnt matter
+      no_log: true # it doesn't matter
 
     - name: dotfiles | cronjob for update
       cron:

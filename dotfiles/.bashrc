@@ -71,6 +71,14 @@ function duu() {
     du -sm '{}' \; |
     sort -n
 }
+# shellcheck disable=SC2317  # Don't warn about unreachable commands in this function
+function duuh() {
+  find . \
+    -maxdepth 1 \
+    -exec \
+    du -sh '{}' \; |
+    sort -h
+}
 
 # AWS: user/account-id
 function aws-whoami() {
@@ -380,6 +388,14 @@ if test -n "$KITTY_INSTALLATION_DIR" -a -e "$KITTY_INSTALLATION_DIR/shell-integr
 # shellcheck disable=SC1090
 [[ -x "$(type -P checkov)" ]] &&
   source <(register-python-argcomplete checkov)
+## go-task
+[[ -x $(type -P task) ]] &&
+  eval "$(task --completion bash)"
+[[ -x $(type -P go-task) ]] &&
+  eval "$(go-task --completion bash)"
+
+[[ -x "${HOME}/.bashrc.d/.env" ]] &&
+  source "${HOME}/.bashrc.d/.env"
 
 ## final PATH export
 export PATH

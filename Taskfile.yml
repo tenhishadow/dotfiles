@@ -38,7 +38,28 @@ tasks:
   lint:
     deps: [deps-python]
     cmds:
-      - "uv run ansible-lint"
+      - "uv run ansible-lint --exclude .test/"
+  superlinter:
+    cmds:
+      - >-
+        docker run
+        --rm
+        -e LOG_LEVEL=ERROR
+        -e RUN_LOCAL=true
+        -e USE_FIND_ALGORITHM=true
+        -e VALIDATE_ALL_CODEBASE=true
+        -e VALIDATE_BIOME_FORMAT=false
+        -e VALIDATE_EDITORCONFIG=false
+        -e VALIDATE_GITHUB_ACTIONS_ZIZMOR=false
+        -e VALIDATE_LUA=false
+        -e VALIDATE_MARKDOWN=false
+        -e VALIDATE_MARKDOWN_PRETTIER=false
+        -e VALIDATE_NATURAL_LANGUAGE=false
+        -e VALIDATE_SHELL_SHFMT=false
+        -e VALIDATE_TRIVY=false
+        -e FILTER_REGEX_EXCLUDE='(^|/)\.test/nvim/'
+        -v $(pwd):/tmp/lint
+        ghcr.io/super-linter/super-linter:v8.5.0
   clear:
     cmd: >-
       rm -rf
@@ -49,10 +70,21 @@ tasks:
   default:
     deps: [deps-galaxy]
     cmd: "{{.MITOGEN_VARS}} {{.RUN_PLAYBOOK}}"
-  nvim:
-    deps: [default]
+  test:nvim:
+    env:
+      XDG_CONFIG_HOME: "{{.PWD}}/.test/nvim/.config"
+      XDG_DATA_HOME: "{{.PWD}}/.test/nvim/.data"
+      XDG_STATE_HOME: "{{.PWD}}/.test/nvim/.state"
+      XDG_CACHE_HOME: "{{.PWD}}/.test/nvim/.cache"
+      GOENV: "{{.PWD}}/.test/nvim/.state/go/env"
+      NVIM_TS_INSTALL: "auto"
+      NVIM_TS_TIMEOUT_MS: "120000"
     cmds:
-      - nvim --headless "+Lazy! restore" +qa
-      - nvim --headless "+checkhealth" +qa
-      - nvim --headless "+checkhealth vim.lsp" +qa
-      - nvim
+      - rm -rf .test/nvim/.config/nvim
+      - mkdir -p .test/nvim/.config .test/nvim/.data .test/nvim/.state .test/nvim/.cache
+      - cp -a dotfiles/.config/nvim .test/nvim/.config/
+      - timeout 300s nvim --headless "+Lazy! restore" +qa
+      - timeout 180s nvim --headless "+lua dofile('.test/nvim/treesitter_install.lua')" +qa
+      - timeout 120s nvim --headless "+checkhealth" +qa
+      - timeout 120s nvim --headless "+checkhealth vim.lsp" +qa
+      - timeout 120s nvim --headless "+lua dofile('.test/nvim/smoke.lua')"

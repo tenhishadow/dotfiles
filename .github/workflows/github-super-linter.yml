@@ -13,13 +13,13 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@master
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
           persist-credentials: false
 
       - name: Scan Code Base
-        uses: super-linter/super-linter/slim@v8
+        uses: super-linter/super-linter@v8.5.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VALIDATE_ALL_CODEBASE: true
@@ -31,3 +31,5 @@ jobs:
           VALIDATE_MARKDOWN_PRETTIER: false
           VALIDATE_NATURAL_LANGUAGE: false
           VALIDATE_SHELL_SHFMT: false
+          VALIDATE_TRIVY: false
+          FILTER_REGEX_EXCLUDE: (^|/)\.test/nvim/
