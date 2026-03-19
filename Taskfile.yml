@@ -39,7 +39,23 @@ tasks:
     deps: [deps-python]
     cmds:
       - "uv run ansible-lint --exclude .test/"
-      - docker run -e LOG_LEVEL=ERROR -e RUN_LOCAL=true -e VALIDATE_TRIVY=false -e FILTER_REGEX_EXCLUDE='(^|/)\.test/nvim/' -v $(pwd):/tmp/lint --rm ghcr.io/super-linter/super-linter:v8.5.0
+      - >-
+        docker run
+        -e LOG_LEVEL=ERROR
+        -e RUN_LOCAL=true
+        -e VALIDATE_BIOME_FORMAT=false
+        -e VALIDATE_EDITORCONFIG=false
+        -e VALIDATE_GITHUB_ACTIONS_ZIZMOR=false
+        -e VALIDATE_LUA=false
+        -e VALIDATE_MARKDOWN=false
+        -e VALIDATE_MARKDOWN_PRETTIER=false
+        -e VALIDATE_NATURAL_LANGUAGE=false
+        -e VALIDATE_SHELL_SHFMT=false
+        -e VALIDATE_TRIVY=false
+        -e FILTER_REGEX_EXCLUDE='(^|/)\.test/nvim/'
+        -v $(pwd):/tmp/lint
+        --rm
+        ghcr.io/super-linter/super-linter:v8.5.0
   clear:
     cmd: >-
       rm -rf

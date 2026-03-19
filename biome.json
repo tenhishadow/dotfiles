@@ -1,21 +1,12 @@
 {
-	"$schema": "https://biomejs.dev/schemas/2.3.14/schema.json",
-	"files": {
-		"ignoreUnknown": true,
-		"includes": [
-			"**",
-			"!**/.ansible",
-			"!**/.collections",
-			"!**/.git",
-			"!**/.task",
-			"!**/.test/nvim",
-			"!**/.venv",
-			"!**/__pycache__"
-		]
-	},
-	"vcs": {
-		"enabled": true,
-		"clientKind": "git",
-		"useIgnoreFile": true
-	}
+  "$schema": "https://biomejs.dev/schemas/2.3.14/schema.json",
+  "files": {
+    "ignoreUnknown": true,
+    "includes": ["**", "!**/.ansible", "!**/.collections", "!**/.git", "!**/.task", "!**/.test/nvim", "!**/.venv", "!**/__pycache__"]
+  },
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true
+  }
 }

@@ -140,7 +140,7 @@ set viminfo='100,<500,s10,h
 set hlsearch          " highlight all search matches
 set ignorecase        " ignore case in search
 set incsearch         " show search results as I type
-set lazyredraw        " no redraw wihle executing macros,...
+set lazyredraw        " no redraw while executing macros,...
 set mouse-=a          " do not use visual mode for mouse select
 set number            " show line numbers
 set redrawtime=10000  " redraw time
