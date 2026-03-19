@@ -17,10 +17,15 @@ This repository is a self-contained dotfiles installer that uses Ansible to plac
 - `deps-python` runs `uv sync` in locked mode (no dev deps, no project install) to create the Ansible runtime.
 - `deps-galaxy` installs Ansible collections from `requirements.yml`.
 - `default` runs the playbook via `uv run ansible-playbook playbook_install.yml`, with Mitogen enabled by setting `ANSIBLE_STRATEGY=serverscom.mitogen.mitogen_linear`.
-- `lint` runs `ansible-lint` inside the `uv` environment while excluding
-  `.test/`, then runs a pinned `super-linter` Docker image with
+- `lint` runs only `ansible-lint` inside the `uv` environment while
+  excluding `.test/`.
+- `superlinter` runs the pinned `super-linter` Docker image with
   `.test/nvim` fixtures excluded from repo-wide linting.
-  Note: `task lint` requires Docker for the `super-linter` stage.
+  Note: `task superlinter` requires Docker.
+- CI intentionally keeps these separate: `ansible.yml` calls `task lint`,
+  while `github-super-linter.yml` runs `super-linter` directly.
+  Do not add `super-linter` back into `task lint`, or PRs will run it
+  twice.
 - `test:nvim` copies `dotfiles/.config/nvim` into `.test/nvim/.config/nvim`, then runs headless Neovim checks using the isolated XDG dirs under `.test/nvim/`. It restores Lazy plugins, installs Tree-sitter parsers, and executes the smoke suite. Each step is wrapped with a timeout to avoid hangs.
 
 Key dependency sources:
@@ -161,9 +166,31 @@ The `dotfiles/` directory is the payload that the playbook links into `$HOME`.
 - It includes fallback logic to install plugins on first run.
 
 ## Automation and release management
-- `release-please-config.json` updates versions in `pyproject.toml` and `uv.lock` when releasing.
+- `release.yml` runs on pushes to `master` and invokes
+  `googleapis/release-please-action@v4`.
+- `release-please-config.json` uses the root package with the `simple`
+  strategy and updates `pyproject.toml` plus the `dotfiles` entry in
+  `uv.lock`.
+- `.release-please-manifest.json` stores the released version for the
+  root package.
+- Release PRs, version bumps, tags, and `CHANGELOG.md` updates are
+  owned by `release-please`. Do not hand-edit release metadata unless
+  you are intentionally repairing the release flow.
 - `renovate.json` manages dependency updates.
-- `CHANGELOG.md` is auto-maintained via release tooling.
+
+## Commit and PR guidance
+- Open PRs against `master`.
+- Prefer a clean final commit on `master`; squash merge is fine.
+- The generated changelog follows the final commit subject on `master`,
+  so placeholder subjects like `fix` create poor release notes.
+- Match existing history with descriptive, release-friendly subjects
+  such as `feature: ...`, `fix(scope): ...`, or `chore(deps): ...`.
+- Tool-generated release commits look like
+  `chore(master): release X.Y.Z (#NN)`; do not create them by hand.
+- Keep unrelated churn out of feature PRs, especially lockfile or
+  plugin updates not required by the change.
+- When a PR changes repo-wide linting or CI, verify both `task lint`
+  and `task superlinter`.
 
 ## Operational notes and side effects
 - Symlinks are **forced**, so existing files at the destination are replaced.
@@ -173,7 +200,8 @@ The `dotfiles/` directory is the payload that the playbook links into `$HOME`.
 
 ## Common workflows
 - Install/refresh: `go-task` (runs deps + playbook).
-- Lint repo: `task lint`.
+- Lint Ansible: `task lint`.
+- Lint repo with Super-linter: `task superlinter`.
 - Clean local caches: `task clear`.
 - Refresh Neovim plugins and health (plus smoke tests): `task test:nvim`.
 
