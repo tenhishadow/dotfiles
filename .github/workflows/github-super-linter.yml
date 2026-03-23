@@ -15,6 +15,7 @@ jobs:
       - name: Scan Code Base
         uses: super-linter/super-linter@v8.5.0
         env:
+          DEFAULT_BRANCH: master
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VALIDATE_ALL_CODEBASE: true
           VALIDATE_BIOME_FORMAT: false
