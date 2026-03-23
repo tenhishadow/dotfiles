@@ -1,7 +1,7 @@
 ---
-- hosts:        this_host
-  become:       false
-  connection:   local
+- hosts: this_host
+  become: false
+  connection: local
   gather_facts: true
   tasks:
     - name: check mandatory variables are defined
@@ -51,9 +51,9 @@
 
     - name: dotfiles | cronjob for nvim
       ansible.builtin.cron:
-        state:        present
-        name:         vim-plug update/upgrade
-        job:          'nvim --headless "+Lazy! restore" +qa > ~/.nvim.log 2>&1'
+        state: present
+        name: vim-plug update/upgrade
+        job: 'nvim --headless "+Lazy! restore" +qa > ~/.nvim.log 2>&1'
         special_time: daily
       ignore_errors: true # if cron not presented
       no_log: true # it doesn't matter
