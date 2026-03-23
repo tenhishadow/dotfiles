@@ -60,5 +60,22 @@ vim.opt.background = "dark"
 vim.opt.number = true             -- show absolute line numbers
 vim.opt.relativenumber = false    -- relative numbers (optional)
 
+-- Use the system clipboard when a provider is available, so yanks survive
+-- across buffers, tabs and separate Neovim instances.
+do
+  local executable = require("utils.executable")
+  local has_clipboard = executable.has_any({
+    "wl-copy",
+    "xclip",
+    "xsel",
+    "pbcopy",
+    "clip.exe",
+    "win32yank.exe",
+  })
+  if has_clipboard then
+    vim.opt.clipboard = "unnamedplus"
+  end
+end
+
 -- Diff tweaks (always add iwhite for less noise in diffs)
 vim.opt.diffopt:append("iwhite")
