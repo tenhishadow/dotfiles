@@ -33,6 +33,7 @@ tasks:
   deps-upgrade:
     cmds:
       - uv sync --upgrade
+      - pre-commit autoupdate
       - nvim --headless "+Lazy! sync" +qa
 
   lint:
