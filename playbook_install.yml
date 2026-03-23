@@ -1,18 +1,18 @@
 ---
-- hosts: this_host
-  become: false
-  connection: local
+- hosts:        this_host
+  become:       false
+  connection:   local
   gather_facts: true
   tasks:
     - name: check mandatory variables are defined
-      assert:
+      ansible.builtin.assert:
         that:
           - dotfiles_mapping is defined
       tags:
         - configs
 
     - name: manage dirs for dotfiles
-      file:
+      ansible.builtin.file:
         path: "{{ item.value.dir_path }}"
         state: directory
         mode: "{{ item.value.dir_mode }}"
@@ -30,7 +30,7 @@
         - configs
 
     - name: create symlinks for dotfiles
-      file:
+      ansible.builtin.file:
         src: "{{ item.value.src }}"
         dest: "{{ item.value.dest }}"
         force: true
@@ -42,7 +42,7 @@
         - configs
 
     - name: remove old configs/dirs
-      file:
+      ansible.builtin.file:
         path: "{{ item }}"
         state: absent
       loop: "{{ dotfiles_cleanup }}"
@@ -50,22 +50,22 @@
         - configs
 
     - name: dotfiles | cronjob for nvim
-      cron:
-        state: present
-        name: vim-plug update/upgrade
-        job: 'nvim --headless "+Lazy! restore" +qa > ~/.nvim.log 2>&1'
+      ansible.builtin.cron:
+        state:        present
+        name:         vim-plug update/upgrade
+        job:          'nvim --headless "+Lazy! restore" +qa > ~/.nvim.log 2>&1'
         special_time: daily
       ignore_errors: true # if cron not presented
       no_log: true # it doesn't matter
 
     - name: dotfiles | cronjob for update
-      cron:
+      ansible.builtin.cron:
         name: dotfiles updates
         job: "cd {{ ansible_facts.user_dir }}/.dotfiles && git pull >/dev/null 2>/dev/null"
         special_time: hourly
       ignore_errors: true # if cron not presented
 
     - name: Migrating away from .pam_environment
-      file:
+      ansible.builtin.file:
         path: "{{ ansible_facts.user_dir }}/.pam_environment"
         state: absent
