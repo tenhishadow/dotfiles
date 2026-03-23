@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.8](https://github.com/tenhishadow/dotfiles/compare/v1.6.7...v1.6.8) (2026-03-23)
+
+
+### Bug Fixes
+
+* clipboard ([#115](https://github.com/tenhishadow/dotfiles/issues/115)) ([43edf9d](https://github.com/tenhishadow/dotfiles/commit/43edf9d9f0f6b59f5132d917e445e08426736cb2))
+
 ## [1.6.7](https://github.com/tenhishadow/dotfiles/compare/v1.6.6...v1.6.7) (2026-03-19)
 
 
