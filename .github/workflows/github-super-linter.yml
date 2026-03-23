@@ -12,12 +12,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v5
-        with:
-          fetch-depth: 0
-          persist-credentials: false
-
       - name: Scan Code Base
         uses: super-linter/super-linter@v8.5.0
         env:
