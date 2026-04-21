@@ -1,0 +1,86 @@
+---
+- name: browser_policies | chromium | ensure managed directories exist
+  ansible.builtin.file:
+    path: "{{ item.managed_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  loop: "{{ browser_policies_chromium_targets }}"
+  loop_control:
+    label: "{{ item.managed_dir }}"
+  when:
+    - browser_policies_state == "present"
+    - item.enabled | default(true) | bool
+
+- name: browser_policies | chromium | write managed policy files
+  ansible.builtin.copy:
+    dest: "{{ browser_policies_chromium_target_policy_path }}"
+    content: "{{ browser_policies_chromium_rendered_policy | to_nice_json }}\n"
+    owner: root
+    group: root
+    mode: "0644"
+    backup: false
+  vars:
+    browser_policies_chromium_target_policy_filename: >-
+      {{ item.policy_filename | default(browser_policies_chromium_policy_filename) }}
+    browser_policies_chromium_target_policy_path: >-
+      {{ item.managed_dir }}/{{ browser_policies_chromium_target_policy_filename }}
+    browser_policies_chromium_effective_extension_settings: >-
+      {{
+        (
+          browser_policies_extension_lockdown_enabled | bool
+        )
+        | ternary(
+            {
+              '*': {
+                'installation_mode': 'blocked',
+                'blocked_install_message': browser_policies_extension_block_message,
+              },
+            },
+            {}
+          )
+        | combine(browser_policies_chromium_extension_settings, recursive=True)
+      }}
+    browser_policies_chromium_rendered_policy: >-
+      {{
+        browser_policies_chromium_base_policies
+        | combine(item.policies | default({}), recursive=True)
+        | combine(
+            (
+              browser_policies_chromium_effective_extension_settings | length > 0
+            )
+            | ternary(
+                {
+                  'ExtensionSettings':
+                    browser_policies_chromium_effective_extension_settings,
+                },
+                {}
+              ),
+            recursive=True
+          )
+      }}
+  loop: "{{ browser_policies_chromium_targets }}"
+  loop_control:
+    label: "{{ browser_policies_chromium_target_policy_path }}"
+  when:
+    - browser_policies_state == "present"
+    - item.enabled | default(true) | bool
+  notify: browser_policies | browser restart required
+
+- name: browser_policies | chromium | remove managed policy files
+  ansible.builtin.file:
+    path: "{{ browser_policies_chromium_target_policy_path }}"
+    state: absent
+  vars:
+    browser_policies_chromium_target_policy_filename: >-
+      {{ item.policy_filename | default(browser_policies_chromium_policy_filename) }}
+    browser_policies_chromium_target_policy_path: >-
+      {{ item.managed_dir }}/{{ browser_policies_chromium_target_policy_filename }}
+  loop: "{{ browser_policies_chromium_targets }}"
+  loop_control:
+    label: "{{ browser_policies_chromium_target_policy_path }}"
+  when:
+    - browser_policies_state == "absent"
+    - item.enabled | default(true) | bool
+  notify: browser_policies | browser restart required

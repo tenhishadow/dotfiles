@@ -2,6 +2,8 @@
 dotfiles_location: "{{ playbook_dir }}/dotfiles"
 dotfiles_dir_mode: "u=rwx,g=,o="
 dotfiles_bashrcd: "{{ ansible_facts.user_dir }}/.bashrc.d"
+# Temporary: do not enforce wildcard browser extension lockdown on this host.
+browser_policies_extension_lockdown_enabled: false
 
 dotfiles_mapping:
   bashrc:

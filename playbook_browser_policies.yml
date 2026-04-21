@@ -1,0 +1,11 @@
+---
+- hosts: this_host
+  become: true
+  connection: local
+  gather_facts: true
+  tags:
+    - browser_policies
+  roles:
+    - role: browser_policies
+      tags:
+        - browser_policies
