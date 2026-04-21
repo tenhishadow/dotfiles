@@ -13,17 +13,33 @@ browser_policies_chromium_policy_filename: "10-tenhishadow-managed.json"
 
 browser_policies_chromium_base_policies:
   PasswordManagerEnabled: false
-  # AutofillAddressEnabled: false
-  # AutofillCreditCardEnabled: false
-  # PaymentMethodQueryEnabled: false
-  # SyncDisabled: true
-  # BrowserSignin: 0
-  # MetricsReportingEnabled: false
-  # SearchSuggestEnabled: false
-  # NetworkPredictionOptions: 2
-  # BackgroundModeEnabled: false
-  # BrowserGuestModeEnabled: false
-  # DefaultBrowserSettingEnabled: false
+  AutofillAddressEnabled: false
+  AutofillCreditCardEnabled: false
+  PaymentMethodQueryEnabled: false
+  # SyncDisabled: true # something wrong with it ( app not starting )
+  BrowserSignin: 0
+  MetricsReportingEnabled: false
+  SearchSuggestEnabled: false
+  SpellCheckServiceEnabled: false
+  NetworkPredictionOptions: 2
+  BackgroundModeEnabled: false
+  BrowserGuestModeEnabled: false
+  DefaultBrowserSettingEnabled: false
+  BlockThirdPartyCookies: true
+
+  SafeBrowsingExtendedReportingEnabled: false
+  QuicAllowed: true
+  RemoteDebuggingAllowed: false
+  DefaultIdleDetectionSetting: 2
+  DefaultGeolocationSetting: 2
+  HighEfficiencyModeEnabled: true
+  HardwareAccelerationModeEnabled: true
+  # DownloadDirectory: "{{ ansible_facts.user_dir }}/Downloads" # become
+  PromptForDownloadLocation: true
+  PrivacySandboxAdMeasurementEnabled: false
+  PrivacySandboxAdTopicsEnabled: false
+  PrivacySandboxSiteEnabledAdsEnabled: false
+  PrivacySandboxPromptEnabled: false
 
 browser_policies_chromium_extension_settings: {}
 
@@ -43,6 +59,15 @@ browser_policies_chromium_targets:
       BraveStatsPingEnabled: false
       BraveWebDiscoveryEnabled: false
       BraveTalkDisabled: true
+      BraveDeAmpEnabled: true
+      BraveDebouncingEnabled: true
+      BraveReduceLanguageEnabled: true
+      BraveTrackingQueryParametersFilteringEnabled: true
+      BraveGlobalPrivacyControlEnabled: true
+      DefaultBraveAdblockSetting: 2
+      DefaultBraveFingerprintingV2Setting: 3
+      DefaultBraveHttpsUpgradeSetting: 3
+      DefaultBraveReferrersSetting: 2
 
 browser_policies_firefox_base_policies:
   DisableTelemetry: true
