@@ -40,6 +40,14 @@ browser_policies_chromium_base_policies:
   PrivacySandboxAdTopicsEnabled: false
   PrivacySandboxSiteEnabledAdsEnabled: false
   PrivacySandboxPromptEnabled: false
+  DomainReliabilityAllowed: false
+  AlternateErrorPagesEnabled: false
+  UrlKeyedAnonymizedDataCollectionEnabled: false
+  UrlKeyedMetricsAllowed: false
+  FeedbackSurveysEnabled: false
+  UserFeedbackAllowed: false
+  BasicAuthOverHttpEnabled: false
+  CacheEncryptionEnabled: true
 
 browser_policies_chromium_extension_settings: {}
 
