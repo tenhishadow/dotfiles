@@ -36,18 +36,17 @@ browser_policies_chromium_base_policies:
   HardwareAccelerationModeEnabled: true
   # DownloadDirectory: "{{ ansible_facts.user_dir }}/Downloads" # become
   PromptForDownloadLocation: true
-  PrivacySandboxAdMeasurementEnabled: false
-  PrivacySandboxAdTopicsEnabled: false
-  PrivacySandboxSiteEnabledAdsEnabled: false
   PrivacySandboxPromptEnabled: false
   DomainReliabilityAllowed: false
   AlternateErrorPagesEnabled: false
   UrlKeyedAnonymizedDataCollectionEnabled: false
-  UrlKeyedMetricsAllowed: false
   FeedbackSurveysEnabled: false
   UserFeedbackAllowed: false
   BasicAuthOverHttpEnabled: false
-  CacheEncryptionEnabled: true
+  SafeBrowsingProtectionLevel: '1'
+  DisableSafeBrowsingProceedAnyway: false
+  DefaultNotificationsSetting: 2
+  SafeBrowsingSurveysEnabled: false
 
 browser_policies_chromium_extension_settings: {}
 
