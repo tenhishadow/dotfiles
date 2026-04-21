@@ -6,6 +6,24 @@ vars:
   RUN_PLAYBOOK: "uv run ansible-playbook playbook_install.yml {{.CLI_ARGS}}"
   DEPS_OS_ARCHLINUX: "pacman -Sy --noconfirm --needed --noprogressbar uv git"
   MITOGEN_VARS: "ANSIBLE_STRATEGY=serverscom.mitogen.mitogen_linear"
+  SUPERLINTER_DOCKER_RUN: >-
+    docker run
+    --rm
+    -e LOG_LEVEL=ERROR
+    -e RUN_LOCAL=true
+    -e USE_FIND_ALGORITHM=true
+    -e VALIDATE_ALL_CODEBASE=true
+    -e VALIDATE_BIOME_FORMAT=false
+    -e VALIDATE_EDITORCONFIG=false
+    -e VALIDATE_GITHUB_ACTIONS_ZIZMOR=false
+    -e VALIDATE_LUA=false
+    -e VALIDATE_MARKDOWN=false
+    -e VALIDATE_MARKDOWN_PRETTIER=false
+    -e VALIDATE_NATURAL_LANGUAGE=false
+    -e VALIDATE_SHELL_SHFMT=false
+    -e VALIDATE_TRIVY=false
+    -e FILTER_REGEX_EXCLUDE='(^|/)\.test/nvim/'
+    -v $(pwd):/tmp/lint
 
 tasks:
   deps-os:
@@ -42,25 +60,10 @@ tasks:
       - "uv run ansible-lint --exclude .test/"
   superlinter:
     cmds:
-      - >-
-        docker run
-        --rm
-        -e LOG_LEVEL=ERROR
-        -e RUN_LOCAL=true
-        -e USE_FIND_ALGORITHM=true
-        -e VALIDATE_ALL_CODEBASE=true
-        -e VALIDATE_BIOME_FORMAT=false
-        -e VALIDATE_EDITORCONFIG=false
-        -e VALIDATE_GITHUB_ACTIONS_ZIZMOR=false
-        -e VALIDATE_LUA=false
-        -e VALIDATE_MARKDOWN=false
-        -e VALIDATE_MARKDOWN_PRETTIER=false
-        -e VALIDATE_NATURAL_LANGUAGE=false
-        -e VALIDATE_SHELL_SHFMT=false
-        -e VALIDATE_TRIVY=false
-        -e FILTER_REGEX_EXCLUDE='(^|/)\.test/nvim/'
-        -v $(pwd):/tmp/lint
-        ghcr.io/super-linter/super-linter:v8.5.0
+      - "{{.SUPERLINTER_DOCKER_RUN}} ghcr.io/super-linter/super-linter:v8.5.0"
+  superlinter:latest:
+    cmds:
+      - "{{.SUPERLINTER_DOCKER_RUN}} ghcr.io/super-linter/super-linter:latest"
   clear:
     cmd: >-
       rm -rf
@@ -71,6 +74,12 @@ tasks:
   default:
     deps: [deps-galaxy]
     cmd: "{{.MITOGEN_VARS}} {{.RUN_PLAYBOOK}}"
+  browser-policies:
+    deps: [deps-galaxy]
+    cmd: "{{.MITOGEN_VARS}} uv run ansible-playbook playbook_browser_policies.yml {{.CLI_ARGS}}"
+  browser-policies:check:
+    deps: [deps-galaxy]
+    cmd: "{{.MITOGEN_VARS}} uv run ansible-playbook playbook_browser_policies.yml --check --diff {{.CLI_ARGS}}"
   test:nvim:
     env:
       XDG_CONFIG_HOME: "{{.PWD}}/.test/nvim/.config"

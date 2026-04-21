@@ -1,0 +1,80 @@
+---
+browser_policies_enabled: true
+browser_policies_state: present
+
+browser_policies_chromium_enabled: true
+browser_policies_firefox_enabled: true
+browser_policies_vscode_enabled: true
+
+browser_policies_extension_lockdown_enabled: true
+browser_policies_extension_block_message: "Extensions are managed by dotfiles."
+
+browser_policies_chromium_policy_filename: "10-tenhishadow-managed.json"
+
+browser_policies_chromium_base_policies:
+  PasswordManagerEnabled: false
+  # AutofillAddressEnabled: false
+  # AutofillCreditCardEnabled: false
+  # PaymentMethodQueryEnabled: false
+  # SyncDisabled: true
+  # BrowserSignin: 0
+  # MetricsReportingEnabled: false
+  # SearchSuggestEnabled: false
+  # NetworkPredictionOptions: 2
+  # BackgroundModeEnabled: false
+  # BrowserGuestModeEnabled: false
+  # DefaultBrowserSettingEnabled: false
+
+browser_policies_chromium_extension_settings: {}
+
+browser_policies_chromium_targets:
+  - name: brave
+    enabled: true
+    managed_dir: /etc/brave/policies/managed
+    policy_filename: "{{ browser_policies_chromium_policy_filename }}"
+    policies:
+      BraveRewardsDisabled: true
+      BraveWalletDisabled: true
+      BraveVPNDisabled: true
+      BraveNewsDisabled: true
+      BraveAIChatEnabled: false
+      BravePlaylistEnabled: false
+      BraveP3AEnabled: false
+      BraveStatsPingEnabled: false
+      BraveWebDiscoveryEnabled: false
+      BraveTalkDisabled: true
+
+browser_policies_firefox_base_policies:
+  DisableTelemetry: true
+  DisableFirefoxStudies: true
+  DisableFirefoxAccounts: true
+  DisablePocket: true
+  PasswordManagerEnabled: false
+  AutofillAddressEnabled: false
+  AutofillCreditCardEnabled: false
+  FirefoxHome:
+    SponsoredTopSites: false
+    SponsoredPocket: false
+    Pocket: false
+    Snippets: false
+  UserMessaging:
+    ExtensionRecommendations: false
+    SkipOnboarding: true
+
+browser_policies_firefox_extension_settings: {}
+
+browser_policies_firefox_targets:
+  - name: firefox
+    enabled: true
+    policy_path: /etc/firefox/policies/policies.json
+
+browser_policies_vscode_base_policies:
+  TelemetryLevel: "off"
+  EnableFeedback: false
+
+browser_policies_vscode_allowed_extensions: {}
+
+browser_policies_vscode_targets:
+  - name: vscode
+    enabled: true
+    policy_path: /etc/vscode/policy.json

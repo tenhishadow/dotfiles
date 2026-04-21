@@ -1,0 +1,35 @@
+---
+- name: browser_policies | validate inputs
+  ansible.builtin.include_tasks: validate.yml
+  when:
+    - browser_policies_enabled | bool
+  tags:
+    - browser_policies
+    - browser_policies_validate
+
+- name: browser_policies | manage chromium policies
+  ansible.builtin.include_tasks: chromium.yml
+  when:
+    - browser_policies_enabled | bool
+    - browser_policies_chromium_enabled | bool
+  tags:
+    - browser_policies
+    - browser_policies_chromium
+
+- name: browser_policies | manage firefox policies
+  ansible.builtin.include_tasks: firefox.yml
+  when:
+    - browser_policies_enabled | bool
+    - browser_policies_firefox_enabled | bool
+  tags:
+    - browser_policies
+    - browser_policies_firefox
+
+- name: browser_policies | manage vscode policies
+  ansible.builtin.include_tasks: vscode.yml
+  when:
+    - browser_policies_enabled | bool
+    - browser_policies_vscode_enabled | bool
+  tags:
+    - browser_policies
+    - browser_policies_vscode

@@ -1,0 +1,8 @@
+---
+- name: browser_policies | browser restart required
+  ansible.builtin.debug:
+    msg:
+      - "Browser restart required for policy changes to take effect."
+      - "Check Chromium policy pages at brave://policy and brave://management."
+      - "Check Firefox policy status at about:policies."
+      - "Check VS Code managed settings for lock icons or use Show Window Log."
