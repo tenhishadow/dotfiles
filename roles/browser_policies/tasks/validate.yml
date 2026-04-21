@@ -31,26 +31,47 @@
   loop_control:
     label: "{{ item.name | default('unnamed chromium target') }}"
 
-- name: browser_policies | validate firefox targets
+- name: browser_policies | validate path-based targets
   ansible.builtin.assert:
     that:
-      - item is mapping
-      - item.name is defined and item.name is string and item.name | length > 0
-      - item.policies is not defined or item.policies is mapping
-      - not (item.enabled | default(true) | bool) or (item.policy_path is defined and item.policy_path is string and item.policy_path | length > 0)
-    fail_msg: "Invalid Firefox target: {{ item | to_nice_json }}"
-  loop: "{{ browser_policies_firefox_targets }}"
+      - item.target is mapping
+      - >-
+        item.target.name is defined
+        and item.target.name is string
+        and item.target.name | length > 0
+      - item.target.policies is not defined or item.target.policies is mapping
+      - >-
+        not (item.target.enabled | default(true) | bool)
+        or (
+          item.target.policy_path is defined
+          and item.target.policy_path is string
+          and item.target.policy_path | length > 0
+        )
+    fail_msg: "Invalid {{ item.family }} target: {{ item.target | to_nice_json }}"
+  vars:
+    browser_policies_path_targets: >-
+      {%- set results = [] -%}
+      {%- for target in browser_policies_firefox_targets -%}
+      {%-   set _ = results.append(
+              {
+                'family': 'Firefox',
+                'label': target.name | default('unnamed firefox target'),
+                'target': target,
+              }
+            )
+      -%}
+      {%- endfor -%}
+      {%- for target in browser_policies_vscode_targets -%}
+      {%-   set _ = results.append(
+              {
+                'family': 'VS Code',
+                'label': target.name | default('unnamed vscode target'),
+                'target': target,
+              }
+            )
+      -%}
+      {%- endfor -%}
+      {{ results }}
+  loop: "{{ browser_policies_path_targets }}"
   loop_control:
-    label: "{{ item.name | default('unnamed firefox target') }}"
-
-- name: browser_policies | validate vscode targets
-  ansible.builtin.assert:
-    that:
-      - item is mapping
-      - item.name is defined and item.name is string and item.name | length > 0
-      - item.policies is not defined or item.policies is mapping
-      - not (item.enabled | default(true) | bool) or (item.policy_path is defined and item.policy_path is string and item.policy_path | length > 0)
-    fail_msg: "Invalid VS Code target: {{ item | to_nice_json }}"
-  loop: "{{ browser_policies_vscode_targets }}"
-  loop_control:
-    label: "{{ item.name | default('unnamed vscode target') }}"
+    label: "{{ item.family }}: {{ item.label }}"
