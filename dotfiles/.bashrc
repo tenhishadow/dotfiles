@@ -389,8 +389,6 @@ if test -n "$KITTY_INSTALLATION_DIR" -a -e "$KITTY_INSTALLATION_DIR/shell-integr
 [[ -x "$(type -P checkov)" ]] &&
   source <(register-python-argcomplete checkov)
 ## go-task
-[[ -x $(type -P task) ]] &&
-  eval "$(task --completion bash)"
 [[ -x $(type -P go-task) ]] &&
   eval "$(go-task --completion bash)"
 
