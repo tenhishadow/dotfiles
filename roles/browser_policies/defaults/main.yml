@@ -26,7 +26,6 @@ browser_policies_chromium_base_policies:
   BrowserGuestModeEnabled: false
   DefaultBrowserSettingEnabled: false
   BlockThirdPartyCookies: true
-
   SafeBrowsingExtendedReportingEnabled: false
   QuicAllowed: true
   RemoteDebuggingAllowed: false
@@ -34,7 +33,6 @@ browser_policies_chromium_base_policies:
   DefaultGeolocationSetting: 2
   HighEfficiencyModeEnabled: true
   HardwareAccelerationModeEnabled: true
-  # DownloadDirectory: "{{ ansible_facts.user_dir }}/Downloads" # become
   PromptForDownloadLocation: true
   PrivacySandboxPromptEnabled: false
   DomainReliabilityAllowed: false
@@ -47,6 +45,8 @@ browser_policies_chromium_base_policies:
   DisableSafeBrowsingProceedAnyway: false
   DefaultNotificationsSetting: 2
   SafeBrowsingSurveysEnabled: false
+  CompressionDictionaryTransportEnabled: true
+  MemorySaverModeSavings: 1
 
 browser_policies_chromium_extension_settings: {}
 
