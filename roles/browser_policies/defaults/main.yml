@@ -41,7 +41,7 @@ browser_policies_chromium_base_policies:
   FeedbackSurveysEnabled: false
   UserFeedbackAllowed: false
   BasicAuthOverHttpEnabled: false
-  SafeBrowsingProtectionLevel: '1'
+  SafeBrowsingProtectionLevel: "1"
   DisableSafeBrowsingProceedAnyway: false
   DefaultNotificationsSetting: 2
   SafeBrowsingSurveysEnabled: false
