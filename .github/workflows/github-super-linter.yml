@@ -19,7 +19,7 @@ jobs:
           persist-credentials: false
 
       - name: Scan Code Base
-        uses: super-linter/super-linter@v8.5.0
+        uses: super-linter/super-linter@v8.6.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VALIDATE_ALL_CODEBASE: true
