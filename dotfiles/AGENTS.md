@@ -24,17 +24,21 @@ This directory is the canonical user-level payload linked into `$HOME` by
 ## Mapping Rules
 
 - New managed payload files usually require a matching entry in
-  `../inventory/host_vars/this_host.yml`.
+  `../inventory/host_vars/this_host/dotfiles.yml`.
 - If a file is not in `dotfiles_mapping`, the default playbook will not link
   it.
-- Sensitive directories such as `.ssh` and `.gnupg` need explicit directory
-  metadata so modes stay deterministic.
+- Mapping entries use `name`, repository-relative `payload`, and absolute
+  `dest`; `roles/dotfiles` computes the source path.
+- Parent directories for mapping destinations are created automatically. Use
+  `dotfiles_directories` only for extra directories not implied by mappings.
 - Keep payload text, comments, and user-facing messages in English.
 
 ## Validation
 
 - Run `go-task` for user-level payload or mapping changes.
 - Run `go-task lint` for changes that also touch inventory or playbooks.
+- Run `go-task verify` when payload changes are part of broader role,
+  inventory, automation, or documentation work.
 - Run `uv run yamllint .` or `go-task yamllint` for YAML changes.
 - For Neovim config under `.config/nvim/`, also follow the local
   `AGENTS.md` and run `go-task test:nvim`.

@@ -36,7 +36,8 @@ into `$HOME`.
 
 ## Variables
 
-Set host-specific overrides in `inventory/host_vars/this_host.yml`.
+Set host-specific overrides in
+`inventory/host_vars/this_host/browser_policies.yml`.
 
 Key defaults:
 
@@ -56,6 +57,18 @@ browser_policies_firefox_extension_settings: {}
 browser_policies_vscode_allowed_extensions: {}
 ```
 
+Public role variables use the `browser_policies_` prefix. Target entries use
+short, stable keys:
+
+| Target family | Path key |
+| ------------- | -------- |
+| Chromium-based browsers | `policy_dir` |
+| Firefox-based browsers | `policy_path` |
+| VS Code | `policy_path` |
+
+The task files normalize enabled targets into generated policy file specs
+internally before shared file tasks write or remove policy files.
+
 ## Chromium-Based Browsers
 
 Add targets to `browser_policies_chromium_targets`. Each item writes one JSON
@@ -65,13 +78,13 @@ file into that browser's managed policy directory.
 browser_policies_chromium_targets:
   - name: brave
     enabled: true
-    managed_dir: /etc/brave/policies/managed
+    policy_dir: /etc/brave/policies/managed
     policy_filename: "10-tenhishadow-managed.json"
     policies:
       BraveRewardsDisabled: true
   - name: chromium
     enabled: true
-    managed_dir: /etc/chromium/policies/managed
+    policy_dir: /etc/chromium/policies/managed
     policy_filename: "10-tenhishadow-managed.json"
     policies: {}
 ```
@@ -181,8 +194,12 @@ For repository validation, run:
 ```bash
 go-task lint
 go-task browser-policies:check
+go-task verify
 git diff --check
 ```
+
+The role validates common variables, target shapes, target names, absolute
+policy paths, and generated policy file specs before writing system files.
 
 ## Rollback
 

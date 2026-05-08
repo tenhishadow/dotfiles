@@ -8,6 +8,7 @@ automation under `.github/`.
 
 - Preserve CI responsibility boundaries.
 - Keep workflow behavior aligned with `Taskfile.yml`.
+- Keep `go-task verify` aligned with local validation and review automation.
 - Do not reintroduce super-linter into the `go-task lint` path.
 - Do not casually change release-please, Renovate, CODEOWNERS, or zizmor
   configuration.
@@ -17,6 +18,15 @@ automation under `.github/`.
 - Keep `.github/labeler.yml` aligned with the current repository structure.
 - Keep issue and PR templates aligned with supported workflows and validation
   commands.
+- Keep GitHub Copilot custom instructions concise, review-focused, and aligned
+  with the current repo structure. Put repo-wide rules in
+  `.github/copilot-instructions.md` and path-specific rules in
+  `.github/instructions/*.instructions.md`.
+- Keep documentation-specific Copilot rules in
+  `.github/instructions/documentation.instructions.md`.
+- Keep each Copilot review instruction file below 4,000 characters; Copilot
+  code review ignores content past that limit. Instruction changes affect PR
+  reviews after they exist on the PR base branch.
 - When adding a versioned GitHub Action, reusable workflow, Docker image,
   pre-commit hook, Ansible collection, or future GitLab CI include, make sure
   Renovate can update it. Add a Renovate manager or custom manager when the
@@ -29,6 +39,8 @@ automation under `.github/`.
 
 - Run `uv run yamllint .` or `go-task yamllint` for workflow YAML changes.
 - Run `go-task lint` when automation changes affect Ansible validation paths.
+- Run `go-task verify` when automation changes affect local aggregate
+  validation, issue/PR templates, labeler rules, or AI instructions.
 - Run `go-task superlinter` for repository-wide lint pipeline changes.
 - Remember that `go-task superlinter` requires Docker.
 
