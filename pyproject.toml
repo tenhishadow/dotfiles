@@ -5,7 +5,6 @@ version = "1.6.8"
 dependencies = [
     "ansible-lint",
     "ansible",
-    "jmespath",
     "mitogen",
     "yamllint"
 ]
