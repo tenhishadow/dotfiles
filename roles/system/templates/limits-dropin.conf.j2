@@ -1,0 +1,6 @@
+# {{ ansible_managed }}
+# Managed by the system role. Do not edit manually.
+
+{% for system_limits_entry in system_limits_entries %}
+{{ system_limits_entry.domain }} {{ system_limits_entry.type }} {{ system_limits_entry.item }} {{ system_limits_entry.value }}
+{% endfor %}

@@ -14,6 +14,42 @@
     group: "{{ system_config_group }}"
     mode: "{{ system_config_dir_mode }}"
 
+- name: Docker | Ensure modprobe directory
+  become: true
+  ansible.builtin.file:
+    path: "{{ system_docker_modprobe_dir }}"
+    state: directory
+    owner: "{{ system_config_owner }}"
+    group: "{{ system_config_group }}"
+    mode: "{{ system_config_dir_mode }}"
+  when:
+    - system_docker_overlay_options_enabled | bool
+
+- name: Docker | Write overlay module options
+  become: true
+  ansible.builtin.copy:
+    backup: true
+    content: "{{ system_docker_overlay_options_content }}\n"
+    dest: "{{ system_docker_overlay_options_path }}"
+    owner: "{{ system_config_owner }}"
+    group: "{{ system_config_group }}"
+    mode: "{{ system_config_file_mode }}"
+  when:
+    - system_docker_overlay_options_enabled | bool
+
+- name: Docker | Remove legacy overlay module options
+  become: true
+  ansible.builtin.file:
+    path: "{{ system_docker_overlay_legacy_options_path }}"
+    state: absent
+  loop: "{{ system_docker_overlay_legacy_options_paths }}"
+  loop_control:
+    loop_var: system_docker_overlay_legacy_options_path
+    label: "{{ system_docker_overlay_legacy_options_path }}"
+  when:
+    - system_docker_overlay_options_enabled | bool
+    - system_docker_overlay_legacy_options_path != system_docker_overlay_options_path
+
 - name: Docker | Write daemon config
   become: true
   ansible.builtin.template:

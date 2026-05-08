@@ -1,0 +1,19 @@
+---
+- name: Limits | Ensure drop-in directory
+  become: true
+  ansible.builtin.file:
+    path: "{{ system_limits_dropin_dir }}"
+    state: directory
+    owner: "{{ system_config_owner }}"
+    group: "{{ system_config_group }}"
+    mode: "{{ system_config_dir_mode }}"
+
+- name: Limits | Write drop-in
+  become: true
+  ansible.builtin.template:
+    backup: true
+    src: templates/limits-dropin.conf.j2
+    dest: "{{ system_limits_dropin_path }}"
+    owner: "{{ system_config_owner }}"
+    group: "{{ system_config_group }}"
+    mode: "{{ system_config_file_mode }}"

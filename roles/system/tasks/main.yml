@@ -32,6 +32,16 @@
   tags:
     - always
 
+- name: System | Set virtualization guard
+  ansible.builtin.set_fact:
+    system_is_virtual_machine: >-
+      {{
+        (ansible_facts.virtualization_role | default('') | lower) == 'guest'
+        and not (system_is_container | bool)
+      }}
+  tags:
+    - always
+
 - name: System | Set systemd guard
   ansible.builtin.set_fact:
     system_can_manage_systemd: >-
@@ -39,6 +49,17 @@
         ansible_facts.service_mgr == "systemd"
         and not (system_is_container | bool)
         and not (system_in_ci | bool)
+      }}
+  tags:
+    - always
+
+- name: System | Set timesyncd guard
+  ansible.builtin.set_fact:
+    system_can_manage_timesyncd: >-
+      {{
+        system_timesyncd_enabled | bool
+        and system_can_manage_systemd | bool
+        and not (system_is_virtual_machine | bool)
       }}
   tags:
     - always
@@ -74,6 +95,12 @@
 - name: System | Run login tasks
   ansible.builtin.include_tasks:
     file: sys-login.yml
+
+- name: System | Run limits tasks
+  ansible.builtin.include_tasks:
+    file: sys-limits.yml
+  when:
+    - system_limits_enabled | bool
 
 - name: System | Run cron tasks
   ansible.builtin.include_tasks:

@@ -10,17 +10,18 @@
       - system_timezone | length > 0
       - system_motd_message is string
       - system_packages_enabled is boolean
+      - system_timesyncd_enabled is boolean
       - system_docker_enabled is boolean
       - system_laptop_enabled is boolean
       - system_user_services_enabled is boolean
       - system_ntp_service is string
-      - system_ntp_service | length > 0
+      - not (system_timesyncd_enabled | bool) or system_ntp_service | length > 0
       - system_ntp_servers is sequence
       - system_ntp_servers is not string
-      - system_ntp_servers | length > 0
+      - not (system_timesyncd_enabled | bool) or system_ntp_servers | length > 0
       - system_ntp_fallback_servers is sequence
       - system_ntp_fallback_servers is not string
-      - system_ntp_fallback_servers | length > 0
+      - not (system_timesyncd_enabled | bool) or system_ntp_fallback_servers | length > 0
       - system_locales is sequence
       - system_locales is not string
       - system_locales | length > 0
@@ -51,7 +52,16 @@
       - system_journald_settings is mapping
       - system_sshd_settings is mapping
       - system_sysctl_enabled is boolean
+      - system_sysctl_default_settings is mapping
       - system_sysctl_settings is mapping
+      - system_limits_enabled is boolean
+      - system_limits_entries is sequence
+      - system_limits_entries is not string
+      - system_docker_overlay_options_enabled is boolean
+      - system_docker_overlay_options_content is string
+      - system_docker_overlay_options_content | length > 0
+      - system_docker_overlay_legacy_options_paths is sequence
+      - system_docker_overlay_legacy_options_paths is not string
       - system_ntp_conflicting_services is sequence
       - system_ntp_conflicting_services is not string
       - system_masked_services is sequence
@@ -114,6 +124,14 @@
       value: "{{ system_crontab_bin }}"
     - key: system_docker_conf_dir
       value: "{{ system_docker_conf_dir }}"
+    - key: system_docker_modprobe_dir
+      value: "{{ system_docker_modprobe_dir }}"
+    - key: system_docker_overlay_options_path
+      value: "{{ system_docker_overlay_options_path }}"
+    - key: system_limits_dropin_dir
+      value: "{{ system_limits_dropin_dir }}"
+    - key: system_limits_dropin_path
+      value: "{{ system_limits_dropin_path }}"
     - key: system_pacman_config_path
       value: "{{ system_pacman_config_path }}"
     - key: system_reflector_config_path
@@ -178,11 +196,56 @@
     {{
       (system_journald_settings | dict2items)
       + (system_sshd_settings | dict2items)
-      + (system_sysctl_settings | dict2items)
+      + (
+        system_sysctl_default_settings
+        | combine(system_sysctl_settings)
+        | dict2items
+      )
     }}
   loop_control:
     loop_var: system_setting
     label: "{{ system_setting.key }}"
+  tags:
+    - always
+
+- name: System | Validate limits entries
+  ansible.builtin.assert:
+    that:
+      - system_limits_entry is mapping
+      - system_limits_entry.domain is defined
+      - system_limits_entry.domain is string
+      - system_limits_entry.domain | length > 0
+      - system_limits_entry.type is defined
+      - system_limits_entry.type is string
+      - system_limits_entry.type is in ["soft", "hard", "-"]
+      - system_limits_entry.item is defined
+      - system_limits_entry.item is string
+      - system_limits_entry.item | length > 0
+      - system_limits_entry.value is defined
+      - system_limits_entry.value is string or system_limits_entry.value is number
+    fail_msg: "Invalid limits entry: {{ system_limits_entry | to_nice_json }}"
+    quiet: true
+  loop: "{{ system_limits_entries }}"
+  loop_control:
+    loop_var: system_limits_entry
+    label: >-
+      {{
+        system_limits_entry.domain | default('invalid')
+      }} {{ system_limits_entry.item | default('limits entry') }}
+  tags:
+    - always
+
+- name: System | Validate legacy path entries
+  ansible.builtin.assert:
+    that:
+      - system_legacy_path is string
+      - system_legacy_path is regex('^/')
+    fail_msg: "Invalid legacy path entry {{ system_legacy_path }}"
+    quiet: true
+  loop: "{{ system_docker_overlay_legacy_options_paths }}"
+  loop_control:
+    loop_var: system_legacy_path
+    label: "{{ system_legacy_path }}"
   tags:
     - always
 
