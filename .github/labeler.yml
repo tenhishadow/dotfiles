@@ -19,7 +19,9 @@ dependencies:
           - "uv.lock"
 documentation:
   - changed-files:
-      - any-glob-to-any-file: "README.md"
+      - any-glob-to-any-file:
+          - "**/*.md"
+          - "AGENTS.md"
 dotfiles:
   - changed-files:
       - any-glob-to-any-file:

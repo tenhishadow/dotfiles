@@ -1,28 +1,28 @@
 # Scope
 
-- Applies to GitHub workflows, release config, lint config, PR templates,
-  and repository automation under `.github/`.
+Applies to GitHub workflows, release configuration, lint configuration, PR
+templates, labels, CODEOWNERS, and repository automation under `.github/`.
 
-# Editing Rules
+## Editing Rules
 
-- Preserve CI separation.
-- Do not reintroduce super-linter into the ansible-lint-only task flow.
+- Preserve CI responsibility boundaries.
 - Keep workflow behavior aligned with `Taskfile.yml`.
-- Do not casually change release-please, renovate, or zizmor related
-  config.
-- Prefer reproducible, pinned, and low-surprise automation changes.
+- Do not reintroduce super-linter into the `go-task lint` path.
+- Do not casually change release-please, Renovate, CODEOWNERS, or zizmor
+  configuration.
+- Prefer pinned, reproducible, least-privilege automation changes.
+- Keep workflow permissions minimal and explicit.
+- Keep comments and template text in English.
 
-# Validation
+## Validation
 
-- Run `uv run yamllint .` when editing workflow YAML and the tool is
-  available.
-- Run `go-task lint` when automation changes affect Ansible validation
-  paths.
-- Run `go-task superlinter` for repo-wide lint pipeline changes.
+- Run `uv run yamllint .` or `go-task yamllint` for workflow YAML changes.
+- Run `go-task lint` when automation changes affect Ansible validation paths.
+- Run `go-task superlinter` for repository-wide lint pipeline changes.
 - Remember that `go-task superlinter` requires Docker.
 
-# Done Means
+## Done Criteria
 
 - Workflow YAML is syntactically clean.
 - Existing CI responsibility boundaries are preserved.
-- Automation changes match the current repo conventions.
+- Automation changes match current repository conventions.

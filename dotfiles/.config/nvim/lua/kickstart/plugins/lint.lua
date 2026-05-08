@@ -64,7 +64,7 @@ return {
       enable('hcl',       'tflint', 'tflint')
 
       -------------------------------------------------------------------
-      -- JSON (lint) – keep it simple with jsonlint.
+      -- JSON (lint) - keep it simple with jsonlint.
       -- Biome is used as a *formatter* via conform.nvim instead.
       -------------------------------------------------------------------
       enable('json', 'jsonlint', 'jsonlint')

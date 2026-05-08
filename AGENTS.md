@@ -1,93 +1,96 @@
 # Repository
 
-- Arch Linux dotfiles repository managed with Ansible and `go-task`.
-- `dotfiles/` is the payload directory that gets linked into `$HOME`.
-- The default workflow is local and user-level.
-- `playbook_install.yml` is the main dotfiles playbook.
-- The default playbook runs with `connection: local` and `become: false`.
-- `playbook_system.yml` is the opt-in privileged Arch Linux system playbook.
-- `roles/system/` contains the migrated workstation system provisioning role.
+Arch Linux dotfiles and workstation automation repository managed with
+Ansible, `uv`, and `go-task`.
 
-# Main Entry Points
+## Architecture
 
-- `README.md`: install overview and clone/bootstrap example.
-- `Taskfile.yml`: primary task runner and validation entry point.
-- `playbook_install.yml`: main user-level install/refresh flow.
-- `playbook_system.yml`: opt-in system-level workstation flow.
-- `inventory/hosts.yml`: local `this_host` inventory target.
-- `inventory/host_vars/this_host.yml`: source of truth for mappings and
-  cleanup plus local system role settings.
-- `ansible.cfg`: Ansible execution defaults for this repo.
+- `dotfiles/` contains the canonical user-level payload linked into `$HOME`.
+- `playbook_install.yml` is the default user-level install playbook.
+- `playbook_system.yml` is the explicit privileged workstation playbook.
+- `playbook_browser_policies.yml` is the explicit privileged browser policy
+  playbook.
+- `inventory/host_vars/this_host.yml` is the local source of truth for
+  symlink mappings, cleanup, browser policy overrides, and system role values.
+- `roles/system/` contains opt-in Arch Linux workstation provisioning.
+- `roles/browser_policies/` contains opt-in browser and VS Code policy
+  management.
 
-# How Instructions Apply
+## Instruction Scope
 
-- `AGENTS.md` is the canonical instruction format in this repo.
-- The nearest `AGENTS.md` applies for files in its directory tree.
-- Nested `AGENTS.md` files add local rules; they should not repeat this
-  file.
-- Check local instructions before editing in:
+- The nearest `AGENTS.md` applies.
+- Nested `AGENTS.md` files add local rules and should not duplicate this file
+  wholesale.
+- Check local instructions before editing:
+  - `.github/AGENTS.md`
+  - `.test/AGENTS.md`
   - `dotfiles/AGENTS.md`
   - `dotfiles/.config/nvim/AGENTS.md`
   - `inventory/AGENTS.md`
-  - `.github/AGENTS.md`
-  - `.test/AGENTS.md`
-  - `roles/AGENTS.md` when `roles/` exists
+  - `roles/AGENTS.md`
+  - `roles/system/AGENTS.md`
+  - `roles/system/vars/AGENTS.md`
 
-# Global Hard Rules
+## Hard Rules
 
-- Preserve the existing default dotfiles workflow.
-- Do not make the default `go-task` flow require sudo for dotfile apply.
+- Preserve the default user-level dotfiles workflow.
+- Do not make default `go-task` require sudo.
 - Do not add `become: true` to `playbook_install.yml`.
-- Keep privileged or system-wide changes opt-in through a separate
-  playbook/task.
-- Do not add `roles/system` to `playbook_install.yml`.
-- Do not make the default `go-task` target depend on `system`,
-  `system:check`, or `test:system`.
-- Do not change runtime behavior unless the task explicitly requires it.
-- Keep changes deterministic, narrow, and easy to validate.
+- Do not add `roles/system` or `roles/browser_policies` to
+  `playbook_install.yml`.
+- Keep privileged and system-wide behavior behind explicit opt-in
+  playbooks/tasks.
+- Prefer service drop-ins over editing upstream main config files where
+  supported.
+- Keep changes deterministic, narrow, reviewable, and idempotent.
+- Keep repository text, comments, task names, documentation, and AI
+  instructions in English.
 - Do not commit secrets, tokens, cookies, browser profiles, session state,
-  local databases, caches, or other machine-local runtime state.
-- Do not commit generated test workspaces or copied configs.
+  local databases, caches, private keys, generated test workspaces, or copied
+  runtime configs.
 
-# Validation Commands
+## Engineering Rules
 
-- `git diff --check`
-  - Run before finishing any non-trivial change.
-- `go-task`
-  - Run when changing the default user-level install flow, symlink mapping,
-    or payload that should be applied into `$HOME`.
-- `go-task lint`
-  - Run for Ansible, inventory, Taskfile, or playbook changes.
-- `go-task system:check`
-  - Run for system role changes before applying them locally.
-- `go-task test:system`
-  - Run for system role task/template/handler behavior changes.
-  - Docker is required.
-- `uv run yamllint .`
-  - Run for YAML-heavy changes when `yamllint` is available in the existing
-    toolchain.
-- `go-task superlinter`
-  - Run for repo-wide lint or CI-related changes.
-  - Docker is required.
-- `go-task test:nvim`
-  - Run for Neovim config changes.
-  - This uses isolated `.test/nvim` XDG paths and should be treated as the
-    required smoke test for Neovim work.
+- Prefer boring, upstream-compatible Ansible over custom shell.
+- Use FQCN modules such as `ansible.builtin.file`.
+- Use explicit ownership and mode for managed files, especially under `/etc`.
+- Keep variables in inventory, role defaults, or role vars instead of
+  duplicating literals.
+- Keep package lists and policy target lists declarative.
+- Use handlers for service restarts when template or config changes require
+  them.
+- Preserve CI and container guards for privileged system behavior.
+- Do not broaden cleanup/removal patterns without an explicit requirement.
 
-# Workflow Notes
+## Commit Rules
 
-- `uv` manages the Python and Ansible environment.
-- `deps-galaxy` installs required Ansible collections from
-  `requirements.yml`.
-- `task lint` intentionally runs only `ansible-lint`.
-- `task superlinter` is intentionally separate from `task lint`.
-- Keep YAML, Ansible, and task changes aligned with `.yamllint`,
-  `.ansible-lint.yml`, and `.editorconfig`.
+- Use Conventional Commits when a commit is requested.
+- Keep commits scoped to the requested change.
+- Do not push unless explicitly requested.
+- Do not include unrelated dirty worktree changes.
 
-# Done Means
+## Validation Matrix
 
-- The nearest applicable `AGENTS.md` rules were followed.
-- Relevant validation commands were run for the files you changed.
-- The default user-level dotfiles flow is still intact.
-- Any privileged behavior remains explicit and opt-in.
-- No secrets or runtime state were added to the repo.
+- Always run `git diff --check` before finishing non-trivial changes.
+- Run `go-task` for user dotfiles, symlink mappings, cleanup, or default
+  install flow changes.
+- Run `go-task lint` for Ansible, inventory, role, Taskfile, or playbook
+  changes.
+- Run `uv run yamllint .` or `go-task yamllint` for YAML-heavy changes.
+- Run `go-task test:nvim` for Neovim config changes.
+- Run `go-task system:check` for system role changes.
+- Run `go-task test:system` for system role task, template, or handler
+  behavior changes when Docker is available.
+- Run `go-task browser-policies:check` for browser policy role or policy
+  inventory changes.
+- Run `go-task superlinter` for CI or repository-wide lint changes when Docker
+  is available.
+
+## Done Criteria
+
+- Applicable local `AGENTS.md` rules were followed.
+- Runtime behavior changed only when required by the task.
+- The default user-level dotfiles flow remains intact and sudo-free.
+- Privileged behavior remains explicit and opt-in.
+- Relevant validation commands were run or blockers were stated.
+- No secrets or machine-local runtime state were added.
