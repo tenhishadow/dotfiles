@@ -98,7 +98,7 @@ accidental conflicts:
 | ---- | ---- |
 | `inventory/host_vars/this_host/dotfiles.yml` | User-level mappings, extra directories, and cleanup paths. |
 | `inventory/host_vars/this_host/system.yml` | Non-security system settings such as MOTD and journald. |
-| `inventory/host_vars/this_host/security.yml` | SSHD and sysctl hardening settings. |
+| `inventory/host_vars/this_host/security.yml` | SSHD, sysctl, and limits hardening settings. |
 | `inventory/host_vars/this_host/browser_policies.yml` | Browser and VS Code policy overrides. |
 
 Keep host variables role-prefixed: `dotfiles_*`, `system_*`, or
@@ -117,8 +117,19 @@ go-task system
 
 This path runs `playbook_system.yml`, uses `roles/system`, and may require
 sudo. It manages Arch Linux packages, system drop-ins, selected `/etc`
-configuration, Docker daemon settings, cron, reflector, and laptop-related
-settings.
+configuration, sysctl values, PAM limits, Docker daemon and overlay settings,
+cron, reflector, and laptop-related settings.
+
+The system role ships conservative default tuning for workstation use:
+
+- sysctl defaults for unprivileged BPF, `fq`, BBR, `somaxconn`, and local port
+  range.
+- PAM limits through `/etc/security/limits.d/10-dotfiles.conf`.
+- Docker overlay module options through `/etc/modprobe.d/99-dotfiles-overlay.conf`.
+
+Host-specific additions and overrides belong in
+`inventory/host_vars/this_host/security.yml`; keep role-owned defaults in
+`roles/system/defaults/main.yml`.
 
 See `roles/system/README.md` for managed paths, validation, and rollback
 notes.
@@ -188,6 +199,7 @@ change.
 
 - Keep the default `go-task` workflow sudo-free.
 - Keep privileged behavior behind explicit opt-in tasks.
-- Prefer drop-ins over editing upstream main config files where supported.
+- Prefer drop-ins and snippets over editing upstream main config files where
+  supported.
 - Keep generated and machine-local state out of git.
 - Keep repository text, comments, and documentation in English.

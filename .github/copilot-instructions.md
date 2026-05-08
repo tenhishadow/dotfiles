@@ -21,6 +21,8 @@ maintenance.
 
 - All Ansible play, task, and handler names must use
   `<Domain> | <Verb> <object>`.
+- Prefer system role domains: `Timesyncd`, `Journald`, `Sysctl`, `Limits`,
+  `SSHD`, `Docker`, and `User systemd`.
 - Include wrappers must be named `Run ... tasks`.
 - Handler names and `notify` values must match exactly.
 - Tags should remain lowercase snake_case.
@@ -44,6 +46,10 @@ maintenance.
   option casing inside those maps.
 - Prefer system drop-ins over editing upstream main config files where
   supported.
+- PAM limits must use `/etc/security/limits.d/`; kernel module options must use
+  `/etc/modprobe.d/`.
+- Host sysctl overrides belong in `system_sysctl_settings`; role defaults belong
+  in `system_sysctl_default_settings`.
 
 ## Repository Review
 

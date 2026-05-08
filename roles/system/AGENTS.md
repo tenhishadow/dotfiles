@@ -10,13 +10,15 @@ Keep the high-level flow predictable:
 
 - Assert supported OS.
 - Include distro-specific vars.
-- Derive CI, container, and systemd capability guards.
+- Derive CI, container, virtual machine, systemd, and timesyncd capability
+  guards.
 - Validate role variables.
 - Install `system_packages` with tag `pkg`.
-- Run time and NTP tasks.
-- Run locale, console, login, cron, sysctl, journald, and SSHD tasks.
+- Run timezone tasks and guarded timesyncd tasks.
+- Run locale, console, login, limits, cron, sysctl, journald, and SSHD tasks.
 - Run Arch Linux tasks.
-- Run Docker tasks only when not in CI and not in a container.
+- Run Docker tasks only when not in CI and not in a container; keep overlay
+  module options behind `system_docker_overlay_options_enabled`.
 - Run laptop and user-systemd tasks.
 
 ## Editing Rules
@@ -27,6 +29,11 @@ Keep the high-level flow predictable:
 - Preserve `become: true` where system paths or services require privilege.
 - Do not move privileged behavior into unguarded shell commands.
 - Prefer drop-ins over upstream main-file edits where supported.
+- Keep role-owned sysctl defaults in `system_sysctl_default_settings`; use
+  `system_sysctl_settings` only for host-specific additions and overrides.
+- Manage PAM limits through `/etc/security/limits.d/`; do not edit
+  `/etc/security/limits.conf`.
+- Manage kernel module options through `/etc/modprobe.d/` snippets.
 - For templates rendered into `/etc`, keep `owner`, `group`, and `mode`
   explicit.
 - Keep `backup: true` when a task already uses it.

@@ -69,7 +69,8 @@ Ansible, `uv`, and `go-task`.
 - Use one format for all Ansible play, task, and handler names:
   `<Domain> | <Verb> <object>`.
 - Keep domains short and stable, for example `Dotfiles`, `System`,
-  `Browser Policies`, `SSHD`, `NTP`, `Docker`, and `User systemd`.
+  `Browser Policies`, `SSHD`, `Timesyncd`, `Journald`, `Sysctl`, `Limits`,
+  `Docker`, and `User systemd`.
 - Preserve upstream product casing such as `systemd`, `SSHD`, `VS Code`, and
   `Neovim`.
 - Use concise imperative verbs such as `Apply`, `Add`, `Build`, `Check`,
@@ -114,7 +115,7 @@ Ansible, `uv`, and `go-task`.
 - Flag unprefixed Ansible variables, generic loop variables, or role input
   variables that are missing validation.
 - Flag direct edits to supported system main configs when a drop-in path is
-  available.
+  available, including PAM limits and kernel module option snippets.
 - Flag missing documentation, AGENTS, labeler, Renovate, or validation updates
   when repository layout, commands, automation, or runtime behavior changes.
 - Flag non-English repository text, comments, task names, docs, and AI

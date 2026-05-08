@@ -33,6 +33,8 @@
 - [ ] No secrets, tokens, runtime state, caches, profiles, or generated
       workspaces are committed
 - [ ] System config changes prefer drop-ins where supported
+- [ ] PAM limits and kernel module options use `limits.d` and `modprobe.d`
+      snippets
 - [ ] Ansible variables follow role prefixes and settings-map casing rules
 - [ ] Role input variables are validated where the role exposes a contract
 - [ ] README and nearest `AGENTS.md` files are updated when commands,

@@ -7,7 +7,8 @@ applyTo: "playbook_*.yml,inventory/**/*.yml,roles/**/*.yml,requirements.yml,ansi
 - Enforce Ansible names as `<Domain> | <Verb> <object>` for plays, tasks, and
   handlers.
 - Use short stable domains and preserve product casing, for example `SSHD`,
-  `NTP`, `VS Code`, `Neovim`, and `systemd`.
+  `Timesyncd`, `Journald`, `Sysctl`, `Limits`, `VS Code`, `Neovim`, and
+  `systemd`.
 - Use concise imperative verbs from the repo-wide verb set in `AGENTS.md`.
 - Name include wrappers as `Run ... tasks`.
 - Ensure every `notify` value matches a handler name exactly.
@@ -34,5 +35,9 @@ applyTo: "playbook_*.yml,inventory/**/*.yml,roles/**/*.yml,requirements.yml,ansi
   `system_sysctl_settings`, and browser policy dictionaries.
 - Prefer supported drop-ins under `/etc/*/*.d/` over direct upstream main-file
   edits.
+- Manage PAM limits through `/etc/security/limits.d/` and kernel module options
+  through `/etc/modprobe.d/` snippets.
+- Keep role-owned sysctl defaults in `system_sysctl_default_settings`; use
+  `system_sysctl_settings` for host-specific additions and overrides.
 - Require syntax and narrow behavior validation for touched playbooks or
   roles.

@@ -19,5 +19,7 @@ applyTo: "**/*.md,**/AGENTS.md,.github/copilot-instructions.md,.github/instructi
   dotfiles only and must not require sudo.
 - Keep documented variable names aligned with the role contracts:
   `dotfiles_*`, `system_*`, and `browser_policies_*`.
+- Document system role feature flags, managed paths, and drop-in/snippet paths
+  when privileged runtime behavior changes.
 - Mention `go-task verify` for broad documentation, automation, inventory, or
   role changes.

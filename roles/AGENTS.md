@@ -16,6 +16,8 @@ Applies to Ansible roles under `roles/`.
 - Keep tasks small, named, tagged where useful, and easy to review.
 - Use handlers for service restarts triggered by config changes.
 - Keep templates deterministic and avoid reading unmanaged local state.
+- Prefer supported drop-ins and snippets under `/etc` over direct upstream
+  main-file edits.
 - Prefix role variables, registered facts, and task-local vars with the role
   name unless the value is an upstream config key inside a settings map.
 - Use explicit `loop_control.loop_var` for loops that read more than a scalar.
