@@ -3,9 +3,9 @@
   ansible.builtin.file:
     path: "{{ item.policy_path | dirname }}"
     state: directory
-    owner: root
-    group: root
-    mode: "0755"
+    owner: "{{ browser_policies_owner }}"
+    group: "{{ browser_policies_group }}"
+    mode: "{{ browser_policies_dir_mode }}"
   loop: "{{ browser_policies_firefox_targets }}"
   loop_control:
     label: "{{ item.policy_path | dirname }}"
@@ -17,26 +17,18 @@
   ansible.builtin.copy:
     dest: "{{ item.policy_path }}"
     content: "{{ {'policies': browser_policies_firefox_rendered_policy} | to_nice_json }}\n"
-    owner: root
-    group: root
-    mode: "0644"
+    owner: "{{ browser_policies_owner }}"
+    group: "{{ browser_policies_group }}"
+    mode: "{{ browser_policies_file_mode }}"
     backup: false
   vars:
     browser_policies_firefox_effective_extension_settings: >-
       {{
-        (
-          browser_policies_extension_lockdown_enabled | bool
-        )
-        | ternary(
-            {
-              '*': {
-                'installation_mode': 'blocked',
-                'blocked_install_message': browser_policies_extension_block_message,
-              },
-            },
-            {}
+        browser_policies_effective_extension_block
+        | combine(
+            browser_policies_firefox_extension_settings,
+            recursive=True
           )
-        | combine(browser_policies_firefox_extension_settings, recursive=True)
       }}
     browser_policies_firefox_rendered_policy: >-
       {{

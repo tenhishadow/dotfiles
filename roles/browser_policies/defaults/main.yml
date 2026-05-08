@@ -8,6 +8,20 @@ browser_policies_vscode_enabled: true
 
 browser_policies_extension_lockdown_enabled: true
 browser_policies_extension_block_message: "Extensions are managed by dotfiles."
+browser_policies_owner: root
+browser_policies_group: root
+browser_policies_dir_mode: "0755"
+browser_policies_file_mode: "0644"
+
+browser_policies_default_extension_block:
+  "*":
+    installation_mode: blocked
+    blocked_install_message: "{{ browser_policies_extension_block_message }}"
+browser_policies_effective_extension_block: >-
+  {{
+    (browser_policies_extension_lockdown_enabled | bool)
+    | ternary(browser_policies_default_extension_block, {})
+  }}
 
 browser_policies_chromium_policy_filename: "10-tenhishadow-managed.json"
 
@@ -16,7 +30,7 @@ browser_policies_chromium_base_policies:
   AutofillAddressEnabled: false
   AutofillCreditCardEnabled: false
   PaymentMethodQueryEnabled: false
-  # SyncDisabled: true # something wrong with it ( app not starting )
+  # Disabled: Brave does not start reliably with SyncDisabled enforced.
   BrowserSignin: 0
   MetricsReportingEnabled: false
   SearchSuggestEnabled: false

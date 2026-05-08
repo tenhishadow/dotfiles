@@ -35,6 +35,14 @@ system_locale_definition_dirs:
   - /usr/local/share/i18n/locales
   - /usr/share/i18n/locales
 
+system_locale_gen_path: /etc/locale.gen
+system_locale_conf_path: /etc/locale.conf
+system_vconsole_path: /etc/vconsole.conf
+system_motd_path: /etc/motd
+system_issue_path: /etc/issue
+system_sysctl_file_path: /etc/sysctl.d/999-ansible.conf
+system_sshd_binary_path: /usr/sbin/sshd
+
 system_configs:
   owner: root
   group: root
@@ -45,6 +53,8 @@ system_config_group: "{{ system_configs.group }}"
 system_config_file_mode: "{{ system_configs.mode }}"
 system_config_private_file_mode: "0600"
 system_config_dir_mode: "0755"
+system_user_systemd_dir_mode: "0700"
+system_user_service_file_mode: "0640"
 
 system_container_virtualization_types:
   - container
@@ -65,6 +75,7 @@ system_reflector_save_path: /etc/pacman.d/mirrorlist
 
 system_journald_dropin_dir: /etc/systemd/journald.conf.d
 system_journald_dropin_path: "{{ system_journald_dropin_dir }}/10-dotfiles.conf"
+system_journald_service_name: systemd-journald
 system_journald_legacy_dropin_paths:
   - "{{ system_journald_dropin_dir }}/10-ans-workstation.conf"
 system_journald_main_path: /etc/systemd/journald.conf
@@ -75,6 +86,8 @@ system_timesyncd_legacy_dropin_paths:
 system_timesyncd_main_path: /etc/systemd/timesyncd.conf
 system_sshd_dropin_dir: /etc/ssh/sshd_config.d
 system_sshd_dropin_path: "{{ system_sshd_dropin_dir }}/20-dotfiles.conf"
+system_sshd_dropin_include_path: "{{ system_sshd_dropin_dir }}/*.conf"
+system_sshd_service_name: sshd
 system_sshd_legacy_dropin_paths:
   - "{{ system_sshd_dropin_dir }}/20-ans-workstation.conf"
 system_sshd_main_path: /etc/ssh/sshd_config
@@ -101,3 +114,10 @@ system_sshd_legacy_main_cleanup:
 system_ntp_conflicting_services:
   - chronie
   - ntpd
+
+system_camera_blacklist_module: uvcvideo
+system_user_systemd_dir: "{{ ansible_facts.user_dir }}/.config/systemd/user"
+system_ssh_agent_service_name: ssh-agent.service
+system_ssh_agent_service_path: >-
+  {{ system_user_systemd_dir }}/{{ system_ssh_agent_service_name }}
+system_vconsole_service_name: systemd-vconsole-setup.service

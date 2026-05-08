@@ -11,8 +11,14 @@
       - browser_policies_vscode_targets is not string
       - browser_policies_chromium_base_policies is mapping
       - browser_policies_chromium_extension_settings is mapping
+      - browser_policies_default_extension_block is mapping
+      - browser_policies_effective_extension_block is mapping
       - browser_policies_firefox_base_policies is mapping
       - browser_policies_firefox_extension_settings is mapping
+      - browser_policies_owner is string and browser_policies_owner | length > 0
+      - browser_policies_group is string and browser_policies_group | length > 0
+      - browser_policies_dir_mode is string and browser_policies_dir_mode | length > 0
+      - browser_policies_file_mode is string and browser_policies_file_mode | length > 0
       - browser_policies_vscode_base_policies is mapping
       - browser_policies_vscode_allowed_extensions is mapping
     fail_msg: "browser_policies role variables are invalid."

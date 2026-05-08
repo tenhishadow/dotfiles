@@ -2,27 +2,27 @@
 - name: Laptop | Blacklist camera module
   become: true
   community.general.kernel_blacklist:
-    name: uvcvideo
+    name: "{{ system_camera_blacklist_module }}"
     state: present
   failed_when: false
 
 - name: User systemd | Ensure unit directory
   ansible.builtin.file:
-    path: "{{ ansible_facts.user_dir }}/.config/systemd/user/"
+    path: "{{ system_user_systemd_dir }}"
     state: directory
     owner: "{{ ansible_facts.user_id }}"
     group: "{{ ansible_facts.user_id }}"
-    mode: "0700"
+    mode: "{{ system_user_systemd_dir_mode }}"
 
 - name: User systemd | Write ssh-agent service
   become: false
   ansible.builtin.template:
     src: templates/ssh-agent.service.j2
-    dest: "{{ ansible_facts.user_dir }}/.config/systemd/user/ssh-agent.service"
+    dest: "{{ system_ssh_agent_service_path }}"
     backup: true
     owner: "{{ ansible_facts.user_id }}"
     group: "{{ ansible_facts.user_id }}"
-    mode: "0640"
+    mode: "{{ system_user_service_file_mode }}"
   when:
     - ansible_facts.service_mgr == "systemd"
     - not (system_is_container | bool)
@@ -32,7 +32,7 @@
 - name: User systemd | Enable ssh-agent
   ansible.builtin.systemd:
     scope: user
-    name: ssh-agent.service
+    name: "{{ system_ssh_agent_service_name }}"
     state: started
     enabled: true
     daemon_reload: true

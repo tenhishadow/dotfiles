@@ -23,7 +23,7 @@
   ansible.builtin.template:
     backup: true
     src: templates/locale.gen.j2
-    dest: /etc/locale.gen
+    dest: "{{ system_locale_gen_path }}"
     owner: "{{ system_config_owner }}"
     group: "{{ system_config_group }}"
     mode: "{{ system_config_file_mode }}"
@@ -35,7 +35,7 @@
   ansible.builtin.template:
     backup: true
     src: templates/locale.conf.j2
-    dest: /etc/locale.conf
+    dest: "{{ system_locale_conf_path }}"
     owner: "{{ system_config_owner }}"
     group: "{{ system_config_group }}"
     mode: "{{ system_config_file_mode }}"
@@ -69,7 +69,7 @@
   ansible.builtin.template:
     backup: true
     src: templates/vconsole.conf.j2
-    dest: /etc/vconsole.conf
+    dest: "{{ system_vconsole_path }}"
     owner: "{{ system_config_owner }}"
     group: "{{ system_config_group }}"
     mode: "{{ system_config_file_mode }}"
@@ -81,7 +81,7 @@
   ansible.builtin.template:
     backup: true
     src: templates/motd.j2
-    dest: /etc/motd
+    dest: "{{ system_motd_path }}"
     owner: "{{ system_config_owner }}"
     group: "{{ system_config_group }}"
     mode: "{{ system_config_file_mode }}"
@@ -91,7 +91,7 @@
   ansible.builtin.template:
     backup: true
     src: templates/issue.j2
-    dest: /etc/issue
+    dest: "{{ system_issue_path }}"
     owner: "{{ system_config_owner }}"
     group: "{{ system_config_group }}"
     mode: "{{ system_config_file_mode }}"
@@ -101,7 +101,7 @@
   ansible.builtin.systemd_service:
     state: started
     daemon_reload: true
-    name: "{{ system_cron_package }}"
+    name: "{{ system_cron_service_name }}"
     enabled: true
   when:
     - system_can_manage_systemd | bool
@@ -114,10 +114,10 @@
     sysctl_set: true
     state: present
     reload: true
-    sysctl_file: /etc/sysctl.d/999-ansible.conf
+    sysctl_file: "{{ system_sysctl_file_path }}"
   with_dict: "{{ sysctl_params }}"
   when:
-    - configure_sysctl|bool
+    - configure_sysctl | bool
     - not (system_is_container | bool)
     - not (system_in_ci | bool)
 
@@ -201,9 +201,14 @@
     that:
       - >-
         (system_sshd_main_config.content | b64decode)
-        is regex('(?m)^\\s*Include\\s+/etc/ssh/sshd_config\\.d/\\*\\.conf\\s*$')
+        is regex(
+          '(?m)^\\s*Include\\s+'
+          ~ (system_sshd_dropin_include_path | regex_escape)
+          ~ '\\s*$'
+        )
     fail_msg: >-
-      /etc/ssh/sshd_config must include /etc/ssh/sshd_config.d/*.conf
+      {{ system_sshd_main_path }} must include
+      {{ system_sshd_dropin_include_path }}
       before this role can manage sshd through a drop-in.
     quiet: true
   when:
@@ -233,7 +238,7 @@
     owner: "{{ system_config_owner }}"
     group: "{{ system_config_group }}"
     mode: "{{ system_config_file_mode }}"
-    validate: /usr/sbin/sshd -T -f %s
+    validate: "{{ system_sshd_binary_path }} -T -f %s"
   when:
     - not (system_is_container | bool)
     - not (system_in_ci | bool)
@@ -276,7 +281,7 @@
 
 - name: SSHD | Validate effective config
   become: true
-  ansible.builtin.command: /usr/sbin/sshd -T
+  ansible.builtin.command: "{{ system_sshd_binary_path }} -T"
   changed_when: false
   when:
     - not (system_is_container | bool)
