@@ -7,6 +7,7 @@ vars:
   RUN_SYSTEM_PLAYBOOK: "uv run ansible-playbook playbook_system.yml --diff {{.CLI_ARGS}}"
   DEPS_OS_ARCHLINUX: "pacman -Sy --noconfirm --needed --noprogressbar uv git"
   DEPS_OS_SYSTEM_ARCHLINUX: "pacman -Sy --noconfirm --needed --noprogressbar uv git sudo"
+  DEPS_VERIFY_ARCHLINUX: "pacman -Sy --noconfirm --needed --noprogressbar actionlint nodejs npm"
   MITOGEN_VARS: "ANSIBLE_STRATEGY=serverscom.mitogen.mitogen_linear"
   SUPERLINTER_DOCKER_RUN: >-
     docker run
@@ -58,6 +59,13 @@ tasks:
     deps: [deps-python]
     cmds:
       - "uv run ansible-galaxy install -r requirements.yml"
+  deps-verify:
+    deps: [deps-os]
+    status:
+      - $SHELL -c 'type -P actionlint'
+      - $SHELL -c 'type -P npx'
+    cmd: >-
+      {{.DEPS_VERIFY_ARCHLINUX}} || sudo {{.DEPS_VERIFY_ARCHLINUX}}
   deps-upgrade:
     cmds:
       - uv sync --upgrade
@@ -75,6 +83,29 @@ tasks:
   yamllint:
     deps: [deps-python]
     cmd: "uv run yamllint ."
+  diff-check:
+    cmd: git diff --check
+  actionlint:
+    deps: [deps-verify]
+    cmd: actionlint .github/workflows/*.yml
+  renovate:
+    deps: [deps-verify]
+    cmd: >-
+      if type -P renovate-config-validator >/dev/null;
+      then renovate-config-validator --strict;
+      else npx --yes --package renovate renovate-config-validator --strict;
+      fi
+  verify:
+    deps: [deps-galaxy, deps-verify]
+    cmds:
+      - task: diff-check
+      - task: lint
+      - task: yamllint
+      - task: actionlint
+      - task: renovate
+      - task: default
+      - task: system:check
+      - task: browser-policies:check
   superlinter:
     cmds:
       - "{{.SUPERLINTER_DOCKER_RUN}} ghcr.io/super-linter/super-linter:v8.6.0"
