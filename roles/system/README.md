@@ -37,7 +37,7 @@ go-task test:system
 
 | Area | Notes |
 | ---- | ----- |
-| Packages | Installs `system_packages` from `vars/archlinux-packages.yml` with tag `pkg`. |
+| Packages | Installs `system_packages` from `vars/archlinux-packages.yml` when `system_packages_enabled` is true. |
 | Time | Configures timezone and `systemd-timesyncd` when systemd is available. |
 | Journald | Writes `/etc/systemd/journald.conf.d/10-dotfiles.conf`. |
 | SSH daemon | Writes `/etc/ssh/sshd_config.d/20-dotfiles.conf` and validates effective sshd config. |
@@ -45,8 +45,9 @@ go-task test:system
 | Sysctl | Manages `system_sysctl_settings` in `/etc/sysctl.d/999-ansible.conf` when `system_sysctl_enabled` is true. |
 | Pacman | Renders `/etc/pacman.conf` from the role template. |
 | Reflector | Configures reflector and its systemd timer when systemd is available. |
-| Docker | Configures daemon settings when not running in CI or a container. |
-| Laptop | Applies laptop-specific settings such as camera blacklist and user ssh-agent service. |
+| Docker | Configures daemon settings when `system_docker_enabled` is true and the host is not CI/container. |
+| Laptop | Applies laptop-specific settings such as camera blacklist when `system_laptop_enabled` is true. |
+| User services | Configures the user ssh-agent service when `system_user_services_enabled` is true. |
 
 ## Role Flow
 
@@ -56,9 +57,9 @@ The role keeps privileged behavior explicit and guarded:
 2. Load distro-specific vars and packages.
 3. Derive CI, container, and systemd capability guards.
 4. Validate public role variables and host overrides.
-5. Install the package manifest under tag `pkg`.
+5. Install the package manifest under tag `pkg` when packages are enabled.
 6. Run time, locale, console, login, cron, sysctl, journald, SSHD, OS,
-   Docker, and laptop task files.
+   Docker, laptop, and user-service task files according to feature flags.
 
 ## Drop-In Policy
 
@@ -96,6 +97,11 @@ system_journald_settings:
   Storage: persistent
   Compress: "yes"
   SystemMaxUse: 50M
+
+system_packages_enabled: true
+system_docker_enabled: false
+system_laptop_enabled: false
+system_user_services_enabled: true
 
 system_sshd_settings:
   UseDNS: "no"

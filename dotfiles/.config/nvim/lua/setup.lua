@@ -44,9 +44,9 @@ require("lazy").setup({
     { import = "plugins" },
   },
 
-  -- Keep plugins up to date in the background
+  -- Keep plugin updates explicit through `go-task deps-upgrade`.
   checker = {
-    enabled = true,
+    enabled = false,
     notify = false
   },
 

@@ -1,0 +1,33 @@
+---
+- name: User systemd | Ensure unit directory
+  ansible.builtin.file:
+    path: "{{ system_user_systemd_dir }}"
+    state: directory
+    owner: "{{ ansible_facts.user_id }}"
+    group: "{{ ansible_facts.user_id }}"
+    mode: "{{ system_user_systemd_dir_mode }}"
+
+- name: User systemd | Write ssh-agent service
+  become: false
+  ansible.builtin.template:
+    src: templates/ssh-agent.service.j2
+    dest: "{{ system_ssh_agent_service_path }}"
+    backup: true
+    owner: "{{ ansible_facts.user_id }}"
+    group: "{{ ansible_facts.user_id }}"
+    mode: "{{ system_user_service_file_mode }}"
+  when:
+    - ansible_facts.service_mgr == "systemd"
+    - not (system_is_container | bool)
+  notify:
+    - User systemd | Restart ssh-agent
+
+- name: User systemd | Enable ssh-agent
+  ansible.builtin.systemd_service:
+    scope: user
+    name: "{{ system_ssh_agent_service_name }}"
+    state: started
+    enabled: true
+    daemon_reload: true
+  when:
+    - system_can_manage_systemd | bool

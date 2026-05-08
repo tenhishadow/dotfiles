@@ -15,6 +15,8 @@
       - base
       - base-devel
     state: present
+  when:
+    - system_packages_enabled | bool
   tags:
     - pkg
 
@@ -38,6 +40,8 @@
   ansible.builtin.package:
     name: "{{ system_reflector_package }}"
     state: present
+  when:
+    - system_packages_enabled | bool
   tags:
     - pkg
 

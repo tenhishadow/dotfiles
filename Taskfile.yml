@@ -7,7 +7,7 @@ vars:
   RUN_SYSTEM_PLAYBOOK: "uv run ansible-playbook playbook_system.yml --diff {{.CLI_ARGS}}"
   DEPS_OS_ARCHLINUX: "pacman -Sy --noconfirm --needed --noprogressbar uv git"
   DEPS_OS_SYSTEM_ARCHLINUX: "pacman -Sy --noconfirm --needed --noprogressbar uv git sudo"
-  DEPS_VERIFY_ARCHLINUX: "pacman -Sy --noconfirm --needed --noprogressbar actionlint nodejs npm"
+  DEPS_VERIFY_ARCHLINUX: "pacman -Sy --noconfirm --needed --noprogressbar actionlint nodejs npm pre-commit"
   MITOGEN_VARS: "ANSIBLE_STRATEGY=serverscom.mitogen.mitogen_linear"
   SUPERLINTER_DOCKER_RUN: >-
     docker run
@@ -64,6 +64,7 @@ tasks:
     status:
       - $SHELL -c 'type -P actionlint'
       - $SHELL -c 'type -P npx'
+      - $SHELL -c 'type -P pre-commit'
     cmd: >-
       {{.DEPS_VERIFY_ARCHLINUX}} || sudo {{.DEPS_VERIFY_ARCHLINUX}}
   deps-upgrade:
@@ -95,6 +96,9 @@ tasks:
       then renovate-config-validator --strict;
       else npx --yes --package renovate renovate-config-validator --strict;
       fi
+  pre-commit:
+    deps: [deps-verify]
+    cmd: pre-commit run --all-files
   verify:
     deps: [deps-galaxy, deps-verify]
     cmds:
@@ -103,6 +107,7 @@ tasks:
       - task: yamllint
       - task: actionlint
       - task: renovate
+      - task: pre-commit
       - task: default
       - task: system:check
       - task: browser-policies:check

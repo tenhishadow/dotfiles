@@ -4,6 +4,8 @@
   ansible.builtin.package:
     name: "{{ system_tzdata_package }}"
     state: present
+  when:
+    - system_packages_enabled | bool
   tags:
     - pkg
 

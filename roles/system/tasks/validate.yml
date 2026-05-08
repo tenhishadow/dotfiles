@@ -9,6 +9,10 @@
       - system_timezone is string
       - system_timezone | length > 0
       - system_motd_message is string
+      - system_packages_enabled is boolean
+      - system_docker_enabled is boolean
+      - system_laptop_enabled is boolean
+      - system_user_services_enabled is boolean
       - system_ntp_service is string
       - system_ntp_service | length > 0
       - system_ntp_servers is sequence
@@ -54,7 +58,7 @@
       - system_masked_services is not string
       - system_packages is sequence
       - system_packages is not string
-      - system_packages | length > 0
+      - not (system_packages_enabled | bool) or system_packages | length > 0
     fail_msg: "system role variables are invalid."
     quiet: true
   tags:

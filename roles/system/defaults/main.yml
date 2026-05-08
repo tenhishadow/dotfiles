@@ -7,6 +7,11 @@ system_tzdata_package: tzdata
 system_timezone: Europe/Warsaw
 system_motd_message: ""
 
+system_packages_enabled: true
+system_docker_enabled: true
+system_laptop_enabled: true
+system_user_services_enabled: true
+
 system_ntp_service: systemd-timesyncd
 
 system_ntp_servers:

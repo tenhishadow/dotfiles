@@ -54,6 +54,8 @@
   ansible.builtin.package:
     name: "{{ system_packages }}"
     state: present
+  when:
+    - system_packages_enabled | bool
   tags:
     - pkg
 
@@ -97,9 +99,18 @@
   ansible.builtin.include_tasks:
     file: docker.yml
   when:
+    - system_docker_enabled | bool
     - not (system_is_container | bool)
     - not (system_in_ci | bool)
 
 - name: System | Run laptop tasks
   ansible.builtin.include_tasks:
     file: laptop.yml
+  when:
+    - system_laptop_enabled | bool
+
+- name: System | Run user service tasks
+  ansible.builtin.include_tasks:
+    file: user-services.yml
+  when:
+    - system_user_services_enabled | bool
