@@ -1,0 +1,87 @@
+---
+dotfiles_directories:
+  - path: "{{ dotfiles_bashrc_dir }}"
+
+dotfiles_mapping:
+  - name: bashrc
+    payload: .bashrc
+    dest: "{{ dotfiles_home }}/.bashrc"
+  - name: bash_profile
+    payload: .bash_profile
+    dest: "{{ dotfiles_home }}/.bash_profile"
+  - name: editorconfig
+    payload: .editorconfig
+    dest: "{{ dotfiles_home }}/.editorconfig"
+  - name: gitconfig
+    payload: .gitconfig
+    dest: "{{ dotfiles_home }}/.gitconfig"
+  - name: gitignore
+    payload: .gitignore
+    dest: "{{ dotfiles_home }}/.gitignore"
+  - name: screenrc
+    payload: .screenrc
+    dest: "{{ dotfiles_home }}/.screenrc"
+  - name: vimrc
+    payload: .vimrc
+    dest: "{{ dotfiles_home }}/.vimrc"
+  - name: gpg_conf
+    payload: .gnupg/gpg.conf
+    dest: "{{ dotfiles_gnupg_dir }}/gpg.conf"
+  - name: gpg_agent
+    payload: .gnupg/gpg-agent.conf
+    dest: "{{ dotfiles_gnupg_dir }}/gpg-agent.conf"
+  - name: curlrc
+    payload: .curlrc
+    dest: "{{ dotfiles_home }}/.curlrc"
+  - name: wgetrc
+    payload: .wgetrc
+    dest: "{{ dotfiles_home }}/.wgetrc"
+  - name: yamllint
+    payload: .yamllint
+    dest: "{{ dotfiles_config_dir }}/yamllint/config"
+  - name: yamllint_root
+    payload: .yamllint
+    dest: "{{ dotfiles_home }}/.yamllint"
+  - name: ssh_config
+    payload: .ssh/config
+    dest: "{{ dotfiles_ssh_dir }}/config"
+  - name: ssh_config_examples
+    payload: .ssh/config.d/examples
+    dest: "{{ dotfiles_ssh_config_dir }}/examples"
+  - name: kitty_config
+    payload: .config/kitty/kitty.conf
+    dest: "{{ dotfiles_config_dir }}/kitty/kitty.conf"
+  - name: kitty_theme
+    payload: .config/kitty/theme.conf
+    dest: "{{ dotfiles_config_dir }}/kitty/theme.conf"
+  - name: htoprc
+    payload: .config/htop/htoprc
+    dest: "{{ dotfiles_config_dir }}/htop/htoprc"
+  - name: user_dirs
+    payload: .config/user-dirs.dirs
+    dest: "{{ dotfiles_config_dir }}/user-dirs.dirs"
+  - name: environment_d
+    payload: .config/environment.d/99-dotfiles.conf
+    dest: "{{ dotfiles_config_dir }}/environment.d/99-dotfiles.conf"
+  - name: nvim_init
+    payload: .config/nvim/init.lua
+    dest: "{{ dotfiles_config_dir }}/nvim/init.lua"
+  - name: nvim_lazy_lock
+    payload: .config/nvim/lazy-lock.json
+    dest: "{{ dotfiles_config_dir }}/nvim/lazy-lock.json"
+  - name: nvim_lua
+    payload: .config/nvim/lua
+    dest: "{{ dotfiles_config_dir }}/nvim/lua"
+  - name: pylintrc
+    payload: .pylintrc
+    dest: "{{ dotfiles_home }}/.pylintrc"
+  - name: mplayer
+    payload: .mplayer/config
+    dest: "{{ dotfiles_home }}/.mplayer/config"
+  - name: starship
+    payload: .config/starship.toml
+    dest: "{{ dotfiles_config_dir }}/starship.toml"
+
+dotfiles_cleanup_paths:
+  - "{{ dotfiles_config_dir }}/nvim/init.vim"
+  - "{{ dotfiles_home }}/.nvim"

@@ -1,8 +1,15 @@
 ---
-- name: browser_policies | validate common variables
+- name: Browser Policies | Validate common variables
   ansible.builtin.assert:
     that:
+      - browser_policies_enabled is boolean
       - browser_policies_state in ["present", "absent"]
+      - browser_policies_chromium_enabled is boolean
+      - browser_policies_firefox_enabled is boolean
+      - browser_policies_vscode_enabled is boolean
+      - browser_policies_extension_lockdown_enabled is boolean
+      - browser_policies_extension_block_message is string
+      - browser_policies_extension_block_message | length > 0
       - browser_policies_chromium_targets is sequence
       - browser_policies_chromium_targets is not string
       - browser_policies_firefox_targets is sequence
@@ -11,67 +18,102 @@
       - browser_policies_vscode_targets is not string
       - browser_policies_chromium_base_policies is mapping
       - browser_policies_chromium_extension_settings is mapping
+      - browser_policies_extension_block_defaults is mapping
+      - browser_policies_extension_block is mapping
       - browser_policies_firefox_base_policies is mapping
       - browser_policies_firefox_extension_settings is mapping
+      - browser_policies_owner is string and browser_policies_owner | length > 0
+      - browser_policies_group is string and browser_policies_group | length > 0
+      - browser_policies_dir_mode is string and browser_policies_dir_mode | length > 0
+      - browser_policies_file_mode is string and browser_policies_file_mode | length > 0
       - browser_policies_vscode_base_policies is mapping
       - browser_policies_vscode_allowed_extensions is mapping
     fail_msg: "browser_policies role variables are invalid."
-    success_msg: "browser_policies role variables are valid."
+    quiet: true
 
-- name: browser_policies | validate chromium targets
+- name: Chromium Policies | Validate targets
   ansible.builtin.assert:
     that:
-      - item is mapping
-      - item.name is defined and item.name is string and item.name | length > 0
-      - item.policy_filename is not defined or (item.policy_filename is string and item.policy_filename | length > 0)
-      - item.policies is not defined or item.policies is mapping
-      - not (item.enabled | default(true) | bool) or (item.managed_dir is defined and item.managed_dir is string and item.managed_dir | length > 0)
-    fail_msg: "Invalid Chromium target: {{ item | to_nice_json }}"
+      - browser_policies_chromium_target is mapping
+      - browser_policies_chromium_target.name is defined
+      - browser_policies_chromium_target.name is string
+      - browser_policies_chromium_target.name is regex('^[a-z0-9_-]+$')
+      - >-
+        browser_policies_chromium_target.enabled is not defined
+        or browser_policies_chromium_target.enabled is boolean
+      - >-
+        browser_policies_chromium_target.policy_filename is not defined
+        or (
+          browser_policies_chromium_target.policy_filename is string
+          and browser_policies_chromium_target.policy_filename | length > 0
+        )
+      - >-
+        browser_policies_chromium_target.policies is not defined
+        or browser_policies_chromium_target.policies is mapping
+      - >-
+        not (browser_policies_chromium_target.enabled | default(true) | bool)
+        or (
+          browser_policies_chromium_target.policy_dir is defined
+          and browser_policies_chromium_target.policy_dir is string
+          and browser_policies_chromium_target.policy_dir is regex('^/')
+        )
+    fail_msg: "Invalid Chromium target: {{ browser_policies_chromium_target | to_nice_json }}"
+    quiet: true
   loop: "{{ browser_policies_chromium_targets }}"
   loop_control:
-    label: "{{ item.name | default('unnamed chromium target') }}"
+    loop_var: browser_policies_chromium_target
+    label: "{{ browser_policies_chromium_target.name | default('unnamed chromium target') }}"
 
-- name: browser_policies | validate path-based targets
+- name: Path Policies | Validate targets
   ansible.builtin.assert:
     that:
-      - item.target is mapping
+      - browser_policies_path_target.target is mapping
       - >-
-        item.target.name is defined
-        and item.target.name is string
-        and item.target.name | length > 0
-      - item.target.policies is not defined or item.target.policies is mapping
+        browser_policies_path_target.target.name is defined
+        and browser_policies_path_target.target.name is string
+        and browser_policies_path_target.target.name is regex('^[a-z0-9_-]+$')
       - >-
-        not (item.target.enabled | default(true) | bool)
+        browser_policies_path_target.target.enabled is not defined
+        or browser_policies_path_target.target.enabled is boolean
+      - >-
+        browser_policies_path_target.target.policies is not defined
+        or browser_policies_path_target.target.policies is mapping
+      - >-
+        not (browser_policies_path_target.target.enabled | default(true) | bool)
         or (
-          item.target.policy_path is defined
-          and item.target.policy_path is string
-          and item.target.policy_path | length > 0
+          browser_policies_path_target.target.policy_path is defined
+          and browser_policies_path_target.target.policy_path is string
+          and browser_policies_path_target.target.policy_path is regex('^/')
         )
-    fail_msg: "Invalid {{ item.family }} target: {{ item.target | to_nice_json }}"
+    fail_msg: >-
+      Invalid {{ browser_policies_path_target.family }} target:
+      {{ browser_policies_path_target.target | to_nice_json }}
+    quiet: true
   vars:
     browser_policies_path_targets: >-
-      {%- set results = [] -%}
-      {%- for target in browser_policies_firefox_targets -%}
-      {%-   set _ = results.append(
+      {%- set browser_policies_path_target_checks = [] -%}
+      {%- for browser_policies_firefox_target in browser_policies_firefox_targets -%}
+      {%-   set browser_policies_firefox_target_added = browser_policies_path_target_checks.append(
               {
                 'family': 'Firefox',
-                'label': target.name | default('unnamed firefox target'),
-                'target': target,
+                'label': browser_policies_firefox_target.name | default('unnamed firefox target'),
+                'target': browser_policies_firefox_target,
               }
             )
       -%}
       {%- endfor -%}
-      {%- for target in browser_policies_vscode_targets -%}
-      {%-   set _ = results.append(
+      {%- for browser_policies_vscode_target in browser_policies_vscode_targets -%}
+      {%-   set browser_policies_vscode_target_added = browser_policies_path_target_checks.append(
               {
                 'family': 'VS Code',
-                'label': target.name | default('unnamed vscode target'),
-                'target': target,
+                'label': browser_policies_vscode_target.name | default('unnamed vscode target'),
+                'target': browser_policies_vscode_target,
               }
             )
       -%}
       {%- endfor -%}
-      {{ results }}
+      {{ browser_policies_path_target_checks }}
   loop: "{{ browser_policies_path_targets }}"
   loop_control:
-    label: "{{ item.family }}: {{ item.label }}"
+    loop_var: browser_policies_path_target
+    label: "{{ browser_policies_path_target.family }}: {{ browser_policies_path_target.label }}"

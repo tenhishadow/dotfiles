@@ -1,0 +1,117 @@
+---
+- name: Timezone | Install tzdata
+  become: true
+  ansible.builtin.package:
+    name: "{{ system_tzdata_package }}"
+    state: present
+  when:
+    - system_packages_enabled | bool
+  tags:
+    - pkg
+
+- name: Timezone | Set timezone
+  become: true
+  community.general.timezone:
+    name: "{{ system_timezone }}"
+  when:
+    - not (system_is_container | bool)
+
+- name: NTP | Gather service facts
+  become: true
+  ansible.builtin.service_facts:
+  when:
+    - system_can_manage_systemd | bool
+
+- name: NTP | Disable conflicting services
+  become: true
+  ansible.builtin.systemd_service:
+    name: "{{ system_ntp_conflicting_service }}"
+    state: stopped
+    enabled: false
+    masked: true
+  loop: "{{ system_ntp_conflicting_services }}"
+  loop_control:
+    loop_var: system_ntp_conflicting_service
+    label: "{{ system_ntp_conflicting_service }}"
+  when:
+    - system_can_manage_systemd | bool
+    - system_ntp_conflicting_service ~ ".service" in (ansible_facts.services | default({}))
+
+- name: NTP | Read legacy timesyncd config
+  become: true
+  ansible.builtin.slurp:
+    path: "{{ system_timesyncd_main_path }}"
+  register: system_timesyncd_main_slurp
+  when:
+    - not (system_is_container | bool)
+
+- name: NTP | Reset legacy main-file settings
+  become: true
+  ansible.builtin.lineinfile:
+    path: "{{ system_timesyncd_main_path }}"
+    regexp: "{{ system_timesyncd_legacy_line.regexp }}"
+    line: "{{ system_timesyncd_legacy_line.line }}"
+    owner: "{{ system_config_owner }}"
+    group: "{{ system_config_group }}"
+    mode: "{{ system_config_file_mode }}"
+    backup: true
+  loop: "{{ system_timesyncd_legacy_main_lines }}"
+  loop_control:
+    loop_var: system_timesyncd_legacy_line
+    label: "{{ system_timesyncd_legacy_line.regexp }}"
+  notify:
+    - NTP | Restart service
+  when:
+    - not (system_is_container | bool)
+    - >-
+      (system_timesyncd_main_slurp.content | b64decode)
+      is regex('(?m)^' ~ (system_legacy_managed_marker | regex_escape) ~ '$')
+
+- name: NTP | Ensure drop-in directory
+  become: true
+  ansible.builtin.file:
+    path: "{{ system_timesyncd_dropin_dir }}"
+    state: directory
+    owner: "{{ system_config_owner }}"
+    group: "{{ system_config_group }}"
+    mode: "{{ system_config_dir_mode }}"
+  when:
+    - not (system_is_container | bool)
+
+- name: NTP | Write timesyncd drop-in
+  become: true
+  ansible.builtin.template:
+    backup: true
+    src: templates/timesyncd-dropin.conf.j2
+    dest: "{{ system_timesyncd_dropin_path }}"
+    owner: "{{ system_config_owner }}"
+    group: "{{ system_config_group }}"
+    mode: "{{ system_config_file_mode }}"
+  notify:
+    - NTP | Restart service
+  when:
+    - not (system_is_container | bool)
+
+- name: NTP | Remove legacy drop-ins
+  become: true
+  ansible.builtin.file:
+    path: "{{ system_timesyncd_legacy_dropin_path }}"
+    state: absent
+  loop: "{{ system_timesyncd_legacy_dropin_paths }}"
+  loop_control:
+    loop_var: system_timesyncd_legacy_dropin_path
+    label: "{{ system_timesyncd_legacy_dropin_path }}"
+  notify:
+    - NTP | Restart service
+  when:
+    - not (system_is_container | bool)
+    - system_timesyncd_legacy_dropin_path != system_timesyncd_dropin_path
+
+- name: NTP | Ensure service enabled
+  become: true
+  ansible.builtin.service:
+    name: "{{ system_ntp_service }}"
+    state: started
+    enabled: true
+  when:
+    - system_can_manage_systemd | bool

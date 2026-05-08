@@ -1,77 +1,54 @@
 ---
-- name: browser_policies | firefox | ensure policy directories exist
-  ansible.builtin.file:
-    path: "{{ item.policy_path | dirname }}"
-    state: directory
-    owner: root
-    group: root
-    mode: "0755"
-  loop: "{{ browser_policies_firefox_targets }}"
-  loop_control:
-    label: "{{ item.policy_path | dirname }}"
-  when:
-    - browser_policies_state == "present"
-    - item.enabled | default(true) | bool
-
-- name: browser_policies | firefox | write managed policy files
-  ansible.builtin.copy:
-    dest: "{{ item.policy_path }}"
-    content: "{{ {'policies': browser_policies_firefox_rendered_policy} | to_nice_json }}\n"
-    owner: root
-    group: root
-    mode: "0644"
-    backup: false
+- name: Firefox Policies | Build managed targets
+  ansible.builtin.set_fact:
+    browser_policies_policy_files: "{{ browser_policies_firefox_policy_files }}"
   vars:
-    browser_policies_firefox_effective_extension_settings: >-
+    browser_policies_firefox_extension_settings_merged: >-
       {{
-        (
-          browser_policies_extension_lockdown_enabled | bool
-        )
-        | ternary(
-            {
-              '*': {
-                'installation_mode': 'blocked',
-                'blocked_install_message': browser_policies_extension_block_message,
-              },
-            },
-            {}
-          )
-        | combine(browser_policies_firefox_extension_settings, recursive=True)
-      }}
-    browser_policies_firefox_rendered_policy: >-
-      {{
-        browser_policies_firefox_base_policies
-        | combine(item.policies | default({}), recursive=True)
+        browser_policies_extension_block
         | combine(
-            (
-              browser_policies_firefox_effective_extension_settings | length > 0
-            )
-            | ternary(
-                {
-                  'ExtensionSettings':
-                    browser_policies_firefox_effective_extension_settings,
-                },
-                {}
-              ),
+            browser_policies_firefox_extension_settings,
             recursive=True
           )
       }}
-  loop: "{{ browser_policies_firefox_targets }}"
-  loop_control:
-    label: "{{ item.policy_path }}"
-  when:
-    - browser_policies_state == "present"
-    - item.enabled | default(true) | bool
-  notify: browser_policies | browser restart required
+    browser_policies_firefox_policy_files: >-
+      {%- set browser_policies_firefox_files = [] -%}
+      {%- for browser_policies_firefox_target in browser_policies_firefox_targets -%}
+      {%-   if browser_policies_firefox_target.enabled | default(true) | bool -%}
+      {%-     set browser_policies_firefox_policy =
+                browser_policies_firefox_base_policies
+                | combine(browser_policies_firefox_target.policies | default({}), recursive=True)
+                | combine(
+                    (
+                      browser_policies_firefox_extension_settings_merged
+                      | length > 0
+                    )
+                    | ternary(
+                        {
+                          'ExtensionSettings':
+                            browser_policies_firefox_extension_settings_merged,
+                        },
+                        {}
+                      ),
+                    recursive=True
+                  )
+      -%}
+      {%-     set browser_policies_firefox_file_added = browser_policies_firefox_files.append(
+                {
+                  'name': browser_policies_firefox_target.name,
+                  'family': 'Firefox',
+                  'directory': browser_policies_firefox_target.policy_path | dirname,
+                  'path': browser_policies_firefox_target.policy_path,
+                  'content': {'policies': browser_policies_firefox_policy},
+                }
+              )
+      -%}
+      {%-   endif -%}
+      {%- endfor -%}
+      {{ browser_policies_firefox_files }}
 
-- name: browser_policies | firefox | remove managed policy files
-  ansible.builtin.file:
-    path: "{{ item.policy_path }}"
-    state: absent
-  loop: "{{ browser_policies_firefox_targets }}"
-  loop_control:
-    label: "{{ item.policy_path }}"
+- name: Firefox Policies | Run policy file tasks
+  ansible.builtin.include_tasks:
+    file: policy-files.yml
   when:
-    - browser_policies_state == "absent"
-    - item.enabled | default(true) | bool
-  notify: browser_policies | browser restart required
+    - browser_policies_policy_files | length > 0

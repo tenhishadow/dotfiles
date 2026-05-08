@@ -1,52 +1,43 @@
 # browser_policies
 
-Manage Linux browser and VS Code enterprise policies as code.
+Opt-in role for managing Linux browser and VS Code enterprise policies as
+root-owned system configuration.
 
-This role writes root-owned files under `/etc/...` because enterprise
-policies are system configuration, not user profile state. It intentionally
-does not manage runtime browser profiles such as
-`~/.config/BraveSoftware/`, `~/.config/chromium/`, or
-`~/.mozilla/firefox/`, and it does not manage VS Code user or workspace
-state under `~/.config/Code*`.
-
-System policy paths should stay root-owned and should not be symlinked back
-into `$HOME`. This keeps the install explicit, auditable, and aligned with
-how browsers load enterprise policy on Linux.
-
-Firefox note: this role owns the complete generated
-`/etc/firefox/policies/policies.json` file for each enabled Firefox target.
-If a file already exists there, running this role will replace it with the
-rendered policy document.
-
-VS Code note: this role owns the complete generated
-`/etc/vscode/policy.json` file for each enabled VS Code target.
+This role writes policy files under `/etc`. It does not manage runtime browser
+profiles, cookies, history, cache, session state, local storage, VS Code user
+settings, or VS Code workspace settings.
 
 ## Usage
 
-Apply:
+Dry-run policy changes:
 
 ```bash
-go-task browser-policies -- -K
+go-task browser-policies:check
 ```
 
-Dry run:
+Apply policy changes:
 
 ```bash
-go-task browser-policies:check -- -K
+go-task browser-policies
 ```
 
-## Verification
+The playbook uses sudo because policy files are system configuration.
 
-- `brave://policy`
-- `brave://management`
-- `about:policies`
-- VS Code Settings should show managed values with a lock icon
-- VS Code Command Palette: `Show Window Log`
+## Managed Policy Targets
+
+| Target family | Managed path behavior |
+| ------------- | --------------------- |
+| Chromium-based browsers | Writes one generated JSON file under each target managed policy directory. |
+| Firefox-based browsers | Owns the complete `policies.json` file for each enabled target. |
+| VS Code | Owns the complete `/etc/vscode/policy.json` file for each enabled target. |
+
+System policy files should stay root-owned and should not be symlinked back
+into `$HOME`.
 
 ## Variables
 
-Edit variables in inventory, for example
-`inventory/host_vars/this_host.yml`, to override role defaults.
+Set host-specific overrides in
+`inventory/host_vars/this_host/browser_policies.yml`.
 
 Key defaults:
 
@@ -66,34 +57,46 @@ browser_policies_firefox_extension_settings: {}
 browser_policies_vscode_allowed_extensions: {}
 ```
 
-## Adding Chromium-Based Browsers
+Public role variables use the `browser_policies_` prefix. Target entries use
+short, stable keys:
 
-Add another item to `browser_policies_chromium_targets`. Each target writes
-one generated JSON file into its own managed policy directory.
+| Target family | Path key |
+| ------------- | -------- |
+| Chromium-based browsers | `policy_dir` |
+| Firefox-based browsers | `policy_path` |
+| VS Code | `policy_path` |
+
+The task files normalize enabled targets into generated policy file specs
+internally before shared file tasks write or remove policy files.
+
+## Chromium-Based Browsers
+
+Add targets to `browser_policies_chromium_targets`. Each item writes one JSON
+file into that browser's managed policy directory.
 
 ```yaml
 browser_policies_chromium_targets:
   - name: brave
     enabled: true
-    managed_dir: /etc/brave/policies/managed
+    policy_dir: /etc/brave/policies/managed
     policy_filename: "10-tenhishadow-managed.json"
     policies:
       BraveRewardsDisabled: true
   - name: chromium
     enabled: true
-    managed_dir: /etc/chromium/policies/managed
+    policy_dir: /etc/chromium/policies/managed
     policy_filename: "10-tenhishadow-managed.json"
     policies: {}
 ```
 
-This target list approach also works for `google-chrome`,
-`microsoft-edge`, `vivaldi`, and other Chromium-based browsers with their
-own managed policy directories.
+The same target pattern works for `google-chrome`, `microsoft-edge`,
+`vivaldi`, and other Chromium-based browsers with a Linux managed policy
+directory.
 
-## Adding Firefox-Based Browsers
+## Firefox-Based Browsers
 
-Add another item to `browser_policies_firefox_targets`. Each target writes a
-complete `policies.json` file at the declared system path.
+Add targets to `browser_policies_firefox_targets`. Each item owns the complete
+policy file at `policy_path`.
 
 ```yaml
 browser_policies_firefox_targets:
@@ -106,14 +109,14 @@ browser_policies_firefox_targets:
     policies: {}
 ```
 
-This target list approach also works for other Firefox-based browsers such
-as `zen-browser` when they support the same enterprise policy file format.
+The same target pattern works for other Firefox-based browsers when they
+support the Firefox enterprise policy file format.
 
-## Managing VS Code
+## VS Code
 
-VS Code Linux policy is written as `/etc/vscode/policy.json`. The role
-stores policy values by enterprise policy name, for example `UpdateMode`,
-`TelemetryLevel`, and `EnableFeedback`.
+VS Code policy is stored as `/etc/vscode/policy.json`. Policy keys use the
+enterprise policy names, for example `UpdateMode`, `TelemetryLevel`, and
+`EnableFeedback`.
 
 ```yaml
 browser_policies_vscode_targets:
@@ -124,9 +127,8 @@ browser_policies_vscode_targets:
       UpdateMode: manual
 ```
 
-The role renders `AllowedExtensions` for you from a normal mapping variable,
-because VS Code expects this specific policy value as a JSON string inside the
-outer `policy.json` document.
+`AllowedExtensions` is rendered from a normal mapping because VS Code expects
+that policy value as a JSON string inside the outer `policy.json` document.
 
 ```yaml
 browser_policies_vscode_allowed_extensions:
@@ -137,13 +139,15 @@ browser_policies_vscode_allowed_extensions:
     - "5.0.0@linux-x64"
 ```
 
-If you do not want to restrict extensions, leave
-`browser_policies_vscode_allowed_extensions: {}`.
+Use an empty mapping to avoid restricting extensions:
 
-## Managing Extensions
+```yaml
+browser_policies_vscode_allowed_extensions: {}
+```
 
-Extension policy is controlled through dedicated variables. With
-`browser_policies_extension_lockdown_enabled: true`, the role merges a
+## Extension Policy
+
+When `browser_policies_extension_lockdown_enabled: true`, the role merges a
 default wildcard block entry:
 
 ```yaml
@@ -176,16 +180,43 @@ browser_policies_firefox_extension_settings:
     install_url: "https://addons.mozilla.org/firefox/downloads/latest/ublock-origin/latest.xpi"
 ```
 
-To switch an extension from `normal_installed` to `force_installed`, change
-only its `installation_mode` value in the matching extension settings
-mapping.
+## Validation
 
-## Warnings
+After applying, verify policies in the relevant applications:
 
-- Extension lockdown can block or remove extensions that are not listed in
+- Brave or Chromium: `brave://policy` and `brave://management`
+- Firefox-compatible browsers: `about:policies`
+- VS Code: Settings UI managed-value lock icons
+- VS Code logs: Command Palette, `Show Window Log`
+
+For repository validation, run:
+
+```bash
+go-task lint
+go-task browser-policies:check
+go-task verify
+git diff --check
+```
+
+The role validates common variables, target shapes, target names, absolute
+policy paths, and generated policy file specs before writing system files.
+
+## Rollback
+
+Set `browser_policies_state: absent` for managed policy removal, or revert the
+role and inventory changes in git and reapply:
+
+```bash
+go-task browser-policies
+```
+
+Removing policy files does not remove data already stored in browser or VS Code
+profiles.
+
+## Risks
+
+- Extension lockdown can block or remove extensions that are not declared in
   code.
-- Disabling password managers through enterprise policy does not necessarily
-  delete passwords already saved in existing browser profiles.
-- This role intentionally does not manage cookies, history, sessions, cache,
-  local storage, VS Code user settings, VS Code workspace settings, or any
-  other runtime profile state.
+- Password-manager policy changes do not necessarily delete passwords already
+  saved in existing browser profiles.
+- Existing policy files at role-owned paths are replaced by rendered output.

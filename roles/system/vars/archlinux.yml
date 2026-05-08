@@ -1,0 +1,15 @@
+---
+system_crontab_bin: /usr/bin/crontab
+system_cron_package: cronie
+system_cron_service_name: cronie
+system_docker_group: docker
+system_docker_service_name: docker
+system_docker_conf_dir: /etc/docker
+system_pacman_config_path: /etc/pacman.conf
+system_reflector_package: reflector
+system_reflector_config_path: /etc/xdg/reflector/reflector.conf
+system_reflector_timer_name: reflector.timer
+system_reflector_legacy_cron_name: reflector
+system_root_user: root
+system_masked_services:
+  - passim.service

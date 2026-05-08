@@ -1,0 +1,6 @@
+# {{ ansible_managed }}
+# vim:ft=systemd
+
+[Time]
+NTP={{ system_ntp_servers | join(' ') }}
+FallbackNTP={{ system_ntp_fallback_servers | join(' ') }}

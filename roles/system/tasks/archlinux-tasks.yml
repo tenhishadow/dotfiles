@@ -1,0 +1,80 @@
+---
+- name: Pacman | Write pacman.conf
+  become: true
+  ansible.builtin.template:
+    src: templates/pacman.conf.j2
+    dest: "{{ system_pacman_config_path }}"
+    owner: "{{ system_config_owner }}"
+    group: "{{ system_config_group }}"
+    mode: "{{ system_config_file_mode }}"
+
+- name: Pacman | Install base packages
+  become: true
+  ansible.builtin.package:
+    name:
+      - base
+      - base-devel
+    state: present
+  when:
+    - system_packages_enabled | bool
+  tags:
+    - pkg
+
+- name: Cron | Check crontab binary
+  ansible.builtin.stat:
+    path: "{{ system_crontab_bin }}"
+  register: system_crontab_stat
+  changed_when: false
+
+- name: Reflector | Remove legacy cron job
+  become: true
+  ansible.builtin.cron:
+    state: absent
+    user: "{{ system_root_user }}"
+    name: "{{ system_reflector_legacy_cron_name }}"
+  when:
+    - system_crontab_stat.stat.exists | default(false)
+
+- name: Reflector | Install package
+  become: true
+  ansible.builtin.package:
+    name: "{{ system_reflector_package }}"
+    state: present
+  when:
+    - system_packages_enabled | bool
+  tags:
+    - pkg
+
+- name: Reflector | Write config
+  become: true
+  ansible.builtin.template:
+    src: templates/reflector.conf.j2
+    dest: "{{ system_reflector_config_path }}"
+    owner: "{{ system_config_owner }}"
+    group: "{{ system_config_group }}"
+    mode: "{{ system_config_file_mode }}"
+  when:
+    - system_reflector_enabled | bool
+
+- name: Reflector | Configure timer
+  become: true
+  ansible.builtin.systemd_service:
+    name: "{{ system_reflector_timer_name }}"
+    state: "{{ (system_reflector_enabled | bool) | ternary('started', 'stopped') }}"
+    enabled: "{{ system_reflector_enabled | bool }}"
+  when:
+    - system_can_manage_systemd | bool
+
+- name: System | Mask disabled systemd services
+  become: true
+  ansible.builtin.systemd_service:
+    name: "{{ system_masked_service }}"
+    state: stopped
+    enabled: false
+    masked: true
+  loop: "{{ system_masked_services }}"
+  loop_control:
+    loop_var: system_masked_service
+    label: "{{ system_masked_service }}"
+  when:
+    - system_can_manage_systemd | bool

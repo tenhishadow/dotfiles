@@ -7,18 +7,22 @@ permissions:
 on:
   pull_request:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   github-super-linter:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Code
+      - name: Checkout repository
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Scan Code Base
+      - name: Scan codebase
         uses: super-linter/super-linter@v8.6.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -32,4 +36,4 @@ jobs:
           VALIDATE_NATURAL_LANGUAGE: false
           VALIDATE_SHELL_SHFMT: false
           VALIDATE_TRIVY: false
-          FILTER_REGEX_EXCLUDE: (^|/)\.test/nvim/
+          FILTER_REGEX_EXCLUDE: (^|/)(\.ansible/|\.collections/|\.task/|\.test/nvim/|\.venv/)

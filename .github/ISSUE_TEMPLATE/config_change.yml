@@ -1,0 +1,60 @@
+---
+name: Configuration Change
+description: Request a dotfiles, system, policy, or automation configuration change.
+title: "chore: "
+labels:
+  - enhancement
+  - triage
+body:
+  - type: dropdown
+    id: scope
+    attributes:
+      label: Scope
+      options:
+        - user dotfiles
+        - opt-in system role
+        - browser or VS Code policies
+        - Neovim
+        - GitHub automation
+        - documentation or AI instructions
+    validations:
+      required: true
+  - type: textarea
+    id: requested-change
+    attributes:
+      label: Requested Change
+      description: Describe the desired end state and the files or commands it affects.
+    validations:
+      required: true
+  - type: textarea
+    id: rationale
+    attributes:
+      label: Rationale
+      description: Explain why this should be changed and what trade-offs are acceptable.
+    validations:
+      required: true
+  - type: textarea
+    id: validation
+    attributes:
+      label: Expected Validation
+      description: List the checks that should prove the change works.
+      placeholder: |
+        git diff --check
+        go-task lint
+        go-task verify
+        go-task
+    validations:
+      required: false
+  - type: checkboxes
+    id: constraints
+    attributes:
+      label: Constraints
+      options:
+        - label: Default `go-task` must remain user-level and sudo-free.
+          required: true
+        - label: Privileged behavior must remain opt-in.
+          required: true
+        - label: Documentation and AGENTS.md instructions should be updated if behavior changes.
+          required: false
+        - label: AI review instructions should be updated if review expectations change.
+          required: false

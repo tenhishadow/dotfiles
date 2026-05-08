@@ -1,0 +1,7 @@
+---
+- name: Laptop | Configure camera blacklist
+  become: true
+  community.general.kernel_blacklist:
+    name: "{{ system_camera_blacklist_module }}"
+    state: present
+  failed_when: false

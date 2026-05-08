@@ -1,0 +1,7 @@
+# {{ ansible_managed }}
+# vim:ft=systemd
+
+[Journal]
+{% for system_journald_key, system_journald_value in system_journald_settings.items() %}
+{{ system_journald_key }}={{ system_journald_value }}
+{% endfor %}

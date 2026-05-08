@@ -1,11 +1,5 @@
-# this is just a comment
-skip_list:
-  - name[play]
-  - ignore-errors
-  - name[casing]
-  - fqcn[action-core]
-  - fqcn[action]
-  - var-naming[no-role-prefix]
 exclude_paths:
   - .collections/
   - .collections/**/*
+
+var_naming_pattern: "^[a-z][a-z0-9_]*$"

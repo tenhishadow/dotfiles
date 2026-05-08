@@ -1,0 +1,8 @@
+---
+ansible_managed: o_O
+system_motd_message: o_O
+
+system_journald_settings:
+  Storage: persistent
+  Compress: "yes"
+  SystemMaxUse: 50M

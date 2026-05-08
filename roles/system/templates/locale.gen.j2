@@ -1,0 +1,6 @@
+# {{ ansible_managed }}
+# vim:ft=conf
+{% set system_locale_missing = system_locale_missing_definitions | default([]) %}
+{% for system_locale_name in system_locales %}
+{% if system_locale_name in system_locale_missing %}# {% endif %}{{ system_locale_name }}.UTF-8 UTF-8
+{% endfor %}

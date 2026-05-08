@@ -1,8 +1,53 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": ["config:recommended", ":dependencyDashboard"],
+  "labels": ["dependencies"],
   "semanticCommits": "enabled",
   "semanticCommitType": "deps",
   "semanticCommitScope": null,
-  "pre-commit": { "enabled": true }
+  "ansible-galaxy": {
+    "enabled": true
+  },
+  "github-actions": {
+    "enabled": true
+  },
+  "pre-commit": {
+    "enabled": true
+  },
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Update the Super-Linter container image used by Taskfile.yml.",
+      "managerFilePatterns": ["/^Taskfile\\.yml$/"],
+      "matchStrings": ["ghcr\\.io/super-linter/super-linter:(?<currentValue>v?\\d+\\.\\d+\\.\\d+)"],
+      "depNameTemplate": "ghcr.io/super-linter/super-linter",
+      "datasourceTemplate": "docker",
+      "versioningTemplate": "docker"
+    }
+  ],
+  "packageRules": [
+    {
+      "matchManagers": ["github-actions"],
+      "groupName": "github actions",
+      "addLabels": ["ci"]
+    },
+    {
+      "matchManagers": ["pre-commit"],
+      "groupName": "pre-commit hooks"
+    },
+    {
+      "matchManagers": ["ansible-galaxy"],
+      "groupName": "ansible collections",
+      "addLabels": ["ansible"]
+    },
+    {
+      "matchManagers": ["pep621", "uv"],
+      "groupName": "python toolchain"
+    },
+    {
+      "matchDepNames": ["ghcr.io/super-linter/super-linter", "super-linter/super-linter"],
+      "groupName": "super-linter",
+      "addLabels": ["ci"]
+    }
+  ]
 }

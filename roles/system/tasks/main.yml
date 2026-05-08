@@ -1,0 +1,116 @@
+---
+- name: System | Validate OS
+  ansible.builtin.assert:
+    that:
+      - (ansible_facts.distribution | default('') | lower) is in system_supported_os
+    fail_msg: >-
+      This role does not support this distribution
+      distribution={{ ansible_facts.distribution | default('unknown') }}.
+    quiet: true
+  tags:
+    - always
+
+- name: System | Load OS variables
+  ansible.builtin.include_vars: "{{ system_vars_file }}"
+  loop:
+    - "{{ ansible_facts.distribution | lower }}.yml"
+    - "{{ ansible_facts.distribution | lower }}-packages.yml"
+  loop_control:
+    loop_var: system_vars_file
+    label: "{{ system_vars_file }}"
+  tags:
+    - always
+
+- name: System | Set execution guards
+  ansible.builtin.set_fact:
+    system_in_ci: "{{ lookup('ansible.builtin.env', 'CI') == 'true' }}"
+    system_is_container: >-
+      {{
+        (ansible_facts.virtualization_type | default(''))
+        in system_container_virtualization_types
+      }}
+  tags:
+    - always
+
+- name: System | Set systemd guard
+  ansible.builtin.set_fact:
+    system_can_manage_systemd: >-
+      {{
+        ansible_facts.service_mgr == "systemd"
+        and not (system_is_container | bool)
+        and not (system_in_ci | bool)
+      }}
+  tags:
+    - always
+
+- name: System | Validate variables
+  ansible.builtin.include_tasks:
+    file: validate.yml
+  tags:
+    - always
+
+- name: System Packages | Install manifest
+  become: true
+  ansible.builtin.package:
+    name: "{{ system_packages }}"
+    state: present
+  when:
+    - system_packages_enabled | bool
+  tags:
+    - pkg
+
+- name: System | Run time tasks
+  ansible.builtin.include_tasks:
+    file: time.yml
+
+- name: System | Run locale tasks
+  ansible.builtin.include_tasks:
+    file: sys-locale.yml
+
+- name: System | Run console tasks
+  ansible.builtin.include_tasks:
+    file: sys-console.yml
+
+- name: System | Run login tasks
+  ansible.builtin.include_tasks:
+    file: sys-login.yml
+
+- name: System | Run cron tasks
+  ansible.builtin.include_tasks:
+    file: sys-cron.yml
+
+- name: System | Run sysctl tasks
+  ansible.builtin.include_tasks:
+    file: sys-sysctl.yml
+
+- name: System | Run journald tasks
+  ansible.builtin.include_tasks:
+    file: sys-journald.yml
+
+- name: System | Run SSHD tasks
+  ansible.builtin.include_tasks:
+    file: sys-sshd.yml
+
+- name: System | Run OS tasks
+  ansible.builtin.include_tasks:
+    file: "{{ ansible_facts.distribution | lower }}-tasks.yml"
+
+- name: System | Run Docker tasks
+  ansible.builtin.include_tasks:
+    file: docker.yml
+  when:
+    - system_docker_enabled | bool
+    - not (system_is_container | bool)
+    - not (system_in_ci | bool)
+
+- name: System | Run laptop tasks
+  ansible.builtin.include_tasks:
+    file: laptop.yml
+  when:
+    - system_laptop_enabled | bool
+
+- name: System | Run user service tasks
+  ansible.builtin.include_tasks:
+    file: user-services.yml
+  when:
+    - system_user_services_enabled | bool

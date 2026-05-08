@@ -1,0 +1,12 @@
+---
+- name: Console | Write vconsole.conf
+  become: true
+  ansible.builtin.template:
+    backup: true
+    src: templates/vconsole.conf.j2
+    dest: "{{ system_vconsole_path }}"
+    owner: "{{ system_config_owner }}"
+    group: "{{ system_config_group }}"
+    mode: "{{ system_config_file_mode }}"
+  notify:
+    - Console | Restart vconsole setup

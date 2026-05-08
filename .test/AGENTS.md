@@ -1,25 +1,48 @@
 # Scope
 
-- Applies to `.test/`.
-- This directory contains Neovim smoke-test fixtures and generated test
-  workspaces.
+Applies to `.test/`.
 
-# Canonical Vs Generated
+This directory contains canonical smoke-test fixtures and generated local test
+workspaces.
 
-- Fixture source files such as `.test/nvim/smoke.lua`,
-  `.test/nvim/treesitter_install.lua`, and the language sample files are
-  canonical test inputs.
-- `.test/nvim/.config`, `.test/nvim/.data`, `.test/nvim/.state`, and
-  `.test/nvim/.cache` are generated scratch areas for isolated test runs.
-- Do not treat generated copies as the source of truth for editor config.
+## Canonical Files
 
-# Validation
+- `.test/nvim/smoke.lua`
+- `.test/nvim/treesitter_install.lua`
+- `.test/nvim/*` language sample fixtures
+- `.test/system/exec.sh`
+
+`.test/system/exec.sh` is the Arch Linux container smoke and idempotency script
+used by `go-task test:system`.
+
+## Generated Files
+
+These paths are scratch state created by test runs and must not be treated as
+source of truth:
+
+- `.test/nvim/.config`
+- `.test/nvim/.data`
+- `.test/nvim/.state`
+- `.test/nvim/.cache`
+
+## Editing Rules
+
+- Keep fixtures minimal and deterministic.
+- Keep generated workspaces out of git.
+- Keep shell scripts robust with safe flags where practical.
+- Keep comments, sample text, and documentation in English.
+
+## Validation
 
 ```bash
 go-task test:nvim
+go-task test:system
 ```
 
-# Done Means
+Run the test that matches the changed fixture area.
 
-- Fixture changes still support the smoke test.
+## Done Criteria
+
+- Fixture changes still support the smoke tests.
 - Generated test workspace content was not mistaken for canonical config.
+- No local runtime state was committed.

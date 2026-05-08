@@ -1,0 +1,223 @@
+---
+- name: System | Validate common variables
+  ansible.builtin.assert:
+    that:
+      - system_supported_os is sequence
+      - system_supported_os is not string
+      - system_tzdata_package is string
+      - system_tzdata_package | length > 0
+      - system_timezone is string
+      - system_timezone | length > 0
+      - system_motd_message is string
+      - system_packages_enabled is boolean
+      - system_docker_enabled is boolean
+      - system_laptop_enabled is boolean
+      - system_user_services_enabled is boolean
+      - system_ntp_service is string
+      - system_ntp_service | length > 0
+      - system_ntp_servers is sequence
+      - system_ntp_servers is not string
+      - system_ntp_servers | length > 0
+      - system_ntp_fallback_servers is sequence
+      - system_ntp_fallback_servers is not string
+      - system_ntp_fallback_servers | length > 0
+      - system_locales is sequence
+      - system_locales is not string
+      - system_locales | length > 0
+      - system_locale_definition_dirs is sequence
+      - system_locale_definition_dirs is not string
+      - system_locale_definition_dirs | length > 0
+      - system_config_owner is string
+      - system_config_owner | length > 0
+      - system_config_group is string
+      - system_config_group | length > 0
+      - system_config_file_mode is string
+      - system_config_private_file_mode is string
+      - system_config_dir_mode is string
+      - system_user_systemd_dir_mode is string
+      - system_user_service_file_mode is string
+      - system_container_virtualization_types is sequence
+      - system_container_virtualization_types is not string
+      - system_pacman_parallel_downloads is number
+      - system_pacman_parallel_downloads > 0
+      - system_pacman_download_user is string
+      - system_reflector_enabled is boolean
+      - system_reflector_latest is number
+      - system_reflector_latest > 0
+      - system_reflector_sort is string
+      - system_reflector_sort | length > 0
+      - system_reflector_protocol is string
+      - system_reflector_protocol | length > 0
+      - system_journald_settings is mapping
+      - system_sshd_settings is mapping
+      - system_sysctl_enabled is boolean
+      - system_sysctl_settings is mapping
+      - system_ntp_conflicting_services is sequence
+      - system_ntp_conflicting_services is not string
+      - system_masked_services is sequence
+      - system_masked_services is not string
+      - system_packages is sequence
+      - system_packages is not string
+      - not (system_packages_enabled | bool) or system_packages | length > 0
+    fail_msg: "system role variables are invalid."
+    quiet: true
+  tags:
+    - always
+
+- name: System | Validate path variables
+  ansible.builtin.assert:
+    that:
+      - system_path.value is string
+      - system_path.value is regex('^/')
+    fail_msg: "Invalid system path variable {{ system_path.key }}={{ system_path.value }}"
+    quiet: true
+  loop:
+    - key: system_locale_gen_path
+      value: "{{ system_locale_gen_path }}"
+    - key: system_locale_conf_path
+      value: "{{ system_locale_conf_path }}"
+    - key: system_vconsole_path
+      value: "{{ system_vconsole_path }}"
+    - key: system_motd_path
+      value: "{{ system_motd_path }}"
+    - key: system_issue_path
+      value: "{{ system_issue_path }}"
+    - key: system_sysctl_file_path
+      value: "{{ system_sysctl_file_path }}"
+    - key: system_sshd_binary_path
+      value: "{{ system_sshd_binary_path }}"
+    - key: system_reflector_save_path
+      value: "{{ system_reflector_save_path }}"
+    - key: system_journald_dropin_dir
+      value: "{{ system_journald_dropin_dir }}"
+    - key: system_journald_dropin_path
+      value: "{{ system_journald_dropin_path }}"
+    - key: system_journald_main_path
+      value: "{{ system_journald_main_path }}"
+    - key: system_timesyncd_dropin_dir
+      value: "{{ system_timesyncd_dropin_dir }}"
+    - key: system_timesyncd_dropin_path
+      value: "{{ system_timesyncd_dropin_path }}"
+    - key: system_timesyncd_main_path
+      value: "{{ system_timesyncd_main_path }}"
+    - key: system_sshd_dropin_dir
+      value: "{{ system_sshd_dropin_dir }}"
+    - key: system_sshd_dropin_path
+      value: "{{ system_sshd_dropin_path }}"
+    - key: system_sshd_main_path
+      value: "{{ system_sshd_main_path }}"
+    - key: system_user_systemd_dir
+      value: "{{ system_user_systemd_dir }}"
+    - key: system_ssh_agent_service_path
+      value: "{{ system_ssh_agent_service_path }}"
+    - key: system_crontab_bin
+      value: "{{ system_crontab_bin }}"
+    - key: system_docker_conf_dir
+      value: "{{ system_docker_conf_dir }}"
+    - key: system_pacman_config_path
+      value: "{{ system_pacman_config_path }}"
+    - key: system_reflector_config_path
+      value: "{{ system_reflector_config_path }}"
+  loop_control:
+    loop_var: system_path
+    label: "{{ system_path.key }}"
+  tags:
+    - always
+
+- name: System | Validate service and package variables
+  ansible.builtin.assert:
+    that:
+      - system_name.value is string
+      - system_name.value | length > 0
+    fail_msg: "Invalid system name variable {{ system_name.key }}={{ system_name.value }}"
+    quiet: true
+  loop:
+    - key: system_cron_package
+      value: "{{ system_cron_package }}"
+    - key: system_cron_service_name
+      value: "{{ system_cron_service_name }}"
+    - key: system_docker_group
+      value: "{{ system_docker_group }}"
+    - key: system_docker_service_name
+      value: "{{ system_docker_service_name }}"
+    - key: system_reflector_package
+      value: "{{ system_reflector_package }}"
+    - key: system_reflector_timer_name
+      value: "{{ system_reflector_timer_name }}"
+    - key: system_reflector_legacy_cron_name
+      value: "{{ system_reflector_legacy_cron_name }}"
+    - key: system_root_user
+      value: "{{ system_root_user }}"
+    - key: system_journald_service_name
+      value: "{{ system_journald_service_name }}"
+    - key: system_sshd_service_name
+      value: "{{ system_sshd_service_name }}"
+    - key: system_sshd_dropin_include_path
+      value: "{{ system_sshd_dropin_include_path }}"
+    - key: system_camera_blacklist_module
+      value: "{{ system_camera_blacklist_module }}"
+    - key: system_ssh_agent_service_name
+      value: "{{ system_ssh_agent_service_name }}"
+    - key: system_vconsole_service_name
+      value: "{{ system_vconsole_service_name }}"
+  loop_control:
+    loop_var: system_name
+    label: "{{ system_name.key }}"
+  tags:
+    - always
+
+- name: System | Validate managed setting maps
+  ansible.builtin.assert:
+    that:
+      - system_setting.key is string
+      - system_setting.key | length > 0
+      - system_setting.value is string or system_setting.value is number or system_setting.value is boolean
+    fail_msg: "Invalid managed setting: {{ system_setting | to_nice_json }}"
+    quiet: true
+  loop: >-
+    {{
+      (system_journald_settings | dict2items)
+      + (system_sshd_settings | dict2items)
+      + (system_sysctl_settings | dict2items)
+    }}
+  loop_control:
+    loop_var: system_setting
+    label: "{{ system_setting.key }}"
+  tags:
+    - always
+
+- name: System | Validate legacy cleanup entries
+  ansible.builtin.assert:
+    that:
+      - system_legacy_entry is mapping
+      - system_legacy_entry.regexp is defined
+      - system_legacy_entry.regexp is string
+      - system_legacy_entry.regexp | length > 0
+      - system_legacy_entry.line is defined
+      - system_legacy_entry.line is string
+    fail_msg: "Invalid legacy cleanup entry: {{ system_legacy_entry | to_nice_json }}"
+    quiet: true
+  loop: "{{ system_journald_legacy_main_lines + system_timesyncd_legacy_main_lines }}"
+  loop_control:
+    loop_var: system_legacy_entry
+    label: "{{ system_legacy_entry.regexp | default('invalid legacy entry') }}"
+  tags:
+    - always
+
+- name: System | Validate SSHD cleanup entries
+  ansible.builtin.assert:
+    that:
+      - system_sshd_cleanup_entry is mapping
+      - system_sshd_cleanup_entry.key is defined
+      - system_sshd_cleanup_entry.key is string
+      - system_sshd_cleanup_entry.key | length > 0
+      - system_sshd_cleanup_entry.value is defined
+      - system_sshd_cleanup_entry.value is string
+    fail_msg: "Invalid sshd cleanup entry: {{ system_sshd_cleanup_entry | to_nice_json }}"
+    quiet: true
+  loop: "{{ system_sshd_legacy_main_cleanup }}"
+  loop_control:
+    loop_var: system_sshd_cleanup_entry
+    label: "{{ system_sshd_cleanup_entry.key | default('invalid sshd cleanup entry') }}"
+  tags:
+    - always

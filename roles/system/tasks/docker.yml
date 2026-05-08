@@ -1,0 +1,33 @@
+---
+- name: Docker | Ensure group
+  become: true
+  ansible.builtin.group:
+    name: "{{ system_docker_group }}"
+    state: present
+
+- name: Docker | Ensure config directory
+  become: true
+  ansible.builtin.file:
+    path: "{{ system_docker_conf_dir }}"
+    state: directory
+    owner: "{{ system_config_owner }}"
+    group: "{{ system_config_group }}"
+    mode: "{{ system_config_dir_mode }}"
+
+- name: Docker | Write daemon config
+  become: true
+  ansible.builtin.template:
+    backup: true
+    src: templates/docker.json.j2
+    dest: "{{ system_docker_conf_dir }}/daemon.json"
+    owner: "{{ system_config_owner }}"
+    group: "{{ system_config_group }}"
+    mode: "{{ system_config_file_mode }}"
+  notify: Docker | Restart service
+
+- name: Docker | Add user to group
+  become: true
+  ansible.builtin.user:
+    name: "{{ ansible_facts.user_id }}"
+    groups: "{{ system_docker_group }}"
+    append: true

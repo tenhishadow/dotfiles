@@ -6,7 +6,7 @@ dependencies = [
     "ansible-lint",
     "ansible",
     "mitogen",
-    "jmespath"
+    "yamllint"
 ]
 
 [tool.uv]

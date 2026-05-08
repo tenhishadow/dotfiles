@@ -1,0 +1,54 @@
+---
+name: Bug Report
+description: Report broken dotfiles, Ansible behavior, or repository automation.
+title: "bug: "
+labels:
+  - bug
+  - triage
+body:
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - user dotfiles
+        - system role
+        - browser policies
+        - Neovim
+        - GitHub automation
+        - documentation or AI instructions
+        - other
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: Describe what failed and what you expected.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction
+      description: List exact commands, playbooks, tasks, or files involved.
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: validation
+    attributes:
+      label: Validation Output
+      description: Paste relevant command output with secrets removed, such as `go-task verify`, `go-task`, or area-specific checks.
+      render: text
+    validations:
+      required: false
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Safety Checks
+      options:
+        - label: I removed secrets, tokens, hostnames, and private paths that should not be public.
+          required: true
+        - label: The default `go-task` flow is still expected to be user-level and sudo-free.
+          required: false
