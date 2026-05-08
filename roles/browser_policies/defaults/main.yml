@@ -13,14 +13,14 @@ browser_policies_group: root
 browser_policies_dir_mode: "0755"
 browser_policies_file_mode: "0644"
 
-browser_policies_default_extension_block:
+browser_policies_extension_block_defaults:
   "*":
     installation_mode: blocked
     blocked_install_message: "{{ browser_policies_extension_block_message }}"
-browser_policies_effective_extension_block: >-
+browser_policies_extension_block: >-
   {{
     (browser_policies_extension_lockdown_enabled | bool)
-    | ternary(browser_policies_default_extension_block, {})
+    | ternary(browser_policies_extension_block_defaults, {})
   }}
 
 browser_policies_chromium_policy_filename: "10-tenhishadow-managed.json"
@@ -67,7 +67,7 @@ browser_policies_chromium_extension_settings: {}
 browser_policies_chromium_targets:
   - name: brave
     enabled: true
-    managed_dir: /etc/brave/policies/managed
+    policy_dir: /etc/brave/policies/managed
     policy_filename: "{{ browser_policies_chromium_policy_filename }}"
     policies:
       BraveRewardsDisabled: true

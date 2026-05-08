@@ -2,6 +2,6 @@
 # vim:ft=systemd
 
 [Journal]
-Storage={{ journald_config.storage }}
-Compress={{ journald_config.compress }}
-SystemMaxUse={{ journald_config.systemmaxuse }}
+{% for system_journald_key, system_journald_value in system_journald_settings.items() %}
+{{ system_journald_key }}={{ system_journald_value }}
+{% endfor %}

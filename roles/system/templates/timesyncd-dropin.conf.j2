@@ -2,5 +2,5 @@
 # vim:ft=systemd
 
 [Time]
-NTP={{ system_ntp_main | join(' ') }}
-FallbackNTP={{ system_ntp_fallback | join(' ') }}
+NTP={{ system_ntp_servers | join(' ') }}
+FallbackNTP={{ system_ntp_fallback_servers | join(' ') }}

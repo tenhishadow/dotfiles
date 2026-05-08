@@ -10,11 +10,11 @@
 - name: Timezone | Set timezone
   become: true
   community.general.timezone:
-    name: "{{ system_common_timezone }}"
+    name: "{{ system_timezone }}"
   when:
     - not (system_is_container | bool)
 
-- name: NTP | Gather services
+- name: NTP | Gather service facts
   become: true
   ansible.builtin.service_facts:
   when:
@@ -23,22 +23,23 @@
 - name: NTP | Disable conflicting services
   become: true
   ansible.builtin.systemd_service:
-    name: "{{ item }}"
+    name: "{{ system_ntp_conflicting_service }}"
     state: stopped
     enabled: false
     masked: true
   loop: "{{ system_ntp_conflicting_services }}"
   loop_control:
-    label: "{{ item }}"
+    loop_var: system_ntp_conflicting_service
+    label: "{{ system_ntp_conflicting_service }}"
   when:
     - system_can_manage_systemd | bool
-    - item ~ ".service" in (ansible_facts.services | default({}))
+    - system_ntp_conflicting_service ~ ".service" in (ansible_facts.services | default({}))
 
 - name: NTP | Read legacy timesyncd config
   become: true
   ansible.builtin.slurp:
     path: "{{ system_timesyncd_main_path }}"
-  register: system_timesyncd_main_config
+  register: system_timesyncd_main_slurp
   when:
     - not (system_is_container | bool)
 
@@ -46,21 +47,22 @@
   become: true
   ansible.builtin.lineinfile:
     path: "{{ system_timesyncd_main_path }}"
-    regexp: "{{ item.regexp }}"
-    line: "{{ item.line }}"
+    regexp: "{{ system_timesyncd_legacy_line.regexp }}"
+    line: "{{ system_timesyncd_legacy_line.line }}"
     owner: "{{ system_config_owner }}"
     group: "{{ system_config_group }}"
     mode: "{{ system_config_file_mode }}"
     backup: true
   loop: "{{ system_timesyncd_legacy_main_lines }}"
   loop_control:
-    label: "{{ item.regexp }}"
+    loop_var: system_timesyncd_legacy_line
+    label: "{{ system_timesyncd_legacy_line.regexp }}"
   notify:
     - NTP | Restart service
   when:
     - not (system_is_container | bool)
     - >-
-      (system_timesyncd_main_config.content | b64decode)
+      (system_timesyncd_main_slurp.content | b64decode)
       is regex('(?m)^' ~ (system_legacy_managed_marker | regex_escape) ~ '$')
 
 - name: NTP | Ensure drop-in directory
@@ -91,16 +93,17 @@
 - name: NTP | Remove legacy drop-ins
   become: true
   ansible.builtin.file:
-    path: "{{ item }}"
+    path: "{{ system_timesyncd_legacy_dropin_path }}"
     state: absent
   loop: "{{ system_timesyncd_legacy_dropin_paths }}"
   loop_control:
-    label: "{{ item }}"
+    loop_var: system_timesyncd_legacy_dropin_path
+    label: "{{ system_timesyncd_legacy_dropin_path }}"
   notify:
     - NTP | Restart service
   when:
     - not (system_is_container | bool)
-    - item != system_timesyncd_dropin_path
+    - system_timesyncd_legacy_dropin_path != system_timesyncd_dropin_path
 
 - name: NTP | Ensure service enabled
   become: true

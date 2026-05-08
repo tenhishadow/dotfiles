@@ -1,0 +1,20 @@
+---
+- name: Login | Write motd
+  become: true
+  ansible.builtin.template:
+    backup: true
+    src: templates/motd.j2
+    dest: "{{ system_motd_path }}"
+    owner: "{{ system_config_owner }}"
+    group: "{{ system_config_group }}"
+    mode: "{{ system_config_file_mode }}"
+
+- name: Login | Write issue
+  become: true
+  ansible.builtin.template:
+    backup: true
+    src: templates/issue.j2
+    dest: "{{ system_issue_path }}"
+    owner: "{{ system_config_owner }}"
+    group: "{{ system_config_group }}"
+    mode: "{{ system_config_file_mode }}"

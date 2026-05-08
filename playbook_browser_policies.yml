@@ -1,5 +1,5 @@
 ---
-- name: Apply browser policies
+- name: Browser Policies | Apply managed policies
   hosts: this_host
   become: true
   connection: local

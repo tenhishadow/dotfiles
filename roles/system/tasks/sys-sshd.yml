@@ -1,0 +1,104 @@
+---
+- name: SSHD | Read main config
+  become: true
+  ansible.builtin.slurp:
+    path: "{{ system_sshd_main_path }}"
+  register: system_sshd_main_slurp
+  when:
+    - not (system_is_container | bool)
+    - not (system_in_ci | bool)
+  tags: sshd
+
+- name: SSHD | Verify drop-in include
+  ansible.builtin.assert:
+    that:
+      - >-
+        (system_sshd_main_slurp.content | b64decode)
+        is regex(
+          '(?m)^\\s*Include\\s+'
+          ~ (system_sshd_dropin_include_path | regex_escape)
+          ~ '\\s*$'
+        )
+    fail_msg: >-
+      {{ system_sshd_main_path }} must include
+      {{ system_sshd_dropin_include_path }}
+      before this role can manage sshd through a drop-in.
+    quiet: true
+  when:
+    - not (system_is_container | bool)
+    - not (system_in_ci | bool)
+  tags: sshd
+
+- name: SSHD | Ensure drop-in directory
+  become: true
+  ansible.builtin.file:
+    path: "{{ system_sshd_dropin_dir }}"
+    state: directory
+    owner: "{{ system_config_owner }}"
+    group: "{{ system_config_group }}"
+    mode: "{{ system_config_dir_mode }}"
+  when:
+    - not (system_is_container | bool)
+    - not (system_in_ci | bool)
+  tags: sshd
+
+- name: SSHD | Write drop-in
+  become: true
+  ansible.builtin.template:
+    backup: true
+    src: templates/sshd-dropin.conf.j2
+    dest: "{{ system_sshd_dropin_path }}"
+    owner: "{{ system_config_owner }}"
+    group: "{{ system_config_group }}"
+    mode: "{{ system_config_file_mode }}"
+    validate: "{{ system_sshd_binary_path }} -T -f %s"
+  when:
+    - not (system_is_container | bool)
+    - not (system_in_ci | bool)
+  notify: SSHD | Restart service
+  tags: sshd
+
+- name: SSHD | Remove legacy drop-ins
+  become: true
+  ansible.builtin.file:
+    path: "{{ system_sshd_legacy_dropin_path }}"
+    state: absent
+  loop: "{{ system_sshd_legacy_dropin_paths }}"
+  loop_control:
+    loop_var: system_sshd_legacy_dropin_path
+    label: "{{ system_sshd_legacy_dropin_path }}"
+  when:
+    - not (system_is_container | bool)
+    - not (system_in_ci | bool)
+    - system_sshd_legacy_dropin_path != system_sshd_dropin_path
+  notify: SSHD | Restart service
+  tags: sshd
+
+- name: SSHD | Remove legacy main-file settings
+  become: true
+  ansible.builtin.lineinfile:
+    path: "{{ system_sshd_main_path }}"
+    regexp: '^{{ system_sshd_legacy_setting.key | regex_escape }}\s+{{ system_sshd_legacy_setting.value | regex_escape }}\s*$'
+    state: absent
+    owner: "{{ system_config_owner }}"
+    group: "{{ system_config_group }}"
+    mode: "{{ system_config_file_mode }}"
+    backup: true
+  loop: "{{ (system_sshd_settings | dict2items) + system_sshd_legacy_main_cleanup }}"
+  loop_control:
+    loop_var: system_sshd_legacy_setting
+    label: "{{ system_sshd_legacy_setting.key }}"
+  when:
+    - not (system_is_container | bool)
+    - not (system_in_ci | bool)
+  notify: SSHD | Restart service
+  tags: sshd
+
+- name: SSHD | Validate effective config
+  become: true
+  ansible.builtin.command: "{{ system_sshd_binary_path }} -T"
+  changed_when: false
+  when:
+    - not (system_is_container | bool)
+    - not (system_in_ci | bool)
+  tags: sshd

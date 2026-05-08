@@ -1,61 +1,45 @@
 ---
-- name: VS Code policies | Ensure directories
-  ansible.builtin.file:
-    path: "{{ item.policy_path | dirname }}"
-    state: directory
-    owner: "{{ browser_policies_owner }}"
-    group: "{{ browser_policies_group }}"
-    mode: "{{ browser_policies_dir_mode }}"
-  loop: "{{ browser_policies_vscode_targets }}"
-  loop_control:
-    label: "{{ item.policy_path | dirname }}"
-  when:
-    - browser_policies_state == "present"
-    - item.enabled | default(true) | bool
-
-- name: VS Code policies | Write policy.json
-  ansible.builtin.copy:
-    dest: "{{ item.policy_path }}"
-    content: "{{ browser_policies_vscode_rendered_policy | to_nice_json }}\n"
-    owner: "{{ browser_policies_owner }}"
-    group: "{{ browser_policies_group }}"
-    mode: "{{ browser_policies_file_mode }}"
-    backup: false
+- name: VS Code Policies | Build managed targets
+  ansible.builtin.set_fact:
+    browser_policies_policy_files: "{{ browser_policies_vscode_policy_files }}"
   vars:
-    browser_policies_vscode_rendered_policy: >-
-      {{
-        browser_policies_vscode_base_policies
-        | combine(item.policies | default({}), recursive=True)
-        | combine(
-            (
-              browser_policies_vscode_allowed_extensions | length > 0
-            )
-            | ternary(
+    browser_policies_vscode_policy_files: >-
+      {%- set browser_policies_vscode_files = [] -%}
+      {%- for browser_policies_vscode_target in browser_policies_vscode_targets -%}
+      {%-   if browser_policies_vscode_target.enabled | default(true) | bool -%}
+      {%-     set browser_policies_vscode_content =
+                browser_policies_vscode_base_policies
+                | combine(browser_policies_vscode_target.policies | default({}), recursive=True)
+                | combine(
+                    (
+                      browser_policies_vscode_allowed_extensions | length > 0
+                    )
+                    | ternary(
+                        {
+                          'AllowedExtensions':
+                            browser_policies_vscode_allowed_extensions | to_json,
+                        },
+                        {}
+                      ),
+                    recursive=True
+                  )
+      -%}
+      {%-     set browser_policies_vscode_file_added = browser_policies_vscode_files.append(
                 {
-                  'AllowedExtensions':
-                    browser_policies_vscode_allowed_extensions | to_json,
-                },
-                {}
-              ),
-            recursive=True
-          )
-      }}
-  loop: "{{ browser_policies_vscode_targets }}"
-  loop_control:
-    label: "{{ item.policy_path }}"
-  when:
-    - browser_policies_state == "present"
-    - item.enabled | default(true) | bool
-  notify: Browser policies | Report restart requirement
+                  'name': browser_policies_vscode_target.name,
+                  'family': 'VS Code',
+                  'directory': browser_policies_vscode_target.policy_path | dirname,
+                  'path': browser_policies_vscode_target.policy_path,
+                  'content': browser_policies_vscode_content,
+                }
+              )
+      -%}
+      {%-   endif -%}
+      {%- endfor -%}
+      {{ browser_policies_vscode_files }}
 
-- name: VS Code policies | Remove policy.json
-  ansible.builtin.file:
-    path: "{{ item.policy_path }}"
-    state: absent
-  loop: "{{ browser_policies_vscode_targets }}"
-  loop_control:
-    label: "{{ item.policy_path }}"
+- name: VS Code Policies | Run policy file tasks
+  ansible.builtin.include_tasks:
+    file: policy-files.yml
   when:
-    - browser_policies_state == "absent"
-    - item.enabled | default(true) | bool
-  notify: Browser policies | Report restart requirement
+    - browser_policies_policy_files | length > 0

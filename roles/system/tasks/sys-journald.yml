@@ -1,0 +1,67 @@
+---
+- name: Journald | Read legacy main config
+  become: true
+  ansible.builtin.slurp:
+    path: "{{ system_journald_main_path }}"
+  register: system_journald_main_slurp
+  when:
+    - not (system_is_container | bool)
+
+- name: Journald | Reset legacy main-file settings
+  become: true
+  ansible.builtin.lineinfile:
+    path: "{{ system_journald_main_path }}"
+    regexp: "{{ system_journald_legacy_line.regexp }}"
+    line: "{{ system_journald_legacy_line.line }}"
+    owner: "{{ system_config_owner }}"
+    group: "{{ system_config_group }}"
+    mode: "{{ system_config_file_mode }}"
+    backup: true
+  loop: "{{ system_journald_legacy_main_lines }}"
+  loop_control:
+    loop_var: system_journald_legacy_line
+    label: "{{ system_journald_legacy_line.regexp }}"
+  notify: Journald | Restart service
+  when:
+    - not (system_is_container | bool)
+    - >-
+      (system_journald_main_slurp.content | b64decode)
+      is regex('(?m)^' ~ (system_legacy_managed_marker | regex_escape) ~ '$')
+
+- name: Journald | Ensure drop-in directory
+  become: true
+  ansible.builtin.file:
+    path: "{{ system_journald_dropin_dir }}"
+    state: directory
+    owner: "{{ system_config_owner }}"
+    group: "{{ system_config_group }}"
+    mode: "{{ system_config_dir_mode }}"
+  when:
+    - not (system_is_container | bool)
+
+- name: Journald | Write drop-in
+  become: true
+  ansible.builtin.template:
+    backup: true
+    src: templates/journald-dropin.conf.j2
+    dest: "{{ system_journald_dropin_path }}"
+    owner: "{{ system_config_owner }}"
+    group: "{{ system_config_group }}"
+    mode: "{{ system_config_file_mode }}"
+  notify: Journald | Restart service
+  when:
+    - not (system_is_container | bool)
+
+- name: Journald | Remove legacy drop-ins
+  become: true
+  ansible.builtin.file:
+    path: "{{ system_journald_legacy_dropin_path }}"
+    state: absent
+  loop: "{{ system_journald_legacy_dropin_paths }}"
+  loop_control:
+    loop_var: system_journald_legacy_dropin_path
+    label: "{{ system_journald_legacy_dropin_path }}"
+  notify: Journald | Restart service
+  when:
+    - not (system_is_container | bool)
+    - system_journald_legacy_dropin_path != system_journald_dropin_path

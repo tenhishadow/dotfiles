@@ -36,7 +36,7 @@
     - system_can_manage_systemd | default(false) | bool
 
 - name: User systemd | Restart ssh-agent
-  ansible.builtin.systemd:
+  ansible.builtin.systemd_service:
     scope: user
     name: "{{ system_ssh_agent_service_name }}"
     state: restarted

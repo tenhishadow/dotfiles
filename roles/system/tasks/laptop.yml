@@ -1,5 +1,5 @@
 ---
-- name: Laptop | Blacklist camera module
+- name: Laptop | Configure camera blacklist
   become: true
   community.general.kernel_blacklist:
     name: "{{ system_camera_blacklist_module }}"
@@ -30,7 +30,7 @@
     - User systemd | Restart ssh-agent
 
 - name: User systemd | Enable ssh-agent
-  ansible.builtin.systemd:
+  ansible.builtin.systemd_service:
     scope: user
     name: "{{ system_ssh_agent_service_name }}"
     state: started

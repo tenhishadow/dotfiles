@@ -1,6 +1,6 @@
 # {{ ansible_managed }}
 # vim:ft=sshconfig
 
-{% for key, value in sshd_config | dictsort %}
-{{ key }} {{ value }}
+{% for system_sshd_key, system_sshd_value in system_sshd_settings | dictsort %}
+{{ system_sshd_key }} {{ system_sshd_value }}
 {% endfor %}

@@ -1,0 +1,63 @@
+---
+- name: Browser Policy Files | Validate file specs
+  ansible.builtin.assert:
+    that:
+      - browser_policy_file is mapping
+      - browser_policy_file.name is string
+      - browser_policy_file.name is regex('^[a-z0-9_-]+$')
+      - browser_policy_file.family is string
+      - browser_policy_file.family | length > 0
+      - browser_policy_file.directory is string
+      - browser_policy_file.directory is regex('^/')
+      - browser_policy_file.path is string
+      - browser_policy_file.path is regex('^/')
+      - browser_policy_file.path is regex('^' ~ (browser_policy_file.directory | regex_escape) ~ '/')
+      - browser_policy_file.content is mapping
+    fail_msg: "Invalid browser policy file spec: {{ browser_policy_file | to_nice_json }}"
+    quiet: true
+  loop: "{{ browser_policies_policy_files }}"
+  loop_control:
+    loop_var: browser_policy_file
+    label: "{{ browser_policy_file.family | default('unknown') }}: {{ browser_policy_file.name | default('invalid') }}"
+
+- name: Browser Policy Files | Ensure policy directories
+  ansible.builtin.file:
+    path: "{{ browser_policy_file.directory }}"
+    state: directory
+    owner: "{{ browser_policies_owner }}"
+    group: "{{ browser_policies_group }}"
+    mode: "{{ browser_policies_dir_mode }}"
+  loop: "{{ browser_policies_policy_files }}"
+  loop_control:
+    loop_var: browser_policy_file
+    label: "{{ browser_policy_file.family }}: {{ browser_policy_file.directory }}"
+  when:
+    - browser_policies_state == "present"
+
+- name: Browser Policy Files | Write policy files
+  ansible.builtin.copy:
+    dest: "{{ browser_policy_file.path }}"
+    content: "{{ browser_policy_file.content | to_nice_json }}\n"
+    owner: "{{ browser_policies_owner }}"
+    group: "{{ browser_policies_group }}"
+    mode: "{{ browser_policies_file_mode }}"
+    backup: false
+  loop: "{{ browser_policies_policy_files }}"
+  loop_control:
+    loop_var: browser_policy_file
+    label: "{{ browser_policy_file.family }}: {{ browser_policy_file.path }}"
+  when:
+    - browser_policies_state == "present"
+  notify: Browser Policies | Report restart requirement
+
+- name: Browser Policy Files | Remove policy files
+  ansible.builtin.file:
+    path: "{{ browser_policy_file.path }}"
+    state: absent
+  loop: "{{ browser_policies_policy_files }}"
+  loop_control:
+    loop_var: browser_policy_file
+    label: "{{ browser_policy_file.family }}: {{ browser_policy_file.path }}"
+  when:
+    - browser_policies_state == "absent"
+  notify: Browser Policies | Report restart requirement

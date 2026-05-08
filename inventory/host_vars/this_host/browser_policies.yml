@@ -1,0 +1,3 @@
+---
+# Temporary: do not enforce wildcard browser extension lockdown on this host.
+browser_policies_extension_lockdown_enabled: false

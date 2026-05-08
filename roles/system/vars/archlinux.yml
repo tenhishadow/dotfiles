@@ -1,5 +1,5 @@
 ---
-system_crontab_path: /usr/bin/crontab
+system_crontab_bin: /usr/bin/crontab
 system_cron_package: cronie
 system_cron_service_name: cronie
 system_docker_group: docker
@@ -11,5 +11,5 @@ system_reflector_config_path: /etc/xdg/reflector/reflector.conf
 system_reflector_timer_name: reflector.timer
 system_reflector_legacy_cron_name: reflector
 system_root_user: root
-system_mask_and_stop:
+system_masked_services:
   - passim.service

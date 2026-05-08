@@ -4,17 +4,18 @@ system_supported_os:
 
 system_tzdata_package: tzdata
 
-system_common_timezone: Europe/Warsaw
+system_timezone: Europe/Warsaw
+system_motd_message: ""
 
 system_ntp_service: systemd-timesyncd
 
-system_ntp_main:
+system_ntp_servers:
   - 2.europe.pool.ntp.org
   - 3.europe.pool.ntp.org
   - 1.lu.pool.ntp.org
   - 2.ch.pool.ntp.org
   - 3.ch.pool.ntp.org
-system_ntp_fallback:
+system_ntp_fallback_servers:
   - pool.ntp.org
   - 2.arch.pool.ntp.org
   - 0.arch.pool.ntp.org
@@ -43,14 +44,9 @@ system_issue_path: /etc/issue
 system_sysctl_file_path: /etc/sysctl.d/999-ansible.conf
 system_sshd_binary_path: /usr/sbin/sshd
 
-system_configs:
-  owner: root
-  group: root
-  mode: "0644"
-
-system_config_owner: "{{ system_configs.owner }}"
-system_config_group: "{{ system_configs.group }}"
-system_config_file_mode: "{{ system_configs.mode }}"
+system_config_owner: root
+system_config_group: root
+system_config_file_mode: "0644"
 system_config_private_file_mode: "0600"
 system_config_dir_mode: "0755"
 system_user_systemd_dir_mode: "0700"
@@ -79,6 +75,10 @@ system_journald_service_name: systemd-journald
 system_journald_legacy_dropin_paths:
   - "{{ system_journald_dropin_dir }}/10-ans-workstation.conf"
 system_journald_main_path: /etc/systemd/journald.conf
+system_journald_settings:
+  Storage: persistent
+  Compress: "yes"
+  SystemMaxUse: 50M
 system_timesyncd_dropin_dir: /etc/systemd/timesyncd.conf.d
 system_timesyncd_dropin_path: "{{ system_timesyncd_dropin_dir }}/10-dotfiles.conf"
 system_timesyncd_legacy_dropin_paths:
@@ -91,6 +91,10 @@ system_sshd_service_name: sshd
 system_sshd_legacy_dropin_paths:
   - "{{ system_sshd_dropin_dir }}/20-ans-workstation.conf"
 system_sshd_main_path: /etc/ssh/sshd_config
+system_sshd_settings: {}
+
+system_sysctl_enabled: false
+system_sysctl_settings: {}
 
 system_legacy_managed_marker: "# o_O"
 system_journald_legacy_main_lines:

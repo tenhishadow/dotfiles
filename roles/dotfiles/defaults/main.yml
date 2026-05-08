@@ -1,0 +1,22 @@
+---
+dotfiles_home: "{{ ansible_facts.user_dir }}"
+dotfiles_owner: "{{ ansible_facts.real_user_id }}"
+dotfiles_group: "{{ ansible_facts.real_group_id }}"
+dotfiles_location: "{{ playbook_dir }}/dotfiles"
+dotfiles_directory_mode: "u=rwx,g=,o="
+dotfiles_config_dir: "{{ dotfiles_home }}/.config"
+dotfiles_bashrc_dir: "{{ dotfiles_home }}/.bashrc.d"
+dotfiles_gnupg_dir: "{{ dotfiles_home }}/.gnupg"
+dotfiles_ssh_dir: "{{ dotfiles_home }}/.ssh"
+dotfiles_ssh_config_dir: "{{ dotfiles_ssh_dir }}/config.d"
+dotfiles_crontab_path: /usr/bin/crontab
+dotfiles_pam_environment_path: "{{ dotfiles_home }}/.pam_environment"
+dotfiles_nvim_restore_cron_name: neovim lazy restore
+dotfiles_nvim_restore_cron_job: 'nvim --headless "+Lazy! restore" +qa > ~/.nvim.log 2>&1'
+dotfiles_legacy_cron_names:
+  - dotfiles updates
+  - vim-plug update/upgrade
+
+dotfiles_directories: []
+dotfiles_mapping: []
+dotfiles_cleanup_paths: []

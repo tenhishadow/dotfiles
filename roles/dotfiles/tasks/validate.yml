@@ -1,0 +1,118 @@
+---
+- name: Dotfiles | Validate common variables
+  ansible.builtin.assert:
+    that:
+      - dotfiles_home is string
+      - dotfiles_home is regex('^/')
+      - dotfiles_owner is string or dotfiles_owner is number
+      - dotfiles_group is string or dotfiles_group is number
+      - dotfiles_location is string
+      - dotfiles_location is regex('^/')
+      - dotfiles_directory_mode is string
+      - dotfiles_config_dir is string
+      - dotfiles_config_dir is regex('^/')
+      - dotfiles_bashrc_dir is string
+      - dotfiles_bashrc_dir is regex('^/')
+      - dotfiles_gnupg_dir is string
+      - dotfiles_gnupg_dir is regex('^/')
+      - dotfiles_ssh_dir is string
+      - dotfiles_ssh_dir is regex('^/')
+      - dotfiles_ssh_config_dir is string
+      - dotfiles_ssh_config_dir is regex('^/')
+      - dotfiles_crontab_path is string
+      - dotfiles_crontab_path is regex('^/')
+      - dotfiles_pam_environment_path is string
+      - dotfiles_pam_environment_path is regex('^/')
+      - dotfiles_nvim_restore_cron_name is string
+      - dotfiles_nvim_restore_cron_name | length > 0
+      - dotfiles_nvim_restore_cron_job is string
+      - dotfiles_nvim_restore_cron_job | length > 0
+      - dotfiles_legacy_cron_names is sequence
+      - dotfiles_legacy_cron_names is not string
+      - dotfiles_directories is sequence
+      - dotfiles_directories is not string
+      - dotfiles_mapping is sequence
+      - dotfiles_mapping is not string
+      - dotfiles_cleanup_paths is sequence
+      - dotfiles_cleanup_paths is not string
+    fail_msg: "dotfiles role variables are invalid."
+    quiet: true
+  tags:
+    - configs
+
+- name: Dotfiles | Validate extra directories
+  ansible.builtin.assert:
+    that:
+      - dotfiles_directory is mapping
+      - dotfiles_directory.path is defined
+      - dotfiles_directory.path is string
+      - dotfiles_directory.path is regex('^/')
+      - dotfiles_directory.mode is not defined or dotfiles_directory.mode is string
+      - >-
+        dotfiles_directory.owner is not defined
+        or dotfiles_directory.owner is string
+        or dotfiles_directory.owner is number
+      - >-
+        dotfiles_directory.group is not defined
+        or dotfiles_directory.group is string
+        or dotfiles_directory.group is number
+    fail_msg: "Invalid dotfiles directory entry: {{ dotfiles_directory | to_nice_json }}"
+    quiet: true
+  loop: "{{ dotfiles_directories }}"
+  loop_control:
+    loop_var: dotfiles_directory
+    label: "{{ dotfiles_directory.path | default('invalid directory entry') }}"
+  tags:
+    - configs
+
+- name: Dotfiles | Validate link mappings
+  ansible.builtin.assert:
+    that:
+      - dotfiles_link is mapping
+      - dotfiles_link.name is defined
+      - dotfiles_link.name is string
+      - dotfiles_link.name is regex('^[a-z0-9_]+$')
+      - dotfiles_link.payload is defined
+      - dotfiles_link.payload is string
+      - dotfiles_link.payload | length > 0
+      - dotfiles_link.payload is not regex('^/')
+      - dotfiles_link.payload is not regex('(^|/)\\.\\.(/|$)')
+      - dotfiles_link.dest is defined
+      - dotfiles_link.dest is string
+      - dotfiles_link.dest is regex('^/')
+    fail_msg: "Invalid dotfiles mapping entry: {{ dotfiles_link | to_nice_json }}"
+    quiet: true
+  loop: "{{ dotfiles_mapping }}"
+  loop_control:
+    loop_var: dotfiles_link
+    label: "{{ dotfiles_link.name | default('invalid link mapping') }}"
+  tags:
+    - configs
+
+- name: Dotfiles | Validate mapping uniqueness
+  ansible.builtin.assert:
+    that:
+      - >-
+        dotfiles_mapping | map(attribute='name') | list | length
+        == dotfiles_mapping | map(attribute='name') | unique | list | length
+      - >-
+        dotfiles_mapping | map(attribute='dest') | list | length
+        == dotfiles_mapping | map(attribute='dest') | unique | list | length
+    fail_msg: "dotfiles_mapping names and destinations must be unique."
+    quiet: true
+  tags:
+    - configs
+
+- name: Dotfiles | Validate cleanup paths
+  ansible.builtin.assert:
+    that:
+      - dotfiles_cleanup_path is string
+      - dotfiles_cleanup_path is regex('^/')
+    fail_msg: "Invalid dotfiles cleanup path: {{ dotfiles_cleanup_path }}"
+    quiet: true
+  loop: "{{ dotfiles_cleanup_paths }}"
+  loop_control:
+    loop_var: dotfiles_cleanup_path
+    label: "{{ dotfiles_cleanup_path }}"
+  tags:
+    - configs

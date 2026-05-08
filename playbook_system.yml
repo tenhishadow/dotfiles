@@ -1,5 +1,5 @@
 ---
-- name: Apply workstation system layer
+- name: System | Apply workstation layer
   hosts: this_host
   gather_facts: true
   roles:
