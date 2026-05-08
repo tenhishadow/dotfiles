@@ -1,0 +1,284 @@
+---
+- name: Locale | Check definitions
+  ansible.builtin.stat:
+    path: "{{ item.1 }}/{{ item.0 }}"
+  loop: "{{ system_locales | product(system_locale_definition_dirs) | list }}"
+  register: system_locale_defs
+  changed_when: false
+
+- name: Locale | Set locale definition lists
+  ansible.builtin.set_fact:
+    system_locale_available: "{{ system_locale_available_tmp }}"
+    system_locale_missing_defs: "{{ system_locales | difference(system_locale_available_tmp) }}"
+  vars:
+    system_locale_available_tmp: >-
+      {{ system_locale_defs.results
+         | selectattr('stat.exists')
+         | map(attribute='item.0')
+         | unique
+         | list }}
+
+- name: Locale | Configure gen
+  become: true
+  ansible.builtin.template:
+    backup: true
+    src: templates/locale.gen.j2
+    dest: /etc/locale.gen
+    owner: "{{ system_config_owner }}"
+    group: "{{ system_config_group }}"
+    mode: "{{ system_config_file_mode }}"
+  notify:
+    - SystemdVconsoleSetup
+
+- name: Locale | Configure
+  become: true
+  ansible.builtin.template:
+    backup: true
+    src: templates/locale.conf.j2
+    dest: /etc/locale.conf
+    owner: "{{ system_config_owner }}"
+    group: "{{ system_config_group }}"
+    mode: "{{ system_config_file_mode }}"
+  notify:
+    - SystemdVconsoleSetup
+
+- name: Locale | List generated
+  become: true
+  ansible.builtin.command: locale -a
+  register: system_locale_list
+  changed_when: false
+
+- name: Locale | Generate
+  become: true
+  ansible.builtin.command: locale-gen
+  changed_when: true
+  vars:
+    desired_locales: >-
+      {{ system_locale_available
+         | map('regex_replace', '$', '.utf8')
+         | map('lower')
+         | list }}
+    current_locales: "{{ system_locale_list.stdout_lines | map('lower') | list }}"
+    missing_locales: "{{ desired_locales | difference(current_locales) }}"
+  when:
+    - not (system_in_ci | bool)
+    - missing_locales | length > 0
+
+- name: Vconsole | Configure
+  become: true
+  ansible.builtin.template:
+    backup: true
+    src: templates/vconsole.conf.j2
+    dest: /etc/vconsole.conf
+    owner: "{{ system_config_owner }}"
+    group: "{{ system_config_group }}"
+    mode: "{{ system_config_file_mode }}"
+  notify:
+    - SystemdVconsoleSetup
+
+- name: Configure | /etc/motd
+  become: true
+  ansible.builtin.template:
+    backup: true
+    src: templates/motd.j2
+    dest: /etc/motd
+    owner: "{{ system_config_owner }}"
+    group: "{{ system_config_group }}"
+    mode: "{{ system_config_file_mode }}"
+
+- name: Configure /etc/issue
+  become: true
+  ansible.builtin.template:
+    backup: true
+    src: templates/issue.j2
+    dest: /etc/issue
+    owner: "{{ system_config_owner }}"
+    group: "{{ system_config_group }}"
+    mode: "{{ system_config_file_mode }}"
+
+- name: Start/enable cron
+  become: true
+  ansible.builtin.systemd_service:
+    state: started
+    daemon_reload: true
+    name: "{{ system_cron_package }}"
+    enabled: true
+  when:
+    - system_can_manage_systemd | bool
+
+- name: Configure | Sysctl
+  become: true
+  ansible.posix.sysctl:
+    name: "{{ item.key }}"
+    value: "{{ item.value }}"
+    sysctl_set: true
+    state: present
+    reload: true
+    sysctl_file: /etc/sysctl.d/999-ansible.conf
+  with_dict: "{{ sysctl_params }}"
+  when:
+    - configure_sysctl|bool
+    - not (system_is_container | bool)
+    - not (system_in_ci | bool)
+
+- name: Configure | Read legacy journald main config
+  become: true
+  ansible.builtin.slurp:
+    path: "{{ system_journald_main_path }}"
+  register: system_journald_main_config
+  when:
+    - not (system_is_container | bool)
+
+- name: Configure | Remove legacy journald main-file settings
+  become: true
+  ansible.builtin.lineinfile:
+    path: "{{ system_journald_main_path }}"
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+    owner: "{{ system_config_owner }}"
+    group: "{{ system_config_group }}"
+    mode: "{{ system_config_file_mode }}"
+    backup: true
+  loop: "{{ system_journald_legacy_main_lines }}"
+  loop_control:
+    label: "{{ item.regexp }}"
+  notify: RestartJournald
+  when:
+    - not (system_is_container | bool)
+    - >-
+      (system_journald_main_config.content | b64decode)
+      is regex('(?m)^' ~ (system_legacy_managed_marker | regex_escape) ~ '$')
+
+- name: Configure | Systemd-journald drop-in directory
+  become: true
+  ansible.builtin.file:
+    path: "{{ system_journald_dropin_dir }}"
+    state: directory
+    owner: "{{ system_config_owner }}"
+    group: "{{ system_config_group }}"
+    mode: "{{ system_config_dir_mode }}"
+  when:
+    - not (system_is_container | bool)
+
+- name: Configure | Systemd-journald drop-in
+  become: true
+  ansible.builtin.template:
+    backup: true
+    src: templates/journald-dropin.conf.j2
+    dest: "{{ system_journald_dropin_path }}"
+    owner: "{{ system_config_owner }}"
+    group: "{{ system_config_group }}"
+    mode: "{{ system_config_file_mode }}"
+  notify: RestartJournald
+  when:
+    - not (system_is_container | bool)
+
+- name: Configure | Remove legacy journald drop-ins
+  become: true
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop: "{{ system_journald_legacy_dropin_paths }}"
+  loop_control:
+    label: "{{ item }}"
+  notify: RestartJournald
+  when:
+    - not (system_is_container | bool)
+    - item != system_journald_dropin_path
+
+- name: Sshd | Read main config
+  become: true
+  ansible.builtin.slurp:
+    path: "{{ system_sshd_main_path }}"
+  register: system_sshd_main_config
+  when:
+    - not (system_is_container | bool)
+    - not (system_in_ci | bool)
+  tags: sshd
+
+- name: Sshd | Assert drop-in include is available
+  ansible.builtin.assert:
+    that:
+      - >-
+        (system_sshd_main_config.content | b64decode)
+        is regex('(?m)^\\s*Include\\s+/etc/ssh/sshd_config\\.d/\\*\\.conf\\s*$')
+    fail_msg: >-
+      /etc/ssh/sshd_config must include /etc/ssh/sshd_config.d/*.conf
+      before this role can manage sshd through a drop-in.
+    quiet: true
+  when:
+    - not (system_is_container | bool)
+    - not (system_in_ci | bool)
+  tags: sshd
+
+- name: Sshd | Ensure drop-in directory exists
+  become: true
+  ansible.builtin.file:
+    path: "{{ system_sshd_dropin_dir }}"
+    state: directory
+    owner: "{{ system_config_owner }}"
+    group: "{{ system_config_group }}"
+    mode: "{{ system_config_dir_mode }}"
+  when:
+    - not (system_is_container | bool)
+    - not (system_in_ci | bool)
+  tags: sshd
+
+- name: Sshd | Configure drop-in
+  become: true
+  ansible.builtin.template:
+    backup: true
+    src: templates/sshd-dropin.conf.j2
+    dest: "{{ system_sshd_dropin_path }}"
+    owner: "{{ system_config_owner }}"
+    group: "{{ system_config_group }}"
+    mode: "{{ system_config_file_mode }}"
+    validate: /usr/sbin/sshd -T -f %s
+  when:
+    - not (system_is_container | bool)
+    - not (system_in_ci | bool)
+  notify: RestartSshd
+  tags: sshd
+
+- name: Sshd | Remove legacy drop-ins
+  become: true
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop: "{{ system_sshd_legacy_dropin_paths }}"
+  loop_control:
+    label: "{{ item }}"
+  when:
+    - not (system_is_container | bool)
+    - not (system_in_ci | bool)
+    - item != system_sshd_dropin_path
+  notify: RestartSshd
+  tags: sshd
+
+- name: Sshd | Remove legacy managed settings from main config
+  become: true
+  ansible.builtin.lineinfile:
+    path: "{{ system_sshd_main_path }}"
+    regexp: '^{{ item.key | regex_escape }}\s+{{ item.value | regex_escape }}\s*$'
+    state: absent
+    owner: "{{ system_config_owner }}"
+    group: "{{ system_config_group }}"
+    mode: "{{ system_config_file_mode }}"
+    backup: true
+  loop: "{{ (sshd_config | dict2items) + system_sshd_legacy_main_cleanup }}"
+  loop_control:
+    label: "{{ item.key }}"
+  when:
+    - not (system_is_container | bool)
+    - not (system_in_ci | bool)
+  notify: RestartSshd
+  tags: sshd
+
+- name: Sshd | Validate effective configuration
+  become: true
+  ansible.builtin.command: /usr/sbin/sshd -T
+  changed_when: false
+  when:
+    - not (system_is_container | bool)
+    - not (system_in_ci | bool)
+  tags: sshd

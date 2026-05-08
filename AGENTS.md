@@ -5,15 +5,18 @@
 - The default workflow is local and user-level.
 - `playbook_install.yml` is the main dotfiles playbook.
 - The default playbook runs with `connection: local` and `become: false`.
+- `playbook_system.yml` is the opt-in privileged Arch Linux system playbook.
+- `roles/system/` contains the migrated workstation system provisioning role.
 
 # Main Entry Points
 
 - `README.md`: install overview and clone/bootstrap example.
 - `Taskfile.yml`: primary task runner and validation entry point.
 - `playbook_install.yml`: main user-level install/refresh flow.
+- `playbook_system.yml`: opt-in system-level workstation flow.
 - `inventory/hosts.yml`: local `this_host` inventory target.
 - `inventory/host_vars/this_host.yml`: source of truth for mappings and
-  cleanup.
+  cleanup plus local system role settings.
 - `ansible.cfg`: Ansible execution defaults for this repo.
 
 # How Instructions Apply
@@ -37,6 +40,9 @@
 - Do not add `become: true` to `playbook_install.yml`.
 - Keep privileged or system-wide changes opt-in through a separate
   playbook/task.
+- Do not add `roles/system` to `playbook_install.yml`.
+- Do not make the default `go-task` target depend on `system`,
+  `system:check`, or `test:system`.
 - Do not change runtime behavior unless the task explicitly requires it.
 - Keep changes deterministic, narrow, and easy to validate.
 - Do not commit secrets, tokens, cookies, browser profiles, session state,
@@ -52,6 +58,11 @@
     or payload that should be applied into `$HOME`.
 - `go-task lint`
   - Run for Ansible, inventory, Taskfile, or playbook changes.
+- `go-task system:check`
+  - Run for system role changes before applying them locally.
+- `go-task test:system`
+  - Run for system role task/template/handler behavior changes.
+  - Docker is required.
 - `uv run yamllint .`
   - Run for YAML-heavy changes when `yamllint` is available in the existing
     toolchain.

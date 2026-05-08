@@ -1,6 +1,7 @@
 # dotfiles
 
-Special repository for configuring dotfiles with Ansible
+Special repository for configuring user dotfiles and Arch Linux workstation
+state with Ansible.
 
 [![ansible](https://github.com/tenhishadow/dotfiles/actions/workflows/ansible.yml/badge.svg)](https://github.com/tenhishadow/dotfiles/actions/workflows/ansible.yml)
 
@@ -20,8 +21,26 @@ _INSTALL_DIR="$HOME/.dotfiles" \
   && go-task
 ```
 
-## installation with ans-workstation
+The default `go-task` target is intentionally user-level only. It links the
+payload under `dotfiles/` into `$HOME` and does not run the system role.
 
-[ans-workstation](https://github.com/tenhishadow/ans-workstation)
+## system layer
 
-it configures the workstation and also includes this repository
+The former `ans-workstation` system provisioning flow is available here as an
+explicit opt-in role:
+
+```bash
+go-task system:check
+go-task system
+```
+
+This path uses `playbook_system.yml` and may require sudo.
+
+## browser policies
+
+System-wide browser and VS Code policy management is also opt-in:
+
+```bash
+go-task browser-policies:check
+go-task browser-policies
+```

@@ -1,0 +1,103 @@
+---
+system_supported_os:
+  - archlinux
+
+system_tzdata_package: tzdata
+
+system_common_timezone: Europe/Warsaw
+
+system_ntp_service: systemd-timesyncd
+
+system_ntp_main:
+  - 2.europe.pool.ntp.org
+  - 3.europe.pool.ntp.org
+  - 1.lu.pool.ntp.org
+  - 2.ch.pool.ntp.org
+  - 3.ch.pool.ntp.org
+system_ntp_fallback:
+  - pool.ntp.org
+  - 2.arch.pool.ntp.org
+  - 0.arch.pool.ntp.org
+  - 3.arch.pool.ntp.org
+  - 1.arch.pool.ntp.org
+
+system_locales:
+  - en_US
+  - pl_PL
+  - ru_RU
+  - uk_UA
+  - de_DE
+  - cs_CZ
+  - fr_FR
+  - C
+
+system_locale_definition_dirs:
+  - /usr/local/share/i18n/locales
+  - /usr/share/i18n/locales
+
+system_configs:
+  owner: root
+  group: root
+  mode: "0644"
+
+system_config_owner: "{{ system_configs.owner }}"
+system_config_group: "{{ system_configs.group }}"
+system_config_file_mode: "{{ system_configs.mode }}"
+system_config_private_file_mode: "0600"
+system_config_dir_mode: "0755"
+
+system_container_virtualization_types:
+  - container
+  - docker
+  - lxc
+  - lxd
+  - podman
+
+system_pacman_parallel_downloads: 20
+system_pacman_download_user: >-
+  {{ (system_is_container | default(false) | bool) | ternary('', 'alpm') }}
+
+system_reflector_enabled: true
+system_reflector_latest: 5
+system_reflector_sort: age
+system_reflector_protocol: https
+system_reflector_save_path: /etc/pacman.d/mirrorlist
+
+system_journald_dropin_dir: /etc/systemd/journald.conf.d
+system_journald_dropin_path: "{{ system_journald_dropin_dir }}/10-dotfiles.conf"
+system_journald_legacy_dropin_paths:
+  - "{{ system_journald_dropin_dir }}/10-ans-workstation.conf"
+system_journald_main_path: /etc/systemd/journald.conf
+system_timesyncd_dropin_dir: /etc/systemd/timesyncd.conf.d
+system_timesyncd_dropin_path: "{{ system_timesyncd_dropin_dir }}/10-dotfiles.conf"
+system_timesyncd_legacy_dropin_paths:
+  - "{{ system_timesyncd_dropin_dir }}/10-ans-workstation.conf"
+system_timesyncd_main_path: /etc/systemd/timesyncd.conf
+system_sshd_dropin_dir: /etc/ssh/sshd_config.d
+system_sshd_dropin_path: "{{ system_sshd_dropin_dir }}/20-dotfiles.conf"
+system_sshd_legacy_dropin_paths:
+  - "{{ system_sshd_dropin_dir }}/20-ans-workstation.conf"
+system_sshd_main_path: /etc/ssh/sshd_config
+
+system_legacy_managed_marker: "# o_O"
+system_journald_legacy_main_lines:
+  - regexp: "^Storage=.*$"
+    line: "#Storage=auto"
+  - regexp: "^Compress=.*$"
+    line: "#Compress=yes"
+  - regexp: "^SystemMaxUse=.*$"
+    line: "#SystemMaxUse="
+system_timesyncd_legacy_main_lines:
+  - regexp: "^NTP=.*$"
+    line: "#NTP="
+  - regexp: "^FallbackNTP=.*$"
+    line: "#FallbackNTP="
+system_sshd_legacy_main_cleanup:
+  - key: Protocol
+    value: "2"
+  - key: PubkeyAcceptedAlgorithms
+    value: "-ssh-rsa,-rsa-sha2-256,-rsa-sha2-512"
+
+system_ntp_conflicting_services:
+  - chronie
+  - ntpd

@@ -1,0 +1,159 @@
+---
+- name: Configure | Pacman
+  become: true
+  ansible.builtin.template:
+    src: templates/pacman.conf.j2
+    dest: /etc/pacman.conf
+    owner: "{{ system_config_owner }}"
+    group: "{{ system_config_group }}"
+    mode: "{{ system_config_file_mode }}"
+
+- name: Packages | Install base and base-devel
+  become: true
+  ansible.builtin.package:
+    name:
+      - base
+      - base-devel
+    state: present
+  tags:
+    - pkg
+
+- name: Cron | Check crontab presence
+  ansible.builtin.stat:
+    path: /usr/bin/crontab
+  register: system_crontab_bin
+  changed_when: false
+
+- name: Remove cron reflector job
+  become: true
+  ansible.builtin.cron:
+    state: absent
+    user: root
+    name: reflector
+    job: >-
+      reflector --protocol https --latest 10 --sort rate --save
+      /etc/pacman.d/mirrorlist >/dev/null 2>/dev/null
+    special_time: daily
+  when:
+    - system_crontab_bin.stat.exists | default(false)
+
+- name: Reflector | Install
+  become: true
+  ansible.builtin.package:
+    name: "reflector"
+    state: present
+  tags:
+    - pkg
+
+- name: Reflector | Config
+  become: true
+  ansible.builtin.template:
+    src: templates/reflector.conf.j2
+    dest: /etc/xdg/reflector/reflector.conf
+    owner: "{{ system_config_owner }}"
+    group: "{{ system_config_group }}"
+    mode: "{{ system_config_file_mode }}"
+  when:
+    - system_reflector_enabled | bool
+
+- name: Reflector | Configure timer
+  become: true
+  ansible.builtin.systemd_service:
+    name: reflector.timer
+    state: "{{ (system_reflector_enabled | bool) | ternary('started', 'stopped') }}"
+    enabled: "{{ system_reflector_enabled | bool }}"
+  when:
+    - system_can_manage_systemd | bool
+
+- name: Systemd | Mask and Disable useless
+  become: true
+  ansible.builtin.systemd_service:
+    name: "{{ item }}"
+    state: stopped
+    enabled: false
+    masked: true
+  loop: "{{ system_mask_and_stop }}"
+  when:
+    - system_can_manage_systemd | bool
+
+# - name: yay | check if installed
+#   stat:
+#     path: /usr/bin/yay
+#   register: yay_bin
+#   changed_when: false
+#
+# - name: yay | install system deps
+#   pacman:
+#     name:
+#       - base-devel
+#       - git
+#       - sudo
+#     state: present
+#   when: not yay_bin.stat.exists
+# #
+# - name: yay | define temp user for installing yay
+#   set_fact:
+#     yay_install_user: >-
+#       yay_install_usr_{{
+#         lookup('password', '/dev/null chars=ascii_letters,digits length=15')
+#       }}
+#   when: not yay_bin.stat.exists
+#
+# - name: yay | create a user for installing yay
+#   user:
+#     name: "{{ yay_install_user }}"
+#     create_home: false
+#   when: not yay_bin.stat.exists
+#
+# - name: yay | create temp dir
+#   tempfile:
+#     state: directory
+#   register: tempdir
+#   when: not yay_bin.stat.exists
+#
+# - name: yay | chown to temp user
+#   file:
+#     path: "{{ tempdir.path }}"
+#     owner: "{{ yay_install_user }}"
+#   when: not yay_bin.stat.exists
+# #
+# - name: TESt
+#   become_user: "{{ yay_install_user }}"
+#   become: yes
+#   become_method: sudo
+#   ansible.builtin.command: whoami
+# args:
+#   chdir: "{{ tempdir.path }}"
+#
+# - name: yay | clone repo
+#   become: yes
+#   become_user: "{{ yay_install_user }}"
+#   git:
+#     repo: 'https://aur.archlinux.org/yay.git'
+#     dest: "{{ tempdir.path }}"
+#   when: not yay_bin.stat.exists
+#
+# - name: yay | install
+#   become: yes
+#   become_user: "{{ yay_install_user }}"
+#   shell: "makepkg --install --noconfirm"
+#   args:
+#     chdir: "{{ tempdir.path }}"
+#     creates: /usr/bin/yay
+#   when: not yay_bin.stat.exists
+#   # register: command_output
+#   # ignore_errors: yes
+#
+#
+# - name: yay | cleanup user
+#   user:
+#     name: "{{ yay_install_user }}"
+#     state: absent
+#   when: not yay_bin.stat.exists
+#
+# - name: yay | cleanup | dir
+#   file:
+#     path: "{{ tempdir.path }}"
+#     state: absent
+#     recursive: yes
+#   when: not yay_bin.stat.exists

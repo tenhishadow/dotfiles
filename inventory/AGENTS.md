@@ -5,10 +5,12 @@
 
 # Source Of Truth
 
-- `host_vars/this_host.yml` is the source of truth for dotfiles mappings
-  and cleanup actions.
+- `host_vars/this_host.yml` is the source of truth for dotfiles mappings,
+  cleanup actions, browser policy overrides, and local system role settings.
 - New payload files under `../dotfiles/` must be added to the mapping to
   take effect.
+- System role values in this file are used only by `playbook_system.yml`;
+  they must not make the default dotfiles playbook privileged.
 - The default inventory target is local `this_host`.
 
 # Editing Rules

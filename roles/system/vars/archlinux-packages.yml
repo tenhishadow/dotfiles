@@ -1,0 +1,233 @@
+---
+# vim::foldmethod=marker
+
+system_packages:
+  # : media {{{
+  - feh
+  # : }}}
+
+  # : monitoring {{{
+  - monit
+  - speedtest-cli
+  - tcpdump
+  - iptraf-ng
+  - iftop
+  - iperf3
+  - lm_sensors
+  - smartmontools
+  - sysstat
+  - dmidecode
+  - htop
+  - iotop
+  - nmon
+  - lsof
+  - btop
+  - duf
+  - dust
+  # : }}}
+
+  # : network {{{
+  - ca-certificates
+  - ca-certificates-mozilla
+  - ca-certificates-utils
+  - curl
+  - doggo
+  - httpie
+  - iodine # Tunnel IPv4 data through a DNS server
+  - ptunnel # http://www.cs.uit.no/~daniels/PingTunnel/
+  - sstp-client
+  - strongswan
+  - thunderbird
+  - wget
+  - xh
+  - openssh
+  - openbsd-netcat
+  # : }}}
+
+  # : network {{{
+  ## messages
+  - element-desktop
+  - telegram-desktop
+  - mattermost
+  # - zoom # AUR
+  # - slack-desktop # AUR
+  ## browsers
+  - firefox
+  # - brave-bin # AUR
+  # : }}}
+
+  # : system {{{
+  - bash-completion
+  - bind-tools
+  - coreutils
+  - cracklib
+  - cryptsetup
+  - dosfstools
+  - e2fsprogs
+  - freerdp
+  - geoip2-database
+  - gnupg
+  - gnutls
+  - gzip
+  - unzip
+  - zip
+  - man-pages
+  - mc
+  - nmap
+  - mtr
+  - pigz
+  - pacman-contrib
+  - reflector
+  - remmina
+  # - salt # moved to AUR :(
+  - screen
+  - scrot
+  - tcl
+  - tigervnc
+  - whois
+  - gawk
+  - "{{ system_cron_package }}"
+  - imagemagick
+  - hwinfo
+  - nvme-cli
+  - fping # Utility to ping multiple hosts at once
+  - mono
+  - irqbalance
+  - tuned
+  - eza
+  # : }}}
+
+  # : utils {{{
+  - keepassxc
+  - nextcloud-client
+  - rclone
+  # : }}}
+
+  # : dev {{{
+  - vim
+  - neovim
+  - python-pynvim
+  - code
+  # - task
+  - tea
+  - ast-grep
+  - bat
+  - cosign
+  - direnv
+  - docker
+  - docker-compose
+  - docker-buildx
+  - python-docker
+  - buildah
+  - skopeo
+  - sops
+  - age
+  - make
+  - cmake
+  - jq
+  - yq
+  - shellcheck
+  - kitty # term
+  - xclip # command line interface to X selections (clipboard)
+  - github-cli # github cli <3
+  - git
+  - git-delta
+  - aws-cli
+  - just
+  - pre-commit # https://pre-commit.com/#usage
+  - terraform
+  - packer
+  - terragrunt
+  - ugrep # better grep
+  - fzf # https://github.com/junegunn/fzf/tree/master
+  - ttf-ibm-plex # CLI
+  - ttf-opensans # GUI
+  - terminus-font
+  - qrencode
+  - vault
+  - dos2unix
+  # - dnsperf # AUR
+  - prettier
+  - bash-language-server
+  - pyright
+  - gopls
+  - go
+  - rust-analyzer
+  - typescript-language-server
+  - vscode-css-languageserver
+  - vscode-html-languageserver
+  - vscode-json-languageserver
+  - yaml-language-server
+  - lua-language-server
+  - arduino-language-server
+  - eslint-language-server
+  - python-lsp-server
+  - python-pip
+  - python-pipx
+  - cython
+  - jdk-openjdk
+  - openjdk-doc
+  - openjdk-src
+  - yarn
+  - npm
+  - nerd-fonts
+  - starship
+  - ttf-font-nerd
+  - ruff
+  - yamllint
+  - tflint
+  - luacheck
+  - autopep8
+  - pint
+  - biome
+  - sqlfluff
+  - python-black
+  - ansible-lint
+  - ansible
+  - bats
+  - bats-assert
+  - bats-support
+  - clang
+  - rust
+  - ripgrep
+  - ripgrep-all
+  - fd
+  - wireshark-cli
+  - gitleaks
+  - trivy
+  - osv-scanner
+  - syft
+  - zoxide
+  # : }}}
+
+  # : kubernetes {{{
+  - argocd
+  - cilium-cli
+  - helm
+  - helmfile
+  - k9s
+  - krew
+  - kubeconform
+  - kubectl
+  - kubectx
+  - kustomize # Template-free customization of Kubernetes YAML manifests
+  - popeye
+  - stern
+  - talhelper # A tool to help create Talos clusters in your GitOps repository
+  - talosctl # CLI for Talos - A modern OS for Kubernetes
+  # : }}}
+
+  # : lint {{{
+  - actionlint
+  - python-cfn-lint
+  - shellharden
+  - stylua
+  - tombi
+  - vale
+  - yamlfmt
+  - markdownlint-cli
+  # : }}}
+
+  # : ai {{{
+  - gemini-cli
+  # : }}}

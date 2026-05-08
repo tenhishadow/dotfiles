@@ -5,6 +5,8 @@ ansible:
           - "ansible.cfg"
           - "inventory/**/*"
           - "playbook_install.yml"
+          - "playbook_system.yml"
+          - "roles/system/**/*"
 ci:
   - changed-files:
       - any-glob-to-any-file:

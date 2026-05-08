@@ -1,0 +1,6 @@
+# {{ ansible_managed }}
+# vim:ft=sshconfig
+
+{% for key, value in sshd_config | dictsort %}
+{{ key }} {{ value }}
+{% endfor %}

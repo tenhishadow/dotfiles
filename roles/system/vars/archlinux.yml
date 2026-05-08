@@ -1,0 +1,5 @@
+---
+system_cron_package: cronie
+system_docker_conf_dir: /etc/docker
+system_mask_and_stop:
+  - passim.service

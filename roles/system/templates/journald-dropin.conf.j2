@@ -1,0 +1,7 @@
+# {{ ansible_managed }}
+# vim:ft=systemd
+
+[Journal]
+Storage={{ journald_config.storage }}
+Compress={{ journald_config.compress }}
+SystemMaxUse={{ journald_config.systemmaxuse }}

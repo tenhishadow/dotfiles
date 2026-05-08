@@ -4,7 +4,9 @@ version: "3"
 
 vars:
   RUN_PLAYBOOK: "uv run ansible-playbook playbook_install.yml {{.CLI_ARGS}}"
+  RUN_SYSTEM_PLAYBOOK: "uv run ansible-playbook playbook_system.yml --diff {{.CLI_ARGS}}"
   DEPS_OS_ARCHLINUX: "pacman -Sy --noconfirm --needed --noprogressbar uv git"
+  DEPS_OS_SYSTEM_ARCHLINUX: "pacman -Sy --noconfirm --needed --noprogressbar uv git sudo"
   MITOGEN_VARS: "ANSIBLE_STRATEGY=serverscom.mitogen.mitogen_linear"
   SUPERLINTER_DOCKER_RUN: >-
     docker run
@@ -32,6 +34,14 @@ tasks:
     cmd: >-
       {{.DEPS_OS_ARCHLINUX}}
       || sudo {{.DEPS_OS_ARCHLINUX}}
+  deps-os-system:
+    status:
+      - $SHELL -c 'type -P uv'
+      - $SHELL -c 'type -P git'
+      - $SHELL -c 'type -P sudo'
+    cmd: >-
+      {{.DEPS_OS_SYSTEM_ARCHLINUX}}
+      || sudo {{.DEPS_OS_SYSTEM_ARCHLINUX}}
   deps-python:
     silent: true
     deps: [deps-os]
@@ -81,6 +91,27 @@ tasks:
   default:
     deps: [deps-galaxy]
     cmd: "{{.MITOGEN_VARS}} {{.RUN_PLAYBOOK}}"
+  system:
+    deps: [deps-galaxy]
+    cmds:
+      - task: deps-os-system
+      - "{{.MITOGEN_VARS}} {{.RUN_SYSTEM_PLAYBOOK}}"
+  system:check:
+    deps: [deps-galaxy]
+    cmds:
+      - task: deps-os-system
+      - "{{.MITOGEN_VARS}} {{.RUN_SYSTEM_PLAYBOOK}} --check"
+  system:list:
+    deps: [deps-python]
+    cmd: "uv run ansible-playbook --list-tasks playbook_system.yml"
+  pacdiff:
+    cmd: >-
+      type -P pacdiff >/dev/null
+      || {
+        printf '%s\n' 'pacdiff is missing; run go-task system first or install pacman-contrib.';
+        exit 1;
+      };
+      pacdiff -o
   browser-policies:
     deps: [deps-galaxy]
     cmd: "{{.MITOGEN_VARS}} uv run ansible-playbook playbook_browser_policies.yml {{.CLI_ARGS}}"
@@ -105,3 +136,9 @@ tasks:
       - timeout 120s nvim --headless "+checkhealth" +qa
       - timeout 120s nvim --headless "+checkhealth vim.lsp" +qa
       - timeout 120s nvim --headless "+lua dofile('.test/nvim/smoke.lua')"
+  test:system:
+    cmd: >-
+      docker run --rm -i
+      -v "$(pwd):/.dotfiles:ro"
+      archlinux:multilib-devel
+      bash -c 'cd .dotfiles && ./.test/system/exec.sh'

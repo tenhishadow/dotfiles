@@ -1,0 +1,8 @@
+---
+- name: Configure Arch Linux workstation system layer
+  hosts: this_host
+  gather_facts: true
+  roles:
+    - role: system
+      tags:
+        - system
