@@ -39,7 +39,7 @@ body:
     id: validation
     attributes:
       label: Validation Output
-      description: Paste relevant command output with secrets removed.
+      description: Paste relevant command output with secrets removed, such as `go-task verify`, `go-task`, or area-specific checks.
       render: text
     validations:
       required: false

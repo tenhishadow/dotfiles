@@ -8,6 +8,7 @@ ai-instructions:
           - "AGENTS.md"
           - "**/AGENTS.md"
           - ".github/copilot-instructions.md"
+          - ".github/instructions/**/*"
           - ".cursor/**/*"
           - ".windsurf/**/*"
 
@@ -64,7 +65,9 @@ dotfiles:
   - changed-files:
       - any-glob-to-any-file:
           - "dotfiles/**/*"
+          - "inventory/host_vars/this_host/dotfiles.yml"
           - "playbook_install.yml"
+          - "roles/dotfiles/**/*"
 
 github:
   - changed-files:
@@ -88,6 +91,7 @@ security:
           - ".github/CODEOWNERS"
           - "dotfiles/.gnupg/**/*"
           - "dotfiles/.ssh/**/*"
+          - "inventory/host_vars/this_host/security.yml"
           - "roles/browser_policies/**/*"
           - "roles/system/templates/sshd-dropin.conf.j2"
 

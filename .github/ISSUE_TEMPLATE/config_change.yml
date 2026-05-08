@@ -41,6 +41,7 @@ body:
       placeholder: |
         git diff --check
         go-task lint
+        go-task verify
         go-task
     validations:
       required: false
@@ -54,4 +55,6 @@ body:
         - label: Privileged behavior must remain opt-in.
           required: true
         - label: Documentation and AGENTS.md instructions should be updated if behavior changes.
+          required: false
+        - label: AI review instructions should be updated if review expectations change.
           required: false
