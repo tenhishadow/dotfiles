@@ -53,14 +53,21 @@ tasks:
       - uv sync --upgrade
       - pre-commit autoupdate
       - nvim --headless "+Lazy! sync" +qa
+  update:
+    cmds:
+      - git pull --ff-only
+      - go-task
 
   lint:
     deps: [deps-python]
     cmds:
       - "uv run ansible-lint --exclude .test/"
+  yamllint:
+    deps: [deps-python]
+    cmd: "uv run yamllint ."
   superlinter:
     cmds:
-      - "{{.SUPERLINTER_DOCKER_RUN}} ghcr.io/super-linter/super-linter:v8.5.0"
+      - "{{.SUPERLINTER_DOCKER_RUN}} ghcr.io/super-linter/super-linter:v8.6.0"
   superlinter:latest:
     cmds:
       - "{{.SUPERLINTER_DOCKER_RUN}} ghcr.io/super-linter/super-linter:latest"

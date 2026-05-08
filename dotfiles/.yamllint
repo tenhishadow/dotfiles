@@ -1,5 +1,15 @@
 --- # https://yamllint.readthedocs.io/en/stable/rules.html#module-yamllint.rules.comments
 
+ignore: |
+  .ansible/
+  .collections/
+  .task/
+  .venv/
+  .test/nvim/.cache/
+  .test/nvim/.config/
+  .test/nvim/.data/
+  .test/nvim/.state/
+
 rules:
   braces:
     max-spaces-inside: 1

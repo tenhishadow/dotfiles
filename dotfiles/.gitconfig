@@ -36,8 +36,6 @@
 [merge]
   conflictstyle      = diff3 # show original change, incoming change, and unchanged
   tool               = nvim
-[http]
-  sslverify          = false
 [color]
   ui                 = auto
 [color "branch"]

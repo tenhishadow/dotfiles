@@ -49,21 +49,27 @@
       tags:
         - configs
 
+    - name: dotfiles | check crontab presence
+      ansible.builtin.stat:
+        path: /usr/bin/crontab
+      register: dotfiles_crontab_bin
+      changed_when: false
+
     - name: dotfiles | cronjob for nvim
       ansible.builtin.cron:
         state: present
         name: vim-plug update/upgrade
         job: 'nvim --headless "+Lazy! restore" +qa > ~/.nvim.log 2>&1'
         special_time: daily
-      ignore_errors: true # if cron not presented
-      no_log: true # it doesn't matter
+      when:
+        - dotfiles_crontab_bin.stat.exists | default(false)
 
-    - name: dotfiles | cronjob for update
+    - name: dotfiles | remove legacy automatic git update cron
       ansible.builtin.cron:
+        state: absent
         name: dotfiles updates
-        job: "cd {{ ansible_facts.user_dir }}/.dotfiles && git pull >/dev/null 2>/dev/null"
-        special_time: hourly
-      ignore_errors: true # if cron not presented
+      when:
+        - dotfiles_crontab_bin.stat.exists | default(false)
 
     - name: Migrating away from .pam_environment
       ansible.builtin.file:

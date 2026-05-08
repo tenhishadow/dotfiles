@@ -249,8 +249,8 @@ alias paste='wl-paste'
 alias kube-temp='kubectl run -it --rm --image debian:trixie tmp-${RANDOM} -- bash'
 alias archupdate='yay -Syu --noconfirm; yay -Scc --noconfirm'
 alias arch-rekey='sudo pacman-key --refresh-keys'
-alias dotfiles-update='cd ~/.dotfiles/ && git pull && pipenv sync && pipenv run install'
-alias ans-workstation-update='cd ~/.ans-workstation/ && git pull && pipenv sync && pipenv run install'
+alias dotfiles-update='cd ~/.dotfiles/ && git pull --ff-only && go-task'
+alias ans-workstation-update='cd ~/.ans-workstation/ && git pull --ff-only && go-task'
 alias tgfmt='terragrunt hcl format --non-interactive'
 alias tfmt='terraform fmt -recursive -diff'
 alias vim='nvim'
@@ -260,7 +260,7 @@ alias nmap-slow='sudo nmap -sS -p- -T0 -Pn'
 ## clear
 alias clear-journald='sudo journalctl --rotate && sudo journalctl --vacuum-time=1s'
 alias clear-vim='rm -rf ~/.vim/autoload/ ~/.vim/plugged/'
-alias clear-nvim='rm -rf $HOME/.local/share/nvim $HOME/.config/nvim $HOME/.cache/nvim $HOME/.local/state/nvim/'
+alias clear-nvim='rm -rf "$HOME/.local/share/nvim" "$HOME/.cache/nvim" "$HOME/.local/state/nvim"'
 alias k='kubectl'
 
 # Vars
@@ -345,7 +345,7 @@ GOPATH="${HOME}/go" &&
 PATH=$GOPATH/bin:$PATH
 
 ## google cloud
-[[ ! -d "/opt/google-cloud-cli/bin" ]] &&
+[[ -d "/opt/google-cloud-cli/bin" ]] &&
   PATH="$PATH:/opt/google-cloud-cli/bin"
 
 ###
