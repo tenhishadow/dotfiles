@@ -3,6 +3,10 @@ on:
     branches:
       - master
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
 permissions:
   contents: write
   pull-requests: write
@@ -13,7 +17,8 @@ jobs:
   release-please:
     runs-on: ubuntu-latest
     steps:
-      - uses: googleapis/release-please-action@v5
+      - name: Create release PR
+        uses: googleapis/release-please-action@v5
         with:
           token: ${{ secrets.RELEASE_TOKEN }}
           config-file: release-please-config.json

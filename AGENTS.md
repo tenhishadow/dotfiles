@@ -62,6 +62,21 @@ Ansible, `uv`, and `go-task`.
 - Preserve CI and container guards for privileged system behavior.
 - Do not broaden cleanup/removal patterns without an explicit requirement.
 
+## Documentation And Instruction Sync
+
+- Update `README.md` and the nearest applicable `AGENTS.md` when commands,
+  playbooks, roles, validation steps, repository layout, or runtime behavior
+  change.
+- Keep AI instructions self-documenting: add new directories, ownership
+  boundaries, validation commands, and automation rules in the same change that
+  introduces them.
+- Remove stale AI instructions when files, roles, workflows, or validation
+  paths are removed.
+- When adding versioned automation dependencies such as GitHub Actions,
+  reusable workflows, Docker images, pre-commit hooks, or future GitLab CI
+  includes, ensure Renovate can update them or document why they must be
+  updated manually.
+
 ## Commit Rules
 
 - Use Conventional Commits when a commit is requested.

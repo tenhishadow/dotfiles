@@ -24,7 +24,7 @@ vars:
     -e VALIDATE_NATURAL_LANGUAGE=false
     -e VALIDATE_SHELL_SHFMT=false
     -e VALIDATE_TRIVY=false
-    -e FILTER_REGEX_EXCLUDE='(^|/)\.test/nvim/'
+    -e FILTER_REGEX_EXCLUDE='(^|/)(\.ansible/|\.collections/|\.task/|\.test/nvim/|\.venv/)'
     -v $(pwd):/tmp/lint
 
 tasks:

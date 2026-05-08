@@ -50,6 +50,7 @@ legacy user config paths.
 | `playbook_browser_policies.yml` | Opt-in privileged browser and VS Code policy playbook. |
 | `roles/system/` | Arch Linux workstation system provisioning role. |
 | `roles/browser_policies/` | Enterprise browser and VS Code policy role. |
+| `.github/` | GitHub Actions, issue forms, PR template, labeler, and release automation. |
 | `.test/` | Isolated smoke-test fixtures and container test entry points. |
 
 ## Common Tasks
@@ -132,6 +133,16 @@ Additional checks by area:
 - CI or repository-wide lint changes: `go-task superlinter`
 
 `go-task superlinter` requires Docker.
+
+## Repository Automation
+
+GitHub issue forms and the PR template live under `.github/`. The labeler is
+path-based and mirrors the current repository structure, including dotfiles,
+inventory, roles, tests, automation, and AI instructions.
+
+Renovate manages supported dependency updates for GitHub Actions, pre-commit,
+Ansible Galaxy requirements, the Python toolchain, and the Super-Linter Docker
+image referenced by `Taskfile.yml`.
 
 ## Safety Notes
 

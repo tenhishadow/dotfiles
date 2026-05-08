@@ -1,36 +1,110 @@
 ---
+changed-files-labels-limit: 8
+max-files-changed: 300
+
+ai-instructions:
+  - changed-files:
+      - any-glob-to-any-file:
+          - "AGENTS.md"
+          - "**/AGENTS.md"
+          - ".github/copilot-instructions.md"
+          - ".cursor/**/*"
+          - ".windsurf/**/*"
+
 ansible:
   - changed-files:
       - any-glob-to-any-file:
           - "ansible.cfg"
+          - "requirements.yml"
+          - "playbook_*.yml"
           - "inventory/**/*"
-          - "playbook_install.yml"
-          - "playbook_system.yml"
-          - "roles/system/**/*"
-ci:
+          - "roles/**/*"
+
+automation:
   - changed-files:
       - any-glob-to-any-file:
           - ".github/**/*"
+          - ".pre-commit-config.yaml"
+          - ".release-please-manifest.json"
+          - ".zizmor.yml"
+          - "release-please-config.json"
+          - "renovate.json"
+          - "Taskfile.yml"
+
+browser-policies:
+  - changed-files:
+      - any-glob-to-any-file:
+          - "playbook_browser_policies.yml"
+          - "roles/browser_policies/**/*"
+
+ci:
+  - changed-files:
+      - any-glob-to-any-file:
+          - ".github/workflows/**/*"
+          - ".github/linters/**/*"
+          - ".zizmor.yml"
+
 dependencies:
   - changed-files:
       - any-glob-to-any-file:
+          - ".pre-commit-config.yaml"
           - "pyproject.toml"
+          - "requirements.yml"
           - "renovate.json"
           - "uv.lock"
+
 documentation:
   - changed-files:
       - any-glob-to-any-file:
           - "**/*.md"
           - "AGENTS.md"
+          - "**/AGENTS.md"
+
 dotfiles:
   - changed-files:
       - any-glob-to-any-file:
           - "dotfiles/**/*"
+          - "playbook_install.yml"
+
+github:
+  - changed-files:
+      - any-glob-to-any-file:
+          - ".github/**/*"
+
+inventory:
+  - changed-files:
+      - any-glob-to-any-file:
+          - "inventory/**/*"
+
 nvim:
   - changed-files:
       - any-glob-to-any-file:
           - "dotfiles/.config/nvim/**/*"
-bashrc:
+          - ".test/nvim/**/*"
+
+security:
   - changed-files:
       - any-glob-to-any-file:
+          - ".github/CODEOWNERS"
+          - "dotfiles/.gnupg/**/*"
+          - "dotfiles/.ssh/**/*"
+          - "roles/browser_policies/**/*"
+          - "roles/system/templates/sshd-dropin.conf.j2"
+
+shell:
+  - changed-files:
+      - any-glob-to-any-file:
+          - "dotfiles/.bash_profile"
           - "dotfiles/.bashrc"
+          - ".test/**/*.sh"
+
+system:
+  - changed-files:
+      - any-glob-to-any-file:
+          - "playbook_system.yml"
+          - "roles/system/**/*"
+
+tests:
+  - changed-files:
+      - any-glob-to-any-file:
+          - ".test/**/*"
