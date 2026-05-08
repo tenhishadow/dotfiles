@@ -1,5 +1,5 @@
 ---
-- name: browser_policies | validate inputs
+- name: Browser policies | Validate inputs
   ansible.builtin.include_tasks: validate.yml
   when:
     - browser_policies_enabled | bool
@@ -7,7 +7,7 @@
     - browser_policies
     - browser_policies_validate
 
-- name: browser_policies | manage chromium policies
+- name: Browser policies | Include Chromium tasks
   ansible.builtin.include_tasks: chromium.yml
   when:
     - browser_policies_enabled | bool
@@ -16,7 +16,7 @@
     - browser_policies
     - browser_policies_chromium
 
-- name: browser_policies | manage firefox policies
+- name: Browser policies | Include Firefox tasks
   ansible.builtin.include_tasks: firefox.yml
   when:
     - browser_policies_enabled | bool
@@ -25,7 +25,7 @@
     - browser_policies
     - browser_policies_firefox
 
-- name: browser_policies | manage vscode policies
+- name: Browser policies | Include VS Code tasks
   ansible.builtin.include_tasks: vscode.yml
   when:
     - browser_policies_enabled | bool

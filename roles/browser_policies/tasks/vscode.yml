@@ -1,5 +1,5 @@
 ---
-- name: browser_policies | vscode | ensure policy directories exist
+- name: VS Code policies | Ensure directories
   ansible.builtin.file:
     path: "{{ item.policy_path | dirname }}"
     state: directory
@@ -13,7 +13,7 @@
     - browser_policies_state == "present"
     - item.enabled | default(true) | bool
 
-- name: browser_policies | vscode | write managed policy files
+- name: VS Code policies | Write policy.json
   ansible.builtin.copy:
     dest: "{{ item.policy_path }}"
     content: "{{ browser_policies_vscode_rendered_policy | to_nice_json }}\n"
@@ -46,9 +46,9 @@
   when:
     - browser_policies_state == "present"
     - item.enabled | default(true) | bool
-  notify: browser_policies | browser restart required
+  notify: Browser policies | Report restart requirement
 
-- name: browser_policies | vscode | remove managed policy files
+- name: VS Code policies | Remove policy.json
   ansible.builtin.file:
     path: "{{ item.policy_path }}"
     state: absent
@@ -58,4 +58,4 @@
   when:
     - browser_policies_state == "absent"
     - item.enabled | default(true) | bool
-  notify: browser_policies | browser restart required
+  notify: Browser policies | Report restart requirement

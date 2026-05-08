@@ -1,5 +1,5 @@
 ---
-- name: browser_policies | chromium | ensure managed directories exist
+- name: Chromium policies | Ensure directories
   ansible.builtin.file:
     path: "{{ item.managed_dir }}"
     state: directory
@@ -13,7 +13,7 @@
     - browser_policies_state == "present"
     - item.enabled | default(true) | bool
 
-- name: browser_policies | chromium | write managed policy files
+- name: Chromium policies | Write managed files
   ansible.builtin.copy:
     dest: "{{ browser_policies_chromium_target_policy_path }}"
     content: "{{ browser_policies_chromium_rendered_policy | to_nice_json }}\n"
@@ -66,9 +66,9 @@
   when:
     - browser_policies_state == "present"
     - item.enabled | default(true) | bool
-  notify: browser_policies | browser restart required
+  notify: Browser policies | Report restart requirement
 
-- name: browser_policies | chromium | remove managed policy files
+- name: Chromium policies | Remove managed files
   ansible.builtin.file:
     path: "{{ browser_policies_chromium_target_policy_path }}"
     state: absent
@@ -83,4 +83,4 @@
   when:
     - browser_policies_state == "absent"
     - item.enabled | default(true) | bool
-  notify: browser_policies | browser restart required
+  notify: Browser policies | Report restart requirement

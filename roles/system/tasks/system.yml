@@ -6,7 +6,7 @@
   register: system_locale_defs
   changed_when: false
 
-- name: Locale | Set locale definition lists
+- name: Locale | Build available list
   ansible.builtin.set_fact:
     system_locale_available: "{{ system_locale_available_tmp }}"
     system_locale_missing_defs: "{{ system_locales | difference(system_locale_available_tmp) }}"
@@ -18,7 +18,7 @@
          | unique
          | list }}
 
-- name: Locale | Configure gen
+- name: Locale | Write locale.gen
   become: true
   ansible.builtin.template:
     backup: true
@@ -28,9 +28,9 @@
     group: "{{ system_config_group }}"
     mode: "{{ system_config_file_mode }}"
   notify:
-    - SystemdVconsoleSetup
+    - Console | Restart vconsole setup
 
-- name: Locale | Configure
+- name: Locale | Write locale.conf
   become: true
   ansible.builtin.template:
     backup: true
@@ -40,15 +40,15 @@
     group: "{{ system_config_group }}"
     mode: "{{ system_config_file_mode }}"
   notify:
-    - SystemdVconsoleSetup
+    - Console | Restart vconsole setup
 
-- name: Locale | List generated
+- name: Locale | List generated locales
   become: true
   ansible.builtin.command: locale -a
   register: system_locale_list
   changed_when: false
 
-- name: Locale | Generate
+- name: Locale | Generate missing locales
   become: true
   ansible.builtin.command: locale-gen
   changed_when: true
@@ -64,7 +64,7 @@
     - not (system_in_ci | bool)
     - missing_locales | length > 0
 
-- name: Vconsole | Configure
+- name: Console | Write vconsole.conf
   become: true
   ansible.builtin.template:
     backup: true
@@ -74,9 +74,9 @@
     group: "{{ system_config_group }}"
     mode: "{{ system_config_file_mode }}"
   notify:
-    - SystemdVconsoleSetup
+    - Console | Restart vconsole setup
 
-- name: Configure | /etc/motd
+- name: Login | Write motd
   become: true
   ansible.builtin.template:
     backup: true
@@ -86,7 +86,7 @@
     group: "{{ system_config_group }}"
     mode: "{{ system_config_file_mode }}"
 
-- name: Configure /etc/issue
+- name: Login | Write issue
   become: true
   ansible.builtin.template:
     backup: true
@@ -96,7 +96,7 @@
     group: "{{ system_config_group }}"
     mode: "{{ system_config_file_mode }}"
 
-- name: Start/enable cron
+- name: Cron | Ensure service enabled
   become: true
   ansible.builtin.systemd_service:
     state: started
@@ -106,7 +106,7 @@
   when:
     - system_can_manage_systemd | bool
 
-- name: Configure | Sysctl
+- name: Sysctl | Apply kernel parameters
   become: true
   ansible.posix.sysctl:
     name: "{{ item.key }}"
@@ -121,7 +121,7 @@
     - not (system_is_container | bool)
     - not (system_in_ci | bool)
 
-- name: Configure | Read legacy journald main config
+- name: Journald | Read legacy main config
   become: true
   ansible.builtin.slurp:
     path: "{{ system_journald_main_path }}"
@@ -129,7 +129,7 @@
   when:
     - not (system_is_container | bool)
 
-- name: Configure | Remove legacy journald main-file settings
+- name: Journald | Reset legacy main-file settings
   become: true
   ansible.builtin.lineinfile:
     path: "{{ system_journald_main_path }}"
@@ -142,14 +142,14 @@
   loop: "{{ system_journald_legacy_main_lines }}"
   loop_control:
     label: "{{ item.regexp }}"
-  notify: RestartJournald
+  notify: Journald | Restart service
   when:
     - not (system_is_container | bool)
     - >-
       (system_journald_main_config.content | b64decode)
       is regex('(?m)^' ~ (system_legacy_managed_marker | regex_escape) ~ '$')
 
-- name: Configure | Systemd-journald drop-in directory
+- name: Journald | Ensure drop-in directory
   become: true
   ansible.builtin.file:
     path: "{{ system_journald_dropin_dir }}"
@@ -160,7 +160,7 @@
   when:
     - not (system_is_container | bool)
 
-- name: Configure | Systemd-journald drop-in
+- name: Journald | Write drop-in
   become: true
   ansible.builtin.template:
     backup: true
@@ -169,11 +169,11 @@
     owner: "{{ system_config_owner }}"
     group: "{{ system_config_group }}"
     mode: "{{ system_config_file_mode }}"
-  notify: RestartJournald
+  notify: Journald | Restart service
   when:
     - not (system_is_container | bool)
 
-- name: Configure | Remove legacy journald drop-ins
+- name: Journald | Remove legacy drop-ins
   become: true
   ansible.builtin.file:
     path: "{{ item }}"
@@ -181,12 +181,12 @@
   loop: "{{ system_journald_legacy_dropin_paths }}"
   loop_control:
     label: "{{ item }}"
-  notify: RestartJournald
+  notify: Journald | Restart service
   when:
     - not (system_is_container | bool)
     - item != system_journald_dropin_path
 
-- name: Sshd | Read main config
+- name: SSHD | Read main config
   become: true
   ansible.builtin.slurp:
     path: "{{ system_sshd_main_path }}"
@@ -196,7 +196,7 @@
     - not (system_in_ci | bool)
   tags: sshd
 
-- name: Sshd | Assert drop-in include is available
+- name: SSHD | Verify drop-in include
   ansible.builtin.assert:
     that:
       - >-
@@ -211,7 +211,7 @@
     - not (system_in_ci | bool)
   tags: sshd
 
-- name: Sshd | Ensure drop-in directory exists
+- name: SSHD | Ensure drop-in directory
   become: true
   ansible.builtin.file:
     path: "{{ system_sshd_dropin_dir }}"
@@ -224,7 +224,7 @@
     - not (system_in_ci | bool)
   tags: sshd
 
-- name: Sshd | Configure drop-in
+- name: SSHD | Write drop-in
   become: true
   ansible.builtin.template:
     backup: true
@@ -237,10 +237,10 @@
   when:
     - not (system_is_container | bool)
     - not (system_in_ci | bool)
-  notify: RestartSshd
+  notify: SSHD | Restart service
   tags: sshd
 
-- name: Sshd | Remove legacy drop-ins
+- name: SSHD | Remove legacy drop-ins
   become: true
   ansible.builtin.file:
     path: "{{ item }}"
@@ -252,10 +252,10 @@
     - not (system_is_container | bool)
     - not (system_in_ci | bool)
     - item != system_sshd_dropin_path
-  notify: RestartSshd
+  notify: SSHD | Restart service
   tags: sshd
 
-- name: Sshd | Remove legacy managed settings from main config
+- name: SSHD | Remove legacy main-file settings
   become: true
   ansible.builtin.lineinfile:
     path: "{{ system_sshd_main_path }}"
@@ -271,10 +271,10 @@
   when:
     - not (system_is_container | bool)
     - not (system_in_ci | bool)
-  notify: RestartSshd
+  notify: SSHD | Restart service
   tags: sshd
 
-- name: Sshd | Validate effective configuration
+- name: SSHD | Validate effective config
   become: true
   ansible.builtin.command: /usr/sbin/sshd -T
   changed_when: false

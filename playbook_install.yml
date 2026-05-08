@@ -1,17 +1,18 @@
 ---
-- hosts: this_host
+- name: Apply user dotfiles
+  hosts: this_host
   become: false
   connection: local
   gather_facts: true
   tasks:
-    - name: check mandatory variables are defined
+    - name: Dotfiles | Validate mapping
       ansible.builtin.assert:
         that:
           - dotfiles_mapping is defined
       tags:
         - configs
 
-    - name: manage dirs for dotfiles
+    - name: Dotfiles | Ensure parent directories
       ansible.builtin.file:
         path: "{{ item.value.dir_path }}"
         state: directory
@@ -29,7 +30,7 @@
       tags:
         - configs
 
-    - name: create symlinks for dotfiles
+    - name: Dotfiles | Link payload
       ansible.builtin.file:
         src: "{{ item.value.src }}"
         dest: "{{ item.value.dest }}"
@@ -41,7 +42,7 @@
       tags:
         - configs
 
-    - name: remove old configs/dirs
+    - name: Dotfiles | Remove legacy paths
       ansible.builtin.file:
         path: "{{ item }}"
         state: absent
@@ -49,13 +50,13 @@
       tags:
         - configs
 
-    - name: dotfiles | check crontab presence
+    - name: Dotfiles | Check crontab
       ansible.builtin.stat:
         path: /usr/bin/crontab
       register: dotfiles_crontab_bin
       changed_when: false
 
-    - name: dotfiles | cronjob for nvim
+    - name: Dotfiles | Schedule Neovim restore
       ansible.builtin.cron:
         state: present
         name: vim-plug update/upgrade
@@ -64,14 +65,14 @@
       when:
         - dotfiles_crontab_bin.stat.exists | default(false)
 
-    - name: dotfiles | remove legacy automatic git update cron
+    - name: Dotfiles | Remove legacy update cron
       ansible.builtin.cron:
         state: absent
         name: dotfiles updates
       when:
         - dotfiles_crontab_bin.stat.exists | default(false)
 
-    - name: Migrating away from .pam_environment
+    - name: Dotfiles | Remove .pam_environment
       ansible.builtin.file:
         path: "{{ ansible_facts.user_dir }}/.pam_environment"
         state: absent

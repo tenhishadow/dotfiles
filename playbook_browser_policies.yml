@@ -1,5 +1,6 @@
 ---
-- hosts: this_host
+- name: Apply browser policies
+  hosts: this_host
   become: true
   connection: local
   gather_facts: true

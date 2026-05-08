@@ -1,5 +1,5 @@
 ---
-- name: Assert | Supported OS
+- name: System | Validate OS
   ansible.builtin.assert:
     that:
       - (ansible_facts.distribution | default('') | lower) is in system_supported_os
@@ -10,7 +10,7 @@
   tags:
     - always
 
-- name: Vars | include for {{ ansible_facts.distribution | lower }}
+- name: System | Load OS variables
   ansible.builtin.include_vars: "{{ item }}"
   loop:
     - "{{ ansible_facts.distribution | lower }}.yml"
@@ -18,7 +18,7 @@
   tags:
     - always
 
-- name: Facts | derive execution guards
+- name: System | Set execution guards
   ansible.builtin.set_fact:
     system_in_ci: "{{ lookup('ansible.builtin.env', 'CI') == 'true' }}"
     system_is_container: >-
@@ -29,7 +29,7 @@
   tags:
     - always
 
-- name: Facts | derive systemd management guard
+- name: System | Set systemd guard
   ansible.builtin.set_fact:
     system_can_manage_systemd: >-
       {{
@@ -40,7 +40,7 @@
   tags:
     - always
 
-- name: Packages | install
+- name: Packages | Install manifest
   become: true
   ansible.builtin.package:
     name: "{{ system_packages }}"
@@ -48,25 +48,25 @@
   tags:
     - pkg
 
-- name: Time | configure
+- name: System | Include time tasks
   ansible.builtin.include_tasks:
     file: time.yml
 
-- name: OS-common configuration
+- name: System | Include common tasks
   ansible.builtin.include_tasks:
     file: system.yml
 
-- name: OS-related configuration
+- name: System | Include OS tasks
   ansible.builtin.include_tasks:
     file: "{{ ansible_facts.distribution | lower }}-tasks.yml"
 
-- name: Docker config
+- name: System | Include Docker tasks
   ansible.builtin.include_tasks:
     file: docker.yml
   when:
     - not (system_is_container | bool)
     - not (system_in_ci | bool)
 
-- name: Laptop-related configuration
+- name: System | Include laptop tasks
   ansible.builtin.include_tasks:
     file: laptop.yml

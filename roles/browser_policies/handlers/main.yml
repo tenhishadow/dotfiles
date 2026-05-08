@@ -1,5 +1,5 @@
 ---
-- name: browser_policies | browser restart required
+- name: Browser policies | Report restart requirement
   ansible.builtin.debug:
     msg:
       - "Browser restart required for policy changes to take effect."

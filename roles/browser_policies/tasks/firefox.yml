@@ -1,5 +1,5 @@
 ---
-- name: browser_policies | firefox | ensure policy directories exist
+- name: Firefox policies | Ensure directories
   ansible.builtin.file:
     path: "{{ item.policy_path | dirname }}"
     state: directory
@@ -13,7 +13,7 @@
     - browser_policies_state == "present"
     - item.enabled | default(true) | bool
 
-- name: browser_policies | firefox | write managed policy files
+- name: Firefox policies | Write policies.json
   ansible.builtin.copy:
     dest: "{{ item.policy_path }}"
     content: "{{ {'policies': browser_policies_firefox_rendered_policy} | to_nice_json }}\n"
@@ -62,9 +62,9 @@
   when:
     - browser_policies_state == "present"
     - item.enabled | default(true) | bool
-  notify: browser_policies | browser restart required
+  notify: Browser policies | Report restart requirement
 
-- name: browser_policies | firefox | remove managed policy files
+- name: Firefox policies | Remove policies.json
   ansible.builtin.file:
     path: "{{ item.policy_path }}"
     state: absent
@@ -74,4 +74,4 @@
   when:
     - browser_policies_state == "absent"
     - item.enabled | default(true) | bool
-  notify: browser_policies | browser restart required
+  notify: Browser policies | Report restart requirement

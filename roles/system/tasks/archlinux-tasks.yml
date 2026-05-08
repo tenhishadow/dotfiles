@@ -1,5 +1,5 @@
 ---
-- name: Configure | Pacman
+- name: Pacman | Write pacman.conf
   become: true
   ansible.builtin.template:
     src: templates/pacman.conf.j2
@@ -8,7 +8,7 @@
     group: "{{ system_config_group }}"
     mode: "{{ system_config_file_mode }}"
 
-- name: Packages | Install base and base-devel
+- name: Pacman | Install base packages
   become: true
   ansible.builtin.package:
     name:
@@ -18,13 +18,13 @@
   tags:
     - pkg
 
-- name: Cron | Check crontab presence
+- name: Cron | Check crontab
   ansible.builtin.stat:
     path: /usr/bin/crontab
   register: system_crontab_bin
   changed_when: false
 
-- name: Remove cron reflector job
+- name: Reflector | Remove legacy cron job
   become: true
   ansible.builtin.cron:
     state: absent
@@ -37,7 +37,7 @@
   when:
     - system_crontab_bin.stat.exists | default(false)
 
-- name: Reflector | Install
+- name: Reflector | Install package
   become: true
   ansible.builtin.package:
     name: "reflector"
@@ -45,7 +45,7 @@
   tags:
     - pkg
 
-- name: Reflector | Config
+- name: Reflector | Write config
   become: true
   ansible.builtin.template:
     src: templates/reflector.conf.j2
@@ -65,7 +65,7 @@
   when:
     - system_can_manage_systemd | bool
 
-- name: Systemd | Mask and Disable useless
+- name: Systemd | Mask disabled services
   become: true
   ansible.builtin.systemd_service:
     name: "{{ item }}"

@@ -1,5 +1,5 @@
 ---
-- name: Tzdata | Ensure tzdata package is installed
+- name: Timezone | Install tzdata
   become: true
   ansible.builtin.package:
     name: "{{ system_tzdata_package }}"
@@ -7,20 +7,20 @@
   tags:
     - pkg
 
-- name: Tzdata | Set timezone to {{ system_common_timezone }}
+- name: Timezone | Set timezone
   become: true
   community.general.timezone:
     name: "{{ system_common_timezone }}"
   when:
     - not (system_is_container | bool)
 
-- name: NTP | Gather service facts
+- name: NTP | Gather services
   become: true
   ansible.builtin.service_facts:
   when:
     - system_can_manage_systemd | bool
 
-- name: NTP | Disable conflicting daemons
+- name: NTP | Disable conflicting services
   become: true
   ansible.builtin.systemd_service:
     name: "{{ item }}"
@@ -34,7 +34,7 @@
     - system_can_manage_systemd | bool
     - item ~ ".service" in (ansible_facts.services | default({}))
 
-- name: NTP | Read legacy timesyncd main config
+- name: NTP | Read legacy timesyncd config
   become: true
   ansible.builtin.slurp:
     path: "{{ system_timesyncd_main_path }}"
@@ -42,7 +42,7 @@
   when:
     - not (system_is_container | bool)
 
-- name: NTP | Remove legacy timesyncd main-file settings
+- name: NTP | Reset legacy main-file settings
   become: true
   ansible.builtin.lineinfile:
     path: "{{ system_timesyncd_main_path }}"
@@ -56,14 +56,14 @@
   loop_control:
     label: "{{ item.regexp }}"
   notify:
-    - RestartNtp
+    - NTP | Restart service
   when:
     - not (system_is_container | bool)
     - >-
       (system_timesyncd_main_config.content | b64decode)
       is regex('(?m)^' ~ (system_legacy_managed_marker | regex_escape) ~ '$')
 
-- name: NTP | Ensure timesyncd drop-in directory exists
+- name: NTP | Ensure drop-in directory
   become: true
   ansible.builtin.file:
     path: "{{ system_timesyncd_dropin_dir }}"
@@ -74,7 +74,7 @@
   when:
     - not (system_is_container | bool)
 
-- name: NTP | Configure timesyncd drop-in
+- name: NTP | Write timesyncd drop-in
   become: true
   ansible.builtin.template:
     backup: true
@@ -84,11 +84,11 @@
     group: "{{ system_config_group }}"
     mode: "{{ system_config_file_mode }}"
   notify:
-    - RestartNtp
+    - NTP | Restart service
   when:
     - not (system_is_container | bool)
 
-- name: NTP | Remove legacy timesyncd drop-ins
+- name: NTP | Remove legacy drop-ins
   become: true
   ansible.builtin.file:
     path: "{{ item }}"
@@ -97,12 +97,12 @@
   loop_control:
     label: "{{ item }}"
   notify:
-    - RestartNtp
+    - NTP | Restart service
   when:
     - not (system_is_container | bool)
     - item != system_timesyncd_dropin_path
 
-- name: NTP | Start and enable during play
+- name: NTP | Ensure service enabled
   become: true
   ansible.builtin.service:
     name: "{{ system_ntp_service }}"

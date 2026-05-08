@@ -1,5 +1,5 @@
 ---
-- name: browser_policies | validate common variables
+- name: Browser policies | Validate common variables
   ansible.builtin.assert:
     that:
       - browser_policies_state in ["present", "absent"]
@@ -18,7 +18,7 @@
     fail_msg: "browser_policies role variables are invalid."
     success_msg: "browser_policies role variables are valid."
 
-- name: browser_policies | validate chromium targets
+- name: Chromium policies | Validate targets
   ansible.builtin.assert:
     that:
       - item is mapping
@@ -31,7 +31,7 @@
   loop_control:
     label: "{{ item.name | default('unnamed chromium target') }}"
 
-- name: browser_policies | validate path-based targets
+- name: Path policies | Validate targets
   ansible.builtin.assert:
     that:
       - item.target is mapping
