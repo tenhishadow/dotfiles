@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.0.0](https://github.com/tenhishadow/dotfiles/compare/v1.6.8...v2.0.0) (2026-05-08)
+
+
+### Features
+
+* **system:** modularize optional system tasks ([#123](https://github.com/tenhishadow/dotfiles/issues/123)) ([c315f19](https://github.com/tenhishadow/dotfiles/commit/c315f191d5ba1aaea8302e74feac09651fb476f2))
+
 ## [1.6.8](https://github.com/tenhishadow/dotfiles/compare/v1.6.7...v1.6.8) (2026-03-23)
 
 
