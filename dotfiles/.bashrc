@@ -260,8 +260,17 @@ alias nmap-slow='sudo nmap -sS -p- -T0 -Pn'
 ## clear
 alias clear-journald='sudo journalctl --rotate && sudo journalctl --vacuum-time=1s'
 alias clear-vim='rm -rf ~/.vim/autoload/ ~/.vim/plugged/'
-alias clear-nvim='rm -rf "$HOME/.local/share/nvim" "$HOME/.cache/nvim" "$HOME/.local/state/nvim"'
 alias k='kubectl'
+
+function clear-nvim() {
+  local nvim_data="${XDG_DATA_HOME:-${HOME}/.local/share}/nvim"
+  local nvim_cache="${XDG_CACHE_HOME:-${HOME}/.cache}/nvim"
+  local nvim_state="${XDG_STATE_HOME:-${HOME}/.local/state}/nvim"
+
+  rm -rf "${nvim_data}" "${nvim_cache}" "${nvim_state}"
+  mkdir -p "${nvim_state}"
+  chmod 700 "${nvim_state}"
+}
 
 # Vars
 ## bash prompt
