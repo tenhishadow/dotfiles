@@ -8,7 +8,7 @@ dependencies = [
     "mitogen",
     "yamllint",
     "vim-vint>=0.3.21",
-    "setuptools<81",
+    "setuptools<83",
 ]
 
 [tool.uv]
