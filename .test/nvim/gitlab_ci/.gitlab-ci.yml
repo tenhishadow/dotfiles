@@ -3,6 +3,6 @@ stages:
 
 test:
   stage: test
-  image: alpine:3.22
+  image: alpine:3.23
   script:
     - echo "ok"
