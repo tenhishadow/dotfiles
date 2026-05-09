@@ -6,7 +6,9 @@ dependencies = [
     "ansible-lint",
     "ansible",
     "mitogen",
-    "yamllint"
+    "yamllint",
+    "vim-vint>=0.3.21",
+    "setuptools<81",
 ]
 
 [tool.uv]

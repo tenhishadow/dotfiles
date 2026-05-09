@@ -18,6 +18,12 @@ dotfiles_mapping:
   - name: gitignore
     payload: .gitignore
     dest: "{{ dotfiles_home }}/.gitignore"
+  - name: luacheckrc
+    payload: .luacheckrc
+    dest: "{{ dotfiles_home }}/.luacheckrc"
+  - name: vintrc
+    payload: .vintrc.yaml
+    dest: "{{ dotfiles_home }}/.vintrc.yaml"
   - name: screenrc
     payload: .screenrc
     dest: "{{ dotfiles_home }}/.screenrc"
@@ -54,9 +60,33 @@ dotfiles_mapping:
   - name: kitty_theme
     payload: .config/kitty/theme.conf
     dest: "{{ dotfiles_config_dir }}/kitty/theme.conf"
+  - name: kitty_gruvbox_dark_alias
+    payload: .config/kitty/gruvbox-dark.conf
+    dest: "{{ dotfiles_config_dir }}/kitty/gruvbox-dark.conf"
+  - name: kitty_gruvbox_dark
+    payload: .config/kitty/gruvbox_dark.conf
+    dest: "{{ dotfiles_config_dir }}/kitty/gruvbox_dark.conf"
+  - name: kitty_gruvbox_dark_hard
+    payload: .config/kitty/gruvbox_dark_hard.conf
+    dest: "{{ dotfiles_config_dir }}/kitty/gruvbox_dark_hard.conf"
+  - name: kitty_gruvbox_dark_soft
+    payload: .config/kitty/gruvbox_dark_soft.conf
+    dest: "{{ dotfiles_config_dir }}/kitty/gruvbox_dark_soft.conf"
+  - name: kitty_gruvbox_light
+    payload: .config/kitty/gruvbox_light.conf
+    dest: "{{ dotfiles_config_dir }}/kitty/gruvbox_light.conf"
+  - name: kitty_gruvbox_light_hard
+    payload: .config/kitty/gruvbox_light_hard.conf
+    dest: "{{ dotfiles_config_dir }}/kitty/gruvbox_light_hard.conf"
+  - name: kitty_gruvbox_light_soft
+    payload: .config/kitty/gruvbox_light_soft.conf
+    dest: "{{ dotfiles_config_dir }}/kitty/gruvbox_light_soft.conf"
   - name: htoprc
     payload: .config/htop/htoprc
     dest: "{{ dotfiles_config_dir }}/htop/htoprc"
+  - name: mimeapps
+    payload: .config/mimeapps.list
+    dest: "{{ dotfiles_config_dir }}/mimeapps.list"
   - name: user_dirs
     payload: .config/user-dirs.dirs
     dest: "{{ dotfiles_config_dir }}/user-dirs.dirs"

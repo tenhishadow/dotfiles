@@ -8,7 +8,10 @@ workspaces.
 ## Canonical Files
 
 - `.test/nvim/smoke.lua`
+- `.test/nvim/compat.lua`
 - `.test/nvim/treesitter_install.lua`
+- `.test/nvim/keymap_docs.lua`
+- `.test/nvim/mason_tools.lua`
 - `.test/nvim/*` language sample fixtures
 - `.test/system/exec.sh`
 
@@ -28,7 +31,13 @@ source of truth:
 ## Editing Rules
 
 - Keep fixtures minimal and deterministic.
+- Keep Neovim smoke fixture directories aligned with the `name` values in
+  `.test/nvim/smoke.lua`.
 - Keep generated workspaces out of git.
+- Keep Neovim test language lists sourced from the canonical config when
+  possible, especially `config.languages`.
+- Keep Tree-sitter parser installation optional in the test sandbox and skip
+  cleanly when required external tools are missing.
 - Keep shell scripts robust with safe flags where practical.
 - Keep comments, sample text, and documentation in English.
 
@@ -36,6 +45,9 @@ source of truth:
 
 ```bash
 go-task test:nvim
+go-task test:nvim:compat
+go-task test:nvim:mason-tools
+go-task docs:nvim-keymaps:check
 go-task test:system
 ```
 

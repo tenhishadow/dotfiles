@@ -24,6 +24,9 @@ automation under `.github/`.
   `.github/instructions/*.instructions.md`.
 - Keep documentation-specific Copilot rules in
   `.github/instructions/documentation.instructions.md`.
+- Keep Neovim keymap review rules aligned with
+  `docs/nvim-keymaps.md`, `dotfiles/.config/nvim/lua/config/keymaps_spec.lua`,
+  and `Taskfile.yml`.
 - Keep each Copilot review instruction file below 4,000 characters; Copilot
   code review ignores content past that limit. Instruction changes affect PR
   reviews after they exist on the PR base branch.
@@ -41,6 +44,7 @@ automation under `.github/`.
 - Run `go-task lint` when automation changes affect Ansible validation paths.
 - Run `go-task verify` when automation changes affect local aggregate
   validation, issue/PR templates, labeler rules, or AI instructions.
+  It includes Super-Linter and requires a running Docker daemon.
 - Run `go-task superlinter` for repository-wide lint pipeline changes.
 - Remember that `go-task superlinter` requires Docker.
 

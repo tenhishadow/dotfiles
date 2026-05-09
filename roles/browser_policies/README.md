@@ -51,7 +51,7 @@ browser_policies_vscode_enabled: true
 
 browser_policies_extension_lockdown_enabled: true
 browser_policies_extension_block_message: "Extensions are managed by dotfiles."
-browser_policies_chromium_policy_filename: "10-tenhishadow-managed.json"
+browser_policies_chromium_policy_filename: "10-dotfiles-managed.json"
 browser_policies_chromium_extension_settings: {}
 browser_policies_firefox_extension_settings: {}
 browser_policies_vscode_allowed_extensions: {}
@@ -79,13 +79,13 @@ browser_policies_chromium_targets:
   - name: brave
     enabled: true
     policy_dir: /etc/brave/policies/managed
-    policy_filename: "10-tenhishadow-managed.json"
+    policy_filename: "10-dotfiles-managed.json"
     policies:
       BraveRewardsDisabled: true
   - name: chromium
     enabled: true
     policy_dir: /etc/chromium/policies/managed
-    policy_filename: "10-tenhishadow-managed.json"
+    policy_filename: "10-dotfiles-managed.json"
     policies: {}
 ```
 

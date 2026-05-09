@@ -1,5 +1,14 @@
 -- lua/config/options.lua
--- Core Neovim options and settings
+-- Core Neovim options and settings.
+
+----------------------------------------------------------------------
+-- Providers
+----------------------------------------------------------------------
+-- The config does not use remote Node.js, Perl, or Ruby plugins. Keep these
+-- providers disabled to avoid startup probes and optional health noise.
+vim.g.loaded_node_provider = 0
+vim.g.loaded_perl_provider = 0
+vim.g.loaded_ruby_provider = 0
 
 ----------------------------------------------------------------------
 -- Undo directory
@@ -41,24 +50,16 @@ do
   end
 end
 
-----------------------------------------------------------------------
--- Leaders (must be set before lazy / any plugins)
-----------------------------------------------------------------------
-vim.g.mapleader = " "
-vim.g.maplocalleader = "\\"
-
-----------------------------------------------------------------------
 -- Basic options
 ----------------------------------------------------------------------
--- Set shell to bash if available (for better cross-platform compatibility)
 if vim.fn.executable("bash") == 1 then
   vim.opt.shell = "bash"
 end
 
-vim.opt.termguicolors = true      -- enable truecolor before colorscheme
+vim.opt.termguicolors = true
 vim.opt.background = "dark"
-vim.opt.number = true             -- show absolute line numbers
-vim.opt.relativenumber = false    -- relative numbers (optional)
+vim.opt.number = true
+vim.opt.relativenumber = false
 
 -- Use the system clipboard when a provider is available, so yanks survive
 -- across buffers, tabs and separate Neovim instances.
@@ -77,5 +78,4 @@ do
   end
 end
 
--- Diff tweaks (always add iwhite for less noise in diffs)
 vim.opt.diffopt:append("iwhite")

@@ -16,6 +16,7 @@ Ansible, `uv`, and `go-task`.
 - `roles/system/` contains opt-in Arch Linux workstation provisioning.
 - `roles/browser_policies/` contains opt-in browser and VS Code policy
   management.
+- `docs/` contains generated operator manuals, including Neovim keymaps.
 
 ## Instruction Scope
 
@@ -69,7 +70,8 @@ Ansible, `uv`, and `go-task`.
 - Use one format for all Ansible play, task, and handler names:
   `<Domain> | <Verb> <object>`.
 - Keep domains short and stable, for example `Dotfiles`, `System`,
-  `Browser Policies`, `SSHD`, `NTP`, `Docker`, and `User systemd`.
+  `Browser Policies`, `SSHD`, `Timesyncd`, `Journald`, `Sysctl`, `Limits`,
+  `Docker`, and `User systemd`.
 - Preserve upstream product casing such as `systemd`, `SSHD`, `VS Code`, and
   `Neovim`.
 - Use concise imperative verbs such as `Apply`, `Add`, `Build`, `Check`,
@@ -114,9 +116,12 @@ Ansible, `uv`, and `go-task`.
 - Flag unprefixed Ansible variables, generic loop variables, or role input
   variables that are missing validation.
 - Flag direct edits to supported system main configs when a drop-in path is
-  available.
+  available, including PAM limits and kernel module option snippets.
 - Flag missing documentation, AGENTS, labeler, Renovate, or validation updates
   when repository layout, commands, automation, or runtime behavior changes.
+- Flag Neovim keymap changes that do not update
+  `dotfiles/.config/nvim/lua/config/keymaps_spec.lua`,
+  `docs/nvim-keymaps.md`, and the keymap documentation check.
 - Flag non-English repository text, comments, task names, docs, and AI
   instructions unless the content is quoted external output.
 - Flag secrets, runtime state, generated test workspaces, copied local
@@ -160,16 +165,20 @@ Ansible, `uv`, and `go-task`.
 - Run `go-task lint` for Ansible, inventory, role, Taskfile, or playbook
   changes.
 - Run `uv run yamllint .` or `go-task yamllint` for YAML-heavy changes.
+- Run `go-task vint` for Vimscript payloads or Vint configuration changes.
+- Run `go-task docs:nvim-keymaps:check` for Neovim keymap changes.
 - Run `go-task test:nvim` for Neovim config changes.
+- Run `go-task test:nvim:profile` for startup-sensitive Neovim changes.
 - Run `go-task system:check` for system role changes.
 - Run `go-task test:system` for system role task, template, or handler
   behavior changes when Docker is available.
 - Run `go-task browser-policies:check` for browser policy role or policy
   inventory changes.
-- Run `go-task superlinter` for CI or repository-wide lint changes when Docker
-  is available.
+- Run `go-task superlinter` for focused CI or repository-wide lint changes
+  when Docker is available.
 - Run `go-task verify` for a full local validation pass when Taskfile,
   inventory, playbooks, roles, or repository automation change together.
+  This includes Super-Linter and requires a running Docker daemon.
 
 ## Done Criteria
 

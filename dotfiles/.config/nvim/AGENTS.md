@@ -8,9 +8,19 @@ not source of truth.
 ## Structure
 
 - `init.lua` is the minimal entry point.
-- `lua/setup.lua` bootstraps lazy.nvim and loads plugin specs.
+- `lua/config/lazy.lua` bootstraps lazy.nvim and loads plugin specs.
 - `lua/config/` contains core editor behavior.
-- `lua/plugins/` and `lua/kickstart/plugins/` contain plugin definitions.
+- `lua/config/filetypes.lua` contains plugin-independent filetype detection
+  used by filetype-lazy plugin specs.
+- `lua/config/keymaps_spec.lua` is the canonical inventory for user-facing
+  keymaps, leader keys, which-key groups, and generated keymap documentation.
+- `lua/config/languages.lua` is the shared language/tool inventory for
+  Tree-sitter parsers and install requirements, LSP, Mason, formatters, and
+  linters.
+- `lua/config/quickfix.lua` contains manual validation commands. These commands
+  must stay opt-in and must not run scanners automatically on save.
+- `lua/plugins/` contains all lazy.nvim plugin definitions.
+- `lua/dotfiles/health.lua` contains `:checkhealth dotfiles`.
 - `lua/utils/` contains small reusable helpers.
 - `lazy-lock.json` pins plugin versions and should change only
   intentionally.
@@ -18,7 +28,54 @@ not source of truth.
 ## Editing Rules
 
 - Keep startup flow simple and predictable.
-- Keep plugin definitions grouped by domain.
+- Keep the config structured like upstream lazy.nvim guidance: core settings in
+  `lua/config/`, plugin specs in `lua/plugins/`, and `require("lazy").setup`
+  called once from `lua/config/lazy.lua`.
+- Keep lazy.nvim bootstrap deterministic: when `lazy-lock.json` pins
+  `lazy.nvim`, the bootstrap checkout must honor that exact commit.
+- Keep plugin definitions grouped by domain and avoid reintroducing copied
+  `kickstart.nvim` layout or comments.
+- Prefer lazy.nvim `opts` over hand-written `config` when a plugin supports a
+  standard `setup(opts)` call.
+- Add language/tool names once in `lua/config/languages.lua` when the same
+  value is needed by LSP, Mason, formatters, linters, or tests.
+- Add user-facing keymaps once in `lua/config/keymaps_spec.lua`, then consume
+  that inventory from runtime config. Do not hardcode keymap descriptions in
+  plugin specs when the keymap should appear in `docs/nvim-keymaps.md`.
+- Keep the generated keymap manual current by running
+  `go-task docs:nvim-keymaps` after user-facing keymap changes.
+- Keep first-buffer filetype detection in `lua/config/filetypes.lua`; do not
+  rely on a lazy-loaded plugin's `ftdetect` file for filetypes that trigger
+  that same plugin.
+- Gate plugins by minimum Neovim version when upstream requires it. The core
+  config must not fail on old Debian Neovim; modern plugin/LSP features may be
+  disabled there.
+- Keep the LSP plugin layer on the upstream-supported Neovim 0.11.3+
+  `vim.lsp.config` path. Older Neovim versions must keep loading the core
+  config without LSP plugins.
+- Keep `nvim-lspconfig` and Mason LSP integration gated to Neovim versions
+  supported by upstream (currently 0.11.3+). Older Neovim must still load the
+  core config without the plugin layer.
+- Keep Kubernetes, Helm, GitOps, CI, Docker Compose, Terraform/OpenTofu, and
+  policy-language filetype routing in `lua/config/filetypes.lua`; keep their
+  tools and schema data in `lua/config/languages.lua`.
+- Keep Tree-sitter explicit and quiet: do not enable automatic parser installs
+  at startup, keep parser install requirements in `lua/config/languages.lua`,
+  and make tests skip parser installation when required external tools are
+  missing.
+- Keep cold installs deterministic: `Lazy restore` must not update
+  `lazy-lock.json`, Mason is opt-in via `NVIM_USE_MASON`, and blink.cmp must
+  not require Rust or a prebuilt binary download by default.
+- Keep `lua/config/languages.lua` Mason lists limited to package names that
+  exist in the Mason registry. External tools such as `kubeconform` and
+  `kustomize` belong in health/manual command inventories unless Mason adds
+  packages for them.
+- Keep automatic linting lightweight and file-local. Project-wide or security
+  scanners belong in manual commands or manual linter inventories, not in
+  save-time auto lint.
+- Use canonical `conform.nvim` formatter names and `nvim-lint` linter names in
+  `lua/config/languages.lua`; `go-task test:nvim` must catch unknown formatter
+  or linter inventory entries.
 - Keep LSP setup executable-aware and avoid noisy failures when optional
   external binaries are missing.
 - Keep comments, descriptions, and labels in English.
@@ -31,10 +88,28 @@ go-task test:nvim
 ```
 
 This test uses isolated `.test/nvim` XDG paths and is the required smoke test
-for Neovim changes.
+for Neovim changes. It must also prove that a clean `Lazy! restore` does not
+modify `lazy-lock.json`.
+
+Run `go-task test:nvim:profile` for startup-sensitive changes. It runs the
+smoke test first, then reports startup time and loaded plugin count.
+
+Run `go-task test:nvim:compat` for changes that affect startup, core config,
+filetype routing, health checks, or manual commands. It simulates the
+old-Neovim core-only path by disabling the plugin layer.
+
+Run `go-task docs:nvim-keymaps:check` for keymap changes. It verifies that
+`docs/nvim-keymaps.md` matches `lua/config/keymaps_spec.lua`.
+
+Run `go-task test:nvim:mason-tools` after changing Mason tool inventories. It
+verifies sorted, unique Mason package names against the Mason registry.
 
 ## Done Criteria
 
 - Neovim still boots through the expected layers.
 - Plugin and LSP changes remain reproducible.
+- No duplicated plugin families are introduced unless there is an explicit
+  reason documented in the plugin spec.
+- User-facing keymaps are documented in `docs/nvim-keymaps.md` with the
+  current leader key written plainly.
 - `go-task test:nvim` passes or any blocker is stated precisely.

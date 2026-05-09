@@ -1,0 +1,8 @@
+stages:
+  - test
+
+test:
+  stage: test
+  image: alpine:3.22
+  script:
+    - echo "ok"

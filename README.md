@@ -16,7 +16,7 @@ is available through explicit opt-in tasks.
 - `go-task`
 - `uv`
 - `sudo` for opt-in system or policy tasks
-- Docker for container-based smoke tests
+- Docker for full validation, Super-Linter, and container-based smoke tests
 
 Install the base tools:
 
@@ -52,6 +52,7 @@ legacy user config paths.
 | `roles/dotfiles/` | User-level dotfiles validation and symlink role. |
 | `roles/system/` | Arch Linux workstation system provisioning role. |
 | `roles/browser_policies/` | Enterprise browser and VS Code policy role. |
+| `docs/` | Generated operator manuals, including Neovim keymaps. |
 | `.github/` | GitHub Actions, issue forms, PR template, labeler, and release automation. |
 | `.test/` | Isolated smoke-test fixtures and container test entry points. |
 
@@ -62,8 +63,14 @@ legacy user config paths.
 | `go-task` | Apply user-level dotfiles only. |
 | `go-task lint` | Run `ansible-lint` for playbooks, inventory, and roles. |
 | `go-task yamllint` | Run YAML linting through the pinned `uv` environment. |
-| `go-task verify` | Run the local aggregate validation path. |
+| `go-task vint` | Run Vint with Neovim syntax enabled for Vimscript payloads. |
+| `go-task docs:nvim-keymaps` | Regenerate the Neovim keymap manual. |
+| `go-task docs:nvim-keymaps:check` | Check that the generated Neovim keymap manual is current. |
+| `go-task verify` | Run the full local aggregate validation path, including Super-Linter. |
+| `go-task superlinter` | Run the GitHub Super-Linter container locally. |
 | `go-task test:nvim` | Run the isolated Neovim smoke test. |
+| `go-task test:nvim:mason-tools` | Validate configured Mason package names against the Mason registry. |
+| `go-task test:nvim:profile` | Run the Neovim smoke test, then print startup and loaded-plugin counts. |
 | `go-task system:list` | List tasks in the opt-in system playbook. |
 | `go-task system:check` | Dry-run the opt-in system playbook. |
 | `go-task system` | Apply the opt-in system playbook. |
@@ -89,6 +96,45 @@ the source path and creates destination parent directories automatically. Do
 not add secrets, browser profiles, caches, local databases, generated test
 workspaces, SSH private keys, or GPG private keys.
 
+## Neovim
+
+The Neovim payload uses a structured `lazy.nvim` setup:
+
+- `init.lua` loads core config first, then the plugin layer.
+- `lua/config/lazy.lua` bootstraps `lazy.nvim` and honors the pinned
+  `lazy.nvim` commit in `lazy-lock.json`.
+- `lua/config/languages.lua` is the shared source for Tree-sitter languages
+  and install requirements, LSP server binaries, Mason package lists,
+  formatters, and linters.
+- `lua/config/filetypes.lua` owns plugin-independent filetype detection so
+  filetype-lazy plugins work for the first opened buffer.
+- `lua/config/keymaps_spec.lua` is the source of truth for user-facing
+  keymaps and generated keymap documentation.
+- `lua/plugins/` contains all plugin specs; there is no separate kickstart
+  plugin layer.
+- Automatic linting is save-triggered and limited to lightweight file-local
+  linters. Heavier project-wide linters are available manually through
+  `:DotfilesLintManual` or explicit validation commands for Kubernetes, Helm,
+  Kustomize, Terraform/OpenTofu, Trivy, Gitleaks, and Semgrep.
+- `NVIM_USE_MASON=off` is the default. `auto` makes already-installed Mason
+  tools available without startup installs; `always` allows Mason to install
+  configured missing tools on startup.
+- Unused Node.js, Perl, and Ruby remote plugin providers are disabled by
+  default; Python remains enabled for `python-pynvim`.
+
+Neovim 0.11.3+ gets the modern LSP path via `vim.lsp.config()` and
+`vim.lsp.enable()`. Older Neovim versions keep the core editor config and skip
+the LSP plugin layer because current upstream `nvim-lspconfig` requires
+Neovim 0.11.3+. Tree-sitter parser installs need the
+`tree-sitter` CLI (`tree-sitter-cli` on Arch Linux), a C compiler, and `curl`;
+`go-task test:nvim` skips that parser install step when those tools are missing
+instead of producing noisy compile failures. Cold installs are validated by
+`go-task test:nvim`, including a lockfile drift check after `Lazy restore` and
+Mason registry package-name validation for configured Mason tools.
+Startup-sensitive changes can be measured with `go-task test:nvim:profile`.
+User-facing keymaps are documented in `docs/nvim-keymaps.md`; regenerate it
+with `go-task docs:nvim-keymaps` after keymap changes.
+
 ## Inventory Ownership
 
 Host variables are split by ownership to keep reviews small and reduce
@@ -98,7 +144,7 @@ accidental conflicts:
 | ---- | ---- |
 | `inventory/host_vars/this_host/dotfiles.yml` | User-level mappings, extra directories, and cleanup paths. |
 | `inventory/host_vars/this_host/system.yml` | Non-security system settings such as MOTD and journald. |
-| `inventory/host_vars/this_host/security.yml` | SSHD and sysctl hardening settings. |
+| `inventory/host_vars/this_host/security.yml` | SSHD, sysctl, and limits hardening settings. |
 | `inventory/host_vars/this_host/browser_policies.yml` | Browser and VS Code policy overrides. |
 
 Keep host variables role-prefixed: `dotfiles_*`, `system_*`, or
@@ -117,8 +163,19 @@ go-task system
 
 This path runs `playbook_system.yml`, uses `roles/system`, and may require
 sudo. It manages Arch Linux packages, system drop-ins, selected `/etc`
-configuration, Docker daemon settings, cron, reflector, and laptop-related
-settings.
+configuration, sysctl values, PAM limits, Docker daemon and overlay settings,
+cron, reflector, and laptop-related settings.
+
+The system role ships conservative default tuning for workstation use:
+
+- sysctl defaults for unprivileged BPF, `fq`, BBR, `somaxconn`, and local port
+  range.
+- PAM limits through `/etc/security/limits.d/10-dotfiles.conf`.
+- Docker overlay module options through `/etc/modprobe.d/99-dotfiles-overlay.conf`.
+
+Host-specific additions and overrides belong in
+`inventory/host_vars/this_host/security.yml`; keep role-owned defaults in
+`roles/system/defaults/main.yml`.
 
 See `roles/system/README.md` for managed paths, validation, and rollback
 notes.
@@ -145,6 +202,7 @@ Use the narrowest validation that covers the change:
 git diff --check
 go-task lint
 go-task yamllint
+go-task vint
 ```
 
 Use the aggregate local check before finishing broad repository, role,
@@ -154,16 +212,24 @@ inventory, documentation, or automation changes:
 go-task verify
 ```
 
+`go-task verify` includes the GitHub Super-Linter container and requires a
+running Docker daemon. Use the narrower area-specific checks above only when
+Docker is unavailable and state that limitation in review notes.
+
 Additional checks by area:
 
 - User dotfiles or symlink mappings: `go-task`
-- Full local validation: `go-task verify`
+- Full local validation, including Super-Linter and JSCPD: `go-task verify`
+- Vimscript payloads: `go-task vint`
+- Neovim keymap docs: `go-task docs:nvim-keymaps:check`
 - Neovim config: `go-task test:nvim`
+- Neovim Mason tool inventory: `go-task test:nvim:mason-tools`
+- Neovim startup-sensitive changes: `go-task test:nvim:profile`
 - System role behavior: `go-task system:check` and `go-task test:system`
 - Browser policy behavior: `go-task browser-policies:check`
 - CI or repository-wide lint changes: `go-task superlinter`
 
-`go-task superlinter` requires Docker.
+`go-task verify` and `go-task superlinter` require Docker.
 
 ## Repository Automation
 
@@ -178,6 +244,13 @@ Renovate manages supported dependency updates for GitHub Actions, pre-commit,
 Ansible Galaxy requirements, the Python toolchain, and the Super-Linter Docker
 image referenced by `Taskfile.yml`.
 
+Use `go-task deps-upgrade` for local, reviewable dependency refreshes. It
+updates `uv.lock`, refreshes the installed Ansible Galaxy collections allowed by
+`requirements.yml`, runs `pre-commit autoupdate`, updates Neovim
+`lazy-lock.json`, and validates Renovate config. GitHub Actions are updated by
+Renovate PRs; use `go-task deps-report:github-actions` when you want a local
+Renovate extraction/dry-run report for workflow dependencies.
+
 Documentation and AI instructions are part of the repository contract. Update
 `README.md`, the nearest `AGENTS.md`, `.github/copilot-instructions.md`, and
 path-specific `.github/instructions/*.instructions.md` whenever commands,
@@ -188,6 +261,7 @@ change.
 
 - Keep the default `go-task` workflow sudo-free.
 - Keep privileged behavior behind explicit opt-in tasks.
-- Prefer drop-ins over editing upstream main config files where supported.
+- Prefer drop-ins and snippets over editing upstream main config files where
+  supported.
 - Keep generated and machine-local state out of git.
 - Keep repository text, comments, and documentation in English.

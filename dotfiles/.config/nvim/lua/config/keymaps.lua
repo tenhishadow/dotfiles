@@ -1,7 +1,16 @@
 -- lua/config/keymaps.lua
--- Key mappings
+-- Global key mappings.
 
-----------------------------------------------------------------------
--- Simple global keymaps (not tied to specific plugins)
-----------------------------------------------------------------------
-vim.keymap.set("n", "<F2>", ":set invpaste paste?<CR>", { silent = true })
+local keymaps = require("config.keymaps_spec")
+
+local actions = {
+  toggle_paste = ":set invpaste paste?<CR>",
+}
+
+for _, keymap in ipairs(keymaps.core) do
+  local action = assert(actions[keymap.id], "Missing keymap action: " .. keymap.id)
+  vim.keymap.set(keymap.mode, keymap.lhs, action, {
+    desc = keymap.desc,
+    silent = true,
+  })
+end

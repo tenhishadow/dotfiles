@@ -8,7 +8,12 @@
     state: present
     reload: true
     sysctl_file: "{{ system_sysctl_file_path }}"
-  loop: "{{ system_sysctl_settings | dict2items }}"
+  loop: >-
+    {{
+      system_sysctl_default_settings
+      | combine(system_sysctl_settings)
+      | dict2items
+    }}
   loop_control:
     loop_var: system_sysctl_setting
     label: "{{ system_sysctl_setting.key }}"

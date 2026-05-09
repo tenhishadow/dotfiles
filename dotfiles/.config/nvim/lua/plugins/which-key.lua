@@ -1,22 +1,17 @@
+local keymaps = require("config.keymaps_spec")
+
 return {
-  -- Which-key for command discoverability
   {
     "folke/which-key.nvim",
-    event = "VeryLazy", -- Lazy load to avoid startup cost
-    config = function()
+    event = "VeryLazy",
+    opts = {
+      preset = "modern",
+      delay = 1000,
+    },
+    config = function(_, opts)
       local wk = require("which-key")
-
-      wk.setup({
-        preset = "modern",
-        delay = 1000,
-      })
-
-      -- Register only basic groups for existing functionality
-      wk.add({
-        { "<leader>f", group = "find" },
-        { "<leader>g", group = "git" },
-        { "<leader>l", group = "lsp" },
-      })
+      wk.setup(opts)
+      wk.add(keymaps.which_key_groups)
     end,
   },
 }

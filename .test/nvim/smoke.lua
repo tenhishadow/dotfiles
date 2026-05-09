@@ -21,6 +21,7 @@ local function safe_require(name)
 end
 
 local executable_utils = safe_require("utils.executable")
+local keymaps_spec = safe_require("config.keymaps_spec")
 
 local function has_any(cmds)
   if executable_utils and executable_utils.has_any then
@@ -176,17 +177,15 @@ local function get_keymaps(bufnr, lhs)
   return maps
 end
 
+local function runtime_lhs(lhs)
+  return lhs:gsub("<leader>", vim.g.mapleader or " "):gsub("<localleader>", vim.g.maplocalleader or "\\")
+end
+
 local function run_lsp_keymaps(bufnr, test_name)
-  local mappings = {
-    { lhs = "gd", desc = "LSP: Go to Definition" },
-    { lhs = "K", desc = "LSP: Hover" },
-    { lhs = "gi", desc = "LSP: Go to Implementation" },
-    { lhs = "[d", desc = "LSP: Prev Diagnostic" },
-    { lhs = "]d", desc = "LSP: Next Diagnostic" },
-  }
+  local mappings = keymaps_spec and keymaps_spec.lsp or {}
 
   for _, km in ipairs(mappings) do
-    local maps = get_keymaps(bufnr, km.lhs)
+    local maps = get_keymaps(bufnr, runtime_lhs(km.lhs))
     local ok = false
     for _, map in ipairs(maps) do
       if map.desc == nil or map.desc == km.desc then
@@ -396,6 +395,7 @@ local function run_plugin_checks()
     { plugin = "fzf.vim", cmds = { "Files", "Rg", "Buffers" } },
     { plugin = "vimwiki", cmds = { "VimwikiIndex" } },
     { plugin = "conform.nvim", cmds = { "ConformInfo" } },
+    { plugin = "nvim-lint", cmds = { "DotfilesLintManual" } },
     { plugin = "mason.nvim", cmds = mason_mode ~= "off" and { "Mason" } or {} },
     { plugin = "nvim-treesitter", cmds = {} },
   }
@@ -425,13 +425,85 @@ local function run_plugin_checks()
     end
   end
 
+  for _, cmd in ipairs({
+    "DotfilesKubeconform",
+    "DotfilesHelmLint",
+    "DotfilesKustomizeBuild",
+    "DotfilesTerraformValidate",
+    "DotfilesTofuValidate",
+    "DotfilesTrivyConfig",
+    "DotfilesGitleaksDetect",
+    "DotfilesSemgrep",
+  }) do
+    if not has_command(cmd) then
+      add_error("Missing manual command: " .. cmd)
+    end
+  end
+
   if not vim.g.mkdp_filetypes or vim.g.mkdp_filetypes == "" then
     add_error("Missing markdown-preview config (mkdp_filetypes)")
+  end
+
+  local ok_lazy_config, lazy_config = pcall(require, "lazy.core.config")
+  local markdown_preview = ok_lazy_config and lazy_config.plugins["markdown-preview.nvim"] or nil
+  if markdown_preview and markdown_preview.dir then
+    local platform = "linux"
+    if vim.fn.has("win32") == 1 or vim.fn.has("win64") == 1 then
+      platform = "win"
+    elseif vim.fn.has("mac") == 1 or vim.fn.has("macvim") == 1 then
+      platform = vim.fn.system("arch"):match("arm64") and "macos-arm64" or "macos"
+    end
+
+    local binary = markdown_preview.dir .. "/app/bin/markdown-preview-" .. platform
+    if platform == "win" then
+      binary = binary .. ".exe"
+    end
+
+    local node_tslib = markdown_preview.dir .. "/app/node_modules/tslib/package.json"
+    if vim.fn.executable(binary) ~= 1 and vim.fn.filereadable(node_tslib) ~= 1 then
+      add_error("markdown-preview runtime missing: " .. binary .. " or " .. node_tslib)
+    end
+  else
+    add_error("markdown-preview plugin metadata unavailable")
   end
 
   local stats = lazy.stats and lazy.stats() or nil
   if not stats or not stats.count or stats.count == 0 then
     add_error("Lazy stats unavailable")
+  end
+end
+
+local function run_tool_inventory_checks()
+  local languages = safe_require("config.languages")
+  if not languages then
+    return
+  end
+
+  if safe_require("conform") then
+    for filetype, formatters in pairs(languages.formatters_by_ft or {}) do
+      for _, formatter in ipairs(formatters) do
+        local ok = pcall(require, "conform.formatters." .. formatter)
+        if not ok then
+          add_error("Unknown Conform formatter for " .. filetype .. ": " .. formatter)
+        end
+      end
+    end
+  end
+
+  if safe_require("lint") then
+    for inventory_name, inventory in pairs({
+      auto = languages.auto_linters_by_ft or languages.linters_by_ft or {},
+      manual = languages.manual_linters_by_ft or {},
+    }) do
+      for filetype, linters in pairs(inventory) do
+        for _, spec in ipairs(linters) do
+          local ok = pcall(require, "lint.linters." .. spec.name)
+          if not ok then
+            add_error("Unknown " .. inventory_name .. " linter for " .. filetype .. ": " .. spec.name)
+          end
+        end
+      end
+    end
   end
 end
 
@@ -451,24 +523,16 @@ local function run_mason_utils_tests()
     add_error("Mason mode parse failed for off")
   end
 
-  local missing = mason_utils.filter_missing(
-    { "present", "absent" },
-    { present = "present", absent = "absent" },
-    function(cmd)
-      return cmd == "present"
-    end
-  )
+  local missing = mason_utils.filter_missing({ "present", "absent" }, { present = "present", absent = "absent" }, function(cmd)
+    return cmd == "present"
+  end)
   if #missing ~= 1 or missing[1] ~= "absent" then
     add_error("Mason missing filter failed")
   end
 
-  local missing_alias = mason_utils.filter_missing(
-    { "alias" },
-    { alias = { "bin-a", "bin-b" } },
-    function(cmd)
-      return cmd == "bin-b"
-    end
-  )
+  local missing_alias = mason_utils.filter_missing({ "alias" }, { alias = { "bin-a", "bin-b" } }, function(cmd)
+    return cmd == "bin-b"
+  end)
   if #missing_alias ~= 0 then
     add_error("Mason missing filter failed for aliases")
   end
@@ -509,6 +573,7 @@ end
 run_mason_utils_tests()
 run_executable_utils_tests()
 run_plugin_checks()
+run_tool_inventory_checks()
 
 local tests = {
   {
@@ -569,6 +634,51 @@ local tests = {
     },
   },
   {
+    name = "kubernetes",
+    path = "deployment.yaml",
+    ft = "yaml.kubernetes",
+    treesitter = { ft = "yaml" },
+    lsp = {
+      candidates = {
+        { servers = { "yamlls" }, binaries = { "yaml-language-server" } },
+      },
+    },
+  },
+  {
+    name = "kustomize",
+    path = "kustomization.yaml",
+    ft = "yaml.kustomize",
+    treesitter = { ft = "yaml" },
+    lsp = {
+      candidates = {
+        { servers = { "yamlls" }, binaries = { "yaml-language-server" } },
+      },
+    },
+  },
+  {
+    name = "helm",
+    path = "templates/deployment.yaml",
+    ft = "helm",
+    root_files = { "Chart.yaml", "values.yaml" },
+    lsp = {
+      candidates = {
+        { servers = { "helm_ls" }, binaries = { "helm_ls", "helm-ls" } },
+      },
+    },
+  },
+  {
+    name = "helm",
+    path = "values.yaml",
+    ft = "yaml.helm-values",
+    root_files = { "Chart.yaml" },
+    treesitter = { ft = "yaml" },
+    lsp = {
+      candidates = {
+        { servers = { "helm_ls" }, binaries = { "helm_ls", "helm-ls" } },
+      },
+    },
+  },
+  {
     name = "ansible",
     path = "playbook.yml",
     ft = "yaml.ansible",
@@ -577,6 +687,16 @@ local tests = {
         { servers = { "ansiblels" }, binaries = { "ansible-language-server" } },
       },
     },
+  },
+  {
+    name = "ansible_role",
+    path = "roles/web/tasks/main.yaml",
+    ft = "yaml.ansible",
+  },
+  {
+    name = "ansible_inventory",
+    path = "host_vars/web/main.yaml",
+    ft = "yaml.ansible",
   },
   {
     name = "json",
@@ -619,6 +739,41 @@ local tests = {
     },
   },
   {
+    name = "terraform_vars",
+    path = "terraform.tfvars",
+    ft = "terraform-vars",
+  },
+  {
+    name = "opentofu",
+    path = "main.tofu",
+    ft = "opentofu",
+    lsp = {
+      candidates = {
+        { servers = { "tofu_ls" }, binaries = { "tofu-ls" } },
+      },
+    },
+  },
+  {
+    name = "cloudformation",
+    path = "template.yaml",
+    ft = "yaml.cloudformation",
+  },
+  {
+    name = "mikrotik",
+    path = "router.rsc",
+    ft = "rsc",
+  },
+  {
+    name = "nginx",
+    path = "nginx.conf",
+    ft = "nginx",
+  },
+  {
+    name = "vagrant",
+    path = "Vagrantfile",
+    ft = "ruby",
+  },
+  {
     name = "go",
     path = "main.go",
     ft = "go",
@@ -631,6 +786,72 @@ local tests = {
         method = "textDocument/hover",
         needle = "foo",
         required = true,
+      },
+    },
+  },
+  {
+    name = "compose",
+    path = "compose.yaml",
+    ft = "yaml.docker-compose",
+    treesitter = { ft = "yaml" },
+    lsp = {
+      candidates = {
+        { servers = { "docker_compose_language_service" }, binaries = { "docker-compose-langserver" } },
+      },
+    },
+  },
+  {
+    name = "github_actions",
+    path = ".github/workflows/ci.yml",
+    ft = "yaml.github-actions",
+    treesitter = { ft = "yaml" },
+    lsp = {
+      candidates = {
+        { servers = { "gh_actions_ls" }, binaries = { "gh-actions-language-server" } },
+      },
+    },
+  },
+  {
+    name = "gitlab_ci",
+    path = ".gitlab-ci.yml",
+    ft = "yaml.gitlab",
+    treesitter = { ft = "yaml" },
+    lsp = {
+      candidates = {
+        { servers = { "gitlab_ci_ls" }, binaries = { "gitlab-ci-ls" } },
+      },
+    },
+  },
+  {
+    name = "cue",
+    path = "config.cue",
+    ft = "cue",
+    treesitter = true,
+    lsp = {
+      candidates = {
+        { servers = { "cue" }, binaries = { "cue" } },
+      },
+    },
+  },
+  {
+    name = "jsonnet",
+    path = "main.jsonnet",
+    ft = "jsonnet",
+    treesitter = true,
+    lsp = {
+      candidates = {
+        { servers = { "jsonnet_ls" }, binaries = { "jsonnet-language-server" } },
+      },
+    },
+  },
+  {
+    name = "rego",
+    path = "policy.rego",
+    ft = "rego",
+    treesitter = true,
+    lsp = {
+      candidates = {
+        { servers = { "regols" }, binaries = { "regols" } },
       },
     },
   },

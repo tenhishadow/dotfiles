@@ -107,6 +107,7 @@ system_packages:
   - vim
   - neovim
   - python-pynvim
+  - tree-sitter-cli
   - code
   # - task
   - tea

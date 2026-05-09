@@ -4,10 +4,11 @@ system_supported_os:
 
 system_tzdata_package: tzdata
 
-system_timezone: Europe/Warsaw
+system_timezone: UTC
 system_motd_message: ""
 
 system_packages_enabled: true
+system_timesyncd_enabled: true
 system_docker_enabled: true
 system_laptop_enabled: true
 system_user_services_enabled: true
@@ -98,8 +99,58 @@ system_sshd_legacy_dropin_paths:
 system_sshd_main_path: /etc/ssh/sshd_config
 system_sshd_settings: {}
 
-system_sysctl_enabled: false
+system_sysctl_enabled: true
+system_sysctl_default_settings:
+  kernel.unprivileged_bpf_disabled: "1"
+  net.core.default_qdisc: fq
+  net.core.somaxconn: "8192"
+  net.ipv4.ip_local_port_range: "10240 65535"
+  net.ipv4.tcp_congestion_control: bbr
 system_sysctl_settings: {}
+
+system_limits_enabled: true
+system_limits_dropin_dir: /etc/security/limits.d
+system_limits_dropin_path: "{{ system_limits_dropin_dir }}/10-dotfiles.conf"
+system_limits_entries:
+  - domain: "*"
+    type: soft
+    item: nofile
+    value: "65535"
+  - domain: "*"
+    type: hard
+    item: nofile
+    value: "65535"
+  - domain: "*"
+    type: soft
+    item: nproc
+    value: "65535"
+  - domain: "*"
+    type: hard
+    item: nproc
+    value: "65535"
+  - domain: root
+    type: soft
+    item: nofile
+    value: "65535"
+  - domain: root
+    type: hard
+    item: nofile
+    value: "65535"
+  - domain: root
+    type: soft
+    item: nproc
+    value: "65535"
+  - domain: root
+    type: hard
+    item: nproc
+    value: "65535"
+
+system_docker_overlay_options_enabled: true
+system_docker_modprobe_dir: /etc/modprobe.d
+system_docker_overlay_options_path: "{{ system_docker_modprobe_dir }}/99-dotfiles-overlay.conf"
+system_docker_overlay_options_content: "options overlay metacopy=off redirect_dir=off"
+system_docker_overlay_legacy_options_paths:
+  - /etc/modprobe.d/disable-overlay-redirect-dir.conf
 
 system_legacy_managed_marker: "# o_O"
 system_journald_legacy_main_lines:

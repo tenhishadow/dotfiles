@@ -1,5 +1,6 @@
 ---
 ansible_managed: o_O
+system_timezone: Europe/Warsaw
 system_motd_message: o_O
 
 system_journald_settings:

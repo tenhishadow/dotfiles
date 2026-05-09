@@ -23,7 +23,7 @@ browser_policies_extension_block: >-
     | ternary(browser_policies_extension_block_defaults, {})
   }}
 
-browser_policies_chromium_policy_filename: "10-tenhishadow-managed.json"
+browser_policies_chromium_policy_filename: "10-dotfiles-managed.json"
 
 browser_policies_chromium_base_policies:
   PasswordManagerEnabled: false

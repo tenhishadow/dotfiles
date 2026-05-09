@@ -17,7 +17,12 @@ applyTo: "**/*.md,**/AGENTS.md,.github/copilot-instructions.md,.github/instructi
   `AGENTS.md`.
 - Preserve the default contract in docs: `go-task` applies user-level
   dotfiles only and must not require sudo.
+- Keep generated manuals current. For Neovim keymaps, regenerate
+  `docs/nvim-keymaps.md` with `go-task docs:nvim-keymaps` and verify it with
+  `go-task docs:nvim-keymaps:check`.
 - Keep documented variable names aligned with the role contracts:
   `dotfiles_*`, `system_*`, and `browser_policies_*`.
+- Document system role feature flags, managed paths, and drop-in/snippet paths
+  when privileged runtime behavior changes.
 - Mention `go-task verify` for broad documentation, automation, inventory, or
   role changes.

@@ -1,0 +1,6 @@
+apiVersion: v2
+name: smoke
+description: Smoke chart for Neovim filetype tests
+type: application
+version: 0.1.0
+appVersion: "1.0.0"

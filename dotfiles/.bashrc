@@ -250,7 +250,6 @@ alias kube-temp='kubectl run -it --rm --image debian:trixie tmp-${RANDOM} -- bas
 alias archupdate='yay -Syu --noconfirm; yay -Scc --noconfirm'
 alias arch-rekey='sudo pacman-key --refresh-keys'
 alias dotfiles-update='cd ~/.dotfiles/ && git pull --ff-only && go-task'
-alias ans-workstation-update='cd ~/.ans-workstation/ && git pull --ff-only && go-task'
 alias tgfmt='terragrunt hcl format --non-interactive'
 alias tfmt='terraform fmt -recursive -diff'
 alias vim='nvim'
@@ -260,8 +259,17 @@ alias nmap-slow='sudo nmap -sS -p- -T0 -Pn'
 ## clear
 alias clear-journald='sudo journalctl --rotate && sudo journalctl --vacuum-time=1s'
 alias clear-vim='rm -rf ~/.vim/autoload/ ~/.vim/plugged/'
-alias clear-nvim='rm -rf "$HOME/.local/share/nvim" "$HOME/.cache/nvim" "$HOME/.local/state/nvim"'
 alias k='kubectl'
+
+function clear-nvim() {
+  local nvim_data="${XDG_DATA_HOME:-${HOME}/.local/share}/nvim"
+  local nvim_cache="${XDG_CACHE_HOME:-${HOME}/.cache}/nvim"
+  local nvim_state="${XDG_STATE_HOME:-${HOME}/.local/state}/nvim"
+
+  rm -rf "${nvim_data}" "${nvim_cache}" "${nvim_state}"
+  mkdir -p "${nvim_state}"
+  chmod 700 "${nvim_state}"
+}
 
 # Vars
 ## bash prompt

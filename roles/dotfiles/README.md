@@ -21,6 +21,9 @@ Core defaults:
 | `dotfiles_mapping` | Managed symlink declarations. |
 | `dotfiles_directories` | Extra directories not implied by mapping destinations. |
 | `dotfiles_cleanup_paths` | Narrow legacy paths removed by the role. |
+| `dotfiles_nvim_state_dir` | User-owned state directory for Neovim cron logs and lock file. |
+| `dotfiles_cron_path` | Explicit PATH used by managed cron commands. |
+| `dotfiles_nvim_restore_cron_job` | Headless Neovim lazy restore command. |
 
 Each mapping item uses a compact model:
 
@@ -40,6 +43,13 @@ Use `dotfiles_cleanup_paths` for narrow, explicit legacy path removals.
 Public role variables use the `dotfiles_` prefix; loop variables and registered
 facts are also role-prefixed to keep validation output clear.
 
+The Neovim restore cron command intentionally uses a Lua `pcall(require,
+"lazy")` wrapper and `NVIM_USE_MASON=off`. This keeps the job harmless on hosts
+where old Neovim skips the plugin layer and prevents background Mason installs.
+It also uses an explicit cron PATH, `flock`, and logs under
+`~/.local/state/nvim` so background restores are non-overlapping and do not
+write runtime logs into `$HOME`.
+
 ## Role Flow
 
 The role keeps the default install path deterministic:
@@ -49,8 +59,9 @@ The role keeps the default install path deterministic:
 3. Create extra and mapping-derived parent directories.
 4. Link managed payloads into `dotfiles_home`.
 5. Remove explicit legacy cleanup paths.
-6. Manage the Neovim restore cron entry when `crontab` exists.
-7. Remove the legacy PAM environment file.
+6. Ensure the Neovim state directory when `crontab` exists.
+7. Manage the Neovim restore cron entry when `crontab` exists.
+8. Remove the legacy PAM environment file.
 
 ## Validation
 

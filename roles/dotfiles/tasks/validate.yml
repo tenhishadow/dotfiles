@@ -23,6 +23,14 @@
       - dotfiles_crontab_path is regex('^/')
       - dotfiles_pam_environment_path is string
       - dotfiles_pam_environment_path is regex('^/')
+      - dotfiles_nvim_state_dir is string
+      - dotfiles_nvim_state_dir is regex('^/')
+      - dotfiles_nvim_restore_log_path is string
+      - dotfiles_nvim_restore_log_path is regex('^/')
+      - dotfiles_nvim_restore_lock_path is string
+      - dotfiles_nvim_restore_lock_path is regex('^/')
+      - dotfiles_cron_path is string
+      - dotfiles_cron_path | length > 0
       - dotfiles_nvim_restore_cron_name is string
       - dotfiles_nvim_restore_cron_name | length > 0
       - dotfiles_nvim_restore_cron_job is string

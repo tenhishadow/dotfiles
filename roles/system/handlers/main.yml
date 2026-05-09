@@ -18,14 +18,14 @@
     name: "{{ system_docker_service_name }}"
     state: restarted
 
-- name: NTP | Restart service
+- name: Timesyncd | Restart service
   become: true
   ansible.builtin.service:
     name: "{{ system_ntp_service }}"
     state: restarted
     enabled: true
   when:
-    - system_can_manage_systemd | default(false) | bool
+    - system_can_manage_timesyncd | default(false) | bool
 
 - name: Console | Restart vconsole setup
   become: true
