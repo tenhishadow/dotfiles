@@ -1,3 +1,5 @@
+local keymaps = require("config.keymaps_spec")
+
 return {
   {
     "folke/which-key.nvim",
@@ -9,11 +11,7 @@ return {
     config = function(_, opts)
       local wk = require("which-key")
       wk.setup(opts)
-      wk.add({
-        { "<leader>f", group = "find" },
-        { "<leader>g", group = "git" },
-        { "<leader>l", group = "lsp" },
-      })
+      wk.add(keymaps.which_key_groups)
     end,
   },
 }

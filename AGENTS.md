@@ -16,6 +16,7 @@ Ansible, `uv`, and `go-task`.
 - `roles/system/` contains opt-in Arch Linux workstation provisioning.
 - `roles/browser_policies/` contains opt-in browser and VS Code policy
   management.
+- `docs/` contains generated operator manuals, including Neovim keymaps.
 
 ## Instruction Scope
 
@@ -118,6 +119,9 @@ Ansible, `uv`, and `go-task`.
   available, including PAM limits and kernel module option snippets.
 - Flag missing documentation, AGENTS, labeler, Renovate, or validation updates
   when repository layout, commands, automation, or runtime behavior changes.
+- Flag Neovim keymap changes that do not update
+  `dotfiles/.config/nvim/lua/config/keymaps_spec.lua`,
+  `docs/nvim-keymaps.md`, and the keymap documentation check.
 - Flag non-English repository text, comments, task names, docs, and AI
   instructions unless the content is quoted external output.
 - Flag secrets, runtime state, generated test workspaces, copied local
@@ -162,6 +166,7 @@ Ansible, `uv`, and `go-task`.
   changes.
 - Run `uv run yamllint .` or `go-task yamllint` for YAML-heavy changes.
 - Run `go-task vint` for Vimscript payloads or Vint configuration changes.
+- Run `go-task docs:nvim-keymaps:check` for Neovim keymap changes.
 - Run `go-task test:nvim` for Neovim config changes.
 - Run `go-task test:nvim:profile` for startup-sensitive Neovim changes.
 - Run `go-task system:check` for system role changes.

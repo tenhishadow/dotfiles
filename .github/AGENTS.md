@@ -24,6 +24,9 @@ automation under `.github/`.
   `.github/instructions/*.instructions.md`.
 - Keep documentation-specific Copilot rules in
   `.github/instructions/documentation.instructions.md`.
+- Keep Neovim keymap review rules aligned with
+  `docs/nvim-keymaps.md`, `dotfiles/.config/nvim/lua/config/keymaps_spec.lua`,
+  and `Taskfile.yml`.
 - Keep each Copilot review instruction file below 4,000 characters; Copilot
   code review ignores content past that limit. Instruction changes affect PR
   reviews after they exist on the PR base branch.

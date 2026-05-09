@@ -1,3 +1,5 @@
+local keymaps = require("config.keymaps_spec")
+
 return {
   {
     "nvim-neo-tree/neo-tree.nvim",
@@ -7,9 +9,7 @@ return {
       "nvim-tree/nvim-web-devicons",
       "MunifTanjim/nui.nvim",
     },
-    keys = {
-      { "\\", ":Neotree reveal<CR>", desc = "NeoTree reveal", silent = true },
-    },
+    keys = keymaps.to_lazy_keys(keymaps.explorer),
     opts = {
       filesystem = {
         window = {

@@ -9,6 +9,7 @@ workspaces.
 
 - `.test/nvim/smoke.lua`
 - `.test/nvim/treesitter_install.lua`
+- `.test/nvim/keymap_docs.lua`
 - `.test/nvim/*` language sample fixtures
 - `.test/system/exec.sh`
 
@@ -40,6 +41,7 @@ source of truth:
 
 ```bash
 go-task test:nvim
+go-task docs:nvim-keymaps:check
 go-task test:system
 ```
 

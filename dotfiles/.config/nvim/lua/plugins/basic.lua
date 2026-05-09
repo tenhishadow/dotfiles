@@ -1,3 +1,5 @@
+local keymaps = require("config.keymaps_spec")
+
 return {
   {
     "mbbill/undotree",
@@ -10,12 +12,7 @@ return {
   {
     "junegunn/fzf.vim",
     dependencies = { "junegunn/fzf" },
-    keys = {
-      { "<leader>ff", ":Files<CR>", desc = "FZF Files" },
-      { "<leader>fb", ":Buffers<CR>", desc = "FZF Buffers" },
-      { "<leader>fg", ":GFiles<CR>", desc = "FZF Git files" },
-      { "<leader>fl", ":Lines<CR>", desc = "FZF Lines" },
-    },
+    keys = keymaps.to_lazy_keys(keymaps.find),
   },
   {
     "vimwiki/vimwiki",

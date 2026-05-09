@@ -21,6 +21,7 @@ local function safe_require(name)
 end
 
 local executable_utils = safe_require("utils.executable")
+local keymaps_spec = safe_require("config.keymaps_spec")
 
 local function has_any(cmds)
   if executable_utils and executable_utils.has_any then
@@ -176,17 +177,15 @@ local function get_keymaps(bufnr, lhs)
   return maps
 end
 
+local function runtime_lhs(lhs)
+  return lhs:gsub("<leader>", vim.g.mapleader or " "):gsub("<localleader>", vim.g.maplocalleader or "\\")
+end
+
 local function run_lsp_keymaps(bufnr, test_name)
-  local mappings = {
-    { lhs = "gd", desc = "LSP: Go to Definition" },
-    { lhs = "K", desc = "LSP: Hover" },
-    { lhs = "gi", desc = "LSP: Go to Implementation" },
-    { lhs = "[d", desc = "LSP: Prev Diagnostic" },
-    { lhs = "]d", desc = "LSP: Next Diagnostic" },
-  }
+  local mappings = keymaps_spec and keymaps_spec.lsp or {}
 
   for _, km in ipairs(mappings) do
-    local maps = get_keymaps(bufnr, km.lhs)
+    local maps = get_keymaps(bufnr, runtime_lhs(km.lhs))
     local ok = false
     for _, map in ipairs(maps) do
       if map.desc == nil or map.desc == km.desc then

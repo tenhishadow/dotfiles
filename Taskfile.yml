@@ -88,6 +88,22 @@ tasks:
   vint:
     deps: [deps-python]
     cmd: "PYTHONWARNINGS=ignore uv run vint --enable-neovim {{.VINT_TARGETS}}"
+  docs:nvim-keymaps:
+    cmds:
+      - mkdir -p docs
+      - >-
+        timeout 120s nvim --headless --clean -u NONE
+        '+lua dofile(".test/nvim/keymap_docs.lua")'
+        +qa > docs/nvim-keymaps.md
+  docs:nvim-keymaps:check:
+    cmds:
+      - >-
+        tmp="$(mktemp)";
+        trap 'rm -f "${tmp}"' EXIT;
+        timeout 120s nvim --headless --clean -u NONE
+        '+lua dofile(".test/nvim/keymap_docs.lua")'
+        +qa > "${tmp}";
+        diff -u docs/nvim-keymaps.md "${tmp}"
   diff-check:
     cmd: git diff --check
   actionlint:
@@ -110,6 +126,7 @@ tasks:
       - task: lint
       - task: yamllint
       - task: vint
+      - task: docs:nvim-keymaps:check
       - task: actionlint
       - task: renovate
       - task: pre-commit

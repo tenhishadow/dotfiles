@@ -2,8 +2,49 @@ if vim.fn.has("nvim-0.10") == 0 then
   return {}
 end
 
+local keymaps = require("config.keymaps_spec")
 local mason_utils = require("utils.mason")
 local mason_mode = mason_utils.resolve_mode()
+
+local function dap_keymap_actions()
+  return {
+    continue = function()
+      require("dap").continue()
+    end,
+    step_into = function()
+      require("dap").step_into()
+    end,
+    step_over = function()
+      require("dap").step_over()
+    end,
+    step_out = function()
+      require("dap").step_out()
+    end,
+    toggle_breakpoint = function()
+      require("dap").toggle_breakpoint()
+    end,
+    conditional_breakpoint = function()
+      require("dap").set_breakpoint(vim.fn.input("Breakpoint condition: "))
+    end,
+    toggle_ui = function()
+      require("dapui").toggle()
+    end,
+  }
+end
+
+local function dap_keymaps()
+  local actions = dap_keymap_actions()
+
+  return vim.tbl_map(function(keymap)
+    local action = assert(actions[keymap.id], "Missing DAP keymap action: " .. keymap.id)
+    return {
+      keymap.lhs,
+      action,
+      mode = keymap.mode,
+      desc = keymap.desc,
+    }
+  end, keymaps.debug)
+end
 
 return {
   {
@@ -21,57 +62,7 @@ return {
       },
       "leoluz/nvim-dap-go",
     },
-    keys = {
-      {
-        "<F5>",
-        function()
-          require("dap").continue()
-        end,
-        desc = "Debug: Start or Continue",
-      },
-      {
-        "<F1>",
-        function()
-          require("dap").step_into()
-        end,
-        desc = "Debug: Step Into",
-      },
-      {
-        "<F2>",
-        function()
-          require("dap").step_over()
-        end,
-        desc = "Debug: Step Over",
-      },
-      {
-        "<F3>",
-        function()
-          require("dap").step_out()
-        end,
-        desc = "Debug: Step Out",
-      },
-      {
-        "<leader>b",
-        function()
-          require("dap").toggle_breakpoint()
-        end,
-        desc = "Debug: Toggle Breakpoint",
-      },
-      {
-        "<leader>B",
-        function()
-          require("dap").set_breakpoint(vim.fn.input("Breakpoint condition: "))
-        end,
-        desc = "Debug: Set Conditional Breakpoint",
-      },
-      {
-        "<F7>",
-        function()
-          require("dapui").toggle()
-        end,
-        desc = "Debug: Toggle UI",
-      },
-    },
+    keys = dap_keymaps(),
     config = function()
       local dap = require("dap")
       local dapui = require("dapui")

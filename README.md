@@ -52,6 +52,7 @@ legacy user config paths.
 | `roles/dotfiles/` | User-level dotfiles validation and symlink role. |
 | `roles/system/` | Arch Linux workstation system provisioning role. |
 | `roles/browser_policies/` | Enterprise browser and VS Code policy role. |
+| `docs/` | Generated operator manuals, including Neovim keymaps. |
 | `.github/` | GitHub Actions, issue forms, PR template, labeler, and release automation. |
 | `.test/` | Isolated smoke-test fixtures and container test entry points. |
 
@@ -63,6 +64,8 @@ legacy user config paths.
 | `go-task lint` | Run `ansible-lint` for playbooks, inventory, and roles. |
 | `go-task yamllint` | Run YAML linting through the pinned `uv` environment. |
 | `go-task vint` | Run Vint with Neovim syntax enabled for Vimscript payloads. |
+| `go-task docs:nvim-keymaps` | Regenerate the Neovim keymap manual. |
+| `go-task docs:nvim-keymaps:check` | Check that the generated Neovim keymap manual is current. |
 | `go-task verify` | Run the local aggregate validation path. |
 | `go-task test:nvim` | Run the isolated Neovim smoke test. |
 | `go-task test:nvim:profile` | Run the Neovim smoke test, then print startup and loaded-plugin counts. |
@@ -103,6 +106,8 @@ The Neovim payload uses a structured `lazy.nvim` setup:
   formatters, and linters.
 - `lua/config/filetypes.lua` owns plugin-independent filetype detection so
   filetype-lazy plugins work for the first opened buffer.
+- `lua/config/keymaps_spec.lua` is the source of truth for user-facing
+  keymaps and generated keymap documentation.
 - `lua/plugins/` contains all plugin specs; there is no separate kickstart
   plugin layer.
 - `NVIM_USE_MASON=off` is the default. Use `auto` or `always` only when this
@@ -119,6 +124,8 @@ plugins that cannot safely run there. Tree-sitter parser installs need the
 instead of producing noisy compile failures. Cold installs are validated by
 `go-task test:nvim`, including a lockfile drift check after `Lazy restore`.
 Startup-sensitive changes can be measured with `go-task test:nvim:profile`.
+User-facing keymaps are documented in `docs/nvim-keymaps.md`; regenerate it
+with `go-task docs:nvim-keymaps` after keymap changes.
 
 ## Inventory Ownership
 
@@ -202,6 +209,7 @@ Additional checks by area:
 - User dotfiles or symlink mappings: `go-task`
 - Full local validation: `go-task verify`
 - Vimscript payloads: `go-task vint`
+- Neovim keymap docs: `go-task docs:nvim-keymaps:check`
 - Neovim config: `go-task test:nvim`
 - Neovim startup-sensitive changes: `go-task test:nvim:profile`
 - System role behavior: `go-task system:check` and `go-task test:system`

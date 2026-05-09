@@ -3,6 +3,7 @@
 local M = {}
 
 local executable = require("utils.executable")
+local keymaps = require("config.keymaps_spec")
 local languages = require("config.languages")
 
 local has_modern_lsp = vim.lsp and vim.lsp.config and vim.lsp.enable
@@ -142,14 +143,21 @@ local function setup_attach()
         vim.keymap.set(mode, lhs, rhs, { buffer = bufnr, silent = true, desc = desc })
       end
 
-      map("n", "gd", vim.lsp.buf.definition, "LSP: Go to Definition")
-      map("n", "K", vim.lsp.buf.hover, "LSP: Hover")
-      map("n", "gi", vim.lsp.buf.implementation, "LSP: Go to Implementation")
-      map("n", "<leader>rn", vim.lsp.buf.rename, "LSP: Rename")
-      map("n", "<leader>ca", vim.lsp.buf.code_action, "LSP: Code Action")
-      map("n", "[d", diagnostic_jump(-1), "LSP: Prev Diagnostic")
-      map("n", "]d", diagnostic_jump(1), "LSP: Next Diagnostic")
-      map("n", "<leader>q", vim.diagnostic.setloclist, "LSP: Diagnostics to LocList")
+      local actions = {
+        definition = vim.lsp.buf.definition,
+        hover = vim.lsp.buf.hover,
+        implementation = vim.lsp.buf.implementation,
+        rename = vim.lsp.buf.rename,
+        code_action = vim.lsp.buf.code_action,
+        previous_diagnostic = diagnostic_jump(-1),
+        next_diagnostic = diagnostic_jump(1),
+        diagnostics_loclist = vim.diagnostic.setloclist,
+      }
+
+      for _, keymap in ipairs(keymaps.lsp) do
+        local action = assert(actions[keymap.id], "Missing LSP keymap action: " .. keymap.id)
+        map(keymap.mode, keymap.lhs, action, keymap.desc)
+      end
 
       if client then
         enable_inlay_hints(client, bufnr)

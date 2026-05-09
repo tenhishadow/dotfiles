@@ -60,6 +60,7 @@ documentation:
           - "**/*.md"
           - "AGENTS.md"
           - "**/AGENTS.md"
+          - "docs/**/*"
 
 dotfiles:
   - changed-files:
@@ -84,6 +85,7 @@ nvim:
       - any-glob-to-any-file:
           - "dotfiles/.config/nvim/**/*"
           - ".test/nvim/**/*"
+          - "docs/nvim-keymaps.md"
 
 security:
   - changed-files:

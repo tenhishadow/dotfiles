@@ -1,3 +1,5 @@
+local keymaps = require("config.keymaps_spec")
+
 return {
   {
     "lewis6991/gitsigns.nvim",
@@ -10,41 +12,47 @@ return {
           vim.keymap.set(mode, lhs, rhs, { buffer = bufnr, desc = desc })
         end
 
-        map("n", "]c", function()
-          if vim.wo.diff then
-            vim.cmd.normal({ "]c", bang = true })
-          else
-            gitsigns.nav_hunk("next")
-          end
-        end, "Git: Next Change")
+        local actions = {
+          next_change = function()
+            if vim.wo.diff then
+              vim.cmd.normal({ "]c", bang = true })
+            else
+              gitsigns.nav_hunk("next")
+            end
+          end,
+          previous_change = function()
+            if vim.wo.diff then
+              vim.cmd.normal({ "[c", bang = true })
+            else
+              gitsigns.nav_hunk("prev")
+            end
+          end,
+          stage_hunk_visual = function()
+            gitsigns.stage_hunk({ vim.fn.line("."), vim.fn.line("v") })
+          end,
+          reset_hunk_visual = function()
+            gitsigns.reset_hunk({ vim.fn.line("."), vim.fn.line("v") })
+          end,
+          stage_hunk = gitsigns.stage_hunk,
+          reset_hunk = gitsigns.reset_hunk,
+          stage_buffer = gitsigns.stage_buffer,
+          -- stage_hunk toggles staged signs; undo_stage_hunk is deprecated upstream.
+          unstage_hunk = gitsigns.stage_hunk,
+          reset_buffer = gitsigns.reset_buffer,
+          preview_hunk = gitsigns.preview_hunk,
+          blame_line = gitsigns.blame_line,
+          diff_index = gitsigns.diffthis,
+          diff_last_commit = function()
+            gitsigns.diffthis("@")
+          end,
+          toggle_line_blame = gitsigns.toggle_current_line_blame,
+          show_deleted_inline = gitsigns.preview_hunk_inline,
+        }
 
-        map("n", "[c", function()
-          if vim.wo.diff then
-            vim.cmd.normal({ "[c", bang = true })
-          else
-            gitsigns.nav_hunk("prev")
-          end
-        end, "Git: Previous Change")
-
-        map("v", "<leader>hs", function()
-          gitsigns.stage_hunk({ vim.fn.line("."), vim.fn.line("v") })
-        end, "Git: Stage Hunk")
-        map("v", "<leader>hr", function()
-          gitsigns.reset_hunk({ vim.fn.line("."), vim.fn.line("v") })
-        end, "Git: Reset Hunk")
-        map("n", "<leader>hs", gitsigns.stage_hunk, "Git: Toggle Hunk Stage")
-        map("n", "<leader>hr", gitsigns.reset_hunk, "Git: Reset Hunk")
-        map("n", "<leader>hS", gitsigns.stage_buffer, "Git: Stage Buffer")
-        map("n", "<leader>hu", gitsigns.stage_hunk, "Git: Toggle Hunk Stage")
-        map("n", "<leader>hR", gitsigns.reset_buffer, "Git: Reset Buffer")
-        map("n", "<leader>hp", gitsigns.preview_hunk, "Git: Preview Hunk")
-        map("n", "<leader>hb", gitsigns.blame_line, "Git: Blame Line")
-        map("n", "<leader>hd", gitsigns.diffthis, "Git: Diff Index")
-        map("n", "<leader>hD", function()
-          gitsigns.diffthis("@")
-        end, "Git: Diff Last Commit")
-        map("n", "<leader>tb", gitsigns.toggle_current_line_blame, "Git: Toggle Line Blame")
-        map("n", "<leader>tD", gitsigns.preview_hunk_inline, "Git: Show Deleted Inline")
+        for _, keymap in ipairs(keymaps.git) do
+          local action = assert(actions[keymap.id], "Missing Git keymap action: " .. keymap.id)
+          map(keymap.mode, keymap.lhs, action, keymap.desc)
+        end
       end,
     },
   },

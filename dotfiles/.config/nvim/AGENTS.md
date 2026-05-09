@@ -12,6 +12,8 @@ not source of truth.
 - `lua/config/` contains core editor behavior.
 - `lua/config/filetypes.lua` contains plugin-independent filetype detection
   used by filetype-lazy plugin specs.
+- `lua/config/keymaps_spec.lua` is the canonical inventory for user-facing
+  keymaps, leader keys, which-key groups, and generated keymap documentation.
 - `lua/config/languages.lua` is the shared language/tool inventory for
   Tree-sitter parsers and install requirements, LSP, Mason, formatters, and
   linters.
@@ -35,6 +37,11 @@ not source of truth.
   standard `setup(opts)` call.
 - Add language/tool names once in `lua/config/languages.lua` when the same
   value is needed by LSP, Mason, formatters, linters, or tests.
+- Add user-facing keymaps once in `lua/config/keymaps_spec.lua`, then consume
+  that inventory from runtime config. Do not hardcode keymap descriptions in
+  plugin specs when the keymap should appear in `docs/nvim-keymaps.md`.
+- Keep the generated keymap manual current by running
+  `go-task docs:nvim-keymaps` after user-facing keymap changes.
 - Keep first-buffer filetype detection in `lua/config/filetypes.lua`; do not
   rely on a lazy-loaded plugin's `ftdetect` file for filetypes that trigger
   that same plugin.
@@ -68,10 +75,15 @@ modify `lazy-lock.json`.
 Run `go-task test:nvim:profile` for startup-sensitive changes. It runs the
 smoke test first, then reports startup time and loaded plugin count.
 
+Run `go-task docs:nvim-keymaps:check` for keymap changes. It verifies that
+`docs/nvim-keymaps.md` matches `lua/config/keymaps_spec.lua`.
+
 ## Done Criteria
 
 - Neovim still boots through the expected layers.
 - Plugin and LSP changes remain reproducible.
 - No duplicated plugin families are introduced unless there is an explicit
   reason documented in the plugin spec.
+- User-facing keymaps are documented in `docs/nvim-keymaps.md` with the
+  current leader key written plainly.
 - `go-task test:nvim` passes or any blocker is stated precisely.

@@ -44,6 +44,8 @@ This directory is the canonical user-level payload linked into `$HOME` by
 - For Neovim config under `.config/nvim/`, also follow the local
   `AGENTS.md` and run `go-task test:nvim`. Run
   `go-task test:nvim:profile` for startup-sensitive Neovim changes.
+- Run `go-task docs:nvim-keymaps:check` for user-facing Neovim keymap
+  changes and keep `docs/nvim-keymaps.md` current.
 
 ## Done Criteria
 

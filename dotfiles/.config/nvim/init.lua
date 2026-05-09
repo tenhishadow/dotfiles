@@ -8,8 +8,10 @@ pcall(function()
   end
 end)
 
-vim.g.mapleader = " "
-vim.g.maplocalleader = "\\"
+local keymaps = require("config.keymaps_spec")
+
+vim.g.mapleader = keymaps.leader.value
+vim.g.maplocalleader = keymaps.localleader.value
 
 local function safe_require(module)
   local ok, err = pcall(require, module)

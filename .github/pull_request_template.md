@@ -19,6 +19,7 @@
 - [ ] `uv run yamllint .`
 - [ ] `go-task verify`
 - [ ] `go-task`
+- [ ] `go-task docs:nvim-keymaps:check`
 - [ ] `go-task test:nvim`
 - [ ] `go-task system:check`
 - [ ] `go-task test:system`
@@ -39,6 +40,8 @@
 - [ ] Role input variables are validated where the role exposes a contract
 - [ ] README and nearest `AGENTS.md` files are updated when commands,
       structure, validation, or behavior changes
+- [ ] Generated manuals such as `docs/nvim-keymaps.md` are current when their
+      source config changes
 - [ ] Copilot and `.github/instructions/` rules are updated when review
       expectations change
 - [ ] Versioned automation remains covered by Renovate or has an explicit

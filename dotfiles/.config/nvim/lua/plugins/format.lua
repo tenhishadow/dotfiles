@@ -1,4 +1,5 @@
 local languages = require("config.languages")
+local keymaps = require("config.keymaps_spec")
 
 return {
   {
@@ -7,9 +8,7 @@ return {
   },
   {
     "junegunn/vim-easy-align",
-    keys = {
-      { "ga", "<Plug>(EasyAlign)", mode = { "n", "x" }, remap = true },
-    },
+    keys = keymaps.to_lazy_keys(keymaps.editing),
   },
   {
     "ntpeters/vim-better-whitespace",
