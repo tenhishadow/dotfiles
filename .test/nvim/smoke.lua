@@ -428,6 +428,29 @@ local function run_plugin_checks()
     add_error("Missing markdown-preview config (mkdp_filetypes)")
   end
 
+  local ok_lazy_config, lazy_config = pcall(require, "lazy.core.config")
+  local markdown_preview = ok_lazy_config and lazy_config.plugins["markdown-preview.nvim"] or nil
+  if markdown_preview and markdown_preview.dir then
+    local platform = "linux"
+    if vim.fn.has("win32") == 1 or vim.fn.has("win64") == 1 then
+      platform = "win"
+    elseif vim.fn.has("mac") == 1 or vim.fn.has("macvim") == 1 then
+      platform = vim.fn.system("arch"):match("arm64") and "macos-arm64" or "macos"
+    end
+
+    local binary = markdown_preview.dir .. "/app/bin/markdown-preview-" .. platform
+    if platform == "win" then
+      binary = binary .. ".exe"
+    end
+
+    local node_tslib = markdown_preview.dir .. "/app/node_modules/tslib/package.json"
+    if vim.fn.executable(binary) ~= 1 and vim.fn.filereadable(node_tslib) ~= 1 then
+      add_error("markdown-preview runtime missing: " .. binary .. " or " .. node_tslib)
+    end
+  else
+    add_error("markdown-preview plugin metadata unavailable")
+  end
+
   local stats = lazy.stats and lazy.stats() or nil
   if not stats or not stats.count or stats.count == 0 then
     add_error("Lazy stats unavailable")
