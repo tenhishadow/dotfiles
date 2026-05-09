@@ -1,0 +1,53 @@
+[Added Associations]
+application/vnd.oasis.opendocument.spreadsheet=libreoffice-calc.desktop;org.kde.ark.desktop;org.gnome.Nautilus.desktop;
+application/vnd.openxmlformats-officedocument.wordprocessingml.document=libreoffice-writer.desktop;
+application/x-bittorrent=org.qbittorrent.qBittorrent.desktop;
+audio/mpeg=vlc.desktop;sonic-visualiser.desktop;smplayer.desktop;mpv.desktop;org.kde.kwave.desktop;mplayer.desktop;smplayer_enqueue.desktop;audacity.desktop;
+image/png=org.kde.gwenview.desktop;
+inode/directory=org.kde.dolphin.desktop;
+text/csv=libreoffice-calc.desktop;krita_csv.desktop;org.kde.calligra.sheets.desktop;org.kde.kate.desktop;org.kde.kwrite.desktop;helix.desktop;org.kde.calligrawords_ascii.desktop;org.kde.ghostwriter.desktop;wine-extension-txt.desktop;nvim.desktop;vim.desktop;libreoffice-writer.desktop;okularApplication_txt.desktop;
+video/mp4=vlc.desktop;
+video/x-matroska=vlc.desktop;
+x-scheme-handler/element=io.element.Element.desktop;Element.desktop;
+x-scheme-handler/geo=openstreetmap-geo-handler.desktop;google-maps-geo-handler.desktop;
+x-scheme-handler/http=brave-browser.desktop;
+x-scheme-handler/https=brave-browser.desktop;
+x-scheme-handler/io.element.desktop=io.element.Element.desktop;Element.desktop;
+x-scheme-handler/kiro=kiro-url-handler.desktop;
+x-scheme-handler/mailto=org.mozilla.Thunderbird.desktop;org.kde.kmail2.desktop;
+x-scheme-handler/slack=slack.desktop;Slack.desktop;
+x-scheme-handler/tel=skypeforlinux.desktop;
+x-scheme-handler/tg=userapp-Telegram Desktop-JXWUP1.desktop;userapp-Telegram Desktop-3GVVW1.desktop;org.telegram.desktop.desktop;
+x-scheme-handler/tonsite=org.telegram.desktop.desktop;
+
+[Default Applications]
+application/vnd.oasis.opendocument.spreadsheet=libreoffice-calc.desktop;
+application/vnd.openxmlformats-officedocument.wordprocessingml.document=libreoffice-writer.desktop;
+audio/mpeg=vlc.desktop;
+inode/directory=org.kde.dolphin.desktop;
+text/csv=libreoffice-calc.desktop;
+text/html=brave-browser.desktop;
+video/mp4=vlc.desktop;
+video/x-matroska=vlc.desktop;
+x-scheme-handler/callto=skypeforlinux.desktop;
+x-scheme-handler/element=io.element.Element.desktop;
+x-scheme-handler/geo=openstreetmap-geo-handler.desktop;
+x-scheme-handler/http=brave-browser.desktop;
+x-scheme-handler/https=brave-browser.desktop;
+x-scheme-handler/io.element.desktop=io.element.Element.desktop;
+x-scheme-handler/kiro=kiro-url-handler.desktop;
+x-scheme-handler/lens=lens.desktop;
+x-scheme-handler/mailto=org.mozilla.Thunderbird.desktop;
+x-scheme-handler/obsidian=obsidian.desktop;
+x-scheme-handler/skype=skypeforlinux.desktop;
+x-scheme-handler/slack=slack.desktop;
+x-scheme-handler/tel=skypeforlinux.desktop;
+x-scheme-handler/tg=org.telegram.desktop.desktop;
+x-scheme-handler/tidal=tidal-hifi.desktop;
+x-scheme-handler/tonsite=org.telegram.desktop.desktop;
+
+[Removed Associations]
+application/vnd.oasis.opendocument.spreadsheet=org.kde.calligra.sheets.desktop;
+audio/mpeg=org.kde.elisa.desktop;
+video/mp4=org.kde.dragonplayer.desktop;
+video/x-matroska=org.kde.dragonplayer.desktop;
