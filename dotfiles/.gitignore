@@ -7,7 +7,6 @@ terragrunt.iml
 .terragrunt-cache
 .bundle
 .ruby-version
-.terraform.lock.hcl
 
 # terraform
 # Local .terraform directories
