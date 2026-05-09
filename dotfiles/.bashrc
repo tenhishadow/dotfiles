@@ -250,7 +250,6 @@ alias kube-temp='kubectl run -it --rm --image debian:trixie tmp-${RANDOM} -- bas
 alias archupdate='yay -Syu --noconfirm; yay -Scc --noconfirm'
 alias arch-rekey='sudo pacman-key --refresh-keys'
 alias dotfiles-update='cd ~/.dotfiles/ && git pull --ff-only && go-task'
-alias ans-workstation-update='cd ~/.ans-workstation/ && git pull --ff-only && go-task'
 alias tgfmt='terragrunt hcl format --non-interactive'
 alias tfmt='terraform fmt -recursive -diff'
 alias vim='nvim'

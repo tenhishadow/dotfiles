@@ -17,7 +17,7 @@ x-scheme-handler/kiro=kiro-url-handler.desktop;
 x-scheme-handler/mailto=org.mozilla.Thunderbird.desktop;org.kde.kmail2.desktop;
 x-scheme-handler/slack=slack.desktop;Slack.desktop;
 x-scheme-handler/tel=skypeforlinux.desktop;
-x-scheme-handler/tg=userapp-Telegram Desktop-JXWUP1.desktop;userapp-Telegram Desktop-3GVVW1.desktop;org.telegram.desktop.desktop;
+x-scheme-handler/tg=org.telegram.desktop.desktop;
 x-scheme-handler/tonsite=org.telegram.desktop.desktop;
 
 [Default Applications]

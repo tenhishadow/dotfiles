@@ -4,7 +4,7 @@ system_supported_os:
 
 system_tzdata_package: tzdata
 
-system_timezone: Europe/Warsaw
+system_timezone: UTC
 system_motd_message: ""
 
 system_packages_enabled: true

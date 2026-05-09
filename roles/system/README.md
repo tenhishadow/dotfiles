@@ -38,7 +38,7 @@ go-task test:system
 | Area | Notes |
 | ---- | ----- |
 | Packages | Installs `system_packages` from `vars/archlinux-packages.yml` when `system_packages_enabled` is true, including Neovim support tools such as `tree-sitter-cli`. |
-| Time | Configures timezone. Manages `systemd-timesyncd` only when `system_timesyncd_enabled` is true, systemd is manageable, and the host is not a virtual machine. |
+| Time | Configures `system_timezone`, which defaults to `UTC` and should be overridden in host vars. Manages `systemd-timesyncd` only when `system_timesyncd_enabled` is true, systemd is manageable, and the host is not a virtual machine. |
 | Journald | Writes `/etc/systemd/journald.conf.d/10-dotfiles.conf`. |
 | SSH daemon | Writes `/etc/ssh/sshd_config.d/20-dotfiles.conf` and validates effective sshd config. |
 | Locale and console | Manages `/etc/locale.gen`, `/etc/locale.conf`, and `/etc/vconsole.conf`. |
@@ -146,6 +146,7 @@ system_journald_settings:
   Compress: "yes"
   SystemMaxUse: 50M
 
+system_timezone: Europe/Warsaw
 system_packages_enabled: true
 system_timesyncd_enabled: true
 system_docker_enabled: false
