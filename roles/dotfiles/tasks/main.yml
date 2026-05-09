@@ -96,6 +96,16 @@
   register: dotfiles_crontab_stat
   changed_when: false
 
+- name: Dotfiles | Ensure Neovim state directory
+  ansible.builtin.file:
+    path: "{{ dotfiles_nvim_state_dir }}"
+    state: directory
+    owner: "{{ dotfiles_owner }}"
+    group: "{{ dotfiles_group }}"
+    mode: "{{ dotfiles_directory_mode }}"
+  when:
+    - dotfiles_crontab_stat.stat.exists | default(false)
+
 - name: Dotfiles | Schedule Neovim restore
   ansible.builtin.cron:
     state: present
