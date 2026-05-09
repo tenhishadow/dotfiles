@@ -40,3 +40,10 @@ repos:
     hooks:
       - id: zizmor
         args: ["-c", ".zizmor.yml"]
+  - repo: local
+    hooks:
+      - id: stylua
+        name: stylua
+        entry: stylua --check
+        language: system
+        files: ^(dotfiles/\.config/nvim|\.test/nvim)/.*\.lua$

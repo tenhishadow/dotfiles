@@ -6,9 +6,10 @@ vars:
   RUN_PLAYBOOK: "uv run ansible-playbook playbook_install.yml {{.CLI_ARGS}}"
   RUN_SYSTEM_PLAYBOOK: "uv run ansible-playbook playbook_system.yml --diff {{.CLI_ARGS}}"
   VINT_TARGETS: "dotfiles/.vimrc dotfiles/.config/nvim"
+  STYLUA_TARGETS: "dotfiles/.config/nvim .test/nvim"
   DEPS_OS_ARCHLINUX: "pacman -Sy --noconfirm --needed --noprogressbar uv git"
   DEPS_OS_SYSTEM_ARCHLINUX: "pacman -Sy --noconfirm --needed --noprogressbar uv git sudo"
-  DEPS_VERIFY_ARCHLINUX: "pacman -Sy --noconfirm --needed --noprogressbar actionlint nodejs npm pre-commit"
+  DEPS_VERIFY_ARCHLINUX: "pacman -Sy --noconfirm --needed --noprogressbar actionlint nodejs npm pre-commit stylua"
   MITOGEN_VARS: "ANSIBLE_STRATEGY=serverscom.mitogen.mitogen_linear"
   SUPERLINTER_DOCKER_RUN: >-
     docker run
@@ -66,6 +67,7 @@ tasks:
       - $SHELL -c 'type -P actionlint'
       - $SHELL -c 'type -P npx'
       - $SHELL -c 'type -P pre-commit'
+      - $SHELL -c 'type -P stylua'
     cmd: >-
       {{.DEPS_VERIFY_ARCHLINUX}} || sudo {{.DEPS_VERIFY_ARCHLINUX}}
   deps-docker:
@@ -133,6 +135,9 @@ tasks:
   vint:
     deps: [deps-python]
     cmd: "PYTHONWARNINGS=ignore uv run vint --enable-neovim {{.VINT_TARGETS}}"
+  stylua:
+    deps: [deps-verify]
+    cmd: "stylua --check {{.STYLUA_TARGETS}}"
   docs:nvim-keymaps:
     cmds:
       - mkdir -p docs
@@ -171,6 +176,7 @@ tasks:
       - task: lint
       - task: yamllint
       - task: vint
+      - task: stylua
       - task: docs:nvim-keymaps:check
       - task: actionlint
       - task: renovate

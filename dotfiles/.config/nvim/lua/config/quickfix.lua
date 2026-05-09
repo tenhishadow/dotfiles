@@ -189,7 +189,10 @@ command("DotfilesTerraformValidate", "Run terraform validate", function(opts)
   if target == "" then
     target = nearest_dir_with({ ".terraform", "*.tf" })
   end
-  run({ "terraform", "-chdir=" .. target, "validate", "-no-color" }, { title = "terraform validate", cwd = vim.fn.getcwd() })
+  run(
+    { "terraform", "-chdir=" .. target, "validate", "-no-color" },
+    { title = "terraform validate", cwd = vim.fn.getcwd() }
+  )
 end)
 
 command("DotfilesTofuValidate", "Run tofu validate", function(opts)

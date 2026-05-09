@@ -28,7 +28,9 @@ local function check_sorted_unique(values, label)
 end
 
 local function registry_package_exists(package_name)
-  local url = ("https://raw.githubusercontent.com/mason-org/mason-registry/main/packages/%s/package.yaml"):format(package_name)
+  local url = ("https://raw.githubusercontent.com/mason-org/mason-registry/main/packages/%s/package.yaml"):format(
+    package_name
+  )
   vim.fn.system({ "curl", "-fsI", url })
   return vim.v.shell_error == 0
 end

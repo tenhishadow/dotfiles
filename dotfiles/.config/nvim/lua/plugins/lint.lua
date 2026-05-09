@@ -29,9 +29,7 @@ return {
       end
 
       local function should_lint(bufnr)
-        return vim.bo[bufnr].buftype == ""
-          and vim.bo[bufnr].modifiable
-          and vim.api.nvim_buf_get_name(bufnr) ~= ""
+        return vim.bo[bufnr].buftype == "" and vim.bo[bufnr].modifiable and vim.api.nvim_buf_get_name(bufnr) ~= ""
       end
 
       for filetype, linters in pairs(auto_linters) do
