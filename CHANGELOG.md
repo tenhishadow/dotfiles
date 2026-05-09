@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.0.2](https://github.com/tenhishadow/dotfiles/compare/v2.0.1...v2.0.2) (2026-05-09)
+
+
+### Bug Fixes
+
+* update dependency setuptools to v82 ([#130](https://github.com/tenhishadow/dotfiles/issues/130)) ([ae50777](https://github.com/tenhishadow/dotfiles/commit/ae50777a3b7a9c292abfabaef31893c2f145628f))
+
 ## [2.0.1](https://github.com/tenhishadow/dotfiles/compare/v2.0.0...v2.0.1) (2026-05-09)
 
 
