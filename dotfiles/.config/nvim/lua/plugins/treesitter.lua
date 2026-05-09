@@ -7,7 +7,8 @@ end
 return {
   {
     "nvim-treesitter/nvim-treesitter",
-    lazy = false,
+    cmd = { "TSInstall", "TSInstallInfo", "TSUpdate", "TSUpdateSync" },
+    event = { "BufReadPost", "BufNewFile" },
     opts = {
       ensure_installed = languages.treesitter,
       sync_install = false,

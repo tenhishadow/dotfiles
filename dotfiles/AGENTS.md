@@ -42,7 +42,8 @@ This directory is the canonical user-level payload linked into `$HOME` by
 - Run `uv run yamllint .` or `go-task yamllint` for YAML changes.
 - Run `go-task vint` for Vimscript payloads or Vint configuration changes.
 - For Neovim config under `.config/nvim/`, also follow the local
-  `AGENTS.md` and run `go-task test:nvim`.
+  `AGENTS.md` and run `go-task test:nvim`. Run
+  `go-task test:nvim:profile` for startup-sensitive Neovim changes.
 
 ## Done Criteria
 

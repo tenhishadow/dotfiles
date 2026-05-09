@@ -10,6 +10,8 @@ not source of truth.
 - `init.lua` is the minimal entry point.
 - `lua/config/lazy.lua` bootstraps lazy.nvim and loads plugin specs.
 - `lua/config/` contains core editor behavior.
+- `lua/config/filetypes.lua` contains plugin-independent filetype detection
+  used by filetype-lazy plugin specs.
 - `lua/config/languages.lua` is the shared language/tool inventory for
   Tree-sitter parsers and install requirements, LSP, Mason, formatters, and
   linters.
@@ -33,6 +35,9 @@ not source of truth.
   standard `setup(opts)` call.
 - Add language/tool names once in `lua/config/languages.lua` when the same
   value is needed by LSP, Mason, formatters, linters, or tests.
+- Keep first-buffer filetype detection in `lua/config/filetypes.lua`; do not
+  rely on a lazy-loaded plugin's `ftdetect` file for filetypes that trigger
+  that same plugin.
 - Gate plugins by minimum Neovim version when upstream requires it. The core
   config must not fail on old Debian Neovim; modern plugin/LSP features may be
   disabled there.
@@ -59,6 +64,9 @@ go-task test:nvim
 This test uses isolated `.test/nvim` XDG paths and is the required smoke test
 for Neovim changes. It must also prove that a clean `Lazy! restore` does not
 modify `lazy-lock.json`.
+
+Run `go-task test:nvim:profile` for startup-sensitive changes. It runs the
+smoke test first, then reports startup time and loaded plugin count.
 
 ## Done Criteria
 

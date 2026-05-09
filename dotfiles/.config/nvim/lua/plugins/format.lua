@@ -1,7 +1,10 @@
 local languages = require("config.languages")
 
 return {
-  { "editorconfig/editorconfig-vim" },
+  {
+    "editorconfig/editorconfig-vim",
+    enabled = vim.fn.has("nvim-0.9") == 0,
+  },
   {
     "junegunn/vim-easy-align",
     keys = {

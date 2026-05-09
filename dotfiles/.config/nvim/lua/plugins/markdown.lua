@@ -1,6 +1,6 @@
 return {
   -- Markdown syntax / motions
-  { "preservim/vim-markdown" },
+  { "preservim/vim-markdown", ft = { "markdown", "vimwiki" } },
 
   -- Live Markdown preview in browser
   {

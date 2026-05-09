@@ -184,6 +184,24 @@ tasks:
       - timeout 120s nvim --headless "+checkhealth" +qa
       - timeout 120s nvim --headless "+checkhealth vim.lsp" +qa
       - timeout 120s nvim --headless "+lua dofile('.test/nvim/smoke.lua')"
+  test:nvim:profile:
+    deps: [test:nvim]
+    env:
+      XDG_CONFIG_HOME: "{{.PWD}}/.test/nvim/.config"
+      XDG_DATA_HOME: "{{.PWD}}/.test/nvim/.data"
+      XDG_STATE_HOME: "{{.PWD}}/.test/nvim/.state"
+      XDG_CACHE_HOME: "{{.PWD}}/.test/nvim/.cache"
+      NVIM_USE_MASON: "off"
+    cmds:
+      - >-
+        profile_log="$(mktemp)";
+        trap 'rm -f "${profile_log}"' EXIT;
+        timeout 120s nvim --headless --startuptime "${profile_log}" +qa >/dev/null 2>&1;
+        awk '/--- NVIM STARTED ---/ { printf "startup_ms=%s\n", $1 }' "${profile_log}"
+      - >-
+        timeout 120s nvim --headless
+        '+lua local cfg=require("lazy.core.config"); local names={}; local total=0; for name,p in pairs(cfg.plugins) do total=total+1; if p._ and p._.loaded then table.insert(names,name) end end; table.sort(names); print("plugins_total=" .. total); print("plugins_loaded=" .. #names); print("loaded_plugins=" .. table.concat(names,","))'
+        +qa
   test:system:
     cmd: >-
       docker run --rm -i

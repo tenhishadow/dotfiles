@@ -163,6 +163,7 @@ Ansible, `uv`, and `go-task`.
 - Run `uv run yamllint .` or `go-task yamllint` for YAML-heavy changes.
 - Run `go-task vint` for Vimscript payloads or Vint configuration changes.
 - Run `go-task test:nvim` for Neovim config changes.
+- Run `go-task test:nvim:profile` for startup-sensitive Neovim changes.
 - Run `go-task system:check` for system role changes.
 - Run `go-task test:system` for system role task, template, or handler
   behavior changes when Docker is available.

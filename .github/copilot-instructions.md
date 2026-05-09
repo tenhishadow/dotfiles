@@ -59,6 +59,8 @@ maintenance.
   `lazy-lock.json`, centralized `lua/config/languages.lua` tool lists, and
   `NVIM_USE_MASON` opt-in behavior. Tree-sitter parser installation must stay
   explicit and skip cleanly when required external tools are unavailable.
+  Filetype-lazy plugins must have first-buffer detection in
+  `lua/config/filetypes.lua`, not only in the plugin's own `ftdetect` files.
 - Check role README files when role variables, managed files, task flow,
   validation, or rollback behavior changes.
 - Check issue forms and PR templates when supported workflows, validation
@@ -76,6 +78,8 @@ maintenance.
 - Ansible, inventory, role, Taskfile, or playbook changes: `go-task lint`.
 - YAML-heavy changes: `go-task yamllint`.
 - Default dotfiles flow or mappings: `go-task`.
+- Neovim config: `go-task test:nvim`; for startup-sensitive changes also run
+  `go-task test:nvim:profile`.
 - System role: `go-task system:check`; use `go-task test:system` for task,
   template, or handler behavior when Docker is available.
 - Browser policies: `go-task browser-policies:check`.

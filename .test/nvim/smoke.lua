@@ -611,6 +611,31 @@ local tests = {
     },
   },
   {
+    name = "terraform_vars",
+    path = "terraform.tfvars",
+    ft = "terraform",
+  },
+  {
+    name = "cloudformation",
+    path = "template.yaml",
+    ft = "yaml.cloudformation",
+  },
+  {
+    name = "mikrotik",
+    path = "router.rsc",
+    ft = "rsc",
+  },
+  {
+    name = "nginx",
+    path = "nginx.conf",
+    ft = "nginx",
+  },
+  {
+    name = "vagrant",
+    path = "Vagrantfile",
+    ft = "ruby",
+  },
+  {
     name = "go",
     path = "main.go",
     ft = "go",

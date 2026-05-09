@@ -16,6 +16,8 @@ applyTo: "dotfiles/.config/nvim/**/*,.test/nvim/**/*"
 - Keep shared language/tool data in `lua/config/languages.lua` instead of
   duplicating lists across LSP, Mason, formatters, linters, Tree-sitter, or
   tests.
+- Keep first-buffer filetype detection in `lua/config/filetypes.lua` for
+  filetype-lazy plugins; do not depend only on plugin-owned `ftdetect` files.
 - Gate plugins by upstream Neovim requirements. Core config must not fail on
   old Debian Neovim; LSP must support both Neovim 0.11+
   `vim.lsp.config` and the Neovim 0.10 `nvim-lspconfig` setup API.
@@ -29,4 +31,5 @@ applyTo: "dotfiles/.config/nvim/**/*,.test/nvim/**/*"
 - Avoid duplicate plugin families for the same job, for example multiple
   indent-guide plugins.
 - Validate Neovim changes with `go-task test:nvim` and preserve the lockfile
-  diff check in that task.
+  diff check in that task. For startup-sensitive changes, also run
+  `go-task test:nvim:profile`.
