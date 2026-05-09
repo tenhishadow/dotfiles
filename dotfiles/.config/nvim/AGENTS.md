@@ -50,8 +50,9 @@ not source of truth.
 - Gate plugins by minimum Neovim version when upstream requires it. The core
   config must not fail on old Debian Neovim; modern plugin/LSP features may be
   disabled there.
-- Preserve LSP compatibility for both Neovim 0.11.3+ `vim.lsp.config` and the
-  Neovim 0.10 `nvim-lspconfig` setup API.
+- Keep the LSP plugin layer on the upstream-supported Neovim 0.11.3+
+  `vim.lsp.config` path. Older Neovim versions must keep loading the core
+  config without LSP plugins.
 - Keep `nvim-lspconfig` and Mason LSP integration gated to Neovim versions
   supported by upstream (currently 0.11.3+). Older Neovim must still load the
   core config without the plugin layer.
@@ -65,6 +66,16 @@ not source of truth.
 - Keep cold installs deterministic: `Lazy restore` must not update
   `lazy-lock.json`, Mason is opt-in via `NVIM_USE_MASON`, and blink.cmp must
   not require Rust or a prebuilt binary download by default.
+- Keep `lua/config/languages.lua` Mason lists limited to package names that
+  exist in the Mason registry. External tools such as `kubeconform` and
+  `kustomize` belong in health/manual command inventories unless Mason adds
+  packages for them.
+- Keep automatic linting lightweight and file-local. Project-wide or security
+  scanners belong in manual commands or manual linter inventories, not in
+  save-time auto lint.
+- Use canonical `conform.nvim` formatter names and `nvim-lint` linter names in
+  `lua/config/languages.lua`; `go-task test:nvim` must catch unknown formatter
+  or linter inventory entries.
 - Keep LSP setup executable-aware and avoid noisy failures when optional
   external binaries are missing.
 - Keep comments, descriptions, and labels in English.
@@ -89,6 +100,9 @@ old-Neovim core-only path by disabling the plugin layer.
 
 Run `go-task docs:nvim-keymaps:check` for keymap changes. It verifies that
 `docs/nvim-keymaps.md` matches `lua/config/keymaps_spec.lua`.
+
+Run `go-task test:nvim:mason-tools` after changing Mason tool inventories. It
+verifies sorted, unique Mason package names against the Mason registry.
 
 ## Done Criteria
 

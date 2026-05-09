@@ -34,6 +34,7 @@ for _, command in ipairs({
   "DotfilesHelmLint",
   "DotfilesKustomizeBuild",
   "DotfilesTerraformValidate",
+  "DotfilesTofuValidate",
   "DotfilesTrivyConfig",
   "DotfilesGitleaksDetect",
   "DotfilesSemgrep",

@@ -22,9 +22,9 @@ return {
       "neovim/nvim-lspconfig",
     },
     opts = function()
-      local ensure_installed = languages.mason_lsp_servers
-      if mason_mode == "auto" then
-        ensure_installed = mason_utils.filter_missing(ensure_installed, languages.lsp_bins)
+      local ensure_installed = {}
+      if mason_mode == "always" then
+        ensure_installed = languages.mason_lsp_servers
       end
       return {
         ensure_installed = ensure_installed,
@@ -44,7 +44,7 @@ return {
       return {
         ensure_installed = ensure_installed,
         auto_update = false,
-        run_on_start = true,
+        run_on_start = mason_mode == "always",
       }
     end,
   },

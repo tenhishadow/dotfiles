@@ -395,6 +395,7 @@ local function run_plugin_checks()
     { plugin = "fzf.vim", cmds = { "Files", "Rg", "Buffers" } },
     { plugin = "vimwiki", cmds = { "VimwikiIndex" } },
     { plugin = "conform.nvim", cmds = { "ConformInfo" } },
+    { plugin = "nvim-lint", cmds = { "DotfilesLintManual" } },
     { plugin = "mason.nvim", cmds = mason_mode ~= "off" and { "Mason" } or {} },
     { plugin = "nvim-treesitter", cmds = {} },
   }
@@ -429,6 +430,7 @@ local function run_plugin_checks()
     "DotfilesHelmLint",
     "DotfilesKustomizeBuild",
     "DotfilesTerraformValidate",
+    "DotfilesTofuValidate",
     "DotfilesTrivyConfig",
     "DotfilesGitleaksDetect",
     "DotfilesSemgrep",
@@ -468,6 +470,40 @@ local function run_plugin_checks()
   local stats = lazy.stats and lazy.stats() or nil
   if not stats or not stats.count or stats.count == 0 then
     add_error("Lazy stats unavailable")
+  end
+end
+
+local function run_tool_inventory_checks()
+  local languages = safe_require("config.languages")
+  if not languages then
+    return
+  end
+
+  if safe_require("conform") then
+    for filetype, formatters in pairs(languages.formatters_by_ft or {}) do
+      for _, formatter in ipairs(formatters) do
+        local ok = pcall(require, "conform.formatters." .. formatter)
+        if not ok then
+          add_error("Unknown Conform formatter for " .. filetype .. ": " .. formatter)
+        end
+      end
+    end
+  end
+
+  if safe_require("lint") then
+    for inventory_name, inventory in pairs({
+      auto = languages.auto_linters_by_ft or languages.linters_by_ft or {},
+      manual = languages.manual_linters_by_ft or {},
+    }) do
+      for filetype, linters in pairs(inventory) do
+        for _, spec in ipairs(linters) do
+          local ok = pcall(require, "lint.linters." .. spec.name)
+          if not ok then
+            add_error("Unknown " .. inventory_name .. " linter for " .. filetype .. ": " .. spec.name)
+          end
+        end
+      end
+    end
   end
 end
 
@@ -537,6 +573,7 @@ end
 run_mason_utils_tests()
 run_executable_utils_tests()
 run_plugin_checks()
+run_tool_inventory_checks()
 
 local tests = {
   {
@@ -650,6 +687,16 @@ local tests = {
         { servers = { "ansiblels" }, binaries = { "ansible-language-server" } },
       },
     },
+  },
+  {
+    name = "ansible_role",
+    path = "roles/web/tasks/main.yaml",
+    ft = "yaml.ansible",
+  },
+  {
+    name = "ansible_inventory",
+    path = "host_vars/web/main.yaml",
+    ft = "yaml.ansible",
   },
   {
     name = "json",

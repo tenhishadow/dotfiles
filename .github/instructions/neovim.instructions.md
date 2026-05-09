@@ -24,13 +24,21 @@ applyTo: "dotfiles/.config/nvim/**/*,.test/nvim/**/*"
 - Keep first-buffer filetype detection in `lua/config/filetypes.lua` for
   filetype-lazy plugins; do not depend only on plugin-owned `ftdetect` files.
 - Gate plugins by upstream Neovim requirements. Core config must not fail on
-  old Debian Neovim; LSP must support both Neovim 0.11+
-  `vim.lsp.config` and the Neovim 0.10 `nvim-lspconfig` setup API.
+  old Debian Neovim; the LSP plugin layer must use the upstream-supported
+  Neovim 0.11.3+ `vim.lsp.config` path and stay disabled on older Neovim.
 - Keep Tree-sitter parser installation explicit. Do not enable parser
   auto-install at startup; tests should skip parser installation when
   `tree-sitter`, a C compiler, or `curl` is unavailable.
 - Keep Mason opt-in through `NVIM_USE_MASON`. Default startup and background
   restore jobs must not install external tools.
+- Keep Mason install lists limited to package names that exist in the Mason
+  registry. External tools should stay in health/manual command inventories
+  unless Mason provides a package for them.
+- Keep automatic linting lightweight, file-local, and save-triggered only.
+  Project-wide validators and security scanners should be manual commands.
+- Use canonical `conform.nvim` formatter names and `nvim-lint` linter names in
+  `lua/config/languages.lua`; require `go-task test:nvim` for inventory drift
+  checks.
 - Keep blink.cmp on the stable v1 line and avoid binary/Rust requirements by
   default unless explicitly requested.
 - Avoid duplicate plugin families for the same job, for example multiple
@@ -38,4 +46,5 @@ applyTo: "dotfiles/.config/nvim/**/*,.test/nvim/**/*"
 - Validate Neovim changes with `go-task test:nvim` and preserve the lockfile
   diff check in that task. For startup-sensitive changes, also run
   `go-task test:nvim:profile`.
+- Validate Mason tool inventory changes with `go-task test:nvim:mason-tools`.
 - Validate keymap documentation with `go-task docs:nvim-keymaps:check`.

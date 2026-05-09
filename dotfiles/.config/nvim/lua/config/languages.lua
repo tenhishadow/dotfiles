@@ -54,7 +54,7 @@ M.formatters_by_ft = {
   ["yaml.gitlab"] = { "yamlfmt" },
   ["yaml.github-actions"] = { "yamlfmt" },
   ["yaml.helm-values"] = { "yamlfmt" },
-  markdown = { "markdownlint" },
+  markdown = { "markdownlint-cli2" },
 
   json = { "biome" },
   jsonc = { "biome" },
@@ -116,59 +116,45 @@ M.mason_lsp_servers = {
   "yamlls",
 }
 
+-- Mason package names for general tools. LSP-only packages are installed
+-- through mason_lsp_servers. External tools that are not in Mason's registry
+-- stay in health/manual command inventories instead of this install list.
 M.mason_tools = {
   "actionlint",
-  "ansible-language-server",
   "ansible-lint",
   "awk-language-server",
   "azure-pipelines-language-server",
-  "bash-language-server",
   "basics-language-server",
   "black",
   "circleci-yaml-language-server",
   "commitlint",
   "copilot-language-server",
   "cue",
-  "docker-compose-language-service",
-  "docker-language-server",
-  "dockerfile-language-server",
   "dotenv-linter",
-  "gitlab-ci-ls",
   "gitleaks",
   "google-java-format",
-  "gopls",
   "gradle-language-server",
   "graphql-language-service-cli",
   "hadolint",
   "hclfmt",
-  "helm-ls",
-  "kubeconform",
-  "kustomize",
   "isort",
   "jq-lsp",
   "jsonlint",
-  "jsonnet-language-server",
   "jsonnetfmt",
   "kube-linter",
-  "lua-language-server",
+  "markdownlint-cli2",
   "opa",
   "postgres-language-server",
   "prometheus-pint",
-  "pyright",
   "regal",
-  "regols",
-  "ruby-lsp",
   "ruff",
   "semgrep",
   "shellcheck",
   "sqlfluff",
-  "systemd-language-server",
+  "systemd-lsp",
   "systemdlint",
-  "terraform-ls",
   "tflint",
-  "tofu-ls",
   "trivy",
-  "yaml-language-server",
   "yamllint",
 }
 
@@ -189,7 +175,7 @@ M.tool_bins = {
   regal = { "regal" },
   regols = { "regols" },
   ["ruby-lsp"] = { "ruby-lsp" },
-  ["systemd-language-server"] = { "systemd-language-server" },
+  ["systemd-lsp"] = { "systemd-language-server" },
   ["terraform-ls"] = { "terraform-ls" },
   ["tofu-ls"] = { "tofu-ls" },
   ["yaml-language-server"] = { "yaml-language-server" },
@@ -263,21 +249,13 @@ M.health_tools = {
   },
 }
 
-M.linters_by_ft = {
-  ansible = {
-    { name = "ansible_lint", cmd = "ansible-lint" },
-  },
+-- Fast, file-local linters that are safe to run automatically after save.
+M.auto_linters_by_ft = {
   bash = {
     { name = "shellcheck", cmd = "shellcheck" },
   },
   dockerfile = {
     { name = "hadolint", cmd = "hadolint" },
-  },
-  hcl = {
-    { name = "tflint", cmd = "tflint" },
-  },
-  cue = {
-    { name = "cue", cmd = "cue" },
   },
   json = {
     { name = "jsonlint", cmd = "jsonlint" },
@@ -291,27 +269,8 @@ M.linters_by_ft = {
   python = {
     { name = "ruff", cmd = "ruff" },
   },
-  rego = {
-    { name = "regal", cmd = "regal" },
-    { name = "opa_check", cmd = "opa" },
-  },
   sh = {
     { name = "shellcheck", cmd = "shellcheck" },
-  },
-  sql = {
-    { name = "sqlfluff", cmd = "sqlfluff" },
-  },
-  terraform = {
-    { name = "tflint", cmd = "tflint" },
-  },
-  ["terraform-vars"] = {
-    { name = "tflint", cmd = "tflint" },
-  },
-  opentofu = {
-    { name = "tofu", cmd = "tofu" },
-  },
-  ["opentofu-vars"] = {
-    { name = "tofu", cmd = "tofu" },
   },
   yaml = {
     { name = "yamllint", cmd = "yamllint" },
@@ -336,11 +295,48 @@ M.linters_by_ft = {
   },
   ["yaml.ansible"] = {
     { name = "yamllint", cmd = "yamllint" },
-    { name = "ansible_lint", cmd = "ansible-lint" },
   },
   zsh = {
     { name = "shellcheck", cmd = "shellcheck" },
   },
 }
+
+-- Project-wide or security/policy linters stay manual to avoid slow, noisy, or
+-- unsafe automatic process execution while navigating infrastructure repos.
+M.manual_linters_by_ft = {
+  ansible = {
+    { name = "ansible_lint", cmd = "ansible-lint" },
+  },
+  cue = {
+    { name = "cue", cmd = "cue" },
+  },
+  hcl = {
+    { name = "tflint", cmd = "tflint" },
+  },
+  opentofu = {
+    { name = "tofu", cmd = "tofu" },
+  },
+  ["opentofu-vars"] = {
+    { name = "tofu", cmd = "tofu" },
+  },
+  rego = {
+    { name = "regal", cmd = "regal" },
+    { name = "opa_check", cmd = "opa" },
+  },
+  sql = {
+    { name = "sqlfluff", cmd = "sqlfluff" },
+  },
+  terraform = {
+    { name = "tflint", cmd = "tflint" },
+  },
+  ["terraform-vars"] = {
+    { name = "tflint", cmd = "tflint" },
+  },
+  ["yaml.ansible"] = {
+    { name = "ansible_lint", cmd = "ansible-lint" },
+  },
+}
+
+M.linters_by_ft = M.auto_linters_by_ft
 
 return M

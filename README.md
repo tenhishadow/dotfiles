@@ -68,6 +68,7 @@ legacy user config paths.
 | `go-task docs:nvim-keymaps:check` | Check that the generated Neovim keymap manual is current. |
 | `go-task verify` | Run the local aggregate validation path. |
 | `go-task test:nvim` | Run the isolated Neovim smoke test. |
+| `go-task test:nvim:mason-tools` | Validate configured Mason package names against the Mason registry. |
 | `go-task test:nvim:profile` | Run the Neovim smoke test, then print startup and loaded-plugin counts. |
 | `go-task system:list` | List tasks in the opt-in system playbook. |
 | `go-task system:check` | Dry-run the opt-in system playbook. |
@@ -110,19 +111,25 @@ The Neovim payload uses a structured `lazy.nvim` setup:
   keymaps and generated keymap documentation.
 - `lua/plugins/` contains all plugin specs; there is no separate kickstart
   plugin layer.
-- `NVIM_USE_MASON=off` is the default. Use `auto` or `always` only when this
-  host should let Mason install missing tools.
+- Automatic linting is save-triggered and limited to lightweight file-local
+  linters. Heavier project-wide linters are available manually through
+  `:DotfilesLintManual` or explicit validation commands for Kubernetes, Helm,
+  Kustomize, Terraform/OpenTofu, Trivy, Gitleaks, and Semgrep.
+- `NVIM_USE_MASON=off` is the default. `auto` makes already-installed Mason
+  tools available without startup installs; `always` allows Mason to install
+  configured missing tools on startup.
 - Unused Node.js, Perl, and Ruby remote plugin providers are disabled by
   default; Python remains enabled for `python-pynvim`.
 
-Neovim 0.11+ gets the modern LSP path via `vim.lsp.config()` and
-`vim.lsp.enable()`. Neovim 0.10 keeps LSP through the legacy `nvim-lspconfig`
-setup API. Older Neovim versions keep the core editor config and skip modern
-plugins that cannot safely run there. Tree-sitter parser installs need the
+Neovim 0.11.3+ gets the modern LSP path via `vim.lsp.config()` and
+`vim.lsp.enable()`. Older Neovim versions keep the core editor config and skip
+the LSP plugin layer because current upstream `nvim-lspconfig` requires
+Neovim 0.11.3+. Tree-sitter parser installs need the
 `tree-sitter` CLI (`tree-sitter-cli` on Arch Linux), a C compiler, and `curl`;
 `go-task test:nvim` skips that parser install step when those tools are missing
 instead of producing noisy compile failures. Cold installs are validated by
-`go-task test:nvim`, including a lockfile drift check after `Lazy restore`.
+`go-task test:nvim`, including a lockfile drift check after `Lazy restore` and
+Mason registry package-name validation for configured Mason tools.
 Startup-sensitive changes can be measured with `go-task test:nvim:profile`.
 User-facing keymaps are documented in `docs/nvim-keymaps.md`; regenerate it
 with `go-task docs:nvim-keymaps` after keymap changes.
@@ -211,6 +218,7 @@ Additional checks by area:
 - Vimscript payloads: `go-task vint`
 - Neovim keymap docs: `go-task docs:nvim-keymaps:check`
 - Neovim config: `go-task test:nvim`
+- Neovim Mason tool inventory: `go-task test:nvim:mason-tools`
 - Neovim startup-sensitive changes: `go-task test:nvim:profile`
 - System role behavior: `go-task system:check` and `go-task test:system`
 - Browser policy behavior: `go-task browser-policies:check`

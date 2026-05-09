@@ -204,6 +204,14 @@ command("DotfilesTerraformValidate", "Run terraform validate", function(opts)
   run({ "terraform", "-chdir=" .. target, "validate", "-no-color" }, { title = "terraform validate", cwd = vim.fn.getcwd() })
 end)
 
+command("DotfilesTofuValidate", "Run tofu validate", function(opts)
+  local target = trim(opts.args)
+  if target == "" then
+    target = nearest_dir_with({ ".terraform", "*.tofu", "*.tf" })
+  end
+  run({ "tofu", "-chdir=" .. target, "validate", "-no-color" }, { title = "tofu validate", cwd = vim.fn.getcwd() })
+end)
+
 command("DotfilesTrivyConfig", "Scan configuration with trivy", function(opts)
   local target = normalize_target(opts.args)
   run({ "trivy", "config", "--no-progress", target }, { title = "trivy config", cwd = vim.fn.getcwd() })

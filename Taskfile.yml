@@ -227,10 +227,16 @@ tasks:
       - cp -a dotfiles/.config/nvim .test/nvim/.config/
       - timeout 300s nvim --headless "+Lazy! restore" +qa
       - diff -u dotfiles/.config/nvim/lazy-lock.json .test/nvim/.config/nvim/lazy-lock.json
+      - task: test:nvim:mason-tools
       - timeout 180s nvim --headless "+lua dofile('.test/nvim/treesitter_install.lua')" +qa
       - timeout 120s nvim --headless "+checkhealth" +qa
       - timeout 120s nvim --headless "+checkhealth vim.lsp" +qa
       - timeout 120s nvim --headless "+lua dofile('.test/nvim/smoke.lua')"
+  test:nvim:mason-tools:
+    cmds:
+      - >-
+        timeout 120s nvim --headless --clean -u NONE
+        '+lua dofile(".test/nvim/mason_tools.lua")'
   test:nvim:compat:
     env:
       XDG_CONFIG_HOME: "{{.PWD}}/.test/nvim/.config"

@@ -14,7 +14,11 @@ local group = vim.api.nvim_create_augroup("dotfiles_folds", { clear = true })
 
 vim.api.nvim_create_autocmd("FileType", {
   group = group,
-  pattern = "yaml",
+  pattern = {
+    "helm",
+    "yaml",
+    "yaml.*",
+  },
   callback = function()
     vim.opt_local.foldmethod = "marker"
     vim.opt_local.foldlevel = 0
