@@ -1,4 +1,5 @@
 local languages = require("config.languages")
+local notify = require("utils.notify")
 
 return {
   {
@@ -10,15 +11,6 @@ return {
 
       local auto_linters = languages.auto_linters_by_ft or languages.linters_by_ft
       local manual_linters = languages.manual_linters_by_ft or {}
-      local log_levels = (vim.log and vim.log.levels) or { INFO = "INFO", WARN = "WARN" }
-
-      local function notify(message, level)
-        if vim.notify then
-          vim.notify(message, level)
-        else
-          vim.api.nvim_echo({ { message } }, true, {})
-        end
-      end
 
       local function enable(filetype, linter, cmd)
         if vim.fn.executable(cmd or linter) ~= 1 then
@@ -113,13 +105,13 @@ return {
         end
 
         if #names == 0 then
-          notify("No available manual linters for this filetype", log_levels.INFO)
+          notify.send("No available manual linters for this filetype", notify.levels.INFO)
           return
         end
 
         local ok, err = pcall(lint.try_lint, names)
         if not ok then
-          notify("Manual lint failed: " .. tostring(err), log_levels.WARN)
+          notify.send("Manual lint failed: " .. tostring(err), notify.levels.WARN)
         end
       end, {
         nargs = "*",

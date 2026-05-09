@@ -8,10 +8,10 @@ applyTo: ".github/**/*.yml,.github/**/*.yaml,.github/**/*.md,renovate.json,Taskf
 - Keep long-running or PR-triggered workflows covered by concurrency.
 - Keep workflow behavior aligned with `Taskfile.yml`.
 - Keep `go-task verify` as the local aggregate validation path for diff,
-  Ansible lint, YAML lint, actionlint, Renovate config validation, and
-  playbook smoke checks.
+  Ansible lint, YAML lint, actionlint, Renovate config validation, playbook
+  smoke checks, and Super-Linter.
 - Do not reintroduce Super-Linter into `go-task lint`; it belongs to
-  `go-task superlinter`.
+  `go-task superlinter` and the aggregate `go-task verify` path.
 - Ensure new versioned GitHub Actions, reusable workflows, Docker images,
   pre-commit hooks, Ansible collections, and future CI includes are detected by
   Renovate or documented as manually updated.

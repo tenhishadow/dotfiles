@@ -44,6 +44,7 @@ automation under `.github/`.
 - Run `go-task lint` when automation changes affect Ansible validation paths.
 - Run `go-task verify` when automation changes affect local aggregate
   validation, issue/PR templates, labeler rules, or AI instructions.
+  It includes Super-Linter and requires a running Docker daemon.
 - Run `go-task superlinter` for repository-wide lint pipeline changes.
 - Remember that `go-task superlinter` requires Docker.
 

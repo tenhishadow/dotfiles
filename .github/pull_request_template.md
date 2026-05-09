@@ -24,7 +24,7 @@
 - [ ] `go-task system:check`
 - [ ] `go-task test:system`
 - [ ] `go-task browser-policies:check`
-- [ ] `go-task superlinter`
+- [ ] `go-task superlinter` (targeted check when full `go-task verify` was not run)
 - [ ] Not applicable, reason:
 
 # Safety

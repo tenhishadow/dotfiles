@@ -16,7 +16,7 @@ is available through explicit opt-in tasks.
 - `go-task`
 - `uv`
 - `sudo` for opt-in system or policy tasks
-- Docker for container-based smoke tests
+- Docker for full validation, Super-Linter, and container-based smoke tests
 
 Install the base tools:
 
@@ -66,7 +66,8 @@ legacy user config paths.
 | `go-task vint` | Run Vint with Neovim syntax enabled for Vimscript payloads. |
 | `go-task docs:nvim-keymaps` | Regenerate the Neovim keymap manual. |
 | `go-task docs:nvim-keymaps:check` | Check that the generated Neovim keymap manual is current. |
-| `go-task verify` | Run the local aggregate validation path. |
+| `go-task verify` | Run the full local aggregate validation path, including Super-Linter. |
+| `go-task superlinter` | Run the GitHub Super-Linter container locally. |
 | `go-task test:nvim` | Run the isolated Neovim smoke test. |
 | `go-task test:nvim:mason-tools` | Validate configured Mason package names against the Mason registry. |
 | `go-task test:nvim:profile` | Run the Neovim smoke test, then print startup and loaded-plugin counts. |
@@ -211,10 +212,14 @@ inventory, documentation, or automation changes:
 go-task verify
 ```
 
+`go-task verify` includes the GitHub Super-Linter container and requires a
+running Docker daemon. Use the narrower area-specific checks above only when
+Docker is unavailable and state that limitation in review notes.
+
 Additional checks by area:
 
 - User dotfiles or symlink mappings: `go-task`
-- Full local validation: `go-task verify`
+- Full local validation, including Super-Linter and JSCPD: `go-task verify`
 - Vimscript payloads: `go-task vint`
 - Neovim keymap docs: `go-task docs:nvim-keymaps:check`
 - Neovim config: `go-task test:nvim`
@@ -224,7 +229,7 @@ Additional checks by area:
 - Browser policy behavior: `go-task browser-policies:check`
 - CI or repository-wide lint changes: `go-task superlinter`
 
-`go-task superlinter` requires Docker.
+`go-task verify` and `go-task superlinter` require Docker.
 
 ## Repository Automation
 

@@ -4,10 +4,7 @@ local lazy_name = "lazy.nvim"
 local lazy_repo = "https://github.com/folke/lazy.nvim.git"
 local lazy_path = vim.fn.stdpath("data") .. "/lazy/" .. lazy_name
 local lazy_lockfile = vim.fn.stdpath("config") .. "/lazy-lock.json"
-
-local function trim(value)
-  return tostring(value or ""):gsub("^%s+", ""):gsub("%s+$", "")
-end
+local text = require("utils.text")
 
 local function has_ui()
   return #vim.api.nvim_list_uis() > 0
@@ -40,7 +37,7 @@ local function run_git(args)
   if vim.v.shell_error ~= 0 then
     return false, output
   end
-  return true, trim(output)
+  return true, text.trim(output)
 end
 
 local function read_lazy_commit()
@@ -59,7 +56,7 @@ local function read_lazy_commit()
     return nil
   end
 
-  local commit = trim(lazy_lock.commit)
+  local commit = text.trim(lazy_lock.commit)
   if commit == "" then
     return nil
   end

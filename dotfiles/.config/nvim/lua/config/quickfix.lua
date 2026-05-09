@@ -7,20 +7,8 @@ if not vim.api.nvim_create_user_command then
 end
 
 local executable = require("utils.executable")
-
-local log_levels = (vim.log and vim.log.levels) or { INFO = "INFO", WARN = "WARN" }
-
-local function notify(message, level)
-  if vim.notify then
-    vim.notify(message, level)
-  else
-    vim.api.nvim_echo({ { message } }, true, {})
-  end
-end
-
-local function trim(value)
-  return tostring(value or ""):gsub("^%s+", ""):gsub("%s+$", "")
-end
+local notify = require("utils.notify")
+local text = require("utils.text")
 
 local function split_lines(value)
   local lines = {}
@@ -44,7 +32,7 @@ local function is_absolute(path)
 end
 
 local function normalize_target(target)
-  target = trim(target)
+  target = text.trim(target)
   if target ~= "" then
     return vim.fn.fnamemodify(target, ":p")
   end
@@ -100,7 +88,7 @@ local function run(argv, opts)
   local cwd = opts.cwd or vim.fn.getcwd()
 
   if not executable.is_executable(argv[1]) then
-    notify("Missing executable: " .. argv[1], log_levels.WARN)
+    notify.send("Missing executable: " .. argv[1], notify.levels.WARN)
     return
   end
 
@@ -156,9 +144,9 @@ local function run(argv, opts)
   vim.cmd("copen")
 
   if code == 0 then
-    notify((opts.title or argv[1]) .. " completed", log_levels.INFO)
+    notify.send((opts.title or argv[1]) .. " completed", notify.levels.INFO)
   else
-    notify((opts.title or argv[1]) .. " exited with code " .. code, log_levels.WARN)
+    notify.send((opts.title or argv[1]) .. " exited with code " .. code, notify.levels.WARN)
   end
 end
 
@@ -181,7 +169,7 @@ command("DotfilesKubeconform", "Validate Kubernetes YAML with kubeconform", func
 end)
 
 command("DotfilesHelmLint", "Run helm lint for a chart", function(opts)
-  local target = trim(opts.args)
+  local target = text.trim(opts.args)
   if target == "" then
     target = nearest_dir_with({ "Chart.yaml", "Chart.yml" })
   end
@@ -189,7 +177,7 @@ command("DotfilesHelmLint", "Run helm lint for a chart", function(opts)
 end)
 
 command("DotfilesKustomizeBuild", "Run kustomize build", function(opts)
-  local target = trim(opts.args)
+  local target = text.trim(opts.args)
   if target == "" then
     target = nearest_dir_with({ "kustomization.yaml", "kustomization.yml", "Kustomization" })
   end
@@ -197,7 +185,7 @@ command("DotfilesKustomizeBuild", "Run kustomize build", function(opts)
 end)
 
 command("DotfilesTerraformValidate", "Run terraform validate", function(opts)
-  local target = trim(opts.args)
+  local target = text.trim(opts.args)
   if target == "" then
     target = nearest_dir_with({ ".terraform", "*.tf" })
   end
@@ -205,7 +193,7 @@ command("DotfilesTerraformValidate", "Run terraform validate", function(opts)
 end)
 
 command("DotfilesTofuValidate", "Run tofu validate", function(opts)
-  local target = trim(opts.args)
+  local target = text.trim(opts.args)
   if target == "" then
     target = nearest_dir_with({ ".terraform", "*.tofu", "*.tf" })
   end

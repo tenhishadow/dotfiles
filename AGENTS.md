@@ -174,10 +174,11 @@ Ansible, `uv`, and `go-task`.
   behavior changes when Docker is available.
 - Run `go-task browser-policies:check` for browser policy role or policy
   inventory changes.
-- Run `go-task superlinter` for CI or repository-wide lint changes when Docker
-  is available.
+- Run `go-task superlinter` for focused CI or repository-wide lint changes
+  when Docker is available.
 - Run `go-task verify` for a full local validation pass when Taskfile,
   inventory, playbooks, roles, or repository automation change together.
+  This includes Super-Linter and requires a running Docker daemon.
 
 ## Done Criteria
 

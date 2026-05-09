@@ -68,6 +68,21 @@ tasks:
       - $SHELL -c 'type -P pre-commit'
     cmd: >-
       {{.DEPS_VERIFY_ARCHLINUX}} || sudo {{.DEPS_VERIFY_ARCHLINUX}}
+  deps-docker:
+    silent: true
+    cmds:
+      - >-
+        type -P docker >/dev/null
+        || {
+          printf '%s\n' 'docker is required for go-task verify and go-task superlinter.' >&2;
+          exit 1;
+        }
+      - >-
+        docker info >/dev/null 2>&1
+        || {
+          printf '%s\n' 'a running Docker daemon is required for go-task verify and go-task superlinter.' >&2;
+          exit 1;
+        }
   deps-upgrade:
     cmds:
       - task: deps-upgrade:python
@@ -163,10 +178,13 @@ tasks:
       - task: default
       - task: system:check
       - task: browser-policies:check
+      - task: superlinter
   superlinter:
+    deps: [deps-docker]
     cmds:
       - "{{.SUPERLINTER_DOCKER_RUN}} ghcr.io/super-linter/super-linter:v8.6.0"
   superlinter:latest:
+    deps: [deps-docker]
     cmds:
       - "{{.SUPERLINTER_DOCKER_RUN}} ghcr.io/super-linter/super-linter:latest"
   clear:
