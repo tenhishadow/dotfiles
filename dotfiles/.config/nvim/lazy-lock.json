@@ -37,7 +37,6 @@
   "vim-cfn": { "branch": "master", "commit": "3300b3284c9b5a56f6c76de415d15c21b83d1168" },
   "vim-consul": { "branch": "master", "commit": "e6de89a7f2c5b8c6b94d82f0c28a2123dc6f388a" },
   "vim-easy-align": { "branch": "master", "commit": "9815a55dbcd817784458df7a18acacc6f82b1241" },
-  "vim-indent-guides": { "branch": "master", "commit": "a1e1390c0136e63e813d051de2003bf0ee18ae30" },
   "vim-markdown": { "branch": "master", "commit": "1bc9d0cd8e1cc3e901b0a49c2b50a843f1c89397" },
   "vim-mikrotik": { "branch": "master", "commit": "524d27287da1c468474f5fb6111ae37258d42c48" },
   "vim-nomadproject": { "branch": "master", "commit": "15867b43e4148bdfa3bdd2d4fcc2b93122d4031f" },

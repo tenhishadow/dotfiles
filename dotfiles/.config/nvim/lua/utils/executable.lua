@@ -29,10 +29,12 @@ local function run_probe(cmd, probe, timeout_ms)
   vim.list_extend(argv, probe or {})
 
   if vim.system then
-    local result = vim.system(argv, {
-      text = true,
-      timeout = timeout_ms or 2000,
-    }):wait()
+    local result = vim
+      .system(argv, {
+        text = true,
+        timeout = timeout_ms or 2000,
+      })
+      :wait()
     return result.code == 0
   end
 

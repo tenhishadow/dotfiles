@@ -451,24 +451,16 @@ local function run_mason_utils_tests()
     add_error("Mason mode parse failed for off")
   end
 
-  local missing = mason_utils.filter_missing(
-    { "present", "absent" },
-    { present = "present", absent = "absent" },
-    function(cmd)
-      return cmd == "present"
-    end
-  )
+  local missing = mason_utils.filter_missing({ "present", "absent" }, { present = "present", absent = "absent" }, function(cmd)
+    return cmd == "present"
+  end)
   if #missing ~= 1 or missing[1] ~= "absent" then
     add_error("Mason missing filter failed")
   end
 
-  local missing_alias = mason_utils.filter_missing(
-    { "alias" },
-    { alias = { "bin-a", "bin-b" } },
-    function(cmd)
-      return cmd == "bin-b"
-    end
-  )
+  local missing_alias = mason_utils.filter_missing({ "alias" }, { alias = { "bin-a", "bin-b" } }, function(cmd)
+    return cmd == "bin-b"
+  end)
   if #missing_alias ~= 0 then
     add_error("Mason missing filter failed for aliases")
   end

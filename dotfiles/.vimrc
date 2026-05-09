@@ -67,8 +67,9 @@ augroup gr_install_plugins
   call plug#end()
 augroup END
 
-" vint: next-line -ProhibitSetNoCompatible
+" vint: -ProhibitSetNoCompatible
 set nocompatible
+" vint: +ProhibitSetNoCompatible
 set shell=bash
 set ttyfast
 set fileformat=unix
@@ -97,7 +98,7 @@ endif
 if filereadable($HOME . '/.vim/plugged/gruvbox/colors/gruvbox.vim')
   syntax enable
   colorscheme gruvbox
-  if (has("termguicolors"))
+  if has('termguicolors')
     set termguicolors
   endif
   " https://github.com/kovidgoyal/kitty/issues/108#issuecomment-320492663
@@ -107,7 +108,7 @@ if filereadable($HOME . '/.vim/plugged/gruvbox/colors/gruvbox.vim')
   " incorrect background rendering when using a color theme with a
   " background color.
   let &t_ut=''
-  set bg=dark
+  set background=dark
   let g:lightline = { 'colorscheme': 'gruvbox' }
   " ale config
   let g:gruvbox_guisp_fallback = 'bg'

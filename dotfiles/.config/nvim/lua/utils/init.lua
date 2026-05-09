@@ -16,7 +16,9 @@ end
 -- safe require helper
 M.safe_require = function(name)
   local ok, m = pcall(require, name)
-  if ok then return m end
+  if ok then
+    return m
+  end
   return nil
 end
 

@@ -1,15 +1,20 @@
 return {
   {
     "morhetz/gruvbox",
+    lazy = false,
     priority = 1000,
-    config = function()
-      vim.cmd("colorscheme gruvbox")
-      vim.opt.background = "dark"
-      vim.opt.termguicolors = true
+    init = function()
       vim.g.gruvbox_guisp_fallback = "bg"
       vim.g.lightline = { colorscheme = "gruvbox" }
     end,
+    config = function()
+      vim.cmd("colorscheme gruvbox")
+    end,
   },
-  { "tomasr/molokai" },
-  { "jacoborus/tender.vim" },
+  {
+    "itchyny/lightline.vim",
+    lazy = false,
+  },
+  { "tomasr/molokai", lazy = true },
+  { "jacoborus/tender.vim", lazy = true },
 }
