@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.0.1](https://github.com/tenhishadow/dotfiles/compare/v2.0.0...v2.0.1) (2026-05-09)
+
+
+### Miscellaneous Chores
+
+* update nginx docker tag to v1.30 ([#127](https://github.com/tenhishadow/dotfiles/issues/127)) ([cc16800](https://github.com/tenhishadow/dotfiles/commit/cc16800ae1fabad609f66bc0186839da6bfaea9c))
+
 ## [2.0.0](https://github.com/tenhishadow/dotfiles/compare/v1.6.8...v2.0.0) (2026-05-08)
 
 
