@@ -231,6 +231,13 @@ Renovate manages supported dependency updates for GitHub Actions, pre-commit,
 Ansible Galaxy requirements, the Python toolchain, and the Super-Linter Docker
 image referenced by `Taskfile.yml`.
 
+Use `go-task deps-upgrade` for local, reviewable dependency refreshes. It
+updates `uv.lock`, refreshes the installed Ansible Galaxy collections allowed by
+`requirements.yml`, runs `pre-commit autoupdate`, updates Neovim
+`lazy-lock.json`, and validates Renovate config. GitHub Actions are updated by
+Renovate PRs; use `go-task deps-report:github-actions` when you want a local
+Renovate extraction/dry-run report for workflow dependencies.
+
 Documentation and AI instructions are part of the repository contract. Update
 `README.md`, the nearest `AGENTS.md`, `.github/copilot-instructions.md`, and
 path-specific `.github/instructions/*.instructions.md` whenever commands,

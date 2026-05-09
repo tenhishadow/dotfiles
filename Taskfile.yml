@@ -70,9 +70,39 @@ tasks:
       {{.DEPS_VERIFY_ARCHLINUX}} || sudo {{.DEPS_VERIFY_ARCHLINUX}}
   deps-upgrade:
     cmds:
-      - uv sync --upgrade
-      - pre-commit autoupdate
-      - NVIM_USE_MASON=off nvim --headless "+Lazy! sync" +qa
+      - task: deps-upgrade:python
+      - task: deps-upgrade:ansible
+      - task: deps-upgrade:pre-commit
+      - task: deps-upgrade:nvim
+      - task: renovate
+  deps-upgrade:python:
+    deps: [deps-os]
+    cmds:
+      - uv lock --upgrade
+      - >-
+        uv sync
+        --locked
+        --no-build
+        --no-install-project
+        --no-dev
+        --managed-python
+  deps-upgrade:ansible:
+    deps: [deps-python]
+    cmd: "uv run ansible-galaxy collection install -r requirements.yml --upgrade"
+  deps-upgrade:pre-commit:
+    deps: [deps-verify]
+    cmd: pre-commit autoupdate
+  deps-upgrade:nvim:
+    cmd: NVIM_USE_MASON=off nvim --headless "+Lazy! update" +qa
+  deps-report:github-actions:
+    deps: [deps-verify]
+    cmd: >-
+      npx --yes --package renovate renovate
+      --platform=local
+      --dry-run=full
+      --require-config=required
+      --enabled-managers=github-actions
+      --include-paths='[".github/workflows/**"]'
   update:
     cmds:
       - git pull --ff-only
