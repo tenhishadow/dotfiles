@@ -62,6 +62,7 @@ legacy user config paths.
 | `go-task` | Apply user-level dotfiles only. |
 | `go-task lint` | Run `ansible-lint` for playbooks, inventory, and roles. |
 | `go-task yamllint` | Run YAML linting through the pinned `uv` environment. |
+| `go-task vint` | Run Vint with Neovim syntax enabled for Vimscript payloads. |
 | `go-task verify` | Run the local aggregate validation path. |
 | `go-task test:nvim` | Run the isolated Neovim smoke test. |
 | `go-task system:list` | List tasks in the opt-in system playbook. |
@@ -88,6 +89,30 @@ entries in `inventory/host_vars/this_host/dotfiles.yml`. Mapping entries use
 the source path and creates destination parent directories automatically. Do
 not add secrets, browser profiles, caches, local databases, generated test
 workspaces, SSH private keys, or GPG private keys.
+
+## Neovim
+
+The Neovim payload uses a structured `lazy.nvim` setup:
+
+- `init.lua` loads core config first, then the plugin layer.
+- `lua/config/lazy.lua` bootstraps `lazy.nvim` and honors the pinned
+  `lazy.nvim` commit in `lazy-lock.json`.
+- `lua/config/languages.lua` is the shared source for Tree-sitter languages
+  and install requirements, LSP server binaries, Mason package lists,
+  formatters, and linters.
+- `lua/plugins/` contains all plugin specs; there is no separate kickstart
+  plugin layer.
+- `NVIM_USE_MASON=off` is the default. Use `auto` or `always` only when this
+  host should let Mason install missing tools.
+
+Neovim 0.11+ gets the modern LSP path via `vim.lsp.config()` and
+`vim.lsp.enable()`. Neovim 0.10 keeps LSP through the legacy `nvim-lspconfig`
+setup API. Older Neovim versions keep the core editor config and skip modern
+plugins that cannot safely run there. Tree-sitter parser installs need the
+`tree-sitter` CLI, a C compiler, and `curl`; `go-task test:nvim` skips that
+parser install step when those tools are missing instead of producing noisy
+compile failures. Cold installs are validated by `go-task test:nvim`, including
+a lockfile drift check after `Lazy restore`.
 
 ## Inventory Ownership
 
@@ -156,6 +181,7 @@ Use the narrowest validation that covers the change:
 git diff --check
 go-task lint
 go-task yamllint
+go-task vint
 ```
 
 Use the aggregate local check before finishing broad repository, role,
@@ -169,6 +195,7 @@ Additional checks by area:
 
 - User dotfiles or symlink mappings: `go-task`
 - Full local validation: `go-task verify`
+- Vimscript payloads: `go-task vint`
 - Neovim config: `go-task test:nvim`
 - System role behavior: `go-task system:check` and `go-task test:system`
 - Browser policy behavior: `go-task browser-policies:check`

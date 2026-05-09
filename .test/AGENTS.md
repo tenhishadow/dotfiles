@@ -29,6 +29,10 @@ source of truth:
 
 - Keep fixtures minimal and deterministic.
 - Keep generated workspaces out of git.
+- Keep Neovim test language lists sourced from the canonical config when
+  possible, especially `config.languages`.
+- Keep Tree-sitter parser installation optional in the test sandbox and skip
+  cleanly when required external tools are missing.
 - Keep shell scripts robust with safe flags where practical.
 - Keep comments, sample text, and documentation in English.
 

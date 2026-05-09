@@ -161,6 +161,7 @@ Ansible, `uv`, and `go-task`.
 - Run `go-task lint` for Ansible, inventory, role, Taskfile, or playbook
   changes.
 - Run `uv run yamllint .` or `go-task yamllint` for YAML-heavy changes.
+- Run `go-task vint` for Vimscript payloads or Vint configuration changes.
 - Run `go-task test:nvim` for Neovim config changes.
 - Run `go-task system:check` for system role changes.
 - Run `go-task test:system` for system role task, template, or handler

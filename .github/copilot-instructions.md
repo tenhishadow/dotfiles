@@ -55,6 +55,10 @@ maintenance.
 
 - Check that docs and nearest `AGENTS.md` files change with new commands,
   playbooks, roles, validation paths, automation, or runtime behavior.
+- For Neovim changes, enforce the structured lazy.nvim layout, deterministic
+  `lazy-lock.json`, centralized `lua/config/languages.lua` tool lists, and
+  `NVIM_USE_MASON` opt-in behavior. Tree-sitter parser installation must stay
+  explicit and skip cleanly when required external tools are unavailable.
 - Check role README files when role variables, managed files, task flow,
   validation, or rollback behavior changes.
 - Check issue forms and PR templates when supported workflows, validation
