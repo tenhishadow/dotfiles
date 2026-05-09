@@ -201,6 +201,28 @@ tasks:
       - timeout 120s nvim --headless "+checkhealth" +qa
       - timeout 120s nvim --headless "+checkhealth vim.lsp" +qa
       - timeout 120s nvim --headless "+lua dofile('.test/nvim/smoke.lua')"
+  test:nvim:compat:
+    env:
+      XDG_CONFIG_HOME: "{{.PWD}}/.test/nvim/.config"
+      XDG_DATA_HOME: "{{.PWD}}/.test/nvim/.data"
+      XDG_STATE_HOME: "{{.PWD}}/.test/nvim/.state"
+      XDG_CACHE_HOME: "{{.PWD}}/.test/nvim/.cache"
+      NVIM_DOTFILES_DISABLE_PLUGINS: "1"
+      NVIM_USE_MASON: "off"
+    cmds:
+      - >-
+        rm -rf
+        .test/nvim/.config/nvim
+        .test/nvim/.data/nvim
+        .test/nvim/.state/nvim
+        .test/nvim/.cache/nvim
+      - mkdir -p .test/nvim/.config .test/nvim/.data .test/nvim/.state .test/nvim/.cache
+      - cp -a dotfiles/.config/nvim .test/nvim/.config/
+      - timeout 60s nvim --headless "+lua dofile('.test/nvim/compat.lua')"
+  test:nvim:all:
+    cmds:
+      - task: test:nvim
+      - task: test:nvim:compat
   test:nvim:profile:
     deps: [test:nvim]
     env:

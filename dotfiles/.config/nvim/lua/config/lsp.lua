@@ -180,26 +180,52 @@ local function configure(name, opts)
   end
 end
 
+local function merge_tables(dst, src)
+  for key, value in pairs(src or {}) do
+    dst[key] = value
+  end
+  return dst
+end
+
 local function add_schema_settings(configs)
   local ok_schemastore, schemastore = pcall(require, "schemastore")
 
   if configs.yamlls then
+    local schemas = {}
+    if ok_schemastore then
+      merge_tables(schemas, schemastore.yaml.schemas())
+    end
+    merge_tables(schemas, languages.yaml_schemas)
+
+    configs.yamlls.filetypes = {
+      "yaml",
+      "yaml.docker-compose",
+      "yaml.github-actions",
+      "yaml.gitlab",
+      "yaml.kubernetes",
+      "yaml.kustomize",
+      "yaml.helm-values",
+    }
     configs.yamlls.settings = {
       redhat = { telemetry = { enabled = false } },
       yaml = {
+        completion = true,
+        hover = true,
         keyOrdering = false,
         format = { enable = true },
+        disableDefaultProperties = true,
+        maxItemsComputed = 5000,
         validate = true,
         schemaStore = {
           enable = false,
           url = "",
         },
+        kubernetesCRDStore = {
+          enable = true,
+        },
+        schemas = schemas,
       },
     }
-
-    if ok_schemastore then
-      configs.yamlls.settings.yaml.schemas = schemastore.yaml.schemas()
-    end
   end
 
   if configs.jsonls then
@@ -239,14 +265,21 @@ local function build_server_configs(capabilities)
   for _, server in ipairs({
     { name = "ansiblels" },
     { name = "bashls" },
+    { name = "cue" },
+    { name = "docker_compose_language_service" },
     { name = "dockerls" },
     { name = "eslint" },
+    { name = "gh_actions_ls" },
+    { name = "gitlab_ci_ls" },
     { name = "gopls" },
     { name = "helm_ls" },
+    { name = "jsonnet_ls" },
     { name = "jsonls" },
     { name = "lua_ls" },
+    { name = "regols" },
     { name = "ruby_lsp" },
     { name = "terraformls" },
+    { name = "tofu_ls" },
     { name = "ts_ls" },
     { name = "yamlls" },
   }) do
@@ -271,6 +304,64 @@ local function build_server_configs(capabilities)
         telemetry = { enable = false },
       },
     }
+  end
+
+  if configs.docker_compose_language_service then
+    configs.docker_compose_language_service.filetypes = { "yaml.docker-compose" }
+  end
+
+  if configs.gh_actions_ls then
+    configs.gh_actions_ls.filetypes = { "yaml.github-actions" }
+  end
+
+  if configs.gitlab_ci_ls then
+    configs.gitlab_ci_ls.filetypes = { "yaml.gitlab" }
+  end
+
+  if configs.helm_ls then
+    local _, helm_cmd = has_any(languages.lsp_bins.helm_ls)
+    local yamlls_available, yamlls_cmd = has_any(languages.lsp_bins.yamlls)
+
+    if helm_cmd then
+      configs.helm_ls.cmd = { helm_cmd, "serve" }
+    end
+
+    configs.helm_ls.filetypes = { "helm", "yaml.helm-values" }
+    configs.helm_ls.settings = {
+      ["helm-ls"] = {
+        logLevel = "warn",
+        valuesFiles = {
+          mainValuesFile = "values.yaml",
+          lintOverlayValuesFile = "values.lint.yaml",
+          additionalValuesFilesGlobPattern = "values*.yaml",
+        },
+        helmLint = {
+          enabled = true,
+          ignoredMessages = {},
+        },
+        yamlls = {
+          enabled = yamlls_available,
+          path = yamlls_cmd or "yaml-language-server",
+          diagnosticsLimit = 50,
+          showDiagnosticsDirectly = false,
+          config = {
+            schemas = {
+              kubernetes = "templates/**",
+            },
+            completion = true,
+            hover = true,
+          },
+        },
+      },
+    }
+  end
+
+  if configs.terraformls then
+    configs.terraformls.filetypes = { "terraform", "terraform-vars" }
+  end
+
+  if configs.tofu_ls then
+    configs.tofu_ls.filetypes = { "opentofu", "opentofu-vars" }
   end
 
   local typescript_server = server_name("ts_ls", "tsserver")

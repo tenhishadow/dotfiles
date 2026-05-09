@@ -26,8 +26,11 @@ safe_require("config.keymaps")
 safe_require("config.autocmds")
 safe_require("config.filetypes")
 safe_require("config.folds")
+safe_require("config.quickfix")
 
-if vim.fn.has("nvim-0.8") == 1 then
+if vim.env.NVIM_DOTFILES_DISABLE_PLUGINS == "1" then
+  vim.g.dotfiles_plugins_disabled = true
+elseif vim.fn.has("nvim-0.8") == 1 then
   safe_require("config.lazy")
 else
   vim.g.dotfiles_plugins_disabled = true

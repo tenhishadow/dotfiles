@@ -24,6 +24,8 @@ local function shell_join(argv)
   return table.concat(escaped, " ")
 end
 
+M.shell_join = shell_join
+
 local function run_probe(cmd, probe, timeout_ms)
   local argv = { cmd }
   vim.list_extend(argv, probe or {})

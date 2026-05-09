@@ -21,22 +21,12 @@ end
 
 local function check_version(h)
   local version = tostring(vim.version())
-  if has("0.11") then
+  if has("0.11.3") then
     h.ok("Neovim version: " .. version)
   elseif has("0.8") then
     h.warn("Neovim version: " .. version .. "; plugin layer works, modern LSP plugins are disabled")
   else
     h.warn("Neovim version: " .. version .. "; only the core config is loaded")
-  end
-end
-
-local function check_executables(h)
-  for _, exe in ipairs({ "git", "curl", "rg", "make", "unzip" }) do
-    if vim.fn.executable(exe) == 1 then
-      h.ok("Found executable: " .. exe)
-    else
-      h.warn("Missing optional executable: " .. exe)
-    end
   end
 end
 
@@ -47,6 +37,28 @@ local function has_any(cmds)
     end
   end
   return false, nil
+end
+
+local function check_tool_sections(h)
+  local ok_languages, languages = pcall(require, "config.languages")
+  if not ok_languages then
+    h.warn("Tool inventory unavailable")
+    return
+  end
+
+  for _, section in ipairs(languages.health_tools or {}) do
+    h.start(section.section)
+    for _, tool in ipairs(section.tools or {}) do
+      local found, cmd = has_any(tool.commands)
+      if found then
+        h.ok(tool.label .. " found: " .. cmd)
+      elseif tool.required then
+        h.error(tool.label .. " is required but missing")
+      else
+        h.warn(tool.label .. " is missing; related features stay disabled or manual-only")
+      end
+    end
+  end
 end
 
 local function check_treesitter_tools(h)
@@ -71,7 +83,7 @@ function M.check()
   h.start("dotfiles.nvim")
   h.info("Warnings are actionable only for features you intend to use on this host.")
   check_version(h)
-  check_executables(h)
+  check_tool_sections(h)
   check_treesitter_tools(h)
 end
 

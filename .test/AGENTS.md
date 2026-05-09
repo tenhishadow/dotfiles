@@ -8,6 +8,7 @@ workspaces.
 ## Canonical Files
 
 - `.test/nvim/smoke.lua`
+- `.test/nvim/compat.lua`
 - `.test/nvim/treesitter_install.lua`
 - `.test/nvim/keymap_docs.lua`
 - `.test/nvim/*` language sample fixtures
@@ -41,6 +42,7 @@ source of truth:
 
 ```bash
 go-task test:nvim
+go-task test:nvim:compat
 go-task docs:nvim-keymaps:check
 go-task test:system
 ```

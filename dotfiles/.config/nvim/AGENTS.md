@@ -17,6 +17,8 @@ not source of truth.
 - `lua/config/languages.lua` is the shared language/tool inventory for
   Tree-sitter parsers and install requirements, LSP, Mason, formatters, and
   linters.
+- `lua/config/quickfix.lua` contains manual validation commands. These commands
+  must stay opt-in and must not run scanners automatically on save.
 - `lua/plugins/` contains all lazy.nvim plugin definitions.
 - `lua/dotfiles/health.lua` contains `:checkhealth dotfiles`.
 - `lua/utils/` contains small reusable helpers.
@@ -48,8 +50,14 @@ not source of truth.
 - Gate plugins by minimum Neovim version when upstream requires it. The core
   config must not fail on old Debian Neovim; modern plugin/LSP features may be
   disabled there.
-- Preserve LSP compatibility for both Neovim 0.11+ `vim.lsp.config` and the
+- Preserve LSP compatibility for both Neovim 0.11.3+ `vim.lsp.config` and the
   Neovim 0.10 `nvim-lspconfig` setup API.
+- Keep `nvim-lspconfig` and Mason LSP integration gated to Neovim versions
+  supported by upstream (currently 0.11.3+). Older Neovim must still load the
+  core config without the plugin layer.
+- Keep Kubernetes, Helm, GitOps, CI, Docker Compose, Terraform/OpenTofu, and
+  policy-language filetype routing in `lua/config/filetypes.lua`; keep their
+  tools and schema data in `lua/config/languages.lua`.
 - Keep Tree-sitter explicit and quiet: do not enable automatic parser installs
   at startup, keep parser install requirements in `lua/config/languages.lua`,
   and make tests skip parser installation when required external tools are
@@ -74,6 +82,10 @@ modify `lazy-lock.json`.
 
 Run `go-task test:nvim:profile` for startup-sensitive changes. It runs the
 smoke test first, then reports startup time and loaded plugin count.
+
+Run `go-task test:nvim:compat` for changes that affect startup, core config,
+filetype routing, health checks, or manual commands. It simulates the
+old-Neovim core-only path by disabling the plugin layer.
 
 Run `go-task docs:nvim-keymaps:check` for keymap changes. It verifies that
 `docs/nvim-keymaps.md` matches `lua/config/keymaps_spec.lua`.

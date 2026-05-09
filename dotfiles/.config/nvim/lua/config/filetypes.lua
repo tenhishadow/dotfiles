@@ -5,13 +5,14 @@ if vim.filetype and vim.filetype.add then
     pattern = {
       [".*%.hcl"] = "hcl",
       [".*%.tf"] = "terraform",
-      [".*%.tofu"] = "terraform",
       [".*%.tfbackend"] = "hcl",
       [".*%.tfstate"] = "json",
       [".*%.tfstate%.backup"] = "json",
       [".*%.tftest%.hcl"] = "terraform",
       [".*%.tofutest%.hcl"] = "terraform",
-      [".*%.tfvars"] = "terraform",
+      [".*%.tfvars"] = "terraform-vars",
+      [".*%.tofu"] = "opentofu",
+      [".*%.tofuvars"] = "opentofu-vars",
       [".*/%.terragrunt%.hcl"] = "terraform",
       [".*/root%.hcl"] = "terraform",
       [".*/terragrunt%.hcl"] = "terraform",
@@ -24,6 +25,15 @@ if vim.filetype and vim.filetype.add then
       ["terraform.rc"] = "hcl",
       ["Vagrantfile"] = "ruby",
       ["vagrantfile"] = "ruby",
+      ["docker-compose.yaml"] = "yaml.docker-compose",
+      ["docker-compose.yml"] = "yaml.docker-compose",
+      ["compose.yaml"] = "yaml.docker-compose",
+      ["compose.yml"] = "yaml.docker-compose",
+      [".gitlab-ci.yaml"] = "yaml.gitlab",
+      [".gitlab-ci.yml"] = "yaml.gitlab",
+      ["kustomization.yaml"] = "yaml.kustomize",
+      ["kustomization.yml"] = "yaml.kustomize",
+      ["Kustomization"] = "yaml.kustomize",
     },
   })
 end
@@ -64,6 +74,74 @@ local function set_filetype_if_basename(basenames, filetype)
       end
     end,
   })
+end
+
+local function set_filetype_if_extension(extensions, filetype)
+  local lookup = {}
+  for _, ext in ipairs(extensions) do
+    lookup[ext] = true
+  end
+
+  vim.api.nvim_create_autocmd("FileType", {
+    group = group,
+    pattern = "*",
+    desc = "Override filetype by extension",
+    callback = function(args)
+      local ext = vim.fn.fnamemodify(vim.api.nvim_buf_get_name(args.buf), ":e")
+      if lookup[ext] then
+        set_buffer_filetype(args.buf, filetype)
+      end
+    end,
+  })
+end
+
+local function buffer_path(bufnr)
+  return vim.api.nvim_buf_get_name(bufnr):gsub("\\", "/")
+end
+
+local function can_set_yaml_domain(bufnr)
+  local ft = vim.bo[bufnr].filetype
+  return ft == "" or ft == "yaml" or ft == "yml"
+end
+
+local function has_chart_root(path)
+  local dir = vim.fn.fnamemodify(path, ":p:h")
+
+  while dir and dir ~= "" do
+    if vim.fn.filereadable(dir .. "/Chart.yaml") == 1 or vim.fn.filereadable(dir .. "/Chart.yml") == 1 then
+      return true
+    end
+
+    local parent = vim.fn.fnamemodify(dir, ":h")
+    if parent == dir then
+      break
+    end
+    dir = parent
+  end
+
+  return false
+end
+
+local function file_has_markers(bufnr, markers)
+  local line_count = math.min(vim.api.nvim_buf_line_count(bufnr), 300)
+  local lines = vim.api.nvim_buf_get_lines(bufnr, 0, line_count, false)
+  local found = {}
+
+  for _, line in ipairs(lines) do
+    for _, marker in ipairs(markers) do
+      if line:find(marker, 1, true) then
+        found[marker] = true
+      end
+    end
+  end
+
+  for _, marker in ipairs(markers) do
+    if not found[marker] then
+      return false
+    end
+  end
+
+  return true
 end
 
 local function detect_cloudformation(bufnr)
@@ -141,11 +219,21 @@ set_filetype({
 
 set_filetype({
   "*.tf",
-  "*.tofu",
-  "*.tfvars",
   "*.tftest.hcl",
   "*.tofutest.hcl",
 }, "terraform")
+
+set_filetype({
+  "*.tfvars",
+}, "terraform-vars")
+
+set_filetype({
+  "*.tofu",
+}, "opentofu")
+
+set_filetype({
+  "*.tofuvars",
+}, "opentofu-vars")
 
 set_filetype({
   "*.tfstate",
@@ -189,6 +277,56 @@ set_filetype({
 }, "yaml")
 
 set_filetype({
+  "**/.github/workflows/*.yaml",
+  "**/.github/workflows/*.yml",
+  "**/.forgejo/workflows/*.yaml",
+  "**/.forgejo/workflows/*.yml",
+  "**/.gitea/workflows/*.yaml",
+  "**/.gitea/workflows/*.yml",
+}, "yaml.github-actions")
+
+set_filetype({
+  "**/.gitlab-ci.yaml",
+  "**/.gitlab-ci.yml",
+  "**/.gitlab/*.yaml",
+  "**/.gitlab/*.yml",
+}, "yaml.gitlab")
+
+set_filetype({
+  "**/docker-compose.yaml",
+  "**/docker-compose.yml",
+  "**/compose.yaml",
+  "**/compose.yml",
+}, "yaml.docker-compose")
+
+set_filetype({
+  "**/kustomization.yaml",
+  "**/kustomization.yml",
+  "**/Kustomization",
+}, "yaml.kustomize")
+
+set_filetype({
+  "**/k8s/**/*.yaml",
+  "**/k8s/**/*.yml",
+  "**/kubernetes/**/*.yaml",
+  "**/kubernetes/**/*.yml",
+  "**/manifests/**/*.yaml",
+  "**/manifests/**/*.yml",
+  "**/deploy/**/*.yaml",
+  "**/deploy/**/*.yml",
+  "**/deployments/**/*.yaml",
+  "**/deployments/**/*.yml",
+  "**/clusters/**/*.yaml",
+  "**/clusters/**/*.yml",
+  "**/apps/**/*.yaml",
+  "**/apps/**/*.yml",
+  "**/base/**/*.yaml",
+  "**/base/**/*.yml",
+  "**/overlays/**/*.yaml",
+  "**/overlays/**/*.yml",
+}, "yaml.kubernetes")
+
+set_filetype({
   "**/.terragrunt.hcl",
   "**/root.hcl",
   "**/terragrunt.hcl",
@@ -204,3 +342,30 @@ set_filetype_if_basename({
   "Vagrantfile",
   "vagrantfile",
 }, "ruby")
+
+set_filetype_if_extension({ "tfvars" }, "terraform-vars")
+set_filetype_if_extension({ "tofu" }, "opentofu")
+set_filetype_if_extension({ "tofuvars" }, "opentofu-vars")
+
+vim.api.nvim_create_autocmd({ "BufReadPost", "BufNewFile" }, {
+  group = group,
+  pattern = { "*.yaml", "*.yml", "*.tpl", "*.gotmpl" },
+  desc = "Refine Kubernetes and Helm filetypes",
+  callback = function(args)
+    local path = buffer_path(args.buf)
+
+    if path:match("/templates/") and has_chart_root(path) then
+      set_buffer_filetype(args.buf, "helm")
+      return
+    end
+
+    if path:match("/values[^/]*%.ya?ml$") and has_chart_root(path) then
+      set_buffer_filetype(args.buf, "yaml.helm-values")
+      return
+    end
+
+    if can_set_yaml_domain(args.buf) and file_has_markers(args.buf, { "apiVersion:", "kind:" }) then
+      set_buffer_filetype(args.buf, "yaml.kubernetes")
+    end
+  end,
+})

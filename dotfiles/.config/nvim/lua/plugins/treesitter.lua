@@ -30,6 +30,20 @@ return {
       },
     },
     config = function(_, opts)
+      pcall(vim.treesitter.language.register, "yaml", {
+        "yaml.kubernetes",
+        "yaml.kustomize",
+        "yaml.docker-compose",
+        "yaml.gitlab",
+        "yaml.github-actions",
+        "yaml.helm-values",
+      })
+      pcall(vim.treesitter.language.register, "terraform", {
+        "terraform-vars",
+        "opentofu",
+        "opentofu-vars",
+      })
+
       local ok_legacy, ts_configs = pcall(require, "nvim-treesitter.configs")
       if ok_legacy then
         ts_configs.setup(opts)

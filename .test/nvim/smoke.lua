@@ -424,6 +424,20 @@ local function run_plugin_checks()
     end
   end
 
+  for _, cmd in ipairs({
+    "DotfilesKubeconform",
+    "DotfilesHelmLint",
+    "DotfilesKustomizeBuild",
+    "DotfilesTerraformValidate",
+    "DotfilesTrivyConfig",
+    "DotfilesGitleaksDetect",
+    "DotfilesSemgrep",
+  }) do
+    if not has_command(cmd) then
+      add_error("Missing manual command: " .. cmd)
+    end
+  end
+
   if not vim.g.mkdp_filetypes or vim.g.mkdp_filetypes == "" then
     add_error("Missing markdown-preview config (mkdp_filetypes)")
   end
@@ -583,6 +597,51 @@ local tests = {
     },
   },
   {
+    name = "kubernetes",
+    path = "deployment.yaml",
+    ft = "yaml.kubernetes",
+    treesitter = { ft = "yaml" },
+    lsp = {
+      candidates = {
+        { servers = { "yamlls" }, binaries = { "yaml-language-server" } },
+      },
+    },
+  },
+  {
+    name = "kustomize",
+    path = "kustomization.yaml",
+    ft = "yaml.kustomize",
+    treesitter = { ft = "yaml" },
+    lsp = {
+      candidates = {
+        { servers = { "yamlls" }, binaries = { "yaml-language-server" } },
+      },
+    },
+  },
+  {
+    name = "helm",
+    path = "templates/deployment.yaml",
+    ft = "helm",
+    root_files = { "Chart.yaml", "values.yaml" },
+    lsp = {
+      candidates = {
+        { servers = { "helm_ls" }, binaries = { "helm_ls", "helm-ls" } },
+      },
+    },
+  },
+  {
+    name = "helm",
+    path = "values.yaml",
+    ft = "yaml.helm-values",
+    root_files = { "Chart.yaml" },
+    treesitter = { ft = "yaml" },
+    lsp = {
+      candidates = {
+        { servers = { "helm_ls" }, binaries = { "helm_ls", "helm-ls" } },
+      },
+    },
+  },
+  {
     name = "ansible",
     path = "playbook.yml",
     ft = "yaml.ansible",
@@ -635,7 +694,17 @@ local tests = {
   {
     name = "terraform_vars",
     path = "terraform.tfvars",
-    ft = "terraform",
+    ft = "terraform-vars",
+  },
+  {
+    name = "opentofu",
+    path = "main.tofu",
+    ft = "opentofu",
+    lsp = {
+      candidates = {
+        { servers = { "tofu_ls" }, binaries = { "tofu-ls" } },
+      },
+    },
   },
   {
     name = "cloudformation",
@@ -670,6 +739,72 @@ local tests = {
         method = "textDocument/hover",
         needle = "foo",
         required = true,
+      },
+    },
+  },
+  {
+    name = "compose",
+    path = "compose.yaml",
+    ft = "yaml.docker-compose",
+    treesitter = { ft = "yaml" },
+    lsp = {
+      candidates = {
+        { servers = { "docker_compose_language_service" }, binaries = { "docker-compose-langserver" } },
+      },
+    },
+  },
+  {
+    name = "github_actions",
+    path = ".github/workflows/ci.yml",
+    ft = "yaml.github-actions",
+    treesitter = { ft = "yaml" },
+    lsp = {
+      candidates = {
+        { servers = { "gh_actions_ls" }, binaries = { "gh-actions-language-server" } },
+      },
+    },
+  },
+  {
+    name = "gitlab_ci",
+    path = ".gitlab-ci.yml",
+    ft = "yaml.gitlab",
+    treesitter = { ft = "yaml" },
+    lsp = {
+      candidates = {
+        { servers = { "gitlab_ci_ls" }, binaries = { "gitlab-ci-ls" } },
+      },
+    },
+  },
+  {
+    name = "cue",
+    path = "config.cue",
+    ft = "cue",
+    treesitter = true,
+    lsp = {
+      candidates = {
+        { servers = { "cue" }, binaries = { "cue" } },
+      },
+    },
+  },
+  {
+    name = "jsonnet",
+    path = "main.jsonnet",
+    ft = "jsonnet",
+    treesitter = true,
+    lsp = {
+      candidates = {
+        { servers = { "jsonnet_ls" }, binaries = { "jsonnet-language-server" } },
+      },
+    },
+  },
+  {
+    name = "rego",
+    path = "policy.rego",
+    ft = "rego",
+    treesitter = true,
+    lsp = {
+      candidates = {
+        { servers = { "regols" }, binaries = { "regols" } },
       },
     },
   },
