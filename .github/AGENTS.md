@@ -24,6 +24,9 @@ automation under `.github/`.
   `.github/instructions/*.instructions.md`.
 - Keep documentation-specific Copilot rules in
   `.github/instructions/documentation.instructions.md`.
+- Keep AI instructions clear that the former `ans-workstation` layer is now
+  opt-in inside this repository, default `go-task` remains sudo-free, and
+  personal workstation settings are not a generic hardening benchmark.
 - Keep Neovim keymap review rules aligned with
   `docs/nvim-keymaps.md`, `dotfiles/.config/nvim/lua/config/keymaps_spec.lua`,
   and `Taskfile.yml`.

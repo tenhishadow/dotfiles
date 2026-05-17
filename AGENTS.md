@@ -1,6 +1,6 @@
 # Repository
 
-Arch Linux dotfiles and workstation automation repository managed with
+Personal Arch Linux dotfiles and workstation automation repository managed with
 Ansible, `uv`, and `go-task`.
 
 ## Architecture
@@ -13,10 +13,12 @@ Ansible, `uv`, and `go-task`.
 - `inventory/host_vars/this_host/` is the local source of truth for dotfiles
   mappings, cleanup, browser policy overrides, and system role values.
 - `roles/dotfiles/` contains the default user-level dotfiles workflow.
-- `roles/system/` contains opt-in Arch Linux workstation provisioning.
+- `roles/system/` contains opt-in Arch Linux workstation provisioning
+  consolidated from the former `tenhishadow/ans-workstation` repository.
 - `roles/browser_policies/` contains opt-in browser and VS Code policy
   management.
-- `docs/` contains generated operator manuals, including Neovim keymaps.
+- `docs/` contains architecture, adoption, security, migration, and generated
+  operator manuals.
 
 ## Instruction Scope
 
@@ -43,6 +45,10 @@ Ansible, `uv`, and `go-task`.
   `roles/system` or `roles/browser_policies` to `playbook_install.yml`.
 - Keep privileged and system-wide behavior behind explicit opt-in
   playbooks/tasks.
+- Preserve the documented execution boundary: default `go-task` must not be
+  described as applying privileged system or browser policy configuration.
+- Do not present personal workstation security values as a generic hardening
+  benchmark.
 - Prefer service drop-ins over editing upstream main config files where
   supported.
 - Keep changes deterministic, narrow, reviewable, and idempotent.
@@ -110,6 +116,10 @@ Ansible, `uv`, and `go-task`.
   user-level, local, sudo-free, and limited to `playbook_install.yml`.
 - Flag any privileged behavior that leaks into the default dotfiles playbook
   or bypasses the explicit system and browser policy playbooks.
+- Flag docs that imply privileged configuration is part of the default
+  `go-task`, omit the former `ans-workstation` consolidation where relevant,
+  or describe this personal workstation baseline as a generic hardening
+  benchmark.
 - Flag Ansible tasks that are not idempotent, omit FQCN modules, omit explicit
   modes for managed files, use unguarded shell/command calls, or duplicate
   values that belong in inventory/defaults/vars.
@@ -134,6 +144,8 @@ Ansible, `uv`, and `go-task`.
   change.
 - Update role README files when role variables, managed paths, task flow,
   validation, or rollback behavior changes.
+- Update architecture, adoption, security, and migration/history docs when
+  system-layer behavior, boundaries, or consolidation wording changes.
 - Update `.github/copilot-instructions.md` and relevant
   `.github/instructions/*.instructions.md` when review rules, repository
   structure, naming style, validation, or automation expectations change.

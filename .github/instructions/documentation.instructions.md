@@ -17,6 +17,12 @@ applyTo: "**/*.md,**/AGENTS.md,.github/copilot-instructions.md,.github/instructi
   `AGENTS.md`.
 - Preserve the default contract in docs: `go-task` applies user-level
   dotfiles only and must not require sudo.
+- Document the former `tenhishadow/ans-workstation` consolidation factually
+  where repository history or architecture is relevant.
+- Do not imply privileged system or browser policy configuration is part of
+  default `go-task`.
+- Do not present personal workstation security settings as a generic hardening
+  benchmark.
 - Keep generated manuals current. For Neovim keymaps, regenerate
   `docs/nvim-keymaps.md` with `go-task docs:nvim-keymaps` and verify it with
   `go-task docs:nvim-keymaps:check`.
@@ -24,5 +30,7 @@ applyTo: "**/*.md,**/AGENTS.md,.github/copilot-instructions.md,.github/instructi
   `dotfiles_*`, `system_*`, and `browser_policies_*`.
 - Document system role feature flags, managed paths, and drop-in/snippet paths
   when privileged runtime behavior changes.
+- Update architecture, adoption, security, and migration/history docs when
+  system-layer behavior or consolidation wording changes.
 - Mention `go-task verify` for broad documentation, automation, inventory, or
   role changes.

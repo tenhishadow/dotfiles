@@ -3,6 +3,8 @@
 Applies to `roles/system/`.
 
 This is the opt-in Arch Linux workstation system provisioning role.
+It contains the system automation consolidated from the former
+`tenhishadow/ans-workstation` repository.
 
 ## Role Flow
 
@@ -39,6 +41,8 @@ Keep the high-level flow predictable:
 - Keep `backup: true` when a task already uses it.
 - Keep handler-driven service restarts.
 - Keep task names, comments, templates, and documentation in English.
+- Keep role documentation and migration/history wording aligned when the
+  system layer behavior, managed paths, or consolidation notes change.
 - Do not change system package lists here; package list rules live in
   `vars/AGENTS.md`.
 - Do not commit secrets, private keys, tokens, generated configs, or local
