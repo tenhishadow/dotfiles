@@ -1,8 +1,9 @@
 ---
-- name: Chromium Policies | Build managed targets
-  ansible.builtin.set_fact:
-    browser_policies_policy_files: "{{ browser_policies_chromium_policy_files }}"
+- name: Chromium Policies | Run policy file tasks
+  ansible.builtin.include_tasks:
+    file: policy-files.yml
   vars:
+    browser_policies_policy_files: "{{ browser_policies_chromium_policy_files }}"
     browser_policies_chromium_extension_settings_merged: >-
       {{
         browser_policies_extension_block
@@ -47,9 +48,5 @@
       {%-   endif -%}
       {%- endfor -%}
       {{ browser_policies_chromium_files }}
-
-- name: Chromium Policies | Run policy file tasks
-  ansible.builtin.include_tasks:
-    file: policy-files.yml
   when:
-    - browser_policies_policy_files | length > 0
+    - browser_policies_chromium_policy_files | length > 0

@@ -1,8 +1,9 @@
 ---
-- name: VS Code Policies | Build managed targets
-  ansible.builtin.set_fact:
-    browser_policies_policy_files: "{{ browser_policies_vscode_policy_files }}"
+- name: VS Code Policies | Run policy file tasks
+  ansible.builtin.include_tasks:
+    file: policy-files.yml
   vars:
+    browser_policies_policy_files: "{{ browser_policies_vscode_policy_files }}"
     browser_policies_vscode_policy_files: >-
       {%- set browser_policies_vscode_files = [] -%}
       {%- for browser_policies_vscode_target in browser_policies_vscode_targets -%}
@@ -37,9 +38,5 @@
       {%-   endif -%}
       {%- endfor -%}
       {{ browser_policies_vscode_files }}
-
-- name: VS Code Policies | Run policy file tasks
-  ansible.builtin.include_tasks:
-    file: policy-files.yml
   when:
-    - browser_policies_policy_files | length > 0
+    - browser_policies_vscode_policy_files | length > 0
