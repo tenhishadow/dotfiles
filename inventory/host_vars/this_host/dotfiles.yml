@@ -29,8 +29,8 @@ dotfiles_mapping:
     payload: .npmrc
     dest: "{{ dotfiles_home }}/.npmrc"
   - name: yarnrc
-    payload: .yarnrc.yml
-    dest: "{{ dotfiles_home }}/.yarnrc.yml"
+    payload: .yarnrc
+    dest: "{{ dotfiles_home }}/.yarnrc"
   - name: luacheckrc
     payload: .luacheckrc
     dest: "{{ dotfiles_home }}/.luacheckrc"

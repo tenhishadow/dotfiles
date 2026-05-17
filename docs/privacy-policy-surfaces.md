@@ -20,7 +20,7 @@ settings here are personal defaults, not a generic security benchmark.
 | btop | User dotfile | `~/.config/btop/btop.conf` |
 | direnv | User dotfile plus Bash hook | `~/.config/direnv/direnv.toml`, `.bashrc` |
 | npm | User dotfile | `~/.npmrc` |
-| Yarn | User dotfile and environment variable | `~/.yarnrc.yml`, `environment.d` |
+| Yarn | User dotfile and environment variable | `~/.yarnrc`, `environment.d` |
 | pip | User dotfile | `~/.config/pip/pip.conf` |
 
 The managed values prefer opt-outs for telemetry, usage statistics, prompts,
@@ -58,6 +58,9 @@ tools are introduced later.
 - Terraform Cloud tokens, provider credentials, private registry mirrors, and
   internal hostnames.
 - npm, Yarn, and pip registry credentials or private indexes.
+- Yarn Berry `.yarnrc.yml` files. The managed package is Yarn Classic, so this
+  repository manages Classic `.yarnrc` and the documented Berry telemetry
+  environment variable only.
 - TFLint, SQLFluff, and ShellCheck global rule configs. Project-level config is
   less surprising for linters that can change build or review outcomes.
 
@@ -95,7 +98,9 @@ Official references used for these surfaces include:
   <https://docs.npmjs.com/cli/v9/using-npm/config/>
 - update-notifier environment opt-out:
   <https://www.npmjs.com/package/update-notifier>
-- Yarn configuration:
-  <https://yarnpkg.com/configuration/yarnrc>
+- Yarn Classic configuration:
+  <https://classic.yarnpkg.com/lang/en/docs/yarnrc/>
+- Yarn Berry telemetry:
+  <https://yarnpkg.com/advanced/telemetry>
 - pip configuration:
   <https://pip.pypa.io/en/stable/topics/configuration/>

@@ -101,7 +101,7 @@ security:
           - "dotfiles/.ssh/**/*"
           - "dotfiles/.npmrc"
           - "dotfiles/.terraformrc"
-          - "dotfiles/.yarnrc.yml"
+          - "dotfiles/.yarnrc"
           - "inventory/host_vars/this_host/security.yml"
           - "roles/browser_policies/**/*"
           - "roles/system/defaults/main.yml"
