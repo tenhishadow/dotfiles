@@ -34,9 +34,10 @@ The managed file disables automatic updates, update notifications, usage
 statistics, telemetry, detailed telemetry traces, prompt logging, and external
 collector use. The shell environment also sets documented Gemini telemetry
 variables to disabled values. The committed key names were checked against the
-installed `@google/gemini-cli 0.41.2` bundled reference docs; the online Gemini
-CLI docs also document the user settings file, usage statistics opt-out, and
-telemetry environment variables.
+installed `@google/gemini-cli 0.41.2` bundled reference docs during PR #141 on
+2026-05-17. Re-check these settings when upgrading Gemini CLI. The online
+Gemini CLI docs also document the user settings file, usage statistics opt-out,
+and telemetry environment variables.
 
 This repository does not manage Gemini API keys, OAuth state, Google Cloud
 credentials, local conversation history, MCP server credentials, extension
@@ -65,7 +66,8 @@ run explicit provider and Terraform update review when you want that signal.
 
 Thunderbird policy keys are checked against the official Thunderbird policy
 templates. The managed in-app notification keys are version-specific and require
-Thunderbird 139 or newer.
+Thunderbird 139 or newer. This was checked during PR #141 on 2026-05-17;
+re-check the policy template when changing Thunderbird policy keys.
 
 No managed Cursor, Windsurf, or other AI-client config was added because those
 clients are not currently represented in the package manifest or existing

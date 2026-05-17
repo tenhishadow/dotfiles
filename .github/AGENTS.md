@@ -26,6 +26,8 @@ automation under `.github/`.
   with the current repo structure. Put repo-wide rules in
   `.github/copilot-instructions.md` and path-specific rules in
   `.github/instructions/*.instructions.md`.
+- Keep `.ruff.toml` and `.github/linters/.ruff.toml` synchronized. Local Ruff
+  and Super-Linter read config from different paths.
 - Keep documentation-specific Copilot rules in
   `.github/instructions/documentation.instructions.md`.
 - Keep AI instructions clear that the former `ans-workstation` layer is now

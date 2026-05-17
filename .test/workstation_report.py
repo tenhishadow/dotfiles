@@ -314,6 +314,18 @@ def print_browser_policies_report() -> None:
         "/etc/thunderbird/policies/policies.json",
         "/etc/vscode/policy.json",
     ]
+    policy_apps = (
+        ("brave", ["--version"]),
+        ("firefox", ["--version"]),
+        ("thunderbird", ["--version"]),
+        ("code", ["--version"]),
+    )
+
+    section("Policy App Versions")
+    print("read-only report; missing tools are reported without failing")
+    for command, args in policy_apps:
+        print(tool_version_line(command, args))
+
     section("Expected Managed Policy Files")
     print("read-only report; expected role-owned paths only")
     for path in policy_paths:
