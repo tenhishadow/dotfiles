@@ -3,8 +3,8 @@
   ansible.builtin.file:
     path: "{{ system_user_systemd_dir }}"
     state: directory
-    owner: "{{ ansible_facts.user_id }}"
-    group: "{{ ansible_facts.user_id }}"
+    owner: "{{ system_user_service_owner }}"
+    group: "{{ system_user_service_group }}"
     mode: "{{ system_user_systemd_dir_mode }}"
 
 - name: User systemd | Write ssh-agent service
@@ -13,8 +13,8 @@
     src: templates/ssh-agent.service.j2
     dest: "{{ system_ssh_agent_service_path }}"
     backup: true
-    owner: "{{ ansible_facts.user_id }}"
-    group: "{{ ansible_facts.user_id }}"
+    owner: "{{ system_user_service_owner }}"
+    group: "{{ system_user_service_group }}"
     mode: "{{ system_user_service_file_mode }}"
   when:
     - ansible_facts.service_mgr == "systemd"
@@ -30,4 +30,4 @@
     enabled: true
     daemon_reload: true
   when:
-    - system_can_manage_systemd | bool
+    - system_can_manage_user_systemd | bool

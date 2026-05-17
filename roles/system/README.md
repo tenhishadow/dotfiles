@@ -63,7 +63,8 @@ The role keeps privileged behavior explicit and guarded:
 
 1. Validate the supported OS.
 2. Load distro-specific vars and packages.
-3. Derive CI, container, virtual machine, systemd, and timesyncd capability guards.
+3. Derive CI, container, virtual machine, systemd, user systemd, and timesyncd
+   capability guards.
 4. Validate public role variables and host overrides.
 5. Install the package manifest under tag `pkg` when packages are enabled.
 6. Run time, locale, console, login, limits, cron, sysctl, journald, SSHD, OS,
@@ -144,6 +145,8 @@ Public role variables use the `system_` prefix. Use `system_journald_settings`,
 their keys intentionally preserve upstream config option names. The role-owned
 `system_sysctl_default_settings` map contains default kernel tuning, while
 `system_sysctl_settings` is for host-specific additions and overrides.
+User service files are owned by `system_user_service_owner` and
+`system_user_service_group`, which default to the real user and group facts.
 
 Example host overrides:
 

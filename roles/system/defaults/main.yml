@@ -57,6 +57,8 @@ system_config_private_file_mode: "0600"
 system_config_dir_mode: "0755"
 system_user_systemd_dir_mode: "0700"
 system_user_service_file_mode: "0640"
+system_user_service_owner: "{{ ansible_facts.real_user_id }}"
+system_user_service_group: "{{ ansible_facts.real_group_id }}"
 
 system_container_virtualization_types:
   - container
