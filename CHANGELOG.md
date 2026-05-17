@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.0](https://github.com/tenhishadow/dotfiles/compare/v2.0.3...v2.1.0) (2026-05-17)
+
+
+### Features
+
+* **workstation:** consolidate workstation automation ([#137](https://github.com/tenhishadow/dotfiles/issues/137)) ([816eacc](https://github.com/tenhishadow/dotfiles/commit/816eaccec49ccb759f03c8590deeba9b91c810b2))
+
 ## [2.0.3](https://github.com/tenhishadow/dotfiles/compare/v2.0.2...v2.0.3) (2026-05-17)
 
 
