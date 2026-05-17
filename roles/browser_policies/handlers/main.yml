@@ -2,7 +2,8 @@
 - name: Browser Policies | Report restart requirement
   ansible.builtin.debug:
     msg:
-      - "Browser restart required for policy changes to take effect."
+      - "Application restart required for policy changes to take effect."
       - "Check Chromium policy pages at brave://policy and brave://management."
       - "Check Firefox policy status at about:policies."
+      - "Check Thunderbird policy status in Troubleshooting Information."
       - "Check VS Code managed settings for lock icons or use Show Window Log."

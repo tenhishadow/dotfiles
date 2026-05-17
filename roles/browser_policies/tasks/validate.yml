@@ -6,6 +6,7 @@
       - browser_policies_state in ["present", "absent"]
       - browser_policies_chromium_enabled is boolean
       - browser_policies_firefox_enabled is boolean
+      - browser_policies_thunderbird_enabled is boolean
       - browser_policies_vscode_enabled is boolean
       - browser_policies_extension_lockdown_enabled is boolean
       - browser_policies_extension_block_message is string
@@ -14,6 +15,8 @@
       - browser_policies_chromium_targets is not string
       - browser_policies_firefox_targets is sequence
       - browser_policies_firefox_targets is not string
+      - browser_policies_thunderbird_targets is sequence
+      - browser_policies_thunderbird_targets is not string
       - browser_policies_vscode_targets is sequence
       - browser_policies_vscode_targets is not string
       - browser_policies_chromium_base_policies is mapping
@@ -22,6 +25,8 @@
       - browser_policies_extension_block is mapping
       - browser_policies_firefox_base_policies is mapping
       - browser_policies_firefox_extension_settings is mapping
+      - browser_policies_thunderbird_base_policies is mapping
+      - browser_policies_thunderbird_extension_settings is mapping
       - browser_policies_owner is string and browser_policies_owner | length > 0
       - browser_policies_group is string and browser_policies_group | length > 0
       - browser_policies_dir_mode is string and browser_policies_dir_mode | length > 0
@@ -98,6 +103,16 @@
                 'family': 'Firefox',
                 'label': browser_policies_firefox_target.name | default('unnamed firefox target'),
                 'target': browser_policies_firefox_target,
+              }
+            )
+      -%}
+      {%- endfor -%}
+      {%- for browser_policies_thunderbird_target in browser_policies_thunderbird_targets -%}
+      {%-   set browser_policies_thunderbird_target_added = browser_policies_path_target_checks.append(
+              {
+                'family': 'Thunderbird',
+                'label': browser_policies_thunderbird_target.name | default('unnamed thunderbird target'),
+                'target': browser_policies_thunderbird_target,
               }
             )
       -%}
