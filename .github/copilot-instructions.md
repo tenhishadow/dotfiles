@@ -1,8 +1,8 @@
 # Repository Review Rules
 
 Review this personal Arch Linux dotfiles repo for reliability, security,
-idempotence, and low maintenance. The former `ans-workstation` layer now lives
-here only as opt-in system automation.
+idempotence, and low maintenance. Former `ans-workstation` automation is
+opt-in here.
 
 ## Critical Contracts
 
@@ -44,10 +44,9 @@ here only as opt-in system automation.
 
 - Docs and nearest `AGENTS.md` files must change with new commands, roles,
   validation paths, automation, or runtime behavior.
-- For Neovim changes, enforce the structured lazy.nvim layout, deterministic
-  `lazy-lock.json`, centralized `lua/config/languages.lua` tool lists,
-  `NVIM_USE_MASON` opt-in behavior, explicit Tree-sitter parser installs, and
-  first-buffer detection in `lua/config/filetypes.lua`.
+- For Neovim changes, enforce structured lazy.nvim layout, deterministic
+  `lazy-lock.json`, centralized tool lists, `NVIM_USE_MASON` opt-in behavior,
+  explicit Tree-sitter installs, and first-buffer filetype detection.
 - For Neovim keymap changes, require updates to
   `lua/config/keymaps_spec.lua` and `docs/nvim-keymaps.md`. Keymap docs must
   state the active leader key plainly and pass `go-task docs:nvim-keymaps:check`.
@@ -58,7 +57,9 @@ here only as opt-in system automation.
 - Keep repository text, comments, task names, docs, and AI instructions in
   English.
 - Keep GitHub Actions least-privilege, deterministic, and Renovate-updateable.
-- Keep `.github/labeler.yml`, templates, Renovate, and AI instructions aligned.
+- Leave `pyproject.toml` dependency constraints unpinned unless requested;
+  `uv.lock` records resolved versions.
+- Keep labeler, templates, Renovate, and AI instructions aligned.
 - Keep Super-Linter separate from `go-task lint`.
 
 ## Suggested Validation
@@ -71,7 +72,7 @@ here only as opt-in system automation.
   `go-task test:nvim:profile`.
 - Neovim keymaps: `go-task docs:nvim-keymaps:check`.
 - System role: `go-task system:check`; use `go-task test:system` for task,
-  template, or handler behavior when Docker is available.
+  template, or handler changes when Docker is available.
 - Browser policies: `go-task browser-policies:check`.
 - CI or repo-wide lint behavior: `go-task superlinter` when Docker is
   available.

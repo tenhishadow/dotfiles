@@ -70,6 +70,8 @@ Ansible, `uv`, and `go-task`.
   them.
 - Preserve CI and container guards for privileged system behavior.
 - Do not broaden cleanup/removal patterns without an explicit requirement.
+- Keep Python tool dependencies in `pyproject.toml` unpinned unless the user
+  explicitly asks for a constraint. Let `uv.lock` carry resolved versions.
 
 ## Ansible Naming Style
 
