@@ -46,6 +46,7 @@ ci:
       - any-glob-to-any-file:
           - ".github/workflows/**/*"
           - ".github/linters/**/*"
+          - ".ruff.toml"
           - ".zizmor.yml"
 
 dependencies:
