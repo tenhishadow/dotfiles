@@ -89,6 +89,7 @@ The default dotfiles install path must not apply privileged configuration.
 | [`docs/adoption.md`](docs/adoption.md) | Practical first-use and forking notes. |
 | [`docs/security-notes.md`](docs/security-notes.md) | Security caveats for this personal workstation baseline. |
 | [`docs/migration-from-ans-workstation.md`](docs/migration-from-ans-workstation.md) | Location map for the former `ans-workstation` layer. |
+| [`docs/github-labels.md`](docs/github-labels.md) | GitHub labeler pipeline and repository label expectations. |
 | [`roles/system/README.md`](roles/system/README.md) | System role managed paths, validation, and rollback notes. |
 | [`roles/browser_policies/README.md`](roles/browser_policies/README.md) | Browser and VS Code policy targets, variables, and rollback notes. |
 
@@ -272,7 +273,8 @@ Additional checks by area:
 
 GitHub issue forms and the PR template live under `.github/`. The labeler is
 path-based and mirrors the current repository structure, including dotfiles,
-inventory, roles, tests, automation, and AI instructions.
+inventory, roles, tests, automation, and AI instructions. Label expectations
+are documented in [`docs/github-labels.md`](docs/github-labels.md).
 
 GitHub Copilot review guidance lives in `.github/copilot-instructions.md`,
 with path-specific rules under `.github/instructions/`.

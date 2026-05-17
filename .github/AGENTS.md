@@ -16,6 +16,10 @@ automation under `.github/`.
 - Keep workflow permissions minimal and explicit.
 - Keep workflow concurrency explicit for long-running or PR-triggered jobs.
 - Keep `.github/labeler.yml` aligned with the current repository structure.
+- Keep path labels declared in `.github/labeler.yml` present in GitHub, and
+  keep the changed-files label limit high enough for broad maintenance PRs.
+- Keep `docs/github-labels.md` aligned with labeler rules and issue-template
+  labels.
 - Keep issue and PR templates aligned with supported workflows and validation
   commands.
 - Keep GitHub Copilot custom instructions concise, review-focused, and aligned

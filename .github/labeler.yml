@@ -1,5 +1,8 @@
 ---
-changed-files-labels-limit: 8
+# Broad maintenance PRs can legitimately touch docs, automation, roles,
+# dependencies, and AI instructions together. If this limit is exceeded,
+# actions/labeler skips all changed-file labels.
+changed-files-labels-limit: 20
 max-files-changed: 300
 
 ai-instructions:
