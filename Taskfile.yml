@@ -25,7 +25,6 @@ vars:
     -e VALIDATE_MARKDOWN=false
     -e VALIDATE_MARKDOWN_PRETTIER=false
     -e VALIDATE_NATURAL_LANGUAGE=false
-    -e VALIDATE_PYTHON_RUFF_FORMAT=false
     -e VALIDATE_SHELL_SHFMT=false
     -e VALIDATE_TRIVY=false
     -e FILTER_REGEX_EXCLUDE='(^|/)(\.ansible/|\.collections/|\.task/|\.test/nvim/|\.venv/)'
