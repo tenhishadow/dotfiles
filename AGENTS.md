@@ -168,6 +168,8 @@ Ansible, `uv`, and `go-task`.
 - Keep instruction files concise and non-duplicative; repo-wide rules belong
   in root `AGENTS.md` and `.github/copilot-instructions.md`, while path-local
   rules belong in nested `AGENTS.md` and `.github/instructions/`.
+- Keep `.ruff.toml` and `.github/linters/.ruff.toml` synchronized because
+  local Ruff and Super-Linter read different config paths.
 - When adding versioned automation dependencies such as GitHub Actions,
   reusable workflows, Docker images, pre-commit hooks, or future GitLab CI
   includes, ensure Renovate can update them or document why they must be

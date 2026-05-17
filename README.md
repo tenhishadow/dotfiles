@@ -158,7 +158,7 @@ then runs `playbook_system.yml` in Ansible check mode with diff output.
 | `go-task system:check` | Bootstrap dependencies, then dry-run the opt-in system playbook. |
 | `go-task system` | Apply the opt-in system playbook. |
 | `go-task test:system` | Run the system role smoke and idempotency test in an Arch Linux container. |
-| `go-task browser-policies:report` | Print managed browser, Thunderbird, and VS Code policy paths. |
+| `go-task browser-policies:report` | Print managed browser, Thunderbird, and VS Code policy app versions and expected policy paths. |
 | `go-task browser-policies:check` | Dry-run system browser, Thunderbird, and VS Code policy management. |
 | `go-task browser-policies` | Apply system browser, Thunderbird, and VS Code policy management. |
 | `go-task pacdiff` | List pending pacman `.pacnew` and `.pacsave` files. |
