@@ -1,5 +1,8 @@
 ---
-changed-files-labels-limit: 8
+# Broad maintenance PRs can legitimately touch docs, automation, roles,
+# dependencies, and AI instructions together. If this limit is exceeded,
+# actions/labeler skips all changed-file labels.
+changed-files-labels-limit: 20
 max-files-changed: 300
 
 ai-instructions:
@@ -95,6 +98,11 @@ security:
           - "dotfiles/.ssh/**/*"
           - "inventory/host_vars/this_host/security.yml"
           - "roles/browser_policies/**/*"
+          - "roles/system/defaults/main.yml"
+          - "roles/system/tasks/sys-limits.yml"
+          - "roles/system/tasks/sys-sshd.yml"
+          - "roles/system/tasks/sys-sysctl.yml"
+          - "roles/system/templates/limits-dropin.conf.j2"
           - "roles/system/templates/sshd-dropin.conf.j2"
 
 shell:

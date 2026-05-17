@@ -5,9 +5,12 @@ and `go-task`.
 
 [![ansible](https://github.com/tenhishadow/dotfiles/actions/workflows/ansible.yml/badge.svg)](https://github.com/tenhishadow/dotfiles/actions/workflows/ansible.yml)
 
-The default workflow is intentionally user-level only: it links files from
-`dotfiles/` into `$HOME` and does not require sudo. System-wide configuration
-is available through explicit opt-in tasks.
+This repository contains the user-level dotfiles workflow and the former
+`ans-workstation` system automation layer. The default workflow remains
+intentionally user-level and sudo-free: it links managed files from
+`dotfiles/` into `$HOME`. System-wide workstation configuration and browser/VS
+Code policies are available only through explicit opt-in playbooks and
+`go-task` targets.
 
 ## Requirements
 
@@ -40,6 +43,28 @@ _INSTALL_DIR="$HOME/.dotfiles" \
 directories, links managed payload files, and removes a small set of explicit
 legacy user config paths.
 
+## Project Evolution
+
+`tenhishadow/ans-workstation` previously contained the standalone Arch Linux
+workstation automation. That layer has been consolidated into this repository.
+The consolidation did not change the execution boundary:
+
+- `go-task` / `playbook_install.yml` remains user-level and sudo-free.
+- `go-task system` / `playbook_system.yml` applies the opt-in system layer.
+- `go-task browser-policies` / `playbook_browser_policies.yml` applies the
+  opt-in browser and VS Code policy layer.
+
+The default dotfiles install path must not apply privileged configuration.
+
+## Execution Layers
+
+| Layer | Command | Privileged | Purpose |
+| ---- | ------- | ---------- | ------- |
+| User dotfiles | `go-task` | No | Link managed dotfiles into `$HOME`. |
+| System workstation | `go-task system:check` / `go-task system` | Yes | Check or apply the opt-in Arch Linux workstation layer. |
+| Browser policies | `go-task browser-policies:check` / `go-task browser-policies` | Yes | Check or apply opt-in browser and VS Code policies. |
+| Validation | `go-task verify` | No direct system apply | Run repository validation, linting, documentation checks, and smoke tests. |
+
 ## Repository Layout
 
 | Path | Purpose |
@@ -52,15 +77,28 @@ legacy user config paths.
 | `roles/dotfiles/` | User-level dotfiles validation and symlink role. |
 | `roles/system/` | Arch Linux workstation system provisioning role. |
 | `roles/browser_policies/` | Enterprise browser and VS Code policy role. |
-| `docs/` | Generated operator manuals, including Neovim keymaps. |
+| `docs/` | Architecture, adoption, security, migration, and generated operator manuals. |
 | `.github/` | GitHub Actions, issue forms, PR template, labeler, and release automation. |
 | `.test/` | Isolated smoke-test fixtures and container test entry points. |
+
+## Documentation
+
+| Document | Purpose |
+| -------- | ------- |
+| [`docs/architecture.md`](docs/architecture.md) | Repository layer model and safety boundaries. |
+| [`docs/adoption.md`](docs/adoption.md) | Practical first-use and forking notes. |
+| [`docs/security-notes.md`](docs/security-notes.md) | Security caveats for this personal workstation baseline. |
+| [`docs/migration-from-ans-workstation.md`](docs/migration-from-ans-workstation.md) | Location map for the former `ans-workstation` layer. |
+| [`docs/github-labels.md`](docs/github-labels.md) | GitHub labeler pipeline and repository label expectations. |
+| [`roles/system/README.md`](roles/system/README.md) | System role managed paths, validation, and rollback notes. |
+| [`roles/browser_policies/README.md`](roles/browser_policies/README.md) | Browser and VS Code policy targets, variables, and rollback notes. |
 
 ## Common Tasks
 
 | Command | Purpose |
 | ------- | ------- |
 | `go-task` | Apply user-level dotfiles only. |
+| `go-task dotfiles:check` | Dry-run the user-level dotfiles playbook with diff output. |
 | `go-task lint` | Run `ansible-lint` for playbooks, inventory, and roles. |
 | `go-task yamllint` | Run YAML linting through the pinned `uv` environment. |
 | `go-task vint` | Run Vint with Neovim syntax enabled for Vimscript payloads. |
@@ -144,7 +182,7 @@ accidental conflicts:
 | ---- | ---- |
 | `inventory/host_vars/this_host/dotfiles.yml` | User-level mappings, extra directories, and cleanup paths. |
 | `inventory/host_vars/this_host/system.yml` | Non-security system settings such as MOTD and journald. |
-| `inventory/host_vars/this_host/security.yml` | SSHD, sysctl, and limits hardening settings. |
+| `inventory/host_vars/this_host/security.yml` | SSHD, sysctl, and limits security-sensitive workstation settings. |
 | `inventory/host_vars/this_host/browser_policies.yml` | Browser and VS Code policy overrides. |
 
 Keep host variables role-prefixed: `dotfiles_*`, `system_*`, or
@@ -166,7 +204,7 @@ sudo. It manages Arch Linux packages, system drop-ins, selected `/etc`
 configuration, sysctl values, PAM limits, Docker daemon and overlay settings,
 cron, reflector, and laptop-related settings.
 
-The system role ships conservative default tuning for workstation use:
+The system role ships role-owned default tuning for workstation use:
 
 - sysctl defaults for unprivileged BPF, `fq`, BBR, `somaxconn`, and local port
   range.
@@ -218,7 +256,7 @@ Docker is unavailable and state that limitation in review notes.
 
 Additional checks by area:
 
-- User dotfiles or symlink mappings: `go-task`
+- User dotfiles or symlink mappings: `go-task dotfiles:check`, then `go-task`
 - Full local validation, including Super-Linter and JSCPD: `go-task verify`
 - Vimscript payloads: `go-task vint`
 - Neovim keymap docs: `go-task docs:nvim-keymaps:check`
@@ -235,7 +273,8 @@ Additional checks by area:
 
 GitHub issue forms and the PR template live under `.github/`. The labeler is
 path-based and mirrors the current repository structure, including dotfiles,
-inventory, roles, tests, automation, and AI instructions.
+inventory, roles, tests, automation, and AI instructions. Label expectations
+are documented in [`docs/github-labels.md`](docs/github-labels.md).
 
 GitHub Copilot review guidance lives in `.github/copilot-instructions.md`,
 with path-specific rules under `.github/instructions/`.

@@ -16,6 +16,10 @@ automation under `.github/`.
 - Keep workflow permissions minimal and explicit.
 - Keep workflow concurrency explicit for long-running or PR-triggered jobs.
 - Keep `.github/labeler.yml` aligned with the current repository structure.
+- Keep path labels declared in `.github/labeler.yml` present in GitHub, and
+  keep the changed-files label limit high enough for broad maintenance PRs.
+- Keep `docs/github-labels.md` aligned with labeler rules and issue-template
+  labels.
 - Keep issue and PR templates aligned with supported workflows and validation
   commands.
 - Keep GitHub Copilot custom instructions concise, review-focused, and aligned
@@ -24,6 +28,9 @@ automation under `.github/`.
   `.github/instructions/*.instructions.md`.
 - Keep documentation-specific Copilot rules in
   `.github/instructions/documentation.instructions.md`.
+- Keep AI instructions clear that the former `ans-workstation` layer is now
+  opt-in inside this repository, default `go-task` remains sudo-free, and
+  personal workstation settings are not a generic hardening benchmark.
 - Keep Neovim keymap review rules aligned with
   `docs/nvim-keymaps.md`, `dotfiles/.config/nvim/lua/config/keymaps_spec.lua`,
   and `Taskfile.yml`.

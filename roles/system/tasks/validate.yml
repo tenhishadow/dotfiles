@@ -37,6 +37,8 @@
       - system_config_dir_mode is string
       - system_user_systemd_dir_mode is string
       - system_user_service_file_mode is string
+      - system_user_service_owner is string or system_user_service_owner is number
+      - system_user_service_group is string or system_user_service_group is number
       - system_container_virtualization_types is sequence
       - system_container_virtualization_types is not string
       - system_pacman_parallel_downloads is number

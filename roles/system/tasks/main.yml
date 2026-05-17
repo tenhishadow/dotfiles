@@ -53,6 +53,18 @@
   tags:
     - always
 
+- name: System | Set user systemd guard
+  ansible.builtin.set_fact:
+    system_can_manage_user_systemd: >-
+      {{
+        system_user_services_enabled | bool
+        and ansible_facts.service_mgr == "systemd"
+        and not (system_is_container | bool)
+        and not (system_in_ci | bool)
+      }}
+  tags:
+    - always
+
 - name: System | Set timesyncd guard
   ansible.builtin.set_fact:
     system_can_manage_timesyncd: >-

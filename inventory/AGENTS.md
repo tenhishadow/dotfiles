@@ -11,8 +11,8 @@ playbooks.
 - `host_vars/this_host/dotfiles.yml` owns dotfile mappings and cleanup.
 - `host_vars/this_host/browser_policies.yml` owns browser policy overrides.
 - `host_vars/this_host/system.yml` owns non-security system role values.
-- `host_vars/this_host/security.yml` owns SSHD, sysctl, and limits hardening
-  values.
+- `host_vars/this_host/security.yml` owns SSHD, sysctl, and limits
+  security-sensitive workstation values.
 - New payload files under `../dotfiles/` must be added to
   `dotfiles_mapping` before the default playbook can link them.
 - System role values are used only by `playbook_system.yml`.

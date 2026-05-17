@@ -44,14 +44,14 @@ system_packages:
   - openbsd-netcat
   # : }}}
 
-  # : network {{{
-  ## messages
+  # : communication {{{
+  ## Messaging
   - element-desktop
   - telegram-desktop
   - mattermost
   # - zoom # AUR
   # - slack-desktop # AUR
-  ## browsers
+  ## Browsers
   - firefox
   # - brave-bin # AUR
   # : }}}

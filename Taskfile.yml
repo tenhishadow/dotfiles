@@ -134,7 +134,9 @@ tasks:
     cmd: "uv run yamllint ."
   vint:
     deps: [deps-python]
-    cmd: "PYTHONWARNINGS=ignore uv run vint --enable-neovim {{.VINT_TARGETS}}"
+    cmd: >-
+      PYTHONWARNINGS=ignore
+      uv run python .test/vint_runner.py --enable-neovim {{.VINT_TARGETS}}
   stylua:
     deps: [deps-verify]
     cmd: "stylua --check {{.STYLUA_TARGETS}}"
@@ -203,6 +205,9 @@ tasks:
   default:
     deps: [deps-galaxy]
     cmd: "{{.MITOGEN_VARS}} {{.RUN_PLAYBOOK}}"
+  dotfiles:check:
+    deps: [deps-galaxy]
+    cmd: "{{.MITOGEN_VARS}} {{.RUN_PLAYBOOK}} --check --diff"
   system:
     deps: [deps-galaxy]
     cmds:

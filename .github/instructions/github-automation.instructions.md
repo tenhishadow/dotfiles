@@ -23,6 +23,10 @@ applyTo: ".github/**/*.yml,.github/**/*.yaml,.github/**/*.md,renovate.json,Taskf
 - Keep `.github/labeler.yml` aligned with current repository paths, including
   AI instructions under `AGENTS.md`, `.github/copilot-instructions.md`, and
   `.github/instructions/`.
+- Keep labeler path labels present in GitHub and avoid a changed-file label
+  limit that makes broad maintenance PRs skip all labels.
+- Keep `docs/github-labels.md` aligned with labeler rules and issue-template
+  labels.
 - Keep issue forms and the PR template aligned with supported workflows and
   validation commands.
 - Keep Copilot instructions concise, review-focused, and non-duplicative:
