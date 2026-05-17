@@ -1,5 +1,9 @@
 rules:
+  # GitHub Actions versions are Renovate-managed and reviewed in normal PRs,
+  # so this repo does not require immutable action SHAs in workflow files.
   unpinned-uses:
     disable: true
+  # Workflows do not execute untrusted user-provided template values; current
+  # expressions are limited to trusted repository and GitHub event metadata.
   template-injection:
     disable: true

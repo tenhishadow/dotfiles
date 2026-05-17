@@ -29,19 +29,48 @@ sudo pacman -Sy --noconfirm --needed git go-task uv
 
 ## Quick Start
 
-Clone and apply the user-level dotfiles:
+Clone the repository:
 
 ```bash
 _INSTALL_DIR="$HOME/.dotfiles" \
   && git clone https://github.com/tenhishadow/dotfiles.git "$_INSTALL_DIR" \
-  && cd "$_INSTALL_DIR" \
-  && go-task
+  && cd "$_INSTALL_DIR"
+```
+
+Start with the user-level dry run:
+
+```bash
+go-task dotfiles:check
+```
+
+Apply the user-level dotfiles:
+
+```bash
+go-task
 ```
 
 `go-task` runs `playbook_install.yml` only. That playbook loads
 `roles/dotfiles`, validates the dotfiles contract, creates required user
 directories, links managed payload files, and removes a small set of explicit
 legacy user config paths.
+
+## First-Run Safety
+
+`go-task dotfiles:check` runs the default Ansible playbook in check mode with
+diff output. The default playbook is user-level, uses `become: false`, and
+loads `roles/dotfiles` only. It does not apply privileged system or browser
+policy configuration.
+
+Taskfile dependency bootstrap runs before Ansible and may install missing local
+prerequisites such as `uv` or `git` through `pacman` and `sudo` on Arch Linux.
+The dotfiles workflow can still replace managed destinations with symlinks and
+remove explicit legacy user paths, so review
+`inventory/host_vars/this_host/dotfiles.yml` before applying it on another
+account or fork.
+
+Do not run `go-task system` or `go-task browser-policies` until you have
+reviewed managed `/etc` paths, Docker group behavior, SSHD/sysctl values, the
+system package manifest, and browser/VS Code policy ownership.
 
 ## Project Evolution
 
@@ -64,6 +93,9 @@ The default dotfiles install path must not apply privileged configuration.
 | System workstation | `go-task system:check` / `go-task system` | Yes | Check or apply the opt-in Arch Linux workstation layer. |
 | Browser policies | `go-task browser-policies:check` / `go-task browser-policies` | Yes | Check or apply opt-in browser and VS Code policies. |
 | Validation | `go-task verify` | No direct system apply | Run repository validation, linting, documentation checks, and smoke tests. |
+
+Check targets run after Taskfile dependency bootstrap. `go-task system:check`
+then runs `playbook_system.yml` in Ansible check mode with diff output.
 
 ## Repository Layout
 
@@ -110,7 +142,7 @@ The default dotfiles install path must not apply privileged configuration.
 | `go-task test:nvim:mason-tools` | Validate configured Mason package names against the Mason registry. |
 | `go-task test:nvim:profile` | Run the Neovim smoke test, then print startup and loaded-plugin counts. |
 | `go-task system:list` | List tasks in the opt-in system playbook. |
-| `go-task system:check` | Dry-run the opt-in system playbook. |
+| `go-task system:check` | Bootstrap dependencies, then dry-run the opt-in system playbook. |
 | `go-task system` | Apply the opt-in system playbook. |
 | `go-task test:system` | Run the system role smoke and idempotency test in an Arch Linux container. |
 | `go-task browser-policies:check` | Dry-run system browser and VS Code policy management. |

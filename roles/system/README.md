@@ -51,7 +51,7 @@ go-task test:system
 | Locale and console | Manages `/etc/locale.gen`, `/etc/locale.conf`, and `/etc/vconsole.conf`. |
 | Sysctl | Applies `system_sysctl_default_settings` merged with `system_sysctl_settings` to `/etc/sysctl.d/999-ansible.conf` when `system_sysctl_enabled` is true. |
 | Limits | Writes `/etc/security/limits.d/10-dotfiles.conf` when `system_limits_enabled` is true. |
-| Pacman | Renders `/etc/pacman.conf` from the role template. |
+| Pacman | Renders `/etc/pacman.conf` from the role template with an Ansible backup before replacement. |
 | Reflector | Configures reflector and its systemd timer when systemd is available. |
 | Docker | Configures daemon settings and overlay module options when `system_docker_enabled` is true and the host is not CI/container. |
 | Laptop | Applies laptop-specific settings such as camera blacklist when `system_laptop_enabled` is true. |
@@ -210,8 +210,8 @@ git diff --check
 ## Rollback
 
 Use git to revert role changes before reapplying. For local system state,
-inspect Ansible backups for files rendered with `backup: true`, then apply the
-previous revision with:
+inspect Ansible backups for complete-file writes such as `/etc/pacman.conf`,
+then apply the previous revision with:
 
 ```bash
 go-task system
