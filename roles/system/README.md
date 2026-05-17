@@ -7,6 +7,13 @@ paths and services. It is intentionally not part of the default dotfiles
 workflow. Run it only through `playbook_system.yml` or the matching `go-task`
 targets.
 
+## Historical Note
+
+This role supersedes the former standalone `tenhishadow/ans-workstation`
+automation layer. Legacy `*-ans-workstation.conf` drop-ins are removed where
+applicable to avoid duplicate settings after consolidation. The role remains
+opt-in and is not part of the default dotfiles workflow.
+
 ## Usage
 
 Review the task list:
