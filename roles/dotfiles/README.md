@@ -54,6 +54,11 @@ include kubeconfigs, tokens, cloud credentials, Terraform registry credentials,
 npm tokens, pip indexes, AI account state, MCP credentials, local histories, or
 runtime profiles.
 
+K9s is configured with `readOnly: true`, so the managed default is intentionally
+read-only. Git Delta is configured as the Git pager and assumes `delta` is
+installed. npm uses `audit=false` as a privacy-first default; run `npm audit`
+explicitly in project workflows when needed.
+
 Review `inventory/host_vars/this_host/dotfiles.yml` before applying on another
 account because the role can replace managed destinations with symlinks.
 

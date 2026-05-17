@@ -30,18 +30,42 @@ the tool exposes a documented setting.
 ## AI Client Notes
 
 Gemini CLI has an official user settings file at `~/.gemini/settings.json`.
-The managed file disables usage statistics and telemetry, including prompt
-logging. The shell environment also sets documented telemetry variables to
-disabled values.
+The managed file disables automatic updates, update notifications, usage
+statistics, telemetry, detailed telemetry traces, prompt logging, and external
+collector use. The shell environment also sets documented Gemini telemetry
+variables to disabled values. The committed key names were checked against the
+installed `@google/gemini-cli 0.41.2` bundled reference docs; the online Gemini
+CLI docs also document the user settings file, usage statistics opt-out, and
+telemetry environment variables.
 
 This repository does not manage Gemini API keys, OAuth state, Google Cloud
 credentials, local conversation history, MCP server credentials, extension
 state, or project `.gemini` directories. Those files are account, project, or
 runtime state and must stay out of git.
 
+K9s is intentionally read-only by default through `readOnly: true`. This is an
+operational guard, not just a privacy setting, and it does not manage
+kubeconfig, cluster context history, namespace history, cluster names, or
+tokens.
+
+Git Delta is configured as the Git pager and interactive diff filter. That
+assumes `delta` is installed; `go-task doctor` reports its availability.
+
+npm sets `audit=false` as a privacy-first trade-off to avoid registry audit
+submission by default. Run `npm audit` explicitly inside project workflows when
+you want that signal.
+
+Yarn Classic is managed through `~/.yarnrc`. `YARN_ENABLE_TELEMETRY=false`
+applies only to Yarn versions that honor the modern telemetry environment
+variable; this repository does not manage Yarn Berry `.yarnrc.yml` files.
+
 Terraform checkpoint calls are disabled in the managed CLI config for privacy.
 That also disables HashiCorp upgrade and security bulletin checks from the CLI;
 run explicit provider and Terraform update review when you want that signal.
+
+Thunderbird policy keys are checked against the official Thunderbird policy
+templates. The managed in-app notification keys are version-specific and require
+Thunderbird 139 or newer.
 
 No managed Cursor, Windsurf, or other AI-client config was added because those
 clients are not currently represented in the package manifest or existing
@@ -59,7 +83,7 @@ tools are introduced later.
   internal hostnames.
 - npm, Yarn, and pip registry credentials or private indexes.
 - Yarn Berry `.yarnrc.yml` files. The managed package is Yarn Classic, so this
-  repository manages Classic `.yarnrc` and the documented Berry telemetry
+  repository manages Classic `.yarnrc` and the documented modern telemetry
   environment variable only.
 - TFLint, SQLFluff, and ShellCheck global rule configs. Project-level config is
   less surprising for linters that can change build or review outcomes.
@@ -96,8 +120,6 @@ Official references used for these surfaces include:
   <https://direnv.net/docs/hook.html>
 - npm configuration:
   <https://docs.npmjs.com/cli/v9/using-npm/config/>
-- update-notifier environment opt-out:
-  <https://www.npmjs.com/package/update-notifier>
 - Yarn Classic configuration:
   <https://classic.yarnpkg.com/lang/en/docs/yarnrc/>
 - Yarn Berry telemetry:

@@ -131,12 +131,15 @@ browser_policies_thunderbird_targets:
     policy_path: /etc/thunderbird/policies/policies.json
 ```
 
-The default Thunderbird policy disables telemetry, DNS prefetching, login-save
-prompts, password-manager access, and in-app donation, survey, and message
-notifications where supported by the installed Thunderbird version. It does not
-manage mail accounts, profile data, saved passwords, local mail cache,
-extensions installed inside a runtime profile, address books, calendars,
-cookies, or sessions.
+The default Thunderbird policy keys are verified against the official
+Thunderbird policy templates. They disable telemetry, DNS prefetching,
+login-save prompts, password-manager access, and in-app donation, survey, and
+message notifications where supported by the installed Thunderbird version. The
+`InAppNotification_*` keys require Thunderbird 139 or newer.
+
+This role does not manage mail accounts, profile data, saved passwords, local
+mail cache, extensions installed inside a runtime profile, address books,
+calendars, cookies, or sessions.
 
 ## VS Code
 
