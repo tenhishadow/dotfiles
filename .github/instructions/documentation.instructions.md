@@ -19,10 +19,12 @@ applyTo: "**/*.md,**/AGENTS.md,.github/copilot-instructions.md,.github/instructi
   dotfiles only and must not require sudo.
 - Document the former `tenhishadow/ans-workstation` consolidation factually
   where repository history or architecture is relevant.
-- Do not imply privileged system or browser policy configuration is part of
-  default `go-task`.
+- Do not imply privileged system or browser, Thunderbird, or VS Code policy
+  configuration is part of default `go-task`.
 - Do not present personal workstation security settings as a generic hardening
   benchmark.
+- Document privacy settings as personal workstation defaults and identify
+  intentionally unmanaged account, credential, profile, and runtime state.
 - Keep generated manuals current. For Neovim keymaps, regenerate
   `docs/nvim-keymaps.md` with `go-task docs:nvim-keymaps` and verify it with
   `go-task docs:nvim-keymaps:check`.

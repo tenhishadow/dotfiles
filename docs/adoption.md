@@ -15,6 +15,12 @@ It does not apply system-wide configuration.
 Review `inventory/host_vars/this_host/dotfiles.yml` before applying the
 user-level workflow on another account or fork.
 
+Use the read-only dotfiles report to check current destinations:
+
+```bash
+go-task dotfiles:plan
+```
+
 The user-level apply command is:
 
 ```bash
@@ -43,6 +49,14 @@ go-task browser-policies:check
 `go-task system:check` runs Ansible check mode for the opt-in system playbook
 after Taskfile dependency bootstrap.
 
+Read-only reports are available before privileged review:
+
+```bash
+go-task doctor
+go-task system:report
+go-task browser-policies:report
+```
+
 Review these host values before privileged use:
 
 - `inventory/host_vars/this_host/dotfiles.yml`
@@ -53,6 +67,11 @@ Review these host values before privileged use:
 The local host values are personal workstation choices. They are not a generic
 security baseline and should not be copied to servers, shared systems, or other
 workstations without review.
+
+Review `docs/privacy-policy-surfaces.md` before adopting the managed privacy
+dotfiles and browser, Thunderbird, or VS Code policies. The repository does not
+manage secrets, AI account state, kubeconfigs, mail profiles, browser profiles,
+or private registry credentials.
 
 For a fork, start by adjusting inventory values and dotfile mappings, then run
 the check targets before applying any privileged layer.

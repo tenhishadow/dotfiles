@@ -13,7 +13,7 @@ body:
       options:
         - user dotfiles
         - opt-in system role
-        - browser or VS Code policies
+        - browser, Thunderbird, or VS Code policies
         - Neovim
         - GitHub automation
         - documentation or AI instructions

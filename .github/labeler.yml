@@ -94,8 +94,14 @@ security:
   - changed-files:
       - any-glob-to-any-file:
           - ".github/CODEOWNERS"
+          - "dotfiles/.config/k9s/**/*"
+          - "dotfiles/.config/pip/**/*"
+          - "dotfiles/.gemini/**/*"
           - "dotfiles/.gnupg/**/*"
           - "dotfiles/.ssh/**/*"
+          - "dotfiles/.npmrc"
+          - "dotfiles/.terraformrc"
+          - "dotfiles/.yarnrc.yml"
           - "inventory/host_vars/this_host/security.yml"
           - "roles/browser_policies/**/*"
           - "roles/system/defaults/main.yml"

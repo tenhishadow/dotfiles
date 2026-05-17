@@ -13,8 +13,8 @@ default execution boundary.
 | ----- | ------------ | ------- |
 | User dotfiles | `go-task`, `playbook_install.yml`, `roles/dotfiles/` | Link managed files from `dotfiles/` into `$HOME` and remove explicit legacy user paths. |
 | System workstation | `go-task system:check`, `go-task system`, `playbook_system.yml`, `roles/system/` | Check or apply the opt-in Arch Linux workstation layer. |
-| Browser and VS Code policies | `go-task browser-policies:check`, `go-task browser-policies`, `playbook_browser_policies.yml`, `roles/browser_policies/` | Check or apply opt-in system policy files under `/etc`. |
-| Validation and dependencies | `Taskfile.yml`, `.github/`, Renovate, `uv.lock` | Keep local validation, CI, linting, dependency updates, and generated docs reproducible. |
+| Browser, Thunderbird, and VS Code policies | `go-task browser-policies:check`, `go-task browser-policies`, `playbook_browser_policies.yml`, `roles/browser_policies/` | Check or apply opt-in system policy files under `/etc`. |
+| Validation, reporting, and dependencies | `Taskfile.yml`, `.github/`, `.test/workstation_report.py`, Renovate, `uv.lock` | Keep local reports, validation, CI, linting, dependency updates, and generated docs reproducible. |
 
 Host-specific values live under `inventory/host_vars/this_host/` and stay split
 by ownership: dotfiles mappings, system settings, security-sensitive
@@ -29,6 +29,11 @@ workstation settings, and browser policy overrides.
 - Cleanup and removal paths should stay explicit, narrow, and reviewable.
 - Check mode is available for privileged layers through `go-task system:check`
   and `go-task browser-policies:check`.
+- Read-only reports are available through `go-task doctor`,
+  `go-task dotfiles:plan`, `go-task system:report`, and
+  `go-task browser-policies:report`.
+- Privacy and policy configs manage documented settings only and must not
+  include account state, credentials, profiles, or runtime histories.
 
 ## Former ans-workstation Layer
 

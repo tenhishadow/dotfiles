@@ -25,6 +25,7 @@ vars:
     -e VALIDATE_MARKDOWN=false
     -e VALIDATE_MARKDOWN_PRETTIER=false
     -e VALIDATE_NATURAL_LANGUAGE=false
+    -e VALIDATE_PYTHON_RUFF_FORMAT=false
     -e VALIDATE_SHELL_SHFMT=false
     -e VALIDATE_TRIVY=false
     -e FILTER_REGEX_EXCLUDE='(^|/)(\.ansible/|\.collections/|\.task/|\.test/nvim/|\.venv/)'
@@ -171,6 +172,14 @@ tasks:
   pre-commit:
     deps: [deps-verify]
     cmd: pre-commit run --all-files
+  doctor:
+    cmd: "python3 .test/workstation_report.py doctor"
+  dotfiles:plan:
+    cmd: "python3 .test/workstation_report.py dotfiles-plan"
+  system:report:
+    cmd: "python3 .test/workstation_report.py system-report"
+  browser-policies:report:
+    cmd: "python3 .test/workstation_report.py browser-policies-report"
   verify:
     deps: [deps-galaxy, deps-verify]
     cmds:
