@@ -203,6 +203,9 @@ tasks:
   default:
     deps: [deps-galaxy]
     cmd: "{{.MITOGEN_VARS}} {{.RUN_PLAYBOOK}}"
+  dotfiles:check:
+    deps: [deps-galaxy]
+    cmd: "{{.MITOGEN_VARS}} {{.RUN_PLAYBOOK}} --check --diff"
   system:
     deps: [deps-galaxy]
     cmds:

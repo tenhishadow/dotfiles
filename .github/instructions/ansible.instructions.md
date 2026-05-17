@@ -22,6 +22,7 @@ applyTo: "playbook_*.yml,inventory/**/*.yml,roles/**/*.yml,requirements.yml,ansi
 - Preserve the default dotfiles contract: `playbook_install.yml` stays local,
   user-level, `become: false`, and includes only `roles/dotfiles`.
 - Keep `roles/dotfiles` user-level and sudo-free.
+- Use `go-task dotfiles:check` for user-level dotfiles dry-runs.
 - Keep `roles/system` as the opt-in layer consolidated from the former
   `ans-workstation` automation; do not route it through default `go-task`.
 - Dotfiles mapping entries must use `name`, relative `payload`, and absolute

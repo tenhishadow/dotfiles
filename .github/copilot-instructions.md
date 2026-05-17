@@ -65,7 +65,8 @@ here only as opt-in system automation.
 
 - Ansible, inventory, role, Taskfile, or playbook changes: `go-task lint`.
 - YAML-heavy changes: `go-task yamllint`.
-- Default dotfiles flow or mappings: `go-task`.
+- Default dotfiles flow or mappings: `go-task dotfiles:check`; use `go-task`
+  when the apply path must be exercised.
 - Neovim config: `go-task test:nvim`; for startup-sensitive changes also run
   `go-task test:nvim:profile`.
 - Neovim keymaps: `go-task docs:nvim-keymaps:check`.

@@ -1,6 +1,18 @@
 # Adoption Guide
 
-The safe first command is:
+The lowest-risk first check is:
+
+```bash
+go-task dotfiles:check
+```
+
+That command runs the user-level dotfiles playbook in check mode with diff
+output. It is sudo-free and does not apply system-wide configuration.
+
+Review `inventory/host_vars/this_host/dotfiles.yml` before applying the
+user-level workflow on another account or fork.
+
+The user-level apply command is:
 
 ```bash
 go-task
@@ -8,7 +20,8 @@ go-task
 
 That command applies only the user-level dotfiles workflow. It runs
 `playbook_install.yml`, links managed files from `dotfiles/` into `$HOME`, and
-does not apply system-wide configuration.
+does not apply system-wide configuration. It can still replace managed
+destinations with symlinks and remove explicit legacy user paths.
 
 Do not blindly run these privileged apply commands:
 

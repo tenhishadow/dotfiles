@@ -172,8 +172,9 @@ Ansible, `uv`, and `go-task`.
 ## Validation Matrix
 
 - Always run `git diff --check` before finishing non-trivial changes.
-- Run `go-task` for user dotfiles, symlink mappings, cleanup, or default
-  install flow changes.
+- Run `go-task dotfiles:check` for user dotfiles, symlink mappings, cleanup,
+  or default install flow changes; run `go-task` when the apply path must be
+  exercised.
 - Run `go-task lint` for Ansible, inventory, role, Taskfile, or playbook
   changes.
 - Run `uv run yamllint .` or `go-task yamllint` for YAML-heavy changes.

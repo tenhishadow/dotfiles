@@ -97,6 +97,7 @@ The default dotfiles install path must not apply privileged configuration.
 | Command | Purpose |
 | ------- | ------- |
 | `go-task` | Apply user-level dotfiles only. |
+| `go-task dotfiles:check` | Dry-run the user-level dotfiles playbook with diff output. |
 | `go-task lint` | Run `ansible-lint` for playbooks, inventory, and roles. |
 | `go-task yamllint` | Run YAML linting through the pinned `uv` environment. |
 | `go-task vint` | Run Vint with Neovim syntax enabled for Vimscript payloads. |
@@ -202,7 +203,7 @@ sudo. It manages Arch Linux packages, system drop-ins, selected `/etc`
 configuration, sysctl values, PAM limits, Docker daemon and overlay settings,
 cron, reflector, and laptop-related settings.
 
-The system role ships conservative default tuning for workstation use:
+The system role ships role-owned default tuning for workstation use:
 
 - sysctl defaults for unprivileged BPF, `fq`, BBR, `somaxconn`, and local port
   range.
@@ -254,7 +255,7 @@ Docker is unavailable and state that limitation in review notes.
 
 Additional checks by area:
 
-- User dotfiles or symlink mappings: `go-task`
+- User dotfiles or symlink mappings: `go-task dotfiles:check`, then `go-task`
 - Full local validation, including Super-Linter and JSCPD: `go-task verify`
 - Vimscript payloads: `go-task vint`
 - Neovim keymap docs: `go-task docs:nvim-keymaps:check`
