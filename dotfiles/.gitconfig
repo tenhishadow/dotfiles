@@ -2,6 +2,7 @@
   editor             = nvim
   excludesfile       = "~/.gitignore"
   commitGraph        = true
+  pager              = delta
   untrackedCache     = true
   preloadindex       = true
 [alias]
@@ -24,6 +25,12 @@
 [diff]
   tool               = nvim
   parallel           = 8
+[interactive]
+  diffFilter         = delta --color-only
+[delta]
+  navigate           = true
+  line-numbers       = true
+  side-by-side       = false
 [tag]
   forceSignAnnotated = true
 [grep]

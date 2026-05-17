@@ -1,0 +1,4 @@
+# Keep global defaults predictable for repository searches.
+--smart-case
+--max-columns=200
+--max-columns-preview

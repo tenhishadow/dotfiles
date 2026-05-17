@@ -1,0 +1,15 @@
+{
+  "general": {
+    "disableAutoUpdate": true,
+    "disableUpdateNag": true
+  },
+  "privacy": {
+    "usageStatisticsEnabled": false
+  },
+  "telemetry": {
+    "enabled": false,
+    "traces": false,
+    "logPrompts": false,
+    "useCollector": false
+  }
+}

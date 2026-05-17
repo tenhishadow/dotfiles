@@ -13,8 +13,18 @@ Review especially:
 - Docker group membership
 - IPv6 disablement
 - Browser extension and policy settings
+- Thunderbird policy settings and profile separation
+- AI client telemetry and prompt logging settings
 - Sysctl tuning
 - Package installation in the opt-in system layer
+- npm, Yarn, pip, Terraform, K9s, and other user-level tool defaults
 
 Do not treat these values as universally secure. Adapt them to the host, threat
 model, users, and operational requirements.
+
+Privacy-focused dotfiles can reduce background checks, notifications, telemetry,
+or audit submissions. For example, npm audit submission is disabled by default
+in the managed `.npmrc`; run `npm audit` explicitly when you want that registry
+check for a project. Terraform checkpoint calls are also disabled; review
+Terraform and provider updates explicitly when you want upgrade or security
+bulletin signals.

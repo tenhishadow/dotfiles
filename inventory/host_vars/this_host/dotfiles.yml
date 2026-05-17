@@ -1,6 +1,7 @@
 ---
 dotfiles_directories:
   - path: "{{ dotfiles_bashrc_dir }}"
+  - path: "{{ dotfiles_home }}/.terraform.d/plugin-cache"
 
 dotfiles_mapping:
   - name: bashrc
@@ -18,6 +19,18 @@ dotfiles_mapping:
   - name: gitignore
     payload: .gitignore
     dest: "{{ dotfiles_home }}/.gitignore"
+  - name: gemini_settings
+    payload: .gemini/settings.json
+    dest: "{{ dotfiles_home }}/.gemini/settings.json"
+  - name: terraformrc
+    payload: .terraformrc
+    dest: "{{ dotfiles_home }}/.terraformrc"
+  - name: npmrc
+    payload: .npmrc
+    dest: "{{ dotfiles_home }}/.npmrc"
+  - name: yarnrc
+    payload: .yarnrc.yml
+    dest: "{{ dotfiles_home }}/.yarnrc.yml"
   - name: luacheckrc
     payload: .luacheckrc
     dest: "{{ dotfiles_home }}/.luacheckrc"
@@ -84,6 +97,24 @@ dotfiles_mapping:
   - name: htoprc
     payload: .config/htop/htoprc
     dest: "{{ dotfiles_config_dir }}/htop/htoprc"
+  - name: k9s_config
+    payload: .config/k9s/config.yaml
+    dest: "{{ dotfiles_config_dir }}/k9s/config.yaml"
+  - name: bat_config
+    payload: .config/bat/config
+    dest: "{{ dotfiles_config_dir }}/bat/config"
+  - name: ripgrep_config
+    payload: .config/ripgrep/ripgreprc
+    dest: "{{ dotfiles_config_dir }}/ripgrep/ripgreprc"
+  - name: btop_config
+    payload: .config/btop/btop.conf
+    dest: "{{ dotfiles_config_dir }}/btop/btop.conf"
+  - name: direnv_config
+    payload: .config/direnv/direnv.toml
+    dest: "{{ dotfiles_config_dir }}/direnv/direnv.toml"
+  - name: pip_config
+    payload: .config/pip/pip.conf
+    dest: "{{ dotfiles_config_dir }}/pip/pip.conf"
   - name: mimeapps
     payload: .config/mimeapps.list
     dest: "{{ dotfiles_config_dir }}/mimeapps.list"
