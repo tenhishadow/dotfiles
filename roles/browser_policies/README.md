@@ -32,7 +32,8 @@ The playbook uses sudo because policy files are system configuration.
 | VS Code | Owns the complete `/etc/vscode/policy.json` file for each enabled target. |
 
 System policy files should stay root-owned and should not be symlinked back
-into `$HOME`.
+into `$HOME`. Policy file writes create Ansible backups before replacing
+role-owned files.
 
 ## Variables
 
@@ -203,8 +204,9 @@ policy paths, and generated policy file specs before writing system files.
 
 ## Rollback
 
-Set `browser_policies_state: absent` for managed policy removal, or revert the
-role and inventory changes in git and reapply:
+Set `browser_policies_state: absent` for managed policy removal, inspect
+Ansible backups for replaced policy files, or revert the role and inventory
+changes in git and reapply:
 
 ```bash
 go-task browser-policies
@@ -219,4 +221,5 @@ profiles.
   code.
 - Password-manager policy changes do not necessarily delete passwords already
   saved in existing browser profiles.
-- Existing policy files at role-owned paths are replaced by rendered output.
+- Existing policy files at role-owned paths are backed up and replaced by
+  rendered output.

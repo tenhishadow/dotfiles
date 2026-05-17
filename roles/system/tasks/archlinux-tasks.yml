@@ -4,6 +4,7 @@
   ansible.builtin.template:
     src: templates/pacman.conf.j2
     dest: "{{ system_pacman_config_path }}"
+    backup: true
     owner: "{{ system_config_owner }}"
     group: "{{ system_config_group }}"
     mode: "{{ system_config_file_mode }}"

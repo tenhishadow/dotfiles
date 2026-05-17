@@ -7,7 +7,10 @@ go-task dotfiles:check
 ```
 
 That command runs the user-level dotfiles playbook in check mode with diff
-output. It is sudo-free and does not apply system-wide configuration.
+output. The Ansible playbook is sudo-free and uses `become: false`, but
+Taskfile dependency bootstrap may install missing local prerequisites such as
+`uv` or `git` through `pacman` and `sudo` on Arch Linux before Ansible runs.
+It does not apply system-wide configuration.
 
 Review `inventory/host_vars/this_host/dotfiles.yml` before applying the
 user-level workflow on another account or fork.
@@ -36,6 +39,9 @@ Run check mode first:
 go-task system:check
 go-task browser-policies:check
 ```
+
+`go-task system:check` runs Ansible check mode for the opt-in system playbook
+after Taskfile dependency bootstrap.
 
 Review these host values before privileged use:
 
