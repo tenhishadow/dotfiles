@@ -36,7 +36,7 @@ repos:
       - id: detect-secrets
         exclude: dotfiles/.config/nvim/lazy-lock.json
   - repo: https://github.com/zizmorcore/zizmor-pre-commit
-    rev: v1.24.1
+    rev: v1.25.2
     hooks:
       - id: zizmor
         args: ["-c", ".zizmor.yml"]
