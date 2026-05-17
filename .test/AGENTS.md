@@ -13,7 +13,11 @@ workspaces.
 - `.test/nvim/keymap_docs.lua`
 - `.test/nvim/mason_tools.lua`
 - `.test/nvim/*` language sample fixtures
+- `.test/vint_runner.py`
 - `.test/system/exec.sh`
+
+`.test/vint_runner.py` runs vim-vint with a minimal `pkg_resources`
+compatibility shim so the project environment does not need `setuptools`.
 
 `.test/system/exec.sh` is the Arch Linux container smoke and idempotency script
 used by `go-task test:system`.
