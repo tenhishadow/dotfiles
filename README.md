@@ -142,7 +142,7 @@ then runs `playbook_system.yml` in Ansible check mode with diff output.
 | `go-task` | Apply user-level dotfiles only. |
 | `go-task dotfiles:check` | Dry-run the user-level dotfiles playbook with diff output. |
 | `go-task dotfiles:plan` | Print existing user dotfile destinations and cleanup paths. |
-| `go-task doctor` | Print read-only local tool, Docker, user, and systemd availability. |
+| `go-task doctor` | Print read-only local tool, managed user-tool, Docker, user, and systemd availability. |
 | `go-task lint` | Run `ansible-lint` for playbooks, inventory, and roles. |
 | `go-task yamllint` | Run YAML linting through the pinned `uv` environment. |
 | `go-task vint` | Run Vint with Neovim syntax enabled for Vimscript payloads. |
@@ -186,6 +186,10 @@ configs are normal dotfiles and do not include account state, kubeconfigs,
 tokens, private registries, AI conversation history, or runtime profiles. See
 [`docs/privacy-policy-surfaces.md`](docs/privacy-policy-surfaces.md) for the
 managed surface list and intentionally unmanaged files.
+
+`go-task doctor` reports availability and versions for these managed user tools
+without reading credentials, kubeconfigs, cloud auth, browser profiles, or mail
+profiles.
 
 ## Neovim
 

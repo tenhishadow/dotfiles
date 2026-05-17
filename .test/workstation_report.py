@@ -13,10 +13,16 @@ import pwd
 import re
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 DOTFILES_VARS = ROOT / "inventory/host_vars/this_host/dotfiles.yml"
+ANSI_RE = re.compile(r"\x1b\[[0-9;]*m")
+
+
+class ReportError(Exception):
+    """Expected report input error."""
 
 
 def run_check(command: list[str], timeout: int = 5) -> tuple[bool, str]:
@@ -65,6 +71,20 @@ def tool_line(command: str) -> str:
     return f"{command}: {path or 'missing'}"
 
 
+def tool_version_line(command: str, args: list[str] | None = None) -> str:
+    path = shutil.which(command)
+    if not path:
+        return f"{command}: missing"
+    ok, output = run_check([command, *(args or ["--version"])], timeout=3)
+    if ok and output:
+        first_line = ANSI_RE.sub("", output.splitlines()[0])
+        return f"{command}: {path} ({first_line})"
+    if output:
+        first_line = ANSI_RE.sub("", output.splitlines()[0])
+        return f"{command}: {path} (version unavailable: {first_line})"
+    return f"{command}: {path} (version unavailable)"
+
+
 def known_dotfiles_vars() -> dict[str, str]:
     home = Path.home()
     config_home = Path(os.environ.get("XDG_CONFIG_HOME", home / ".config"))
@@ -94,7 +114,20 @@ def render_value(value: str) -> str:
     return re.sub(r"\{\{\s*([^}]+?)\s*\}\}", replace, value)
 
 
+def unresolved(value: str) -> bool:
+    return "{{" in value or "}}" in value
+
+
 def parse_dotfiles_inventory() -> tuple[list[dict[str, str]], list[str], list[str]]:
+    """Parse the current simple dotfiles host vars shape.
+
+    This intentionally supports only the repository's current
+    dotfiles_directories, dotfiles_mapping, and dotfiles_cleanup_paths list
+    structure. It is a read-only report helper, not a general YAML parser.
+    """
+    if not DOTFILES_VARS.is_file():
+        raise ReportError(f"{DOTFILES_VARS}: missing")
+
     mappings: list[dict[str, str]] = []
     directories: list[str] = []
     cleanup: list[str] = []
@@ -149,7 +182,27 @@ def print_doctor() -> None:
 
     section("Tools")
     for command in ("uv", "git", "go-task", "docker", "crontab", "systemctl"):
-        print(tool_line(command))
+        if command == "crontab":
+            print(tool_line(command))
+        else:
+            print(tool_version_line(command))
+
+    section("Managed User Tools")
+    managed_tools = (
+        ("gemini", ["--version"]),
+        ("k9s", ["version", "--short"]),
+        ("delta", ["--version"]),
+        ("terraform", ["version"]),
+        ("bat", ["--version"]),
+        ("rg", ["--version"]),
+        ("btop", ["--version"]),
+        ("direnv", ["version"]),
+        ("npm", ["--version"]),
+        ("yarn", ["--version"]),
+        ("pip", ["--version"]),
+    )
+    for command, args in managed_tools:
+        print(tool_version_line(command, args))
 
     docker_ok, docker_output = run_check(["docker", "info"])
     print(f"docker daemon: {'available' if docker_ok else 'unavailable'}")
@@ -168,8 +221,17 @@ def print_dotfiles_plan() -> None:
     section("Dotfiles Destinations")
     for mapping in mappings:
         name = mapping.get("name", "unnamed")
-        dest = Path(mapping.get("dest", ""))
-        payload = ROOT / "dotfiles" / mapping.get("payload", "")
+        missing_keys = sorted({"payload", "dest"} - mapping.keys())
+        if missing_keys:
+            print(f"{name}: invalid mapping (missing {', '.join(missing_keys)})")
+            continue
+        dest_value = mapping["dest"]
+        payload_value = mapping["payload"]
+        if unresolved(dest_value) or unresolved(payload_value):
+            print(f"{name}: unresolved template ({payload_value} -> {dest_value})")
+            continue
+        dest = Path(dest_value)
+        payload = ROOT / "dotfiles" / payload_value
         if dest.is_symlink() and dest.resolve() == payload.resolve():
             state = "managed symlink"
         elif dest.exists() or dest.is_symlink():
@@ -180,10 +242,16 @@ def print_dotfiles_plan() -> None:
 
     section("Extra Directories")
     for directory in directories:
+        if unresolved(directory):
+            print(f"{directory}: unresolved template")
+            continue
         print(f"{directory}: {status(Path(directory))}")
 
     section("Explicit Cleanup Paths")
     for path in cleanup:
+        if unresolved(path):
+            print(f"{path}: unresolved template")
+            continue
         print(f"{path}: {status(Path(path))}")
 
 
@@ -246,7 +314,8 @@ def print_browser_policies_report() -> None:
         "/etc/thunderbird/policies/policies.json",
         "/etc/vscode/policy.json",
     ]
-    section("Policy Files")
+    section("Expected Managed Policy Files")
+    print("read-only report; expected role-owned paths only")
     for path in policy_paths:
         print(f"{path}: {status(Path(path))}")
 
@@ -259,14 +328,18 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    if args.report == "doctor":
-        print_doctor()
-    elif args.report == "dotfiles-plan":
-        print_dotfiles_plan()
-    elif args.report == "system-report":
-        print_system_report()
-    elif args.report == "browser-policies-report":
-        print_browser_policies_report()
+    try:
+        if args.report == "doctor":
+            print_doctor()
+        elif args.report == "dotfiles-plan":
+            print_dotfiles_plan()
+        elif args.report == "system-report":
+            print_system_report()
+        elif args.report == "browser-policies-report":
+            print_browser_policies_report()
+    except ReportError as error:
+        print(f"report error: {error}", file=sys.stderr)
+        return 1
     return 0
 
 
