@@ -171,6 +171,14 @@ tasks:
   pre-commit:
     deps: [deps-verify]
     cmd: pre-commit run --all-files
+  doctor:
+    cmd: "python3 .test/workstation_report.py doctor"
+  dotfiles:plan:
+    cmd: "python3 .test/workstation_report.py dotfiles-plan"
+  system:report:
+    cmd: "python3 .test/workstation_report.py system-report"
+  browser-policies:report:
+    cmd: "python3 .test/workstation_report.py browser-policies-report"
   verify:
     deps: [deps-galaxy, deps-verify]
     cmds:

@@ -15,8 +15,8 @@ Ansible, `uv`, and `go-task`.
 - `roles/dotfiles/` contains the default user-level dotfiles workflow.
 - `roles/system/` contains opt-in Arch Linux workstation provisioning
   consolidated from the former `tenhishadow/ans-workstation` repository.
-- `roles/browser_policies/` contains opt-in browser and VS Code policy
-  management.
+- `roles/browser_policies/` contains opt-in browser, Thunderbird, and VS Code
+  policy management.
 - `docs/` contains architecture, adoption, security, migration, and generated
   operator manuals.
 
@@ -54,9 +54,13 @@ Ansible, `uv`, and `go-task`.
 - Keep changes deterministic, narrow, reviewable, and idempotent.
 - Keep repository text, comments, task names, documentation, and AI
   instructions in English.
-- Do not commit secrets, tokens, cookies, browser profiles, session state,
-  local databases, caches, private keys, generated test workspaces, or copied
-  runtime configs.
+- Do not commit secrets, tokens, cookies, browser or mail profiles, session
+  state, local databases, caches, private keys, kubeconfigs, cloud
+  credentials, AI account state, MCP credentials, generated test workspaces, or
+  copied runtime configs.
+- Manage privacy and policy values only through documented upstream config or
+  enterprise policy keys. Do not invent settings for AI clients, browsers,
+  package managers, or developer tools.
 
 ## Engineering Rules
 
@@ -65,7 +69,8 @@ Ansible, `uv`, and `go-task`.
 - Use explicit ownership and mode for managed files, especially under `/etc`.
 - Keep variables in inventory, role defaults, or role vars instead of
   duplicating literals.
-- Keep package lists and policy target lists declarative.
+- Keep package lists, policy target lists, and user-level privacy configs
+  declarative.
 - Use handlers for service restarts when template or config changes require
   them.
 - Preserve CI and container guards for privileged system behavior.
@@ -122,6 +127,9 @@ Ansible, `uv`, and `go-task`.
   `go-task`, omit the former `ans-workstation` consolidation where relevant,
   or describe this personal workstation baseline as a generic hardening
   benchmark.
+- Flag undocumented policy/config keys and AI-client dotfiles that include
+  account state, credentials, MCP credentials, prompt history, or local session
+  data.
 - Flag Ansible tasks that are not idempotent, omit FQCN modules, omit explicit
   modes for managed files, use unguarded shell/command calls, or duplicate
   values that belong in inventory/defaults/vars.
@@ -137,7 +145,8 @@ Ansible, `uv`, and `go-task`.
 - Flag non-English repository text, comments, task names, docs, and AI
   instructions unless the content is quoted external output.
 - Flag secrets, runtime state, generated test workspaces, copied local
-  configs, and over-broad cleanup/removal patterns.
+  configs, kubeconfigs, AI account state, mail/browser profiles, and
+  over-broad cleanup/removal patterns.
 
 ## Documentation And Instruction Sync
 
@@ -159,6 +168,8 @@ Ansible, `uv`, and `go-task`.
 - Keep instruction files concise and non-duplicative; repo-wide rules belong
   in root `AGENTS.md` and `.github/copilot-instructions.md`, while path-local
   rules belong in nested `AGENTS.md` and `.github/instructions/`.
+- Keep `.ruff.toml` and `.github/linters/.ruff.toml` synchronized because
+  local Ruff and Super-Linter read different config paths.
 - When adding versioned automation dependencies such as GitHub Actions,
   reusable workflows, Docker images, pre-commit hooks, or future GitLab CI
   includes, ensure Renovate can update them or document why they must be

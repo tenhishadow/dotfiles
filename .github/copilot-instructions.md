@@ -9,11 +9,13 @@ opt-in here.
 - Default `go-task` must remain user-level and sudo-free.
 - `playbook_install.yml` keeps `become: false` and may include
   `roles/dotfiles` only.
-- Privileged system and browser policy behavior must stay opt-in.
+- Privileged system and browser/Thunderbird/VS Code policy behavior must stay
+  opt-in.
 - Docs must not imply privileged configuration is part of default `go-task`.
 - Security wording must not present personal workstation values as a generic
   hardening benchmark.
-- Reject secrets, private keys, browser profiles, caches, generated test
+- Reject secrets, private keys, browser or mail profiles, caches, kubeconfigs,
+  cloud credentials, AI account state, MCP credentials, generated test
   workspaces, local configs, and machine-local runtime state.
 
 ## Ansible Review
@@ -35,6 +37,9 @@ opt-in here.
   casing.
 - Prefer system drop-ins over editing upstream main config files where
   supported.
+- Policy and privacy config keys must be verified against upstream
+  documentation. Do not guess AI-client, browser, package-manager, or developer
+  tool settings.
 - PAM limits must use `/etc/security/limits.d/`; kernel module options must use
   `/etc/modprobe.d/`.
 - Host sysctl overrides belong in `system_sysctl_settings`; defaults belong in
@@ -73,7 +78,7 @@ opt-in here.
 - Neovim keymaps: `go-task docs:nvim-keymaps:check`.
 - System role: `go-task system:check`; use `go-task test:system` for task,
   template, or handler changes when Docker is available.
-- Browser policies: `go-task browser-policies:check`.
+- Browser, Thunderbird, or VS Code policies: `go-task browser-policies:check`.
 - CI or repo-wide lint behavior: `go-task superlinter` when Docker is
   available.
 - Full local validation: `go-task verify`.

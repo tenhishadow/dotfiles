@@ -43,6 +43,25 @@ Use `dotfiles_cleanup_paths` for narrow, explicit legacy path removals.
 Public role variables use the `dotfiles_` prefix; loop variables and registered
 facts are also role-prefixed to keep validation output clear.
 
+## Managed Tool Configs
+
+This role now includes safe user-level configs for tools already represented in
+the workstation package manifest, including Gemini CLI, K9s, Git Delta,
+Terraform CLI, bat, ripgrep, btop, direnv, npm, Yarn, and pip.
+
+These files are normal dotfiles under `$HOME` or XDG config paths. They do not
+include kubeconfigs, tokens, cloud credentials, Terraform registry credentials,
+npm tokens, pip indexes, AI account state, MCP credentials, local histories, or
+runtime profiles.
+
+K9s is configured with `readOnly: true`, so the managed default is intentionally
+read-only. Git Delta is configured as the Git pager and assumes `delta` is
+installed. npm uses `audit=false` as a privacy-first default; run `npm audit`
+explicitly in project workflows when needed.
+
+Review `inventory/host_vars/this_host/dotfiles.yml` before applying on another
+account because the role can replace managed destinations with symlinks.
+
 The Neovim restore cron command intentionally uses a Lua `pcall(require,
 "lazy")` wrapper and `NVIM_USE_MASON=off`. This keeps the job harmless on hosts
 where old Neovim skips the plugin layer and prevents background Mason installs.

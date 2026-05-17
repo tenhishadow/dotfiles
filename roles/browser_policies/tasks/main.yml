@@ -25,6 +25,15 @@
     - browser_policies
     - browser_policies_firefox
 
+- name: Browser Policies | Run Thunderbird tasks
+  ansible.builtin.include_tasks: thunderbird.yml
+  when:
+    - browser_policies_enabled | bool
+    - browser_policies_thunderbird_enabled | bool
+  tags:
+    - browser_policies
+    - browser_policies_thunderbird
+
 - name: Browser Policies | Run VS Code tasks
   ansible.builtin.include_tasks: vscode.yml
   when:

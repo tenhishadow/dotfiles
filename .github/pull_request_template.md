@@ -7,7 +7,7 @@
 - [ ] User-level dotfiles only
 - [ ] Inventory or Ansible plumbing
 - [ ] Opt-in system role
-- [ ] Browser or VS Code policies
+- [ ] Browser, Thunderbird, or VS Code policies
 - [ ] Neovim config
 - [ ] CI, release, or repository tooling
 - [ ] Documentation or AI instructions

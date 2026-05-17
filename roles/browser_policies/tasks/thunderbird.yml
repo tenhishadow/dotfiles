@@ -1,0 +1,51 @@
+---
+- name: Thunderbird Policies | Run policy file tasks
+  ansible.builtin.include_tasks:
+    file: policy-files.yml
+  vars:
+    browser_policies_policy_files: "{{ browser_policies_thunderbird_policy_files }}"
+    browser_policies_thunderbird_extension_settings_merged: >-
+      {{
+        browser_policies_extension_block
+        | combine(
+            browser_policies_thunderbird_extension_settings,
+            recursive=True
+          )
+      }}
+    browser_policies_thunderbird_policy_files: >-
+      {%- set browser_policies_thunderbird_files = [] -%}
+      {%- for browser_policies_thunderbird_target in browser_policies_thunderbird_targets -%}
+      {%-   if browser_policies_thunderbird_target.enabled | default(true) | bool -%}
+      {%-     set browser_policies_thunderbird_policy =
+                browser_policies_thunderbird_base_policies
+                | combine(browser_policies_thunderbird_target.policies | default({}), recursive=True)
+                | combine(
+                    (
+                      browser_policies_thunderbird_extension_settings_merged
+                      | length > 0
+                    )
+                    | ternary(
+                        {
+                          'ExtensionSettings':
+                            browser_policies_thunderbird_extension_settings_merged,
+                        },
+                        {}
+                      ),
+                    recursive=True
+                  )
+      -%}
+      {%-     set browser_policies_thunderbird_file_added = browser_policies_thunderbird_files.append(
+                {
+                  'name': browser_policies_thunderbird_target.name,
+                  'family': 'Thunderbird',
+                  'directory': browser_policies_thunderbird_target.policy_path | dirname,
+                  'path': browser_policies_thunderbird_target.policy_path,
+                  'content': {'policies': browser_policies_thunderbird_policy},
+                }
+              )
+      -%}
+      {%-   endif -%}
+      {%- endfor -%}
+      {{ browser_policies_thunderbird_files }}
+  when:
+    - browser_policies_thunderbird_policy_files | length > 0

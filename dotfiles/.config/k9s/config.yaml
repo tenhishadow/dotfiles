@@ -1,0 +1,18 @@
+---
+k9s:
+  liveViewAutoRefresh: false
+  readOnly: true
+  refreshRate: 2
+  maxConnRetry: 5
+  ui:
+    enableMouse: false
+    noIcons: false
+    splashless: false
+  skipLatestRevCheck: true
+  keepMissingClusters: true
+  logger:
+    tail: 100
+    buffer: 500
+    sinceSeconds: 300
+    textWrap: false
+    showTime: true

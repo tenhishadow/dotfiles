@@ -334,6 +334,15 @@ export LESS='-R --use-color -Dd+r$Du+b$'
 PAGER="less -RFMIX"
 export PAGER
 
+RIPGREP_CONFIG_PATH="${XDG_CONFIG_HOME:-${HOME}/.config}/ripgrep/ripgreprc"
+[[ -r "${RIPGREP_CONFIG_PATH}" ]] && export RIPGREP_CONFIG_PATH
+
+export GEMINI_TELEMETRY_ENABLED="${GEMINI_TELEMETRY_ENABLED:-false}"
+export GEMINI_TELEMETRY_TRACES_ENABLED="${GEMINI_TELEMETRY_TRACES_ENABLED:-false}"
+export GEMINI_TELEMETRY_LOG_PROMPTS="${GEMINI_TELEMETRY_LOG_PROMPTS:-false}"
+export GEMINI_TELEMETRY_USE_COLLECTOR="${GEMINI_TELEMETRY_USE_COLLECTOR:-false}"
+export YARN_ENABLE_TELEMETRY="${YARN_ENABLE_TELEMETRY:-false}"
+
 # PATH extends
 ## systemd user-binaries
 if [[ "${OSTYPE}" != darwin* ]]; then
@@ -355,6 +364,10 @@ PATH=$GOPATH/bin:$PATH
 ## google cloud
 [[ -d "/opt/google-cloud-cli/bin" ]] &&
   PATH="$PATH:/opt/google-cloud-cli/bin"
+
+## direnv
+[[ -x $(type -P direnv) ]] &&
+  eval "$(direnv hook bash)"
 
 ###
 # completions

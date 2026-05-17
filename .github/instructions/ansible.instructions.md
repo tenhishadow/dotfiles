@@ -27,8 +27,9 @@ applyTo: "playbook_*.yml,inventory/**/*.yml,roles/**/*.yml,requirements.yml,ansi
   `ans-workstation` automation; do not route it through default `go-task`.
 - Dotfiles mapping entries must use `name`, relative `payload`, and absolute
   `dest`.
-- Keep system and browser policy automation opt-in through their dedicated
-  playbooks.
+- Keep system and browser, Thunderbird, and VS Code policy automation opt-in
+  through their dedicated playbooks.
+- Use only documented enterprise policy keys for managed policy dictionaries.
 - Prefer FQCN modules and idempotent modules over `command` or `shell`.
 - Require explicit owner, group, and mode for managed files under `/etc`.
 - Keep package lists, path lists, policy targets, mappings, and cleanup lists

@@ -4,6 +4,7 @@ browser_policies_state: present
 
 browser_policies_chromium_enabled: true
 browser_policies_firefox_enabled: true
+browser_policies_thunderbird_enabled: true
 browser_policies_vscode_enabled: true
 
 browser_policies_extension_lockdown_enabled: true
@@ -113,6 +114,23 @@ browser_policies_firefox_targets:
   - name: firefox
     enabled: true
     policy_path: /etc/firefox/policies/policies.json
+
+browser_policies_thunderbird_base_policies:
+  DisableTelemetry: true
+  NetworkPrediction: false
+  OfferToSaveLogins: false
+  PasswordManagerEnabled: false
+  InAppNotification_Disabled: true
+  InAppNotification_DonationEnabled: false
+  InAppNotification_SurveyEnabled: false
+  InAppNotification_MessageEnabled: false
+
+browser_policies_thunderbird_extension_settings: {}
+
+browser_policies_thunderbird_targets:
+  - name: thunderbird
+    enabled: true
+    policy_path: /etc/thunderbird/policies/policies.json
 
 browser_policies_vscode_base_policies:
   TelemetryLevel: "off"

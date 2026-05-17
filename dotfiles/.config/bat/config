@@ -1,0 +1,4 @@
+# Keep output readable while preserving bat's default pager behavior.
+--style="numbers,changes,header"
+--paging=auto
+--wrap=never

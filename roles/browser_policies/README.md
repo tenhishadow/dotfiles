@@ -1,11 +1,12 @@
 # browser_policies
 
-Opt-in role for managing Linux browser and VS Code enterprise policies as
-root-owned system configuration.
+Opt-in role for managing Linux browser, Thunderbird, and VS Code enterprise
+policies as root-owned system configuration.
 
 This role writes policy files under `/etc`. It does not manage runtime browser
-profiles, cookies, history, cache, session state, local storage, VS Code user
-settings, or VS Code workspace settings.
+or mail profiles, cookies, history, cache, session state, local storage, mail
+accounts, address books, calendars, VS Code user settings, or VS Code workspace
+settings.
 
 ## Usage
 
@@ -29,6 +30,7 @@ The playbook uses sudo because policy files are system configuration.
 | ------------- | --------------------- |
 | Chromium-based browsers | Writes one generated JSON file under each target managed policy directory. |
 | Firefox-based browsers | Owns the complete `policies.json` file for each enabled target. |
+| Thunderbird | Owns the complete `policies.json` file for each enabled target. |
 | VS Code | Owns the complete `/etc/vscode/policy.json` file for each enabled target. |
 
 System policy files should stay root-owned and should not be symlinked back
@@ -48,6 +50,7 @@ browser_policies_state: present
 
 browser_policies_chromium_enabled: true
 browser_policies_firefox_enabled: true
+browser_policies_thunderbird_enabled: true
 browser_policies_vscode_enabled: true
 
 browser_policies_extension_lockdown_enabled: true
@@ -55,6 +58,7 @@ browser_policies_extension_block_message: "Extensions are managed by dotfiles."
 browser_policies_chromium_policy_filename: "10-dotfiles-managed.json"
 browser_policies_chromium_extension_settings: {}
 browser_policies_firefox_extension_settings: {}
+browser_policies_thunderbird_extension_settings: {}
 browser_policies_vscode_allowed_extensions: {}
 ```
 
@@ -65,6 +69,7 @@ short, stable keys:
 | ------------- | -------- |
 | Chromium-based browsers | `policy_dir` |
 | Firefox-based browsers | `policy_path` |
+| Thunderbird | `policy_path` |
 | VS Code | `policy_path` |
 
 The task files normalize enabled targets into generated policy file specs
@@ -112,6 +117,29 @@ browser_policies_firefox_targets:
 
 The same target pattern works for other Firefox-based browsers when they
 support the Firefox enterprise policy file format.
+
+## Thunderbird
+
+Thunderbird policy support uses the official `policies.json` surface and owns
+the complete file at `policy_path`. The default target is
+`/etc/thunderbird/policies/policies.json`.
+
+```yaml
+browser_policies_thunderbird_targets:
+  - name: thunderbird
+    enabled: true
+    policy_path: /etc/thunderbird/policies/policies.json
+```
+
+The default Thunderbird policy keys are verified against the official
+Thunderbird policy templates. They disable telemetry, DNS prefetching,
+login-save prompts, password-manager access, and in-app donation, survey, and
+message notifications where supported by the installed Thunderbird version. The
+`InAppNotification_*` keys require Thunderbird 139 or newer.
+
+This role does not manage mail accounts, profile data, saved passwords, local
+mail cache, extensions installed inside a runtime profile, address books,
+calendars, cookies, or sessions.
 
 ## VS Code
 
@@ -181,12 +209,22 @@ browser_policies_firefox_extension_settings:
     install_url: "https://addons.mozilla.org/firefox/downloads/latest/ublock-origin/latest.xpi"
 ```
 
+Thunderbird uses the same extension policy merge model:
+
+```yaml
+browser_policies_thunderbird_extension_settings:
+  "*":
+    installation_mode: blocked
+    blocked_install_message: "Extensions are managed by dotfiles."
+```
+
 ## Validation
 
 After applying, verify policies in the relevant applications:
 
 - Brave or Chromium: `brave://policy` and `brave://management`
 - Firefox-compatible browsers: `about:policies`
+- Thunderbird: Troubleshooting Information, then Enterprise Policies
 - VS Code: Settings UI managed-value lock icons
 - VS Code logs: Command Palette, `Show Window Log`
 
@@ -212,14 +250,14 @@ changes in git and reapply:
 go-task browser-policies
 ```
 
-Removing policy files does not remove data already stored in browser or VS Code
-profiles.
+Removing policy files does not remove data already stored in browser,
+Thunderbird, or VS Code profiles.
 
 ## Risks
 
 - Extension lockdown can block or remove extensions that are not declared in
   code.
 - Password-manager policy changes do not necessarily delete passwords already
-  saved in existing browser profiles.
+  saved in existing browser or Thunderbird profiles.
 - Existing policy files at role-owned paths are backed up and replaced by
   rendered output.

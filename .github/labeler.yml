@@ -46,6 +46,7 @@ ci:
       - any-glob-to-any-file:
           - ".github/workflows/**/*"
           - ".github/linters/**/*"
+          - ".ruff.toml"
           - ".zizmor.yml"
 
 dependencies:
@@ -94,8 +95,14 @@ security:
   - changed-files:
       - any-glob-to-any-file:
           - ".github/CODEOWNERS"
+          - "dotfiles/.config/k9s/**/*"
+          - "dotfiles/.config/pip/**/*"
+          - "dotfiles/.gemini/**/*"
           - "dotfiles/.gnupg/**/*"
           - "dotfiles/.ssh/**/*"
+          - "dotfiles/.npmrc"
+          - "dotfiles/.terraformrc"
+          - "dotfiles/.yarnrc"
           - "inventory/host_vars/this_host/security.yml"
           - "roles/browser_policies/**/*"
           - "roles/system/defaults/main.yml"

@@ -15,9 +15,13 @@ workspaces.
 - `.test/nvim/*` language sample fixtures
 - `.test/vint_runner.py`
 - `.test/system/exec.sh`
+- `.test/workstation_report.py`
 
 `.test/vint_runner.py` runs vim-vint with a minimal `pkg_resources`
 compatibility shim so the project environment does not need `setuptools`.
+
+`.test/workstation_report.py` provides read-only local reports for adoption,
+dotfiles destination review, system paths, and policy file ownership.
 
 `.test/system/exec.sh` is the Arch Linux container smoke and idempotency script
 used by `go-task test:system`.
@@ -53,6 +57,7 @@ go-task test:nvim:compat
 go-task test:nvim:mason-tools
 go-task docs:nvim-keymaps:check
 go-task test:system
+go-task doctor
 ```
 
 Run the test that matches the changed fixture area.

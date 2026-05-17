@@ -14,10 +14,10 @@ This directory is the canonical user-level payload linked into `$HOME` by
 
 ## Do Not Put Here
 
-- Secrets, tokens, cookies, histories, session state, local databases, or
-  caches.
-- Browser profiles, SSH private keys, GPG private keys, or machine-local
-  credentials.
+- Secrets, tokens, cookies, histories, session state, local databases, caches,
+  kubeconfigs, cloud credentials, AI account state, or MCP credentials.
+- Browser profiles, mail profiles, SSH private keys, GPG private keys,
+  private registry credentials, or machine-local credentials.
 - Generated output that can be recreated locally.
 - System-wide `/etc` configuration; use an opt-in playbook or role instead.
 
@@ -32,6 +32,8 @@ This directory is the canonical user-level payload linked into `$HOME` by
 - Parent directories for mapping destinations are created automatically. Use
   `dotfiles_directories` only for extra directories not implied by mappings.
 - Keep payload text, comments, and user-facing messages in English.
+- Manage only documented config keys for privacy and policy dotfiles; do not
+  guess settings for AI clients, package managers, or developer tools.
 
 ## Validation
 

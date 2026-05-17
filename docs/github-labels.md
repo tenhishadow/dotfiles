@@ -21,7 +21,7 @@ Keep these GitHub labels present when editing `.github/labeler.yml`:
 | `ai-instructions` | AI agent and Copilot instruction changes. |
 | `ansible` | Ansible playbooks, inventory, roles, or Galaxy requirements. |
 | `automation` | Repository automation, Taskfile, Renovate, or release tooling. |
-| `browser-policies` | Browser and VS Code enterprise policy automation. |
+| `browser-policies` | Browser, Thunderbird, and VS Code enterprise policy automation. |
 | `ci` | GitHub Actions and CI configuration. |
 | `dependencies` | Dependency manifests, lockfiles, or update automation. |
 | `documentation` | Documentation and Markdown changes. |
@@ -29,7 +29,7 @@ Keep these GitHub labels present when editing `.github/labeler.yml`:
 | `github` | GitHub repository metadata, templates, or workflows. |
 | `inventory` | Ansible inventory and host variable ownership. |
 | `nvim` | Neovim configuration, fixtures, or generated keymap docs. |
-| `security` | Security-sensitive settings, SSHD, sysctl, or policy surfaces. |
+| `security` | Security-sensitive settings, privacy dotfiles, SSHD, sysctl, or policy surfaces. |
 | `shell` | Shell startup files or shell test fixtures. |
 | `system` | Opt-in Arch Linux workstation system role. |
 | `tests` | Test fixtures, smoke tests, or validation harnesses. |

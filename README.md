@@ -8,9 +8,9 @@ and `go-task`.
 This repository contains the user-level dotfiles workflow and the former
 `ans-workstation` system automation layer. The default workflow remains
 intentionally user-level and sudo-free: it links managed files from
-`dotfiles/` into `$HOME`. System-wide workstation configuration and browser/VS
-Code policies are available only through explicit opt-in playbooks and
-`go-task` targets.
+`dotfiles/` into `$HOME`. System-wide workstation configuration and browser,
+Thunderbird, and VS Code policies are available only through explicit opt-in
+playbooks and `go-task` targets.
 
 ## Requirements
 
@@ -70,7 +70,16 @@ account or fork.
 
 Do not run `go-task system` or `go-task browser-policies` until you have
 reviewed managed `/etc` paths, Docker group behavior, SSHD/sysctl values, the
-system package manifest, and browser/VS Code policy ownership.
+system package manifest, and browser/Thunderbird/VS Code policy ownership.
+
+Use read-only reports for a local view before applying changes:
+
+```bash
+go-task doctor
+go-task dotfiles:plan
+go-task system:report
+go-task browser-policies:report
+```
 
 ## Project Evolution
 
@@ -81,7 +90,7 @@ The consolidation did not change the execution boundary:
 - `go-task` / `playbook_install.yml` remains user-level and sudo-free.
 - `go-task system` / `playbook_system.yml` applies the opt-in system layer.
 - `go-task browser-policies` / `playbook_browser_policies.yml` applies the
-  opt-in browser and VS Code policy layer.
+  opt-in browser, Thunderbird, and VS Code policy layer.
 
 The default dotfiles install path must not apply privileged configuration.
 
@@ -91,7 +100,7 @@ The default dotfiles install path must not apply privileged configuration.
 | ---- | ------- | ---------- | ------- |
 | User dotfiles | `go-task` | No | Link managed dotfiles into `$HOME`. |
 | System workstation | `go-task system:check` / `go-task system` | Yes | Check or apply the opt-in Arch Linux workstation layer. |
-| Browser policies | `go-task browser-policies:check` / `go-task browser-policies` | Yes | Check or apply opt-in browser and VS Code policies. |
+| Browser policies | `go-task browser-policies:check` / `go-task browser-policies` | Yes | Check or apply opt-in browser, Thunderbird, and VS Code policies. |
 | Validation | `go-task verify` | No direct system apply | Run repository validation, linting, documentation checks, and smoke tests. |
 
 Check targets run after Taskfile dependency bootstrap. `go-task system:check`
@@ -105,10 +114,10 @@ then runs `playbook_system.yml` in Ansible check mode with diff output.
 | `inventory/host_vars/this_host/` | Local host data split by dotfiles, system, security, and browser policy ownership. |
 | `playbook_install.yml` | Default local user-level install playbook. |
 | `playbook_system.yml` | Opt-in privileged Arch Linux workstation playbook. |
-| `playbook_browser_policies.yml` | Opt-in privileged browser and VS Code policy playbook. |
+| `playbook_browser_policies.yml` | Opt-in privileged browser, Thunderbird, and VS Code policy playbook. |
 | `roles/dotfiles/` | User-level dotfiles validation and symlink role. |
 | `roles/system/` | Arch Linux workstation system provisioning role. |
-| `roles/browser_policies/` | Enterprise browser and VS Code policy role. |
+| `roles/browser_policies/` | Enterprise browser, Thunderbird, and VS Code policy role. |
 | `docs/` | Architecture, adoption, security, migration, and generated operator manuals. |
 | `.github/` | GitHub Actions, issue forms, PR template, labeler, and release automation. |
 | `.test/` | Isolated smoke-test fixtures and container test entry points. |
@@ -120,10 +129,11 @@ then runs `playbook_system.yml` in Ansible check mode with diff output.
 | [`docs/architecture.md`](docs/architecture.md) | Repository layer model and safety boundaries. |
 | [`docs/adoption.md`](docs/adoption.md) | Practical first-use and forking notes. |
 | [`docs/security-notes.md`](docs/security-notes.md) | Security caveats for this personal workstation baseline. |
+| [`docs/privacy-policy-surfaces.md`](docs/privacy-policy-surfaces.md) | Managed privacy, policy, and user-dotfile surfaces. |
 | [`docs/migration-from-ans-workstation.md`](docs/migration-from-ans-workstation.md) | Location map for the former `ans-workstation` layer. |
 | [`docs/github-labels.md`](docs/github-labels.md) | GitHub labeler pipeline and repository label expectations. |
 | [`roles/system/README.md`](roles/system/README.md) | System role managed paths, validation, and rollback notes. |
-| [`roles/browser_policies/README.md`](roles/browser_policies/README.md) | Browser and VS Code policy targets, variables, and rollback notes. |
+| [`roles/browser_policies/README.md`](roles/browser_policies/README.md) | Browser, Thunderbird, and VS Code policy targets, variables, and rollback notes. |
 
 ## Common Tasks
 
@@ -131,6 +141,8 @@ then runs `playbook_system.yml` in Ansible check mode with diff output.
 | ------- | ------- |
 | `go-task` | Apply user-level dotfiles only. |
 | `go-task dotfiles:check` | Dry-run the user-level dotfiles playbook with diff output. |
+| `go-task dotfiles:plan` | Print existing user dotfile destinations and cleanup paths. |
+| `go-task doctor` | Print read-only local tool, managed user-tool, Docker, user, and systemd availability. |
 | `go-task lint` | Run `ansible-lint` for playbooks, inventory, and roles. |
 | `go-task yamllint` | Run YAML linting through the pinned `uv` environment. |
 | `go-task vint` | Run Vint with Neovim syntax enabled for Vimscript payloads. |
@@ -142,11 +154,13 @@ then runs `playbook_system.yml` in Ansible check mode with diff output.
 | `go-task test:nvim:mason-tools` | Validate configured Mason package names against the Mason registry. |
 | `go-task test:nvim:profile` | Run the Neovim smoke test, then print startup and loaded-plugin counts. |
 | `go-task system:list` | List tasks in the opt-in system playbook. |
+| `go-task system:report` | Print managed system paths and local Docker/SSHD status. |
 | `go-task system:check` | Bootstrap dependencies, then dry-run the opt-in system playbook. |
 | `go-task system` | Apply the opt-in system playbook. |
 | `go-task test:system` | Run the system role smoke and idempotency test in an Arch Linux container. |
-| `go-task browser-policies:check` | Dry-run system browser and VS Code policy management. |
-| `go-task browser-policies` | Apply system browser and VS Code policy management. |
+| `go-task browser-policies:report` | Print managed browser, Thunderbird, and VS Code policy app versions and expected policy paths. |
+| `go-task browser-policies:check` | Dry-run system browser, Thunderbird, and VS Code policy management. |
+| `go-task browser-policies` | Apply system browser, Thunderbird, and VS Code policy management. |
 | `go-task pacdiff` | List pending pacman `.pacnew` and `.pacsave` files. |
 
 ## User Dotfiles
@@ -165,6 +179,17 @@ entries in `inventory/host_vars/this_host/dotfiles.yml`. Mapping entries use
 the source path and creates destination parent directories automatically. Do
 not add secrets, browser profiles, caches, local databases, generated test
 workspaces, SSH private keys, or GPG private keys.
+
+The managed user payload includes privacy-focused configs for Gemini CLI, K9s,
+Git Delta, Terraform CLI, bat, ripgrep, btop, direnv, npm, Yarn, and pip. These
+configs are normal dotfiles and do not include account state, kubeconfigs,
+tokens, private registries, AI conversation history, or runtime profiles. See
+[`docs/privacy-policy-surfaces.md`](docs/privacy-policy-surfaces.md) for the
+managed surface list and intentionally unmanaged files.
+
+`go-task doctor` reports availability and versions for these managed user tools
+without reading credentials, kubeconfigs, cloud auth, browser profiles, or mail
+profiles.
 
 ## Neovim
 
@@ -215,7 +240,7 @@ accidental conflicts:
 | `inventory/host_vars/this_host/dotfiles.yml` | User-level mappings, extra directories, and cleanup paths. |
 | `inventory/host_vars/this_host/system.yml` | Non-security system settings such as MOTD and journald. |
 | `inventory/host_vars/this_host/security.yml` | SSHD, sysctl, and limits security-sensitive workstation settings. |
-| `inventory/host_vars/this_host/browser_policies.yml` | Browser and VS Code policy overrides. |
+| `inventory/host_vars/this_host/browser_policies.yml` | Browser, Thunderbird, and VS Code policy overrides. |
 
 Keep host variables role-prefixed: `dotfiles_*`, `system_*`, or
 `browser_policies_*`. Upstream configuration keys inside settings maps keep
@@ -252,7 +277,7 @@ notes.
 
 ## Browser Policies
 
-Browser and VS Code enterprise policies are opt-in:
+Browser, Thunderbird, and VS Code enterprise policies are opt-in:
 
 ```bash
 go-task browser-policies:check
@@ -260,7 +285,7 @@ go-task browser-policies
 ```
 
 This path writes root-owned policy files under `/etc` and intentionally does
-not manage runtime browser or VS Code profile state. See
+not manage runtime browser, Thunderbird, or VS Code profile state. See
 `roles/browser_policies/README.md` for variables, validation, and rollback
 notes.
 
