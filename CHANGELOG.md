@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.2.0](https://github.com/tenhishadow/dotfiles/compare/v2.1.0...v2.2.0) (2026-05-17)
+
+
+### Features
+
+* **policies:** expand privacy-first workstation policies ([#141](https://github.com/tenhishadow/dotfiles/issues/141)) ([610daaf](https://github.com/tenhishadow/dotfiles/commit/610daaf3f6cdaa9a4796c897158661beeb06b4d2))
+
 ## [2.1.0](https://github.com/tenhishadow/dotfiles/compare/v2.0.3...v2.1.0) (2026-05-17)
 
 
