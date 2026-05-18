@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.2.1](https://github.com/tenhishadow/dotfiles/compare/v2.2.0...v2.2.1) (2026-05-18)
+
+
+### Bug Fixes
+
+* **renovate:** ignore test fixtures ([a8159d3](https://github.com/tenhishadow/dotfiles/commit/a8159d3c7ba0e2149bf5e6c3b479ef4ade368e4c))
+
 ## [2.2.0](https://github.com/tenhishadow/dotfiles/compare/v2.1.0...v2.2.0) (2026-05-17)
 
 
