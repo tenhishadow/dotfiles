@@ -62,6 +62,8 @@ opt-in here.
 - Keep repository text, comments, task names, docs, and AI instructions in
   English.
 - Keep GitHub Actions least-privilege, deterministic, and Renovate-updateable.
+- Keep Renovate scoped to real dependency surfaces; `.test/` fixtures are not
+  Renovate-managed dependencies.
 - Leave `pyproject.toml` dependency constraints unpinned unless requested;
   `uv.lock` records resolved versions.
 - Keep labeler, templates, Renovate, and AI instructions aligned.

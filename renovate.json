@@ -1,6 +1,8 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": ["config:recommended", ":dependencyDashboard"],
+  "enabledManagers": ["ansible-galaxy", "github-actions", "pep621", "pre-commit", "custom.regex"],
+  "ignorePaths": [".test/**"],
   "labels": ["dependencies"],
   "semanticCommits": "enabled",
   "semanticCommitType": "deps",
@@ -41,7 +43,7 @@
       "addLabels": ["ansible"]
     },
     {
-      "matchManagers": ["pep621", "uv"],
+      "matchManagers": ["pep621"],
       "groupName": "python toolchain"
     },
     {
