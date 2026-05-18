@@ -15,6 +15,8 @@ applyTo: ".github/**/*.yml,.github/**/*.yaml,.github/**/*.md,renovate.json,Taskf
 - Ensure new versioned GitHub Actions, reusable workflows, Docker images,
   pre-commit hooks, Ansible collections, and future CI includes are detected by
   Renovate or documented as manually updated.
+- Keep Renovate scoped to real repository dependency surfaces. `.test/`
+  fixtures must stay ignored because they are detector and smoke-test inputs.
 - Keep dependency refresh tasks explicit: `go-task deps-upgrade` should update
   local lock/config surfaces such as `uv.lock`, pre-commit revs, Ansible Galaxy
   installed collections, and Neovim `lazy-lock.json`; GitHub Actions version

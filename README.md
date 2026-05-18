@@ -338,7 +338,9 @@ with path-specific rules under `.github/instructions/`.
 
 Renovate manages supported dependency updates for GitHub Actions, pre-commit,
 Ansible Galaxy requirements, the Python toolchain, and the Super-Linter Docker
-image referenced by `Taskfile.yml`.
+image referenced by `Taskfile.yml`. Renovate intentionally ignores `.test/`
+fixtures because they are detector and smoke-test inputs, not repository
+dependency surfaces.
 
 Use `go-task deps-upgrade` for local, reviewable dependency refreshes. It
 updates `uv.lock`, refreshes the installed Ansible Galaxy collections allowed by

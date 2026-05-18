@@ -42,6 +42,8 @@ source of truth:
 - Keep Neovim smoke fixture directories aligned with the `name` values in
   `.test/nvim/smoke.lua`.
 - Keep generated workspaces out of git.
+- Keep `.test/` excluded from Renovate because dependency-like files here are
+  fixtures, not repository dependency surfaces.
 - Keep Neovim test language lists sourced from the canonical config when
   possible, especially `config.languages`.
 - Keep Tree-sitter parser installation optional in the test sandbox and skip
