@@ -3,7 +3,7 @@ collections:
     version: "2.2.0"
     source: https://galaxy.ansible.com
   - name: community.general
-    version: "12.6.1"
+    version: "13.0.0"
     source: https://galaxy.ansible.com
   - name: serverscom.mitogen
     version: "1.4.1"
