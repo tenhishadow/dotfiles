@@ -15,19 +15,15 @@ return {
     event = "BufReadPre",
     init = function()
       vim.g.better_whitespace_enabled = 1
+      vim.g.strip_whitespace_on_save = 0
     end,
   },
   {
     "stevearc/conform.nvim",
-    event = { "BufWritePre" },
+    cmd = { "ConformInfo" },
     opts = {
       formatters_by_ft = languages.formatters_by_ft,
-      format_on_save = function(bufnr)
-        if vim.g.disable_autoformat or vim.b[bufnr].disable_autoformat then
-          return
-        end
-        return { timeout_ms = 3000, lsp_format = "never" }
-      end,
+      default_format_opts = { timeout_ms = 3000, lsp_format = "never" },
       formatters = {
         biome = {
           require_cwd = true,

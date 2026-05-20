@@ -507,6 +507,135 @@ local function run_tool_inventory_checks()
   end
 end
 
+local function run_save_behavior_checks()
+  local ok_autocmds, conform_autocmds = pcall(vim.api.nvim_get_autocmds, {
+    group = "Conform",
+    event = "BufWritePre",
+  })
+  if ok_autocmds and #conform_autocmds > 0 then
+    add_error("Conform format-on-save must stay disabled")
+  end
+
+  if vim.g.strip_whitespace_on_save ~= nil and vim.g.strip_whitespace_on_save ~= 0 then
+    add_error("Whitespace stripping on save must stay disabled")
+  end
+
+  local cases = {
+    {
+      name = "yaml",
+      path = "preserve.yaml",
+      lines = {
+        "apiVersion: v1",
+        "kind: ConfigMap",
+        "metadata:",
+        "  name: preserve",
+        "data:",
+        "  # disabled: true  ",
+        "  key: value  ",
+        "  script: |",
+        "    echo keep  ",
+        "    # commented line  ",
+      },
+    },
+    {
+      name = "lua",
+      path = "init.lua",
+      lines = {
+        "local value = true  ",
+        "-- local disabled = false  ",
+        "return value  ",
+      },
+    },
+    {
+      name = "python",
+      path = "main.py",
+      lines = {
+        "value = True  ",
+        "# value = False  ",
+        "print(value)  ",
+      },
+    },
+    {
+      name = "shell",
+      path = "script.sh",
+      lines = {
+        "#!/usr/bin/env bash",
+        "set -euo pipefail  ",
+        "# echo disabled  ",
+        "echo enabled  ",
+      },
+    },
+    {
+      name = "go",
+      path = "main.go",
+      lines = {
+        "package main",
+        "",
+        "func main() {  ",
+        '\t// println("disabled")  ',
+        '\tprintln("enabled")  ',
+        "}  ",
+      },
+    },
+    {
+      name = "terraform",
+      path = "main.tf",
+      lines = {
+        'resource "null_resource" "example" {  ',
+        "  # triggers = {}  ",
+        "}  ",
+      },
+    },
+    {
+      name = "json",
+      path = "config.json",
+      lines = {
+        "{",
+        '  "enabled": true  ',
+        "}  ",
+      },
+    },
+    {
+      name = "markdown",
+      path = "README.md",
+      lines = {
+        "# Title  ",
+        "",
+        "<!-- hidden comment -->  ",
+        "Text with two trailing spaces.  ",
+      },
+    },
+  }
+
+  for _, case in ipairs(cases) do
+    local root = vim.fn.tempname()
+    if vim.fn.mkdir(root, "p") == 0 then
+      add_error("Failed to create save behavior fixture for " .. case.name)
+      return
+    end
+
+    local path = root .. "/" .. case.path
+    if vim.fn.writefile(case.lines, path) ~= 0 then
+      add_error("Failed to write save behavior fixture for " .. case.name)
+      vim.fn.delete(root, "rf")
+      return
+    end
+
+    local expected = table.concat(vim.fn.readfile(path, "b"), "\n")
+    local bufnr = open_file(path)
+    vim.cmd("write")
+    local actual = table.concat(vim.fn.readfile(path, "b"), "\n")
+
+    if actual ~= expected then
+      add_error("Save modified " .. case.name .. " content")
+    end
+
+    vim.bo[bufnr].modified = false
+    pcall(vim.api.nvim_buf_delete, bufnr, { force = true })
+    vim.fn.delete(root, "rf")
+  end
+end
+
 local function run_mason_utils_tests()
   local mason_utils = safe_require("utils.mason")
   if not mason_utils then
@@ -578,6 +707,7 @@ run_mason_utils_tests()
 run_executable_utils_tests()
 run_plugin_checks()
 run_tool_inventory_checks()
+run_save_behavior_checks()
 
 local tests = {
   {

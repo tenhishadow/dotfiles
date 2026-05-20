@@ -35,6 +35,8 @@ playbooks.
 - Keep `dotfiles_mapping` entries in `name`, `payload`, `dest` form.
 - Keep dotfiles `payload` values relative to `dotfiles_location`.
 - Do not put secrets or machine-local runtime state in host vars.
+- Do not add generated XDG desktop state such as `user-dirs.dirs` to
+  `dotfiles_mapping`; `xdg-user-dirs-update` owns that local file.
 - Do not add broad globs or destructive cleanup patterns.
 - Do not make the default dotfiles playbook privileged through inventory.
 - Keep comments and variable descriptions in English.

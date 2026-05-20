@@ -36,6 +36,8 @@ applyTo: "dotfiles/.config/nvim/**/*,.test/nvim/**/*"
   unless Mason provides a package for them.
 - Keep automatic linting lightweight, file-local, and save-triggered only.
   Project-wide validators and security scanners should be manual commands.
+- Keep save-time behavior non-mutating. Do not enable format-on-save,
+  format-after-save, or whitespace stripping on save; formatters are manual.
 - Use canonical `conform.nvim` formatter names and `nvim-lint` linter names in
   `lua/config/languages.lua`; require `go-task test:nvim` for inventory drift
   checks.

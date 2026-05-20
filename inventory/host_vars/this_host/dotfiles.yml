@@ -118,9 +118,6 @@ dotfiles_mapping:
   - name: mimeapps
     payload: .config/mimeapps.list
     dest: "{{ dotfiles_config_dir }}/mimeapps.list"
-  - name: user_dirs
-    payload: .config/user-dirs.dirs
-    dest: "{{ dotfiles_config_dir }}/user-dirs.dirs"
   - name: environment_d
     payload: .config/environment.d/99-dotfiles.conf
     dest: "{{ dotfiles_config_dir }}/environment.d/99-dotfiles.conf"

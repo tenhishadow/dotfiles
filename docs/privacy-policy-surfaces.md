@@ -87,6 +87,8 @@ tools are introduced later.
 - Yarn Berry `.yarnrc.yml` files. The managed package is Yarn Classic, so this
   repository manages Classic `.yarnrc` and the documented modern telemetry
   environment variable only.
+- Generated XDG desktop state such as `~/.config/user-dirs.dirs`, which is
+  owned by `xdg-user-dirs-update` as a local regular file.
 - TFLint, SQLFluff, and ShellCheck global rule configs. Project-level config is
   less surprising for linters that can change build or review outcomes.
 

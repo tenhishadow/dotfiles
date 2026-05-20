@@ -187,6 +187,10 @@ tokens, private registries, AI conversation history, or runtime profiles. See
 [`docs/privacy-policy-surfaces.md`](docs/privacy-policy-surfaces.md) for the
 managed surface list and intentionally unmanaged files.
 
+Generated `xdg-user-dirs` state such as `~/.config/user-dirs.dirs` is not
+managed. `xdg-user-dirs-update` rewrites that path as a regular local file, so
+linking it from the repository would make the default dotfiles run non-idempotent.
+
 `go-task doctor` reports availability and versions for these managed user tools
 without reading credentials, kubeconfigs, cloud auth, browser profiles, or mail
 profiles.
@@ -211,6 +215,8 @@ The Neovim payload uses a structured `lazy.nvim` setup:
   linters. Heavier project-wide linters are available manually through
   `:DotfilesLintManual` or explicit validation commands for Kubernetes, Helm,
   Kustomize, Terraform/OpenTofu, Trivy, Gitleaks, and Semgrep.
+- Formatters are configured for explicit manual use only. Saving a file must
+  not auto-format content or strip whitespace.
 - `NVIM_USE_MASON=off` is the default. `auto` makes already-installed Mason
   tools available without startup installs; `always` allows Mason to install
   configured missing tools on startup.

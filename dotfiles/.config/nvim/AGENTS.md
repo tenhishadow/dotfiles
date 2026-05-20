@@ -73,6 +73,9 @@ not source of truth.
 - Keep automatic linting lightweight and file-local. Project-wide or security
   scanners belong in manual commands or manual linter inventories, not in
   save-time auto lint.
+- Keep save-time behavior non-mutating. Do not enable format-on-save,
+  format-after-save, or whitespace stripping on save; formatters are for
+  explicit manual use only.
 - Use canonical `conform.nvim` formatter names and `nvim-lint` linter names in
   `lua/config/languages.lua`; `go-task test:nvim` must catch unknown formatter
   or linter inventory entries.
