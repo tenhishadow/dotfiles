@@ -211,6 +211,8 @@ The Neovim payload uses a structured `lazy.nvim` setup:
   linters. Heavier project-wide linters are available manually through
   `:DotfilesLintManual` or explicit validation commands for Kubernetes, Helm,
   Kustomize, Terraform/OpenTofu, Trivy, Gitleaks, and Semgrep.
+- Formatters are configured for explicit manual use only. Saving a file must
+  not auto-format content or strip whitespace.
 - `NVIM_USE_MASON=off` is the default. `auto` makes already-installed Mason
   tools available without startup installs; `always` allows Mason to install
   configured missing tools on startup.
