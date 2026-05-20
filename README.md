@@ -187,6 +187,10 @@ tokens, private registries, AI conversation history, or runtime profiles. See
 [`docs/privacy-policy-surfaces.md`](docs/privacy-policy-surfaces.md) for the
 managed surface list and intentionally unmanaged files.
 
+Generated `xdg-user-dirs` state such as `~/.config/user-dirs.dirs` is not
+managed. `xdg-user-dirs-update` rewrites that path as a regular local file, so
+linking it from the repository would make the default dotfiles run non-idempotent.
+
 `go-task doctor` reports availability and versions for these managed user tools
 without reading credentials, kubeconfigs, cloud auth, browser profiles, or mail
 profiles.

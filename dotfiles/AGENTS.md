@@ -19,6 +19,8 @@ This directory is the canonical user-level payload linked into `$HOME` by
 - Browser profiles, mail profiles, SSH private keys, GPG private keys,
   private registry credentials, or machine-local credentials.
 - Generated output that can be recreated locally.
+- Generated XDG desktop state such as `.config/user-dirs.dirs`; let
+  `xdg-user-dirs-update` own the local file.
 - System-wide `/etc` configuration; use an opt-in playbook or role instead.
 
 ## Mapping Rules
