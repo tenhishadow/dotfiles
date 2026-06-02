@@ -23,8 +23,9 @@ compatibility shim so the project environment does not need `setuptools`.
 `.test/workstation_report.py` provides read-only local reports for adoption,
 dotfiles destination review, system paths, and policy file ownership.
 
-`.test/system/exec.sh` is the Arch Linux container smoke and idempotency script
-used by `go-task test:system`.
+`.test/system/exec.sh` is the Arch Linux container system package target,
+smoke, and idempotency script used by `go-task test:system` and
+`go-task verify`.
 
 ## Generated Files
 

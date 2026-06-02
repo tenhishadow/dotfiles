@@ -14,6 +14,7 @@ default execution boundary.
 | User dotfiles | `go-task`, `playbook_install.yml`, `roles/dotfiles/` | Link managed files from `dotfiles/` into `$HOME` and remove explicit legacy user paths. |
 | System workstation | `go-task system:check`, `go-task system`, `playbook_system.yml`, `roles/system/` | Check or apply the opt-in Arch Linux workstation layer. |
 | Browser, Thunderbird, and VS Code policies | `go-task browser-policies:check`, `go-task browser-policies`, `playbook_browser_policies.yml`, `roles/browser_policies/` | Check or apply opt-in system policy files under `/etc`. |
+| All opt-in apply | `go-task all` | Apply user dotfiles, system workstation, and browser policy layers in order. |
 | Validation, reporting, and dependencies | `Taskfile.yml`, `.github/`, `.test/workstation_report.py`, Renovate, `uv.lock` | Keep local reports, validation, CI, linting, dependency updates, and generated docs reproducible. |
 
 Host-specific values live under `inventory/host_vars/this_host/` and stay split
@@ -24,6 +25,8 @@ workstation settings, and browser policy overrides.
 
 - The default `go-task` path runs `playbook_install.yml` only and is sudo-free.
 - Privileged workstation and policy layers require explicit commands.
+- `go-task all` is an explicit privileged aggregate apply target, not the
+  default workflow.
 - System configuration prefers drop-ins and snippets where upstream supports
   them.
 - Cleanup and removal paths should stay explicit, narrow, and reviewable.

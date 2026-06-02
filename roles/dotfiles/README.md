@@ -65,9 +65,10 @@ account because the role can replace managed destinations with symlinks.
 The Neovim restore cron command intentionally uses a Lua `pcall(require,
 "lazy")` wrapper and `NVIM_USE_MASON=off`. This keeps the job harmless on hosts
 where old Neovim skips the plugin layer and prevents background Mason installs.
-It also uses an explicit cron PATH, `flock`, and logs under
-`~/.local/state/nvim` so background restores are non-overlapping and do not
-write runtime logs into `$HOME`.
+It also creates `~/.local/state/nvim` before opening the log file, uses an
+explicit cron PATH and `flock`, and logs under that state directory so
+background restores are non-overlapping and do not write runtime logs into
+`$HOME`.
 
 ## Role Flow
 

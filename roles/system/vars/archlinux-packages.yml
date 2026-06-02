@@ -58,14 +58,14 @@ system_packages:
 
   # : system {{{
   - bash-completion
-  - bind-tools
+  - bind
   - coreutils
   - cracklib
   - cryptsetup
   - dosfstools
   - e2fsprogs
   - freerdp
-  - geoip2-database
+  - geoipupdate
   - gnupg
   - gnutls
   - gzip
@@ -171,9 +171,9 @@ system_packages:
   - openjdk-src
   - yarn
   - npm
-  - nerd-fonts
   - starship
-  - ttf-font-nerd
+  - ttf-nerd-fonts-symbols
+  - ttf-nerd-fonts-symbols-mono
   - ruff
   - yamllint
   - tflint

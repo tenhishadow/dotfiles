@@ -9,6 +9,9 @@ automation under `.github/`.
 - Preserve CI responsibility boundaries.
 - Keep workflow behavior aligned with `Taskfile.yml`.
 - Keep `go-task verify` aligned with local validation and review automation.
+- Keep the `task-all` CI job aligned with the explicit `go-task all` aggregate
+  apply target. It runs in an Arch Linux container and skips package
+  installation to keep CI bounded.
 - Do not reintroduce super-linter into the `go-task lint` path.
 - Do not casually change release-please, Renovate, CODEOWNERS, or zizmor
   configuration.
@@ -53,7 +56,10 @@ automation under `.github/`.
 - Run `go-task lint` when automation changes affect Ansible validation paths.
 - Run `go-task verify` when automation changes affect local aggregate
   validation, issue/PR templates, labeler rules, or AI instructions.
-  It includes Super-Linter and requires a running Docker daemon.
+  It includes the system role container test and Super-Linter, and requires a
+  running Docker daemon.
+- For `task-all` workflow changes, validate the equivalent Arch container path
+  when Docker is available.
 - Run `go-task superlinter` for repository-wide lint pipeline changes.
 - Remember that `go-task superlinter` requires Docker.
 
