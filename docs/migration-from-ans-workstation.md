@@ -13,7 +13,7 @@ layer:
 | Security-sensitive host values | `inventory/host_vars/this_host/security.yml` |
 | Check system layer | `go-task system:check` |
 | Apply system layer | `go-task system` |
-| Test system role | `go-task test:system` |
+| Test system packages and role behavior | `go-task test:system` |
 
 The default `go-task` command in this repository does not apply system-wide
 configuration. It runs `playbook_install.yml` and remains limited to the

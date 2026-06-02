@@ -34,7 +34,7 @@ Apply the role:
 go-task system
 ```
 
-Run the container smoke and idempotency test:
+Run the container package availability, smoke, and idempotency test:
 
 ```bash
 go-task test:system
@@ -204,8 +204,9 @@ go-task test:system
 git diff --check
 ```
 
-`go-task test:system` runs the role twice in a fresh Arch Linux container with
-`--skip-tags pkg`; the second pass must be idempotent.
+`go-task test:system` first verifies the role's Arch package targets against a
+fresh pacman database, then runs the role twice in a fresh Arch Linux container
+with `--skip-tags pkg`; the second pass must be idempotent.
 
 ## Rollback
 

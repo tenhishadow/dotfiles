@@ -22,7 +22,7 @@
 - [ ] `go-task docs:nvim-keymaps:check`
 - [ ] `go-task test:nvim`
 - [ ] `go-task system:check`
-- [ ] `go-task test:system`
+- [ ] `go-task test:system` (covered by `go-task verify`)
 - [ ] `go-task browser-policies:check`
 - [ ] `go-task superlinter` (targeted check when full `go-task verify` was not run)
 - [ ] Not applicable, reason:

@@ -32,3 +32,32 @@ jobs:
     with:
       os: ${{ matrix.os }}
       task_target: default
+
+  task_all:
+    name: task-all (archlinux)
+    runs-on: ubuntu-latest
+    container:
+      image: archlinux:multilib-devel
+    env:
+      ANSIBLE_FORCE_COLOR: "true"
+      UV_PROJECT_ENVIRONMENT: /tmp/dotfiles-task-all-venv
+    steps:
+      - name: Install bootstrap tools
+        run: >-
+          pacman --disable-sandbox -Sy
+          --noconfirm
+          --needed
+          --noprogressbar
+          git
+          go-task
+          reflector
+          sudo
+          uv
+
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Run aggregate target
+        run: go-task all -- --skip-tags pkg

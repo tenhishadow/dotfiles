@@ -9,7 +9,12 @@ applyTo: ".github/**/*.yml,.github/**/*.yaml,.github/**/*.md,renovate.json,Taskf
 - Keep workflow behavior aligned with `Taskfile.yml`.
 - Keep `go-task verify` as the local aggregate validation path for diff,
   Ansible lint, YAML lint, actionlint, Renovate config validation, playbook
-  smoke checks, and Super-Linter.
+  smoke checks, the system role container test, and Super-Linter.
+- Keep `go-task all` as an explicit apply target; it must not replace default
+  `go-task` or `go-task verify`.
+- Keep the `task-all` CI job as an Arch Linux container check of
+  `go-task all -- --skip-tags pkg` so aggregate ordering is covered without
+  installing the full workstation package manifest on hosted runners.
 - Do not reintroduce Super-Linter into `go-task lint`; it belongs to
   `go-task superlinter` and the aggregate `go-task verify` path.
 - Ensure new versioned GitHub Actions, reusable workflows, Docker images,

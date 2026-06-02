@@ -24,8 +24,8 @@ Applies to `roles/system/vars/`.
 
 - Run `go-task lint`.
 - Run `uv run yamllint .` or `go-task yamllint`.
-- Remember that `go-task test:system` runs with `--skip-tags pkg`; it does not
-  prove package availability.
+- Run `go-task test:system` to validate package names against a fresh Arch
+  Linux container before the smoke and idempotency pass.
 
 ## Done Criteria
 

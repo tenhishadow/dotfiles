@@ -52,8 +52,8 @@ Keep the high-level flow predictable:
 
 - Run `go-task lint`.
 - Run `go-task system:check` for behavior or variable changes.
-- Run `go-task test:system` for task, template, or handler changes when
-  Docker is available.
+- Run `go-task test:system` for package manifest, task, template, or handler
+  changes when Docker is available.
 - Run `go-task verify` when system role changes are part of a broader repo
   change.
 - Run `uv run yamllint .` or `go-task yamllint` for YAML changes.

@@ -27,6 +27,8 @@ applyTo: "playbook_*.yml,inventory/**/*.yml,roles/**/*.yml,requirements.yml,ansi
   `ans-workstation` automation; do not route it through default `go-task`.
 - Dotfiles mapping entries must use `name`, relative `payload`, and absolute
   `dest`.
+- User cron jobs that redirect to managed state logs must create the state
+  directory before shell redirection opens the log file.
 - Do not map generated XDG desktop state such as `user-dirs.dirs`; let
   `xdg-user-dirs-update` own that local file.
 - Keep system and browser, Thunderbird, and VS Code policy automation opt-in

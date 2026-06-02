@@ -68,9 +68,10 @@ remove explicit legacy user paths, so review
 `inventory/host_vars/this_host/dotfiles.yml` before applying it on another
 account or fork.
 
-Do not run `go-task system` or `go-task browser-policies` until you have
-reviewed managed `/etc` paths, Docker group behavior, SSHD/sysctl values, the
-system package manifest, and browser/Thunderbird/VS Code policy ownership.
+Do not run `go-task system`, `go-task browser-policies`, or `go-task all`
+until you have reviewed managed `/etc` paths, Docker group behavior,
+SSHD/sysctl values, the system package manifest, and browser/Thunderbird/VS
+Code policy ownership.
 
 Use read-only reports for a local view before applying changes:
 
@@ -91,6 +92,8 @@ The consolidation did not change the execution boundary:
 - `go-task system` / `playbook_system.yml` applies the opt-in system layer.
 - `go-task browser-policies` / `playbook_browser_policies.yml` applies the
   opt-in browser, Thunderbird, and VS Code policy layer.
+- `go-task all` applies those three layers in order and is an explicit
+  privileged opt-in aggregate.
 
 The default dotfiles install path must not apply privileged configuration.
 
@@ -101,6 +104,7 @@ The default dotfiles install path must not apply privileged configuration.
 | User dotfiles | `go-task` | No | Link managed dotfiles into `$HOME`. |
 | System workstation | `go-task system:check` / `go-task system` | Yes | Check or apply the opt-in Arch Linux workstation layer. |
 | Browser policies | `go-task browser-policies:check` / `go-task browser-policies` | Yes | Check or apply opt-in browser, Thunderbird, and VS Code policies. |
+| All opt-in apply | `go-task all` | Yes | Apply user dotfiles, system workstation, and browser policy layers in order. |
 | Validation | `go-task verify` | No direct system apply | Run repository validation, linting, documentation checks, and smoke tests. |
 
 Check targets run after Taskfile dependency bootstrap. `go-task system:check`
@@ -140,6 +144,7 @@ then runs `playbook_system.yml` in Ansible check mode with diff output.
 | Command | Purpose |
 | ------- | ------- |
 | `go-task` | Apply user-level dotfiles only. |
+| `go-task all` | Apply user dotfiles, then the opt-in system and browser policy layers. |
 | `go-task dotfiles:check` | Dry-run the user-level dotfiles playbook with diff output. |
 | `go-task dotfiles:plan` | Print existing user dotfile destinations and cleanup paths. |
 | `go-task doctor` | Print read-only local tool, managed user-tool, Docker, user, and systemd availability. |
@@ -148,7 +153,7 @@ then runs `playbook_system.yml` in Ansible check mode with diff output.
 | `go-task vint` | Run Vint with Neovim syntax enabled for Vimscript payloads. |
 | `go-task docs:nvim-keymaps` | Regenerate the Neovim keymap manual. |
 | `go-task docs:nvim-keymaps:check` | Check that the generated Neovim keymap manual is current. |
-| `go-task verify` | Run the full local aggregate validation path, including Super-Linter. |
+| `go-task verify` | Run the full local aggregate validation path, including Docker-backed checks. |
 | `go-task superlinter` | Run the GitHub Super-Linter container locally. |
 | `go-task test:nvim` | Run the isolated Neovim smoke test. |
 | `go-task test:nvim:mason-tools` | Validate configured Mason package names against the Mason registry. |
@@ -157,7 +162,7 @@ then runs `playbook_system.yml` in Ansible check mode with diff output.
 | `go-task system:report` | Print managed system paths and local Docker/SSHD status. |
 | `go-task system:check` | Bootstrap dependencies, then dry-run the opt-in system playbook. |
 | `go-task system` | Apply the opt-in system playbook. |
-| `go-task test:system` | Run the system role smoke and idempotency test in an Arch Linux container. |
+| `go-task test:system` | Check system package targets, smoke, and idempotency in an Arch Linux container. |
 | `go-task browser-policies:report` | Print managed browser, Thunderbird, and VS Code policy app versions and expected policy paths. |
 | `go-task browser-policies:check` | Dry-run system browser, Thunderbird, and VS Code policy management. |
 | `go-task browser-policies` | Apply system browser, Thunderbird, and VS Code policy management. |
@@ -313,20 +318,22 @@ inventory, documentation, or automation changes:
 go-task verify
 ```
 
-`go-task verify` includes the GitHub Super-Linter container and requires a
-running Docker daemon. Use the narrower area-specific checks above only when
-Docker is unavailable and state that limitation in review notes.
+`go-task verify` includes the system role container test and GitHub
+Super-Linter container, so it requires a running Docker daemon. Use the
+narrower area-specific checks above only when Docker is unavailable and state
+that limitation in review notes.
 
 Additional checks by area:
 
 - User dotfiles or symlink mappings: `go-task dotfiles:check`, then `go-task`
-- Full local validation, including Super-Linter and JSCPD: `go-task verify`
+- Full local validation, including Docker-backed checks: `go-task verify`
 - Vimscript payloads: `go-task vint`
 - Neovim keymap docs: `go-task docs:nvim-keymaps:check`
 - Neovim config: `go-task test:nvim`
 - Neovim Mason tool inventory: `go-task test:nvim:mason-tools`
 - Neovim startup-sensitive changes: `go-task test:nvim:profile`
-- System role behavior: `go-task system:check` and `go-task test:system`
+- System role packages and behavior: `go-task system:check` and
+  `go-task test:system`
 - Browser policy behavior: `go-task browser-policies:check`
 - CI or repository-wide lint changes: `go-task superlinter`
 
@@ -338,6 +345,11 @@ GitHub issue forms and the PR template live under `.github/`. The labeler is
 path-based and mirrors the current repository structure, including dotfiles,
 inventory, roles, tests, automation, and AI instructions. Label expectations
 are documented in [`docs/github-labels.md`](docs/github-labels.md).
+
+The `ansible` workflow also runs a `task-all` job in an Arch Linux container.
+It executes `go-task all -- --skip-tags pkg` to cover aggregate ordering across
+the user dotfiles, system, and browser policy layers without installing the
+full workstation package manifest on hosted runners.
 
 GitHub Copilot review guidance lives in `.github/copilot-instructions.md`,
 with path-specific rules under `.github/instructions/`.

@@ -32,6 +32,8 @@ applyTo: "**/*.md,**/AGENTS.md,.github/copilot-instructions.md,.github/instructi
   `dotfiles_*`, `system_*`, and `browser_policies_*`.
 - Document system role feature flags, managed paths, and drop-in/snippet paths
   when privileged runtime behavior changes.
+- Document user-level cron behavior when managed commands create or write
+  state files.
 - Update architecture, adoption, security, and migration/history docs when
   system-layer behavior or consolidation wording changes.
 - Mention `go-task verify` for broad documentation, automation, inventory, or

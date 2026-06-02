@@ -7,11 +7,11 @@ maintenance. Former `ans-workstation` automation is opt-in.
 
 - Default `go-task` stays user-level and sudo-free; `playbook_install.yml`
   keeps `become: false` and only includes `roles/dotfiles`.
-- Privileged system and browser/Thunderbird/VS Code policies stay opt-in.
+- Privileged targets, including `go-task all`, stay opt-in.
 - Docs must not put privileged config in default `go-task` or present personal
   workstation values as a generic hardening benchmark.
-- Reject secrets, private keys, browser/mail profiles, caches, kubeconfigs,
-  cloud credentials, AI/MCP state, test workspaces, local configs, and runtime state.
+- Reject secrets, profiles, caches, kubeconfigs, cloud credentials, AI/MCP
+  state, test workspaces, local configs, and runtime state.
 
 ## Ansible
 
@@ -25,6 +25,7 @@ maintenance. Former `ans-workstation` automation is opt-in.
 - Flag shell/command without `changed_when`, `creates`, `removes`, or an
   equivalent idempotence guard.
 - Dotfiles mappings use `name`, relative `payload`, and absolute `dest`.
+- Dotfiles cron jobs that redirect to state logs create the state dir first.
 - System setting maps use `system_journald_settings`, `system_sshd_settings`,
   and `system_sysctl_settings`; preserve upstream key casing.
 - Prefer drop-ins over editing upstream main configs where supported.
@@ -69,8 +70,7 @@ maintenance. Former `ans-workstation` automation is opt-in.
 - Neovim config: `go-task test:nvim`; startup-sensitive changes also run
   `go-task test:nvim:profile`.
 - Neovim keymaps: `go-task docs:nvim-keymaps:check`.
-- System role: `go-task system:check`; task/template/handler changes also use
-  `go-task test:system` when Docker is available.
+- System role/packages: `go-task system:check` and `go-task test:system`.
 - Browser policies: `go-task browser-policies:check`.
 - CI or repo-wide lint behavior: `go-task superlinter` when Docker is available.
 - Full validation: `go-task verify`.

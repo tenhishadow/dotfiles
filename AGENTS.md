@@ -10,6 +10,8 @@ Ansible, `uv`, and `go-task`.
 - `playbook_system.yml` is the explicit privileged workstation playbook.
 - `playbook_browser_policies.yml` is the explicit privileged browser policy
   playbook.
+- `go-task all` is the explicit privileged aggregate apply target for user
+  dotfiles, system workstation, and browser policy layers.
 - `inventory/host_vars/this_host/` is the local source of truth for dotfiles
   mappings, cleanup, browser policy overrides, and system role values.
 - `roles/dotfiles/` contains the default user-level dotfiles workflow.
@@ -47,6 +49,8 @@ Ansible, `uv`, and `go-task`.
   playbooks/tasks.
 - Preserve the documented execution boundary: default `go-task` must not be
   described as applying privileged system or browser policy configuration.
+- Do not describe `go-task all` as the default workflow; it is an explicit
+  privileged opt-in aggregate.
 - Do not present personal workstation security values as a generic hardening
   benchmark.
 - Prefer service drop-ins over editing upstream main config files where
@@ -196,15 +200,16 @@ Ansible, `uv`, and `go-task`.
 - Run `go-task test:nvim` for Neovim config changes.
 - Run `go-task test:nvim:profile` for startup-sensitive Neovim changes.
 - Run `go-task system:check` for system role changes.
-- Run `go-task test:system` for system role task, template, or handler
-  behavior changes when Docker is available.
+- Run `go-task test:system` for system package manifest, task, template, or
+  handler behavior changes when Docker is available.
 - Run `go-task browser-policies:check` for browser policy role or policy
   inventory changes.
 - Run `go-task superlinter` for focused CI or repository-wide lint changes
   when Docker is available.
 - Run `go-task verify` for a full local validation pass when Taskfile,
   inventory, playbooks, roles, or repository automation change together.
-  This includes Super-Linter and requires a running Docker daemon.
+  This includes the system role container test and Super-Linter, and requires a
+  running Docker daemon.
 
 ## Done Criteria
 

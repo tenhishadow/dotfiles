@@ -17,6 +17,7 @@ dotfiles_nvim_restore_lock_path: "{{ dotfiles_nvim_state_dir }}/lazy-restore.loc
 dotfiles_cron_path: /usr/local/bin:/usr/bin:/bin
 dotfiles_nvim_restore_cron_name: neovim lazy restore
 dotfiles_nvim_restore_cron_job: >-
+  install -d -m 700 {{ dotfiles_nvim_state_dir | quote }} &&
   PATH={{ dotfiles_cron_path }} NVIM_USE_MASON=off
   flock -n {{ dotfiles_nvim_restore_lock_path | quote }}
   nvim --headless

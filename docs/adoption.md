@@ -35,6 +35,7 @@ destinations with symlinks and remove explicit legacy user paths.
 Do not blindly run these privileged apply commands:
 
 ```bash
+go-task all
 go-task system
 go-task browser-policies
 ```

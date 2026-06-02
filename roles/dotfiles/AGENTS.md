@@ -14,6 +14,8 @@ This is the default user-level dotfiles role used by `playbook_install.yml`.
 - Create mapping parent directories from `dest`; use `dotfiles_directories`
   only for extra directories not implied by mappings.
 - Keep cleanup entries in `dotfiles_cleanup_paths`, explicit, and narrow.
+- Keep managed cron jobs self-contained when writing logs: create the target
+  state directory before shell redirection opens the log file.
 - Keep input validation in `tasks/validate.yml`.
 - Keep task names, comments, and docs in English.
 

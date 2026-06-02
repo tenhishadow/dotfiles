@@ -11,6 +11,8 @@ GitHub labels are repository metadata. Pull request path labels are declared in
 - `changed-files-labels-limit` must stay above the number of path labels a
   broad maintenance pull request can match. If that limit is exceeded,
   `actions/labeler` skips all changed-file labels.
+- The current limit is `50`; keep it high enough for broad validation,
+  documentation, automation, and role maintenance pull requests.
 
 ## Path Labels
 
