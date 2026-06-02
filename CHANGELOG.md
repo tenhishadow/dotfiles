@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.2.2](https://github.com/tenhishadow/dotfiles/compare/v2.2.1...v2.2.2) (2026-06-02)
+
+
+### Bug Fixes
+
+* **system:** refresh Arch package targets and validation ([2b144ba](https://github.com/tenhishadow/dotfiles/commit/2b144ba37a82889dd3640d5c934f9655c2962c32))
+
 ## [2.2.1](https://github.com/tenhishadow/dotfiles/compare/v2.2.0...v2.2.1) (2026-05-18)
 
 
