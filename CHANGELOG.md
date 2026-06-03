@@ -1,6 +1,6 @@
 # Changelog
 
-## [2.3.0](https://github.com/tenhishadow/dotfiles/compare/v2.2.2...v2.3.0) (2026-06-03)
+## [2.2.3](https://github.com/tenhishadow/dotfiles/compare/v2.2.2...v2.2.3) (2026-06-03)
 
 
 ### Features
