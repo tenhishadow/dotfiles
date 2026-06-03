@@ -1,5 +1,42 @@
 # Changelog
 
+## [2.2.2](https://github.com/tenhishadow/dotfiles/compare/v2.2.3...v2.2.2) (2026-06-03)
+
+
+### Features
+
+* add headless neovim smoke tests and harden repo tooling ([#111](https://github.com/tenhishadow/dotfiles/issues/111)) ([73f2d05](https://github.com/tenhishadow/dotfiles/commit/73f2d05fd46ba391b07a4f431045e2351478581e))
+* detect terragrunt files as terraform in neovim ([2bae543](https://github.com/tenhishadow/dotfiles/commit/2bae5430714f6c1c367dee7c52c9180cb8999ac6))
+* fix(ci): switch ansible workflow to shared template ([#95](https://github.com/tenhishadow/dotfiles/issues/95)) ([7b74906](https://github.com/tenhishadow/dotfiles/commit/7b749067f2027e67e4b727825fe9f330b3052181))
+* improve neovim markdown and cursor UX ([#85](https://github.com/tenhishadow/dotfiles/issues/85)) ([c00f175](https://github.com/tenhishadow/dotfiles/commit/c00f175a19488e934145303372ca12f34445a83d))
+* jan-2026 ([#105](https://github.com/tenhishadow/dotfiles/issues/105)) ([7ad61e2](https://github.com/tenhishadow/dotfiles/commit/7ad61e2ebe2dfb50b699fc63c7af57c3d0c884c8))
+* migrate to uv and modernize development environment ([a50e428](https://github.com/tenhishadow/dotfiles/commit/a50e42870989b3ea0e45ac60ef553c4bfe32f602))
+* mitogen ([#107](https://github.com/tenhishadow/dotfiles/issues/107)) ([f14206b](https://github.com/tenhishadow/dotfiles/commit/f14206baeace1323fb590e76be56a8f7a36c0913))
+* neovim ([#75](https://github.com/tenhishadow/dotfiles/issues/75)) ([91d1f86](https://github.com/tenhishadow/dotfiles/commit/91d1f863e59d09c5f3853eed1687ff04e5257ccb))
+* **policies:** expand privacy-first workstation policies ([#141](https://github.com/tenhishadow/dotfiles/issues/141)) ([610daaf](https://github.com/tenhishadow/dotfiles/commit/610daaf3f6cdaa9a4796c897158661beeb06b4d2))
+* **starship:** port bashrc git prompt to starship config ([#91](https://github.com/tenhishadow/dotfiles/issues/91)) ([79f0ef5](https://github.com/tenhishadow/dotfiles/commit/79f0ef521b17a08ababc938a660c1719b7adb5e0))
+* **system:** bootstrap yay from AUR ([#152](https://github.com/tenhishadow/dotfiles/issues/152)) ([6b57f1b](https://github.com/tenhishadow/dotfiles/commit/6b57f1b4eec2f21a9c736d78f02ab747e3b40c37))
+* **system:** modularize optional system tasks ([#123](https://github.com/tenhishadow/dotfiles/issues/123)) ([c315f19](https://github.com/tenhishadow/dotfiles/commit/c315f191d5ba1aaea8302e74feac09651fb476f2))
+* upgrade deps ([#109](https://github.com/tenhishadow/dotfiles/issues/109)) ([0a55437](https://github.com/tenhishadow/dotfiles/commit/0a5543718e2fe96bec46bad3c90425ad35b68414))
+* **workstation:** consolidate workstation automation ([#137](https://github.com/tenhishadow/dotfiles/issues/137)) ([816eacc](https://github.com/tenhishadow/dotfiles/commit/816eaccec49ccb759f03c8590deeba9b91c810b2))
+
+
+### Bug Fixes
+
+* clipboard ([#115](https://github.com/tenhishadow/dotfiles/issues/115)) ([43edf9d](https://github.com/tenhishadow/dotfiles/commit/43edf9d9f0f6b59f5132d917e445e08426736cb2))
+* **renovate:** ignore test fixtures ([a8159d3](https://github.com/tenhishadow/dotfiles/commit/a8159d3c7ba0e2149bf5e6c3b479ef4ade368e4c))
+* **system:** refresh Arch package targets and validation ([2b144ba](https://github.com/tenhishadow/dotfiles/commit/2b144ba37a82889dd3640d5c934f9655c2962c32))
+* **Taskfile:** reconfigure pre-deps ([#97](https://github.com/tenhishadow/dotfiles/issues/97)) ([f261340](https://github.com/tenhishadow/dotfiles/commit/f261340a0f1f6dcf856a099d08a3b05ec62886b2))
+* update dependency setuptools to v82 ([#130](https://github.com/tenhishadow/dotfiles/issues/130)) ([ae50777](https://github.com/tenhishadow/dotfiles/commit/ae50777a3b7a9c292abfabaef31893c2f145628f))
+* update dependency setuptools to v82 ([#135](https://github.com/tenhishadow/dotfiles/issues/135)) ([fc27f77](https://github.com/tenhishadow/dotfiles/commit/fc27f77c5de174f5b32ef8eb863ac4029defcd78))
+
+
+### Miscellaneous Chores
+
+* **deps:** update pre-commit hook adrienverge/yamllint to v1.38.0 ([#100](https://github.com/tenhishadow/dotfiles/issues/100)) ([98fa697](https://github.com/tenhishadow/dotfiles/commit/98fa6973e17e8a2e6830df299b09444c73c9d21a))
+* **deps:** update pre-commit hook zizmorcore/zizmor-pre-commit to v1.21.0 ([#102](https://github.com/tenhishadow/dotfiles/issues/102)) ([1ae3f04](https://github.com/tenhishadow/dotfiles/commit/1ae3f049ac06eadfc5ec53752b7f1daa68122fdd))
+* update nginx docker tag to v1.30 ([#127](https://github.com/tenhishadow/dotfiles/issues/127)) ([cc16800](https://github.com/tenhishadow/dotfiles/commit/cc16800ae1fabad609f66bc0186839da6bfaea9c))
+
 ## [2.2.3](https://github.com/tenhishadow/dotfiles/compare/v2.2.2...v2.2.3) (2026-06-03)
 
 
