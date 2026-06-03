@@ -4,6 +4,15 @@
 system_packages:
   # : media {{{
   - feh
+  - obs-studio
+  - vlc
+  - vlc-cli
+  - ffmpeg
+  - xdg-desktop-portal
+  - xdg-desktop-portal-kde
+  - ffmpegthumbnailer
+  - v4l2loopback-dkms
+  - playerctl
   # : }}}
 
   # : monitoring {{{
@@ -101,6 +110,8 @@ system_packages:
   - keepassxc
   - nextcloud-client
   - rclone
+  - rsync
+  - less
   # : }}}
 
   # : dev {{{
@@ -109,7 +120,7 @@ system_packages:
   - python-pynvim
   - tree-sitter-cli
   - code
-  # - task
+  - go-task
   - tea
   - ast-grep
   - bat
