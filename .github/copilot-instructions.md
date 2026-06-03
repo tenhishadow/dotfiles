@@ -28,6 +28,8 @@ maintenance. Former `ans-workstation` automation is opt-in.
 - Dotfiles cron jobs that redirect to state logs create the state dir first.
 - System setting maps use `system_journald_settings`, `system_sshd_settings`,
   and `system_sysctl_settings`; preserve upstream key casing.
+- AUR helper/package management stays in `roles/system`, uses tag `aur`, and is
+  skipped in check mode, CI, and containers.
 - Prefer drop-ins over editing upstream main configs where supported.
 - Verify policy/privacy keys upstream; do not guess AI-client, browser,
   package-manager, or developer-tool settings.

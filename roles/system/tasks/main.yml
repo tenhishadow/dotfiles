@@ -76,6 +76,19 @@
   tags:
     - always
 
+- name: System | Set AUR guard
+  ansible.builtin.set_fact:
+    system_can_manage_aur: >-
+      {{
+        system_aur_enabled | bool
+        and not (ansible_check_mode | bool)
+        and not (system_is_container | bool)
+        and not (system_in_ci | bool)
+      }}
+  tags:
+    - always
+    - aur
+
 - name: System | Validate variables
   ansible.builtin.include_tasks:
     file: validate.yml
@@ -91,6 +104,14 @@
     - system_packages_enabled | bool
   tags:
     - pkg
+
+- name: System | Run AUR tasks
+  ansible.builtin.include_tasks:
+    file: aur.yml
+  when:
+    - system_aur_enabled | bool
+  tags:
+    - aur
 
 - name: System | Run time tasks
   ansible.builtin.include_tasks:

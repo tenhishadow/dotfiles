@@ -1,0 +1,82 @@
+---
+- name: AUR | Validate non-root builder
+  ansible.builtin.assert:
+    that:
+      - ansible_facts.user_id != system_root_user
+    fail_msg: "AUR packages must be built by a non-root user."
+    quiet: true
+  when:
+    - system_can_manage_aur | bool
+  tags:
+    - aur
+
+- name: AUR | Check yay package
+  ansible.builtin.command:
+    cmd: "pacman -Qq {{ system_aur_helper_package }}"
+  register: system_aur_helper_package_query
+  changed_when: false
+  failed_when: false
+  when:
+    - system_can_manage_aur | bool
+  tags:
+    - aur
+
+- name: AUR | Check yay binary
+  ansible.builtin.stat:
+    path: "{{ system_aur_helper_binary_path }}"
+  register: system_aur_helper_binary_stat
+  when:
+    - system_can_manage_aur | bool
+  tags:
+    - aur
+
+- name: AUR | Install build dependencies
+  become: true
+  ansible.builtin.package:
+    name: "{{ system_aur_build_packages }}"
+    state: present
+  when:
+    - system_can_manage_aur | bool
+    - (system_aur_helper_package_query.rc | default(1)) != 0
+    - not (system_aur_helper_binary_stat.stat.exists | default(false))
+  tags:
+    - aur
+
+- name: AUR | Ensure build root
+  ansible.builtin.file:
+    path: "{{ system_aur_build_root }}"
+    state: directory
+    mode: "0755"
+  when:
+    - system_can_manage_aur | bool
+    - (system_aur_helper_package_query.rc | default(1)) != 0
+    - not (system_aur_helper_binary_stat.stat.exists | default(false))
+  tags:
+    - aur
+
+- name: AUR | Clone yay repository
+  ansible.builtin.git:
+    repo: "{{ system_aur_helper_repo }}"
+    dest: "{{ system_aur_helper_build_dir }}"
+    version: "{{ system_aur_helper_ref }}"
+    update: true
+  when:
+    - system_can_manage_aur | bool
+    - (system_aur_helper_package_query.rc | default(1)) != 0
+    - not (system_aur_helper_binary_stat.stat.exists | default(false))
+  tags:
+    - aur
+
+- name: AUR | Build and install yay
+  ansible.builtin.command:
+    cmd: makepkg --syncdeps --install --noconfirm --needed
+    chdir: "{{ system_aur_helper_build_dir }}"
+    creates: "{{ system_aur_helper_binary_path }}"
+  environment:
+    PACMAN: sudo pacman
+  when:
+    - system_can_manage_aur | bool
+    - (system_aur_helper_package_query.rc | default(1)) != 0
+    - not (system_aur_helper_binary_stat.stat.exists | default(false))
+  tags:
+    - aur

@@ -10,10 +10,18 @@
       - system_timezone | length > 0
       - system_motd_message is string
       - system_packages_enabled is boolean
+      - system_aur_enabled is boolean
       - system_timesyncd_enabled is boolean
       - system_docker_enabled is boolean
       - system_laptop_enabled is boolean
       - system_user_services_enabled is boolean
+      - system_aur_build_packages is sequence
+      - system_aur_build_packages is not string
+      - not (system_aur_enabled | bool) or system_aur_build_packages | length > 0
+      - system_aur_helper_repo is string
+      - system_aur_helper_repo | length > 0
+      - system_aur_helper_ref is string
+      - system_aur_helper_ref | length > 0
       - system_ntp_service is string
       - not (system_timesyncd_enabled | bool) or system_ntp_service | length > 0
       - system_ntp_servers is sequence
@@ -98,6 +106,12 @@
       value: "{{ system_sysctl_file_path }}"
     - key: system_sshd_binary_path
       value: "{{ system_sshd_binary_path }}"
+    - key: system_aur_build_root
+      value: "{{ system_aur_build_root }}"
+    - key: system_aur_helper_binary_path
+      value: "{{ system_aur_helper_binary_path }}"
+    - key: system_aur_helper_build_dir
+      value: "{{ system_aur_helper_build_dir }}"
     - key: system_reflector_save_path
       value: "{{ system_reflector_save_path }}"
     - key: system_journald_dropin_dir
@@ -160,6 +174,8 @@
       value: "{{ system_docker_group }}"
     - key: system_docker_service_name
       value: "{{ system_docker_service_name }}"
+    - key: system_aur_helper_package
+      value: "{{ system_aur_helper_package }}"
     - key: system_reflector_package
       value: "{{ system_reflector_package }}"
     - key: system_reflector_timer_name

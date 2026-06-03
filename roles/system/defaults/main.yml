@@ -8,10 +8,18 @@ system_timezone: UTC
 system_motd_message: ""
 
 system_packages_enabled: true
+system_aur_enabled: true
 system_timesyncd_enabled: true
 system_docker_enabled: true
 system_laptop_enabled: true
 system_user_services_enabled: true
+
+system_aur_build_root: "{{ ansible_facts.user_dir }}/.cache/aur"
+system_aur_helper_package: yay
+system_aur_helper_repo: https://aur.archlinux.org/yay.git
+system_aur_helper_ref: master
+system_aur_helper_binary_path: /usr/bin/yay
+system_aur_helper_build_dir: "{{ system_aur_build_root }}/{{ system_aur_helper_package }}"
 
 system_ntp_service: systemd-timesyncd
 

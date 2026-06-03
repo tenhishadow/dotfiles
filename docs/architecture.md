@@ -29,6 +29,8 @@ workstation settings, and browser policy overrides.
   default workflow.
 - System configuration prefers drop-ins and snippets where upstream supports
   them.
+- AUR helper bootstrap lives in the opt-in system layer, uses tag `aur`, and is
+  skipped in check mode, CI, and containers.
 - Cleanup and removal paths should stay explicit, narrow, and reviewable.
 - Check mode is available for privileged layers through `go-task system:check`
   and `go-task browser-policies:check`.

@@ -12,10 +12,11 @@ Keep the high-level flow predictable:
 
 - Assert supported OS.
 - Include distro-specific vars.
-- Derive CI, container, virtual machine, systemd, and timesyncd capability
+- Derive CI, container, virtual machine, systemd, timesyncd, and AUR capability
   guards.
 - Validate role variables.
 - Install `system_packages` with tag `pkg`.
+- Run AUR helper tasks with tag `aur` only when guarded as safe.
 - Run timezone tasks and guarded timesyncd tasks.
 - Run locale, console, login, limits, cron, sysctl, journald, and SSHD tasks.
 - Run Arch Linux tasks.
@@ -26,6 +27,8 @@ Keep the high-level flow predictable:
 ## Editing Rules
 
 - Preserve CI and container guards.
+- Keep AUR helper/package management tasks tagged `aur` and skipped in check
+  mode, CI, and containers.
 - Preserve `ansible_facts` based OS and virtualization checks.
 - Keep role input validation in `tasks/validate.yml`.
 - Preserve `become: true` where system paths or services require privilege.

@@ -25,6 +25,8 @@ applyTo: "playbook_*.yml,inventory/**/*.yml,roles/**/*.yml,requirements.yml,ansi
 - Use `go-task dotfiles:check` for user-level dotfiles dry-runs.
 - Keep `roles/system` as the opt-in layer consolidated from the former
   `ans-workstation` automation; do not route it through default `go-task`.
+- Keep AUR helper/package management in `roles/system`, tagged `aur`, and
+  guarded from check-mode, CI, and container execution.
 - Dotfiles mapping entries must use `name`, relative `payload`, and absolute
   `dest`.
 - User cron jobs that redirect to managed state logs must create the state

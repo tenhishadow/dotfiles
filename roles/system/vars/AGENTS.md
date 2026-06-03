@@ -12,6 +12,8 @@ Applies to `roles/system/vars/`.
   finalizing package changes.
 - Prefer official repository packages.
 - Do not add AUR-only packages unless AUR support is explicitly implemented.
+- Keep AUR helper build dependency variables separate from
+  `archlinux-packages.yml`, and ensure related tasks use tag `aur`.
 - Keep commented AUR notes as comments only.
 - Preserve existing package categories unless a regrouping is explicitly
   requested.

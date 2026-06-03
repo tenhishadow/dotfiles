@@ -100,7 +100,7 @@ sudo reflector \
 pacman --disable-sandbox -Sy --noconfirm --noprogressbar >/dev/null
 check_system_package_targets
 
-go-task system -- --skip-tags pkg
+go-task system -- --skip-tags pkg,aur
 
 # idempotency
-go-task system -- --skip-tags pkg
+go-task system -- --skip-tags pkg,aur

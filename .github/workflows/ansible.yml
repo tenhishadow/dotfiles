@@ -60,4 +60,4 @@ jobs:
           persist-credentials: false
 
       - name: Run aggregate target
-        run: go-task all -- --skip-tags pkg
+        run: go-task all -- --skip-tags pkg,aur

@@ -10,7 +10,7 @@ automation under `.github/`.
 - Keep workflow behavior aligned with `Taskfile.yml`.
 - Keep `go-task verify` aligned with local validation and review automation.
 - Keep the `task-all` CI job aligned with the explicit `go-task all` aggregate
-  apply target. It runs in an Arch Linux container and skips package
+  apply target. It runs in an Arch Linux container and skips package and AUR
   installation to keep CI bounded.
 - Do not reintroduce super-linter into the `go-task lint` path.
 - Do not casually change release-please, Renovate, CODEOWNERS, or zizmor

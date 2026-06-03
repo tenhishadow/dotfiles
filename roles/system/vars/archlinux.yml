@@ -5,6 +5,9 @@ system_cron_service_name: cronie
 system_docker_group: docker
 system_docker_service_name: docker
 system_docker_conf_dir: /etc/docker
+system_aur_build_packages:
+  - base-devel
+  - git
 system_pacman_config_path: /etc/pacman.conf
 system_reflector_package: reflector
 system_reflector_config_path: /etc/xdg/reflector/reflector.conf
