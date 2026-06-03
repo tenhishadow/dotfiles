@@ -64,6 +64,7 @@ Review these host values before privileged use:
 - `inventory/host_vars/this_host/system.yml`
 - `inventory/host_vars/this_host/security.yml`
 - `inventory/host_vars/this_host/browser_policies.yml`
+- `roles/system/defaults/main.yml` AUR helper defaults
 
 The local host values are personal workstation choices. They are not a generic
 security baseline and should not be copied to servers, shared systems, or other

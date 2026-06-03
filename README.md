@@ -270,13 +270,15 @@ go-task system
 This path runs `playbook_system.yml`, uses `roles/system`, and may require
 sudo. It manages Arch Linux packages, system drop-ins, selected `/etc`
 configuration, sysctl values, PAM limits, Docker daemon and overlay settings,
-cron, reflector, and laptop-related settings.
+cron, reflector, optional AUR `yay` bootstrap, and laptop-related settings.
 
 The system role ships role-owned default tuning for workstation use:
 
 - sysctl defaults for unprivileged BPF, `fq`, BBR, `somaxconn`, and local port
   range.
 - PAM limits through `/etc/security/limits.d/10-dotfiles.conf`.
+- AUR helper bootstrap through tasks tagged `aur`, skipped in check mode, CI,
+  and containers.
 - Docker overlay module options through `/etc/modprobe.d/99-dotfiles-overlay.conf`.
 
 Host-specific additions and overrides belong in
@@ -347,9 +349,9 @@ inventory, roles, tests, automation, and AI instructions. Label expectations
 are documented in [`docs/github-labels.md`](docs/github-labels.md).
 
 The `ansible` workflow also runs a `task-all` job in an Arch Linux container.
-It executes `go-task all -- --skip-tags pkg` to cover aggregate ordering across
+It executes `go-task all -- --skip-tags pkg,aur` to cover aggregate ordering across
 the user dotfiles, system, and browser policy layers without installing the
-full workstation package manifest on hosted runners.
+full workstation package manifest or AUR helper on hosted runners.
 
 GitHub Copilot review guidance lives in `.github/copilot-instructions.md`,
 with path-specific rules under `.github/instructions/`.

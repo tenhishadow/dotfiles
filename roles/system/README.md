@@ -45,6 +45,7 @@ go-task test:system
 | Area | Notes |
 | ---- | ----- |
 | Packages | Installs `system_packages` from `vars/archlinux-packages.yml` when `system_packages_enabled` is true, including Neovim support tools such as `tree-sitter-cli`. |
+| AUR | Optionally bootstraps the configured AUR helper, `yay` by default, through tasks tagged `aur` in apply mode on non-CI, non-container hosts. |
 | Time | Configures `system_timezone`, which defaults to `UTC` and should be overridden in host vars. Manages `systemd-timesyncd` only when `system_timesyncd_enabled` is true, systemd is manageable, and the host is not a virtual machine. |
 | Journald | Writes `/etc/systemd/journald.conf.d/10-dotfiles.conf`. |
 | SSH daemon | Writes `/etc/ssh/sshd_config.d/20-dotfiles.conf` and validates effective sshd config. |
@@ -63,11 +64,13 @@ The role keeps privileged behavior explicit and guarded:
 
 1. Validate the supported OS.
 2. Load distro-specific vars and packages.
-3. Derive CI, container, virtual machine, systemd, user systemd, and timesyncd
-   capability guards.
+3. Derive CI, container, virtual machine, systemd, user systemd, timesyncd, and
+   AUR capability guards.
 4. Validate public role variables and host overrides.
 5. Install the package manifest under tag `pkg` when packages are enabled.
-6. Run time, locale, console, login, limits, cron, sysctl, journald, SSHD, OS,
+6. Bootstrap the AUR helper under tag `aur` when AUR is enabled, apply mode is
+   active, and the host is safe.
+7. Run time, locale, console, login, limits, cron, sysctl, journald, SSHD, OS,
    Docker, laptop, and user-service task files according to feature flags.
 
 ## Feature Flags
@@ -78,6 +81,7 @@ inside the system role:
 | Variable | Default | Controls |
 | -------- | ------- | -------- |
 | `system_packages_enabled` | `true` | Arch package manifest installation. |
+| `system_aur_enabled` | `true` | AUR helper bootstrap in apply mode on non-CI, non-container hosts. |
 | `system_timesyncd_enabled` | `true` | `systemd-timesyncd` drop-in management when the host is not a virtual machine. |
 | `system_sysctl_enabled` | `true` | Kernel parameter drop-in under `/etc/sysctl.d/`. |
 | `system_limits_enabled` | `true` | PAM limits drop-in under `/etc/security/limits.d/`. |
@@ -158,6 +162,7 @@ system_journald_settings:
 
 system_timezone: Europe/Warsaw
 system_packages_enabled: true
+system_aur_enabled: true
 system_timesyncd_enabled: true
 system_docker_enabled: false
 system_laptop_enabled: false
@@ -185,9 +190,16 @@ system_docker_overlay_options_enabled: true
 Do not rename upstream option keys inside these maps; only the Ansible variable
 names use lowercase snake_case.
 
+The default AUR helper bootstrap installs `yay` from
+`https://aur.archlinux.org/yay.git` into `/usr/bin/yay`. It installs Arch build
+dependencies from `system_aur_build_packages`, builds from
+`system_aur_build_root`, refuses root builds, and skips check mode, CI, and
+container execution. Use tag `aur` to select or skip this path.
+
 Common disable-only overrides:
 
 ```yaml
+system_aur_enabled: false
 system_sysctl_enabled: false
 system_limits_enabled: false
 system_docker_overlay_options_enabled: false
@@ -206,7 +218,7 @@ git diff --check
 
 `go-task test:system` first verifies the role's Arch package targets against a
 fresh pacman database, then runs the role twice in a fresh Arch Linux container
-with `--skip-tags pkg`; the second pass must be idempotent.
+with `--skip-tags pkg,aur`; the second pass must be idempotent.
 
 ## Rollback
 

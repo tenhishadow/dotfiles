@@ -75,6 +75,8 @@ Ansible, `uv`, and `go-task`.
   duplicating literals.
 - Keep package lists, policy target lists, and user-level privacy configs
   declarative.
+- Keep AUR helper/package management in `roles/system` task files tagged `aur`
+  and guarded from check-mode, CI, and container execution.
 - Use handlers for service restarts when template or config changes require
   them.
 - Preserve CI and container guards for privileged system behavior.

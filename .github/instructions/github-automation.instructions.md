@@ -13,8 +13,9 @@ applyTo: ".github/**/*.yml,.github/**/*.yaml,.github/**/*.md,renovate.json,Taskf
 - Keep `go-task all` as an explicit apply target; it must not replace default
   `go-task` or `go-task verify`.
 - Keep the `task-all` CI job as an Arch Linux container check of
-  `go-task all -- --skip-tags pkg` so aggregate ordering is covered without
-  installing the full workstation package manifest on hosted runners.
+  `go-task all -- --skip-tags pkg,aur` so aggregate ordering is covered without
+  installing the full workstation package manifest or AUR helper on hosted
+  runners.
 - Do not reintroduce Super-Linter into `go-task lint`; it belongs to
   `go-task superlinter` and the aggregate `go-task verify` path.
 - Ensure new versioned GitHub Actions, reusable workflows, Docker images,
