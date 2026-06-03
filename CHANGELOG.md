@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.2.3](https://github.com/tenhishadow/dotfiles/compare/v2.2.2...v2.2.3) (2026-06-03)
+
+
+### Features
+
+* **system:** bootstrap yay from AUR ([#152](https://github.com/tenhishadow/dotfiles/issues/152)) ([6b57f1b](https://github.com/tenhishadow/dotfiles/commit/6b57f1b4eec2f21a9c736d78f02ab747e3b40c37))
+
 ## [2.2.2](https://github.com/tenhishadow/dotfiles/compare/v2.2.1...v2.2.2) (2026-06-02)
 
 
