@@ -87,118 +87,73 @@
 - name: System | Validate path variables
   ansible.builtin.assert:
     that:
-      - system_path.value is string
-      - system_path.value is regex('^/')
-    fail_msg: "Invalid system path variable {{ system_path.key }}={{ system_path.value }}"
+      - lookup('ansible.builtin.vars', system_path) is string
+      - lookup('ansible.builtin.vars', system_path) is regex('^/')
+    fail_msg: "Invalid system path variable {{ system_path }}={{ lookup('ansible.builtin.vars', system_path) }}"
     quiet: true
   loop:
-    - key: system_locale_gen_path
-      value: "{{ system_locale_gen_path }}"
-    - key: system_locale_conf_path
-      value: "{{ system_locale_conf_path }}"
-    - key: system_vconsole_path
-      value: "{{ system_vconsole_path }}"
-    - key: system_motd_path
-      value: "{{ system_motd_path }}"
-    - key: system_issue_path
-      value: "{{ system_issue_path }}"
-    - key: system_sysctl_file_path
-      value: "{{ system_sysctl_file_path }}"
-    - key: system_sshd_binary_path
-      value: "{{ system_sshd_binary_path }}"
-    - key: system_aur_build_root
-      value: "{{ system_aur_build_root }}"
-    - key: system_aur_helper_binary_path
-      value: "{{ system_aur_helper_binary_path }}"
-    - key: system_aur_helper_build_dir
-      value: "{{ system_aur_helper_build_dir }}"
-    - key: system_reflector_save_path
-      value: "{{ system_reflector_save_path }}"
-    - key: system_journald_dropin_dir
-      value: "{{ system_journald_dropin_dir }}"
-    - key: system_journald_dropin_path
-      value: "{{ system_journald_dropin_path }}"
-    - key: system_journald_main_path
-      value: "{{ system_journald_main_path }}"
-    - key: system_timesyncd_dropin_dir
-      value: "{{ system_timesyncd_dropin_dir }}"
-    - key: system_timesyncd_dropin_path
-      value: "{{ system_timesyncd_dropin_path }}"
-    - key: system_timesyncd_main_path
-      value: "{{ system_timesyncd_main_path }}"
-    - key: system_sshd_dropin_dir
-      value: "{{ system_sshd_dropin_dir }}"
-    - key: system_sshd_dropin_path
-      value: "{{ system_sshd_dropin_path }}"
-    - key: system_sshd_main_path
-      value: "{{ system_sshd_main_path }}"
-    - key: system_user_systemd_dir
-      value: "{{ system_user_systemd_dir }}"
-    - key: system_ssh_agent_service_path
-      value: "{{ system_ssh_agent_service_path }}"
-    - key: system_crontab_bin
-      value: "{{ system_crontab_bin }}"
-    - key: system_docker_conf_dir
-      value: "{{ system_docker_conf_dir }}"
-    - key: system_docker_modprobe_dir
-      value: "{{ system_docker_modprobe_dir }}"
-    - key: system_docker_overlay_options_path
-      value: "{{ system_docker_overlay_options_path }}"
-    - key: system_limits_dropin_dir
-      value: "{{ system_limits_dropin_dir }}"
-    - key: system_limits_dropin_path
-      value: "{{ system_limits_dropin_path }}"
-    - key: system_pacman_config_path
-      value: "{{ system_pacman_config_path }}"
-    - key: system_reflector_config_path
-      value: "{{ system_reflector_config_path }}"
+    - system_locale_gen_path
+    - system_locale_conf_path
+    - system_vconsole_path
+    - system_motd_path
+    - system_issue_path
+    - system_sysctl_file_path
+    - system_sshd_binary_path
+    - system_aur_build_root
+    - system_aur_helper_binary_path
+    - system_aur_helper_build_dir
+    - system_reflector_save_path
+    - system_journald_dropin_dir
+    - system_journald_dropin_path
+    - system_journald_main_path
+    - system_timesyncd_dropin_dir
+    - system_timesyncd_dropin_path
+    - system_timesyncd_main_path
+    - system_sshd_dropin_dir
+    - system_sshd_dropin_path
+    - system_sshd_main_path
+    - system_user_systemd_dir
+    - system_ssh_agent_service_path
+    - system_crontab_bin
+    - system_docker_conf_dir
+    - system_docker_modprobe_dir
+    - system_docker_overlay_options_path
+    - system_limits_dropin_dir
+    - system_limits_dropin_path
+    - system_pacman_config_path
+    - system_reflector_config_path
   loop_control:
     loop_var: system_path
-    label: "{{ system_path.key }}"
+    label: "{{ system_path }}"
   tags:
     - always
 
 - name: System | Validate service and package variables
   ansible.builtin.assert:
     that:
-      - system_name.value is string
-      - system_name.value | length > 0
-    fail_msg: "Invalid system name variable {{ system_name.key }}={{ system_name.value }}"
+      - lookup('ansible.builtin.vars', system_name) is string
+      - lookup('ansible.builtin.vars', system_name) | length > 0
+    fail_msg: "Invalid system name variable {{ system_name }}={{ lookup('ansible.builtin.vars', system_name) }}"
     quiet: true
   loop:
-    - key: system_cron_package
-      value: "{{ system_cron_package }}"
-    - key: system_cron_service_name
-      value: "{{ system_cron_service_name }}"
-    - key: system_docker_group
-      value: "{{ system_docker_group }}"
-    - key: system_docker_service_name
-      value: "{{ system_docker_service_name }}"
-    - key: system_aur_helper_package
-      value: "{{ system_aur_helper_package }}"
-    - key: system_reflector_package
-      value: "{{ system_reflector_package }}"
-    - key: system_reflector_timer_name
-      value: "{{ system_reflector_timer_name }}"
-    - key: system_reflector_legacy_cron_name
-      value: "{{ system_reflector_legacy_cron_name }}"
-    - key: system_root_user
-      value: "{{ system_root_user }}"
-    - key: system_journald_service_name
-      value: "{{ system_journald_service_name }}"
-    - key: system_sshd_service_name
-      value: "{{ system_sshd_service_name }}"
-    - key: system_sshd_dropin_include_path
-      value: "{{ system_sshd_dropin_include_path }}"
-    - key: system_camera_blacklist_module
-      value: "{{ system_camera_blacklist_module }}"
-    - key: system_ssh_agent_service_name
-      value: "{{ system_ssh_agent_service_name }}"
-    - key: system_vconsole_service_name
-      value: "{{ system_vconsole_service_name }}"
+    - system_cron_package
+    - system_cron_service_name
+    - system_docker_group
+    - system_docker_service_name
+    - system_aur_helper_package
+    - system_reflector_package
+    - system_reflector_timer_name
+    - system_reflector_legacy_cron_name
+    - system_root_user
+    - system_journald_service_name
+    - system_sshd_service_name
+    - system_sshd_dropin_include_path
+    - system_camera_blacklist_module
+    - system_ssh_agent_service_name
+    - system_vconsole_service_name
   loop_control:
     loop_var: system_name
-    label: "{{ system_name.key }}"
+    label: "{{ system_name }}"
   tags:
     - always
 
