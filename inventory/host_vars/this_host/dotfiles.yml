@@ -73,9 +73,6 @@ dotfiles_mapping:
   - name: kitty_theme
     payload: .config/kitty/theme.conf
     dest: "{{ dotfiles_config_dir }}/kitty/theme.conf"
-  - name: kitty_gruvbox_dark_alias
-    payload: .config/kitty/gruvbox-dark.conf
-    dest: "{{ dotfiles_config_dir }}/kitty/gruvbox-dark.conf"
   - name: kitty_gruvbox_dark
     payload: .config/kitty/gruvbox_dark.conf
     dest: "{{ dotfiles_config_dir }}/kitty/gruvbox_dark.conf"
@@ -143,3 +140,5 @@ dotfiles_mapping:
 dotfiles_cleanup_paths:
   - "{{ dotfiles_config_dir }}/nvim/init.vim"
   - "{{ dotfiles_home }}/.nvim"
+  # Removed duplicate of gruvbox_dark.conf; drop the stale symlink on upgrade.
+  - "{{ dotfiles_config_dir }}/kitty/gruvbox-dark.conf"
