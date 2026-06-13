@@ -38,7 +38,8 @@ applyTo: ".github/**/*.yml,.github/**/*.yaml,.github/**/*.md,renovate.json,Taskf
 - Keep issue forms and the PR template aligned with supported workflows and
   validation commands.
 - Keep Copilot instructions concise, review-focused, and non-duplicative:
-  repo-wide rules in `.github/copilot-instructions.md`, path-specific rules in
-  `.github/instructions/*.instructions.md`.
+  repo-wide rules are canonical in the root `AGENTS.md`,
+  `.github/copilot-instructions.md` condenses them, and path-specific rules
+  live in `.github/instructions/*.instructions.md`.
 - Keep documentation-specific review rules in
   `.github/instructions/documentation.instructions.md`.

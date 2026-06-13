@@ -4,17 +4,19 @@ applyTo: "**/*.md,**/AGENTS.md,.github/copilot-instructions.md,.github/instructi
 
 # Documentation Review Instructions
 
-- Keep repository documentation in English.
+Repository documentation stays English (enforced by `go-task lint:english`).
+Repo-wide AI instruction rules are single-source in the root `AGENTS.md`;
+`.github/copilot-instructions.md` is the condensed Copilot surface, and
+`.github/instructions/*.instructions.md` carry path-specific rules. Edit the
+canonical rule, not a copy. See the `AGENTS.md` "Documentation And Instruction
+Sync" section.
+
 - Update `README.md` when commands, entry points, repository layout,
   validation paths, or runtime behavior change.
 - Update role README files when role variables, managed paths, task flow,
   validation, or rollback behavior changes.
 - Update the nearest `AGENTS.md` when local editing rules, ownership
   boundaries, validation commands, or done criteria change.
-- Keep AI instructions concise and non-duplicative: repo-wide rules in
-  `.github/copilot-instructions.md`, path-specific rules in
-  `.github/instructions/*.instructions.md`, and local operational rules in
-  `AGENTS.md`.
 - Preserve the default contract in docs: `go-task` applies user-level
   dotfiles only and must not require sudo.
 - Document the former `tenhishadow/ans-workstation` consolidation factually

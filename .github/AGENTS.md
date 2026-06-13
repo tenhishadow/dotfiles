@@ -26,9 +26,9 @@ automation under `.github/`.
 - Keep issue and PR templates aligned with supported workflows and validation
   commands.
 - Keep GitHub Copilot custom instructions concise, review-focused, and aligned
-  with the current repo structure. Put repo-wide rules in
-  `.github/copilot-instructions.md` and path-specific rules in
-  `.github/instructions/*.instructions.md`.
+  with the current repo structure. Repo-wide rules are canonical in the root
+  `AGENTS.md`; `.github/copilot-instructions.md` condenses them for review and
+  `.github/instructions/*.instructions.md` carry path-specific rules.
 - Keep `.ruff.toml` and `.github/linters/.ruff.toml` synchronized. Local Ruff
   and Super-Linter read config from different paths.
 - Keep documentation-specific Copilot rules in

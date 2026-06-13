@@ -18,20 +18,14 @@ Applies to Ansible roles under `roles/`.
 - Keep templates deterministic and avoid reading unmanaged local state.
 - Prefer supported drop-ins and snippets under `/etc` over direct upstream
   main-file edits.
-- Prefix role variables, registered facts, and task-local vars with the role
-  name unless the value is an upstream config key inside a settings map.
 - Use explicit `loop_control.loop_var` for loops that read more than a scalar.
-- Keep comments, task names, and docs in English.
 - Privileged roles must remain opt-in and must not be added to the default
   user-level playbook unless explicitly requested.
 
-## Naming Style
-
-- Name every role task and handler as `<Domain> | <Verb> <object>`.
-- Use the repo-wide verb set from the root `AGENTS.md`.
-- Name include wrappers as `Run ... tasks`.
-- Keep handler names and `notify` values identical.
-- Keep tags lowercase snake_case.
+Variable naming, role prefixes, English-only text, and the
+`<Domain> | <Verb> <object>` task/handler/`notify` naming contract follow the
+root `AGENTS.md`. They are enforced by ansible-lint, `go-task lint:english`,
+and `go-task lint:ansible-semantics`, so this file does not restate them.
 
 ## Validation
 

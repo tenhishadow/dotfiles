@@ -376,10 +376,12 @@ Renovate extraction/dry-run report for workflow dependencies.
 Documentation and AI instructions are part of the repository contract. The
 [Common Tasks](#common-tasks) table is the single source of truth for the
 `go-task` command catalog: update it when commands change, and reference
-commands by name elsewhere instead of repeating the table. Update the nearest
-`AGENTS.md`, `.github/copilot-instructions.md`, and path-specific
-`.github/instructions/*.instructions.md` whenever roles, inventory ownership,
-validation paths, automation, or runtime behavior change.
+commands by name elsewhere instead of repeating the table. Repo-wide AI
+instruction rules are single-source in `AGENTS.md` and self-checked by
+`go-task lint:ansible-semantics`, `go-task lint:english`,
+`go-task docs:agents:check`, and `go-task docs:instructions:check`, so edit the
+canonical rule instead of copying it across files. See the `AGENTS.md`
+"Documentation And Instruction Sync" section.
 
 ## Safety Notes
 
