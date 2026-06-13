@@ -155,11 +155,9 @@
   when:
     - system_sysctl_enabled | bool
 
-- name: System | Run journald tasks
+- name: System | Run drop-in tasks
   ansible.builtin.include_tasks:
-    file: sys-journald.yml
-  when:
-    - system_journald_enabled | bool
+    file: sys-dropins.yml
 
 - name: System | Run SSHD tasks
   ansible.builtin.include_tasks:

@@ -46,12 +46,14 @@
   become: true
   ansible.builtin.template:
     backup: true
-    src: templates/sshd-dropin.conf.j2
+    src: dropin-sshd.conf.j2
     dest: "{{ system_sshd_dropin_path }}"
     owner: "{{ system_config_owner }}"
     group: "{{ system_config_group }}"
     mode: "{{ system_config_file_mode }}"
     validate: "{{ system_sshd_binary_path }} -T -f %s"
+  vars:
+    system_dropin_settings: "{{ system_sshd_settings }}"
   when:
     - not (system_is_container | bool)
     - not (system_in_ci | bool)
