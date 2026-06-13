@@ -163,6 +163,15 @@ tasks:
         '+lua dofile(".test/nvim/keymap_docs.lua")'
         +qa > "${tmp}";
         diff -u docs/nvim-keymaps.md "${tmp}"
+  docs:agents:
+    cmds:
+      - >-
+        tmp="$(mktemp)";
+        trap 'rm -f "${tmp}"' EXIT;
+        python3 .test/gen_agents_map.py > "${tmp}";
+        cp "${tmp}" AGENTS.md
+  docs:agents:check:
+    cmd: "python3 .test/gen_agents_map.py | diff -u AGENTS.md -"
   docs:instructions:check:
     cmd: "python3 .test/check_instruction_refs.py"
   diff-check:
@@ -206,6 +215,7 @@ tasks:
       - task: vint
       - task: stylua
       - task: docs:nvim-keymaps:check
+      - task: docs:agents:check
       - task: docs:instructions:check
       - task: actionlint
       - task: renovate

@@ -27,16 +27,19 @@ Ansible, `uv`, and `go-task`.
 - The nearest `AGENTS.md` applies.
 - Nested `AGENTS.md` files add local rules and should not duplicate this file
   wholesale.
-- Check local instructions before editing:
+- Check local instructions before editing (`go-task docs:agents` regenerates
+  this list; `go-task docs:agents:check` fails if it is stale):
+  <!-- BEGIN GENERATED: nested-agents (go-task docs:agents) -->
   - `.github/AGENTS.md`
   - `.test/AGENTS.md`
-  - `dotfiles/AGENTS.md`
   - `dotfiles/.config/nvim/AGENTS.md`
+  - `dotfiles/AGENTS.md`
   - `inventory/AGENTS.md`
   - `roles/AGENTS.md`
   - `roles/dotfiles/AGENTS.md`
   - `roles/system/AGENTS.md`
   - `roles/system/vars/AGENTS.md`
+  <!-- END GENERATED: nested-agents -->
 
 ## Hard Rules
 
