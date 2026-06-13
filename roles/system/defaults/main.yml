@@ -13,6 +13,17 @@ system_timesyncd_enabled: true
 system_docker_enabled: true
 system_laptop_enabled: true
 system_user_services_enabled: true
+# Off-switches for the always-on subsystems. They default to true so the
+# applied configuration is unchanged; set one false to skip that include.
+# Environment guards (containers, CI, systemd availability) still apply inside
+# each subsystem.
+system_time_enabled: true
+system_locale_enabled: true
+system_console_enabled: true
+system_login_enabled: true
+system_cron_enabled: true
+system_journald_enabled: true
+system_sshd_enabled: true
 
 system_aur_build_root: "{{ ansible_facts.user_dir }}/.cache/aur"
 system_aur_helper_package: yay

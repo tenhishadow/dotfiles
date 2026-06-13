@@ -15,6 +15,13 @@
       - system_docker_enabled is boolean
       - system_laptop_enabled is boolean
       - system_user_services_enabled is boolean
+      - system_time_enabled is boolean
+      - system_locale_enabled is boolean
+      - system_console_enabled is boolean
+      - system_login_enabled is boolean
+      - system_cron_enabled is boolean
+      - system_journald_enabled is boolean
+      - system_sshd_enabled is boolean
       - system_aur_build_packages is sequence
       - system_aur_build_packages is not string
       - not (system_aur_enabled | bool) or system_aur_build_packages | length > 0
