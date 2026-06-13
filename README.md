@@ -353,7 +353,10 @@ are documented in [`docs/github-labels.md`](docs/github-labels.md).
 The `ansible` workflow also runs a `task-all` job in an Arch Linux container.
 It executes `go-task all -- --skip-tags pkg,aur` to cover aggregate ordering across
 the user dotfiles, system, and browser policy layers without installing the
-full workstation package manifest or AUR helper on hosted runners.
+full workstation package manifest or AUR helper on hosted runners. A weekly
+`schedule` trigger reruns the workflow against a fresh Arch container to catch
+rolling-release upstream breakage; the cross-OS apply matrix is skipped on those
+scheduled runs.
 
 GitHub Copilot review guidance lives in `.github/copilot-instructions.md`,
 with path-specific rules under `.github/instructions/`.
