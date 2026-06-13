@@ -8,7 +8,9 @@
     - browser_policies_validate
 
 - name: Browser Policies | Run Chromium tasks
-  ansible.builtin.include_tasks: chromium.yml
+  ansible.builtin.include_tasks: build-policy-files.yml
+  vars:
+    browser_policies_family: "{{ browser_policies_families | selectattr('key', 'equalto', 'chromium') | first }}"
   when:
     - browser_policies_enabled | bool
     - browser_policies_chromium_enabled | bool
@@ -17,7 +19,9 @@
     - browser_policies_chromium
 
 - name: Browser Policies | Run Firefox tasks
-  ansible.builtin.include_tasks: firefox.yml
+  ansible.builtin.include_tasks: build-policy-files.yml
+  vars:
+    browser_policies_family: "{{ browser_policies_families | selectattr('key', 'equalto', 'firefox') | first }}"
   when:
     - browser_policies_enabled | bool
     - browser_policies_firefox_enabled | bool
@@ -26,7 +30,9 @@
     - browser_policies_firefox
 
 - name: Browser Policies | Run Thunderbird tasks
-  ansible.builtin.include_tasks: thunderbird.yml
+  ansible.builtin.include_tasks: build-policy-files.yml
+  vars:
+    browser_policies_family: "{{ browser_policies_families | selectattr('key', 'equalto', 'thunderbird') | first }}"
   when:
     - browser_policies_enabled | bool
     - browser_policies_thunderbird_enabled | bool
@@ -35,7 +41,9 @@
     - browser_policies_thunderbird
 
 - name: Browser Policies | Run VS Code tasks
-  ansible.builtin.include_tasks: vscode.yml
+  ansible.builtin.include_tasks: build-policy-files.yml
+  vars:
+    browser_policies_family: "{{ browser_policies_families | selectattr('key', 'equalto', 'vscode') | first }}"
   when:
     - browser_policies_enabled | bool
     - browser_policies_vscode_enabled | bool

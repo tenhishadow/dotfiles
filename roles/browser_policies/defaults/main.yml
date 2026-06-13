@@ -142,3 +142,51 @@ browser_policies_vscode_targets:
   - name: vscode
     enabled: true
     policy_path: /etc/vscode/policy.json
+
+# Data-driven descriptors shared by the policy-file builder (build-policy-files.yml)
+# and the path-target validation. Each entry captures how a family differs:
+#   extension_kind: merged_dict (combine the lockdown block with the family
+#                   extension settings) | json_string (encode allowed
+#                   extensions as a JSON string) | none
+#   content_kind:   flat (write the policy mapping as-is) | wrapped (nest it
+#                   under a top-level "policies" key)
+#   path_kind:      dir_filename (join policy_dir and a filename) | path (use
+#                   the target policy_path directly)
+browser_policies_families:
+  - key: chromium
+    name: Chromium
+    targets_var: browser_policies_chromium_targets
+    base_policies_var: browser_policies_chromium_base_policies
+    extension_kind: merged_dict
+    extension_key: ExtensionSettings
+    extension_settings_var: browser_policies_chromium_extension_settings
+    content_kind: flat
+    path_kind: dir_filename
+    filename_default_var: browser_policies_chromium_policy_filename
+  - key: firefox
+    name: Firefox
+    targets_var: browser_policies_firefox_targets
+    base_policies_var: browser_policies_firefox_base_policies
+    extension_kind: merged_dict
+    extension_key: ExtensionSettings
+    extension_settings_var: browser_policies_firefox_extension_settings
+    content_kind: wrapped
+    path_kind: path
+  - key: thunderbird
+    name: Thunderbird
+    targets_var: browser_policies_thunderbird_targets
+    base_policies_var: browser_policies_thunderbird_base_policies
+    extension_kind: merged_dict
+    extension_key: ExtensionSettings
+    extension_settings_var: browser_policies_thunderbird_extension_settings
+    content_kind: wrapped
+    path_kind: path
+  - key: vscode
+    name: VS Code
+    targets_var: browser_policies_vscode_targets
+    base_policies_var: browser_policies_vscode_base_policies
+    extension_kind: json_string
+    extension_key: AllowedExtensions
+    extension_settings_var: browser_policies_vscode_allowed_extensions
+    content_kind: flat
+    path_kind: path

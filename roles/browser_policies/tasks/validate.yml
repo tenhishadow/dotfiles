@@ -96,38 +96,17 @@
     quiet: true
   vars:
     browser_policies_path_targets: >-
-      {%- set browser_policies_path_target_checks = [] -%}
-      {%- for browser_policies_firefox_target in browser_policies_firefox_targets -%}
-      {%-   set browser_policies_firefox_target_added = browser_policies_path_target_checks.append(
-              {
-                'family': 'Firefox',
-                'label': browser_policies_firefox_target.name | default('unnamed firefox target'),
-                'target': browser_policies_firefox_target,
-              }
-            )
-      -%}
+      {%- set ns = namespace(checks=[]) -%}
+      {%- for family in browser_policies_families if family.path_kind == 'path' -%}
+      {%-   for target in lookup('ansible.builtin.vars', family.targets_var) -%}
+      {%-     set ns.checks = ns.checks + [{
+                'family': family.name,
+                'label': target.name | default('unnamed ' ~ family.key ~ ' target'),
+                'target': target,
+              }] -%}
+      {%-   endfor -%}
       {%- endfor -%}
-      {%- for browser_policies_thunderbird_target in browser_policies_thunderbird_targets -%}
-      {%-   set browser_policies_thunderbird_target_added = browser_policies_path_target_checks.append(
-              {
-                'family': 'Thunderbird',
-                'label': browser_policies_thunderbird_target.name | default('unnamed thunderbird target'),
-                'target': browser_policies_thunderbird_target,
-              }
-            )
-      -%}
-      {%- endfor -%}
-      {%- for browser_policies_vscode_target in browser_policies_vscode_targets -%}
-      {%-   set browser_policies_vscode_target_added = browser_policies_path_target_checks.append(
-              {
-                'family': 'VS Code',
-                'label': browser_policies_vscode_target.name | default('unnamed vscode target'),
-                'target': browser_policies_vscode_target,
-              }
-            )
-      -%}
-      {%- endfor -%}
-      {{ browser_policies_path_target_checks }}
+      {{ ns.checks }}
   loop: "{{ browser_policies_path_targets }}"
   loop_control:
     loop_var: browser_policies_path_target
