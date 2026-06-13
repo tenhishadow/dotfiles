@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.3.0](https://github.com/tenhishadow/dotfiles/compare/v2.2.3...v2.3.0) (2026-06-13)
+
+
+### Features
+
+* data-driven roles, self-validating instruction layer, and scheduled Arch CI ([#155](https://github.com/tenhishadow/dotfiles/issues/155)) ([ad44c03](https://github.com/tenhishadow/dotfiles/commit/ad44c0376e79eb4504ccef186924455bf6509c72))
+
 ## [2.2.3](https://github.com/tenhishadow/dotfiles/compare/v2.2.2...v2.2.3) (2026-06-03)
 
 
