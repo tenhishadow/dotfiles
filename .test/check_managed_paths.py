@@ -22,6 +22,7 @@ GROUPS = {
 
 
 def main() -> int:
+    """Compare the rendered manifest with the report path constants."""
     if len(sys.argv) != 2:
         print("usage: check_managed_paths.py <manifest.json>", file=sys.stderr)
         return 2
