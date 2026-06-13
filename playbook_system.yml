@@ -1,6 +1,9 @@
 ---
 - name: System | Apply workstation layer
   hosts: this_host
+  # The play runs unprivileged; the system role escalates per task with
+  # become: true only where root is required. Connection is local via inventory.
+  become: false
   gather_facts: true
   roles:
     - role: system

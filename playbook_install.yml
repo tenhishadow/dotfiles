@@ -2,7 +2,6 @@
 - name: Dotfiles | Apply user config
   hosts: this_host
   become: false
-  connection: local
   gather_facts: true
   roles:
     - role: dotfiles

@@ -1,11 +1,10 @@
 ---
 - name: Browser Policies | Apply managed policies
   hosts: this_host
+  # Connection is local via inventory; the play escalates because every policy
+  # file is written under /etc.
   become: true
-  connection: local
   gather_facts: true
-  tags:
-    - browser_policies
   roles:
     - role: browser_policies
       tags:
