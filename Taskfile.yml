@@ -134,6 +134,8 @@ tasks:
   lint:ansible-semantics:
     deps: [deps-python]
     cmd: "uv run python .test/check_ansible_semantics.py"
+  lint:english:
+    cmd: "python3 .test/check_repo_english.py"
   yamllint:
     deps: [deps-python]
     cmd: "uv run yamllint ."
@@ -197,6 +199,7 @@ tasks:
       - task: diff-check
       - task: lint
       - task: lint:ansible-semantics
+      - task: lint:english
       - task: yamllint
       - task: vint
       - task: stylua
