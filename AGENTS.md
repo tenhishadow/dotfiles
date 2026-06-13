@@ -156,9 +156,11 @@ Ansible, `uv`, and `go-task`.
 
 ## Documentation And Instruction Sync
 
-- Update `README.md` and the nearest applicable `AGENTS.md` when commands,
-  playbooks, roles, validation steps, repository layout, or runtime behavior
-  change.
+- The `go-task` command catalog lives in the README `Common Tasks` table; keep
+  it as the single source of truth and reference commands by name elsewhere
+  instead of repeating the table. Update `README.md` and the nearest applicable
+  `AGENTS.md` when commands, playbooks, roles, validation steps, repository
+  layout, or runtime behavior change.
 - Update role README files when role variables, managed paths, task flow,
   validation, or rollback behavior changes.
 - Update architecture, adoption, security, and migration/history docs when
@@ -189,6 +191,9 @@ Ansible, `uv`, and `go-task`.
 - Do not include unrelated dirty worktree changes.
 
 ## Validation Matrix
+
+The README `Common Tasks` table is the authoritative `go-task` command
+reference; the rules below map change types to those commands.
 
 - Always run `git diff --check` before finishing non-trivial changes.
 - Run `go-task dotfiles:check` for user dotfiles, symlink mappings, cleanup,

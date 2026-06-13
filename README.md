@@ -141,6 +141,10 @@ then runs `playbook_system.yml` in Ansible check mode with diff output.
 
 ## Common Tasks
 
+This table is the single source of truth for the `go-task` command catalog.
+Other documentation references these commands by name instead of repeating the
+table.
+
 | Command | Purpose |
 | ------- | ------- |
 | `go-task` | Apply user-level dotfiles only. |
@@ -369,11 +373,13 @@ updates `uv.lock`, refreshes the installed Ansible Galaxy collections allowed by
 Renovate PRs; use `go-task deps-report:github-actions` when you want a local
 Renovate extraction/dry-run report for workflow dependencies.
 
-Documentation and AI instructions are part of the repository contract. Update
-`README.md`, the nearest `AGENTS.md`, `.github/copilot-instructions.md`, and
-path-specific `.github/instructions/*.instructions.md` whenever commands,
-roles, inventory ownership, validation paths, automation, or runtime behavior
-change.
+Documentation and AI instructions are part of the repository contract. The
+[Common Tasks](#common-tasks) table is the single source of truth for the
+`go-task` command catalog: update it when commands change, and reference
+commands by name elsewhere instead of repeating the table. Update the nearest
+`AGENTS.md`, `.github/copilot-instructions.md`, and path-specific
+`.github/instructions/*.instructions.md` whenever roles, inventory ownership,
+validation paths, automation, or runtime behavior change.
 
 ## Safety Notes
 

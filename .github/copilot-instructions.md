@@ -65,6 +65,9 @@ maintenance. Former `ans-workstation` automation is opt-in.
 
 ## Suggested Validation
 
+The README `Common Tasks` table is the authoritative `go-task` command
+reference; the list below maps change types to those commands.
+
 - Ansible, inventory, role, Taskfile, playbook changes: `go-task lint`.
 - YAML-heavy changes: `go-task yamllint`.
 - Default dotfiles flow or mappings: `go-task dotfiles:check`; use `go-task`
