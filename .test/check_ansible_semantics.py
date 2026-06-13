@@ -25,7 +25,6 @@ from __future__ import annotations
 
 import glob
 import re
-import sys
 from pathlib import Path
 
 import yaml
@@ -126,9 +125,13 @@ def check_names(root: Path, files: list[Path]) -> list[str]:
             if name is None:
                 continue  # ansible-lint owns "name missing"
             if not isinstance(name, str) or not NAME_RE.match(name):
-                problems.append(f"{rel}: {kind} name not '<Domain> | <Verb> <object>': {name!r}")
+                problems.append(
+                    f"{rel}: {kind} name not '<Domain> | <Verb> <object>': {name!r}"
+                )
             elif name.count(SEPARATOR) != 1:
-                problems.append(f"{rel}: {kind} name needs exactly one ' | ' separator: {name!r}")
+                problems.append(
+                    f"{rel}: {kind} name needs exactly one ' | ' separator: {name!r}"
+                )
     return problems
 
 
@@ -164,7 +167,9 @@ def main() -> int:
         for problem in problems:
             print(f"  {problem}")
         return 1
-    print(f"ansible semantics consistent: {len(files)} files, names and notify/handlers match")
+    print(
+        f"ansible semantics consistent: {len(files)} files, names and notify/handlers match"
+    )
     return 0
 
 

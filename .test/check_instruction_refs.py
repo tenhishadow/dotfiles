@@ -21,7 +21,6 @@ repository references and are ignored. Run with plain Python:
 from __future__ import annotations
 
 import re
-import sys
 from pathlib import Path
 
 # Files that make up the instruction / documentation layer.
@@ -43,7 +42,9 @@ EXCLUDED_DIRS = (".venv", ".git", ".collections", ".ansible", ".task", "node_mod
 
 # Match go-task only at a command boundary (line start or inside backticks) so
 # package lists like "pacman ... git go-task uv" are not read as invocations.
-GO_TASK_RE = re.compile(r"(?:^[ \t$]*|`)go-task(?:\s+(?P<name>[a-z][a-z0-9:_-]*))?", re.M)
+GO_TASK_RE = re.compile(
+    r"(?:^[ \t$]*|`)go-task(?:\s+(?P<name>[a-z][a-z0-9:_-]*))?", re.M
+)
 # Backtick- or link-quoted tokens that look like repository paths.
 TOKEN_RE = re.compile(r"[`(]([A-Za-z0-9][A-Za-z0-9._/*-]+)[`)]")
 PLAYBOOK_RE = re.compile(r"\bplaybook_[a-z_]+\.yml\b")
@@ -107,9 +108,7 @@ def check_paths(root: Path, text: str) -> list[str]:
     """Return repository path references that do not resolve."""
     problems = []
     candidates = set(PLAYBOOK_RE.findall(text))
-    candidates.update(
-        tok for tok in TOKEN_RE.findall(text) if tok.startswith(ANCHORS)
-    )
+    candidates.update(tok for tok in TOKEN_RE.findall(text) if tok.startswith(ANCHORS))
     for ref in candidates:
         if not path_exists(root, ref):
             problems.append(f"missing repository path referenced in docs: {ref}")

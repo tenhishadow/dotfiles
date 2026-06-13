@@ -20,7 +20,6 @@ output or a transliterated proper noun). Run with plain Python:
 from __future__ import annotations
 
 import subprocess
-import sys
 import unicodedata
 from pathlib import Path
 
@@ -80,7 +79,9 @@ def main() -> int:
         print("non-English text in tracked files:")
         for problem in problems:
             print(f"  {problem}")
-        print("  (allowlist quoted external output / proper nouns in ALLOWLIST if intentional)")
+        print(
+            "  (allowlist quoted external output / proper nouns in ALLOWLIST if intentional)"
+        )
         return 1
     print("repository text is free of non-English letters (English-only guard passed)")
     return 0
