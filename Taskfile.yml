@@ -178,6 +178,13 @@ tasks:
     cmd: "python3 .test/workstation_report.py system-report"
   browser-policies:report:
     cmd: "python3 .test/workstation_report.py browser-policies-report"
+  managed-paths:check:
+    deps: [deps-python]
+    cmd: >-
+      manifest="$(mktemp)";
+      trap 'rm -f "${manifest}"' EXIT;
+      uv run ansible-playbook .test/managed_paths.yml -e manifest_out="${manifest}" >/dev/null;
+      python3 .test/check_managed_paths.py "${manifest}"
   verify:
     deps: [deps-galaxy, deps-verify]
     cmds:
@@ -190,6 +197,7 @@ tasks:
       - task: actionlint
       - task: renovate
       - task: pre-commit
+      - task: managed-paths:check
       - task: default
       - task: system:check
       - task: test:system
