@@ -5,11 +5,14 @@ version: "3"
 vars:
   RUN_PLAYBOOK: "uv run ansible-playbook playbook_install.yml {{.CLI_ARGS}}"
   RUN_SYSTEM_PLAYBOOK: "uv run ansible-playbook playbook_system.yml --diff {{.CLI_ARGS}}"
+  RUN_BROWSER_PLAYBOOK: "uv run ansible-playbook playbook_browser_policies.yml"
   VINT_TARGETS: "dotfiles/.vimrc dotfiles/.config/nvim"
   STYLUA_TARGETS: "dotfiles/.config/nvim .test/nvim"
-  DEPS_OS_ARCHLINUX: "pacman -Sy --noconfirm --needed --noprogressbar uv git"
-  DEPS_OS_SYSTEM_ARCHLINUX: "pacman -Sy --noconfirm --needed --noprogressbar uv git sudo"
-  DEPS_VERIFY_ARCHLINUX: "pacman -Sy --noconfirm --needed --noprogressbar actionlint nodejs npm pre-commit stylua"
+  PACMAN_INSTALL: "pacman -Sy --noconfirm --needed --noprogressbar"
+  DEPS_OS_ARCHLINUX: "{{.PACMAN_INSTALL}} uv git"
+  DEPS_OS_SYSTEM_ARCHLINUX: "{{.PACMAN_INSTALL}} uv git sudo"
+  DEPS_VERIFY_ARCHLINUX: "{{.PACMAN_INSTALL}} actionlint nodejs npm pre-commit stylua"
+  SUPERLINTER_IMAGE_TAG: "v8.6.0"
   SUPERLINTER_DOCKER_RUN: >-
     docker run
     --rm
@@ -206,11 +209,13 @@ tasks:
   superlinter:
     deps: [deps-docker]
     cmds:
-      - "{{.SUPERLINTER_DOCKER_RUN}} ghcr.io/super-linter/super-linter:v8.6.0"
+      - "{{.SUPERLINTER_DOCKER_RUN}} ghcr.io/super-linter/super-linter:{{.SUPERLINTER_IMAGE_TAG}}"
   superlinter:latest:
     deps: [deps-docker]
+    vars:
+      SUPERLINTER_IMAGE_TAG: "latest"
     cmds:
-      - "{{.SUPERLINTER_DOCKER_RUN}} ghcr.io/super-linter/super-linter:latest"
+      - "{{.SUPERLINTER_DOCKER_RUN}} ghcr.io/super-linter/super-linter:{{.SUPERLINTER_IMAGE_TAG}}"
   clear:
     cmd: >-
       rm -rf
@@ -252,29 +257,29 @@ tasks:
       pacdiff -o
   browser-policies:
     deps: [deps-galaxy]
-    cmd: "uv run ansible-playbook playbook_browser_policies.yml {{.CLI_ARGS}}"
+    cmd: "{{.RUN_BROWSER_PLAYBOOK}} {{.CLI_ARGS}}"
   browser-policies:check:
     deps: [deps-galaxy]
-    cmd: "uv run ansible-playbook playbook_browser_policies.yml --check --diff {{.CLI_ARGS}}"
+    cmd: "{{.RUN_BROWSER_PLAYBOOK}} --check --diff {{.CLI_ARGS}}"
   test:nvim:
     env:
-      XDG_CONFIG_HOME: "{{.PWD}}/.test/nvim/.config"
-      XDG_DATA_HOME: "{{.PWD}}/.test/nvim/.data"
-      XDG_STATE_HOME: "{{.PWD}}/.test/nvim/.state"
-      XDG_CACHE_HOME: "{{.PWD}}/.test/nvim/.cache"
+      XDG_CONFIG_HOME: &xdg_config_home "{{.PWD}}/.test/nvim/.config"
+      XDG_DATA_HOME: &xdg_data_home "{{.PWD}}/.test/nvim/.data"
+      XDG_STATE_HOME: &xdg_state_home "{{.PWD}}/.test/nvim/.state"
+      XDG_CACHE_HOME: &xdg_cache_home "{{.PWD}}/.test/nvim/.cache"
       GOENV: "{{.PWD}}/.test/nvim/.state/go/env"
       NVIM_USE_MASON: "off"
       NVIM_TS_INSTALL: "auto"
       NVIM_TS_TIMEOUT_MS: "120000"
     cmds:
-      - >-
+      - &nvim_bootstrap_clean >-
         rm -rf
         .test/nvim/.config/nvim
         .test/nvim/.data/nvim
         .test/nvim/.state/nvim
         .test/nvim/.cache/nvim
-      - mkdir -p .test/nvim/.config .test/nvim/.data .test/nvim/.state .test/nvim/.cache
-      - cp -a dotfiles/.config/nvim .test/nvim/.config/
+      - &nvim_bootstrap_mkdir mkdir -p .test/nvim/.config .test/nvim/.data .test/nvim/.state .test/nvim/.cache
+      - &nvim_bootstrap_copy cp -a dotfiles/.config/nvim .test/nvim/.config/
       - timeout 300s nvim --headless "+Lazy! restore" +qa
       - diff -u dotfiles/.config/nvim/lazy-lock.json .test/nvim/.config/nvim/lazy-lock.json
       - task: test:nvim:mason-tools
@@ -289,21 +294,16 @@ tasks:
         '+lua dofile(".test/nvim/mason_tools.lua")'
   test:nvim:compat:
     env:
-      XDG_CONFIG_HOME: "{{.PWD}}/.test/nvim/.config"
-      XDG_DATA_HOME: "{{.PWD}}/.test/nvim/.data"
-      XDG_STATE_HOME: "{{.PWD}}/.test/nvim/.state"
-      XDG_CACHE_HOME: "{{.PWD}}/.test/nvim/.cache"
+      XDG_CONFIG_HOME: *xdg_config_home
+      XDG_DATA_HOME: *xdg_data_home
+      XDG_STATE_HOME: *xdg_state_home
+      XDG_CACHE_HOME: *xdg_cache_home
       NVIM_DOTFILES_DISABLE_PLUGINS: "1"
       NVIM_USE_MASON: "off"
     cmds:
-      - >-
-        rm -rf
-        .test/nvim/.config/nvim
-        .test/nvim/.data/nvim
-        .test/nvim/.state/nvim
-        .test/nvim/.cache/nvim
-      - mkdir -p .test/nvim/.config .test/nvim/.data .test/nvim/.state .test/nvim/.cache
-      - cp -a dotfiles/.config/nvim .test/nvim/.config/
+      - *nvim_bootstrap_clean
+      - *nvim_bootstrap_mkdir
+      - *nvim_bootstrap_copy
       - timeout 60s nvim --headless "+lua dofile('.test/nvim/compat.lua')"
   test:nvim:all:
     cmds:
@@ -312,10 +312,10 @@ tasks:
   test:nvim:profile:
     deps: [test:nvim]
     env:
-      XDG_CONFIG_HOME: "{{.PWD}}/.test/nvim/.config"
-      XDG_DATA_HOME: "{{.PWD}}/.test/nvim/.data"
-      XDG_STATE_HOME: "{{.PWD}}/.test/nvim/.state"
-      XDG_CACHE_HOME: "{{.PWD}}/.test/nvim/.cache"
+      XDG_CONFIG_HOME: *xdg_config_home
+      XDG_DATA_HOME: *xdg_data_home
+      XDG_STATE_HOME: *xdg_state_home
+      XDG_CACHE_HOME: *xdg_cache_home
       NVIM_USE_MASON: "off"
     cmds:
       - >-
