@@ -163,6 +163,8 @@ tasks:
         '+lua dofile(".test/nvim/keymap_docs.lua")'
         +qa > "${tmp}";
         diff -u docs/nvim-keymaps.md "${tmp}"
+  docs:instructions:check:
+    cmd: "python3 .test/check_instruction_refs.py"
   diff-check:
     cmd: git diff --check
   actionlint:
@@ -204,6 +206,7 @@ tasks:
       - task: vint
       - task: stylua
       - task: docs:nvim-keymaps:check
+      - task: docs:instructions:check
       - task: actionlint
       - task: renovate
       - task: pre-commit
