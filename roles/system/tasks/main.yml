@@ -116,18 +116,26 @@
 - name: System | Run time tasks
   ansible.builtin.include_tasks:
     file: time.yml
+  when:
+    - system_time_enabled | bool
 
 - name: System | Run locale tasks
   ansible.builtin.include_tasks:
     file: sys-locale.yml
+  when:
+    - system_locale_enabled | bool
 
 - name: System | Run console tasks
   ansible.builtin.include_tasks:
     file: sys-console.yml
+  when:
+    - system_console_enabled | bool
 
 - name: System | Run login tasks
   ansible.builtin.include_tasks:
     file: sys-login.yml
+  when:
+    - system_login_enabled | bool
 
 - name: System | Run limits tasks
   ansible.builtin.include_tasks:
@@ -138,18 +146,24 @@
 - name: System | Run cron tasks
   ansible.builtin.include_tasks:
     file: sys-cron.yml
+  when:
+    - system_cron_enabled | bool
 
 - name: System | Run sysctl tasks
   ansible.builtin.include_tasks:
     file: sys-sysctl.yml
+  when:
+    - system_sysctl_enabled | bool
 
-- name: System | Run journald tasks
+- name: System | Run drop-in tasks
   ansible.builtin.include_tasks:
-    file: sys-journald.yml
+    file: sys-dropins.yml
 
 - name: System | Run SSHD tasks
   ansible.builtin.include_tasks:
     file: sys-sshd.yml
+  when:
+    - system_sshd_enabled | bool
 
 - name: System | Run OS tasks
   ansible.builtin.include_tasks:

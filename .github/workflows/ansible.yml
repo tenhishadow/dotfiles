@@ -8,6 +8,9 @@ on:
     branches:
       - master
   pull_request:
+  schedule:
+    # Weekly run against fresh Arch to catch rolling-release upstream breakage.
+    - cron: "0 6 * * 1"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -23,6 +26,9 @@ jobs:
 
   ansible_exec:
     name: ansible-exec (${{ matrix.os }})
+    # The weekly schedule targets the Arch container; skip the cross-OS apply
+    # matrix to keep scheduled runs lean.
+    if: github.event_name != 'schedule'
     strategy:
       matrix:
         os:

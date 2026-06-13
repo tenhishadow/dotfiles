@@ -4,17 +4,12 @@ applyTo: "playbook_*.yml,inventory/**/*.yml,roles/**/*.yml,requirements.yml,ansi
 
 # Ansible Review Instructions
 
-- Enforce Ansible names as `<Domain> | <Verb> <object>` for plays, tasks, and
-  handlers.
-- Use short stable domains and preserve product casing, for example `SSHD`,
-  `Timesyncd`, `Journald`, `Sysctl`, `Limits`, `VS Code`, `Neovim`, and
-  `systemd`.
-- Use concise imperative verbs from the repo-wide verb set in `AGENTS.md`.
-- Name include wrappers as `Run ... tasks`.
-- Ensure every `notify` value matches a handler name exactly.
-- Keep tags lowercase snake_case.
-- Prefix role variables, registered facts, and non-trivial task-local vars with
-  `dotfiles_`, `system_`, or `browser_policies_`.
+Repo-wide naming, variable, and English-only rules live in the root `AGENTS.md`
+and are enforced by `ansible-lint`, `go-task lint:ansible-semantics` (the
+`<Domain> | <Verb> <object>` format and exact `notify`/handler matching), and
+`go-task lint:english`. Do not restate them; review the path-scoped points
+below.
+
 - Use `loop_control.loop_var` for non-trivial loops instead of generic `item`.
 - Keep role input validation in `tasks/validate.yml` when a role exposes a
   variable contract.

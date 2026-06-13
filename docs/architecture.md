@@ -3,9 +3,13 @@
 This repository is a personal Arch Linux dotfiles and workstation automation
 baseline managed with Ansible, `uv`, and `go-task`.
 
-It keeps user-owned dotfiles, opt-in system provisioning, opt-in browser and VS
-Code policies, and repository validation in one place without changing the
-default execution boundary.
+It keeps user-owned dotfiles, opt-in system provisioning, opt-in browser,
+Thunderbird, and VS Code policies, and repository validation in one place
+without changing the default execution boundary.
+
+This document is the canonical description of the repository architecture and
+safety boundaries. `README.md` and `AGENTS.md` link here instead of restating
+the layer model.
 
 ## Layer Model
 

@@ -5,6 +5,9 @@ Ansible, `uv`, and `go-task`.
 
 ## Architecture
 
+`docs/architecture.md` is the canonical layer model and safety-boundary
+description; this section is the agent-facing file-location map.
+
 - `dotfiles/` contains the canonical user-level payload linked into `$HOME`.
 - `playbook_install.yml` is the default user-level install playbook.
 - `playbook_system.yml` is the explicit privileged workstation playbook.
@@ -27,16 +30,19 @@ Ansible, `uv`, and `go-task`.
 - The nearest `AGENTS.md` applies.
 - Nested `AGENTS.md` files add local rules and should not duplicate this file
   wholesale.
-- Check local instructions before editing:
+- Check local instructions before editing (`go-task docs:agents` regenerates
+  this list; `go-task docs:agents:check` fails if it is stale):
+  <!-- BEGIN GENERATED: nested-agents (go-task docs:agents) -->
   - `.github/AGENTS.md`
   - `.test/AGENTS.md`
-  - `dotfiles/AGENTS.md`
   - `dotfiles/.config/nvim/AGENTS.md`
+  - `dotfiles/AGENTS.md`
   - `inventory/AGENTS.md`
   - `roles/AGENTS.md`
   - `roles/dotfiles/AGENTS.md`
   - `roles/system/AGENTS.md`
   - `roles/system/vars/AGENTS.md`
+  <!-- END GENERATED: nested-agents -->
 
 ## Hard Rules
 
@@ -57,7 +63,7 @@ Ansible, `uv`, and `go-task`.
   supported.
 - Keep changes deterministic, narrow, reviewable, and idempotent.
 - Keep repository text, comments, task names, documentation, and AI
-  instructions in English.
+  instructions in English (enforced by `go-task lint:english`).
 - Do not commit secrets, tokens, cookies, browser or mail profiles, session
   state, local databases, caches, private keys, kubeconfigs, cloud
   credentials, AI account state, MCP credentials, generated test workspaces, or
@@ -87,7 +93,9 @@ Ansible, `uv`, and `go-task`.
 ## Ansible Naming Style
 
 - Use one format for all Ansible play, task, and handler names:
-  `<Domain> | <Verb> <object>`.
+  `<Domain> | <Verb> <object>`. The format and exact `notify`/handler matching
+  are enforced by `go-task lint:ansible-semantics`; the verb and domain lists
+  below are illustrative guidance, not a closed set.
 - Keep domains short and stable, for example `Dotfiles`, `System`,
   `Browser Policies`, `SSHD`, `Timesyncd`, `Journald`, `Sysctl`, `Limits`,
   `Docker`, and `User systemd`.
@@ -101,18 +109,16 @@ Ansible, `uv`, and `go-task`.
   example `drop-in directory`, `policy files`, `payload sources`, or
   `service facts`.
 - Name include wrappers as `Run ... tasks`.
-- Handler names must use the same format, and `notify` values must match the
-  handler name exactly.
 - Keep tags lowercase snake_case.
 
 ## Ansible Variable Style
 
 - Prefix public role variables, registered facts, `set_fact` values, and
   non-trivial task-local vars with the role name: `dotfiles_`, `system_`, or
-  `browser_policies_`.
-- Use lowercase snake_case for Ansible variables. Keep upstream config keys
-  unchanged inside setting maps such as SSHD, journald, sysctl, browser policy,
-  and VS Code policy dictionaries.
+  `browser_policies_`, in lowercase snake_case. Both rules are enforced by
+  ansible-lint (`var-naming`).
+- Keep upstream config keys unchanged inside setting maps such as SSHD,
+  journald, sysctl, browser policy, and VS Code policy dictionaries.
 - Prefer concise nouns that describe ownership and shape, for example
   `*_settings`, `*_paths`, `*_dirs`, `*_files`, and `*_enabled`.
 - Use explicit `loop_control.loop_var` for every non-trivial loop; avoid
@@ -156,30 +162,35 @@ Ansible, `uv`, and `go-task`.
 
 ## Documentation And Instruction Sync
 
-- Update `README.md` and the nearest applicable `AGENTS.md` when commands,
-  playbooks, roles, validation steps, repository layout, or runtime behavior
-  change.
-- Update role README files when role variables, managed paths, task flow,
-  validation, or rollback behavior changes.
-- Update architecture, adoption, security, and migration/history docs when
-  system-layer behavior, boundaries, or consolidation wording changes.
-- Update `.github/copilot-instructions.md` and relevant
-  `.github/instructions/*.instructions.md` when review rules, repository
-  structure, naming style, validation, or automation expectations change.
-- Keep AI instructions self-documenting: add new directories, ownership
-  boundaries, validation commands, and automation rules in the same change that
-  introduces them.
-- Remove stale AI instructions when files, roles, workflows, or validation
-  paths are removed.
-- Keep instruction files concise and non-duplicative; repo-wide rules belong
-  in root `AGENTS.md` and `.github/copilot-instructions.md`, while path-local
-  rules belong in nested `AGENTS.md` and `.github/instructions/`.
+This layer is single-source and self-checked. Edit the one canonical home for a
+rule; do not fan the same rule out into every file.
+
+- Repo-wide rules live in this root `AGENTS.md`. The agent ownership map (the
+  nested-`AGENTS.md` list above) is generated: run `go-task docs:agents` after
+  adding or removing a nested `AGENTS.md`, and `go-task docs:agents:check`
+  fails on a stale map.
+- The `go-task` command catalog lives in the README `Common Tasks` table.
+  Reference commands by name elsewhere; never repeat the table.
+- Mechanical rules are enforced, not restated: the `<Domain> | <Verb> <object>`
+  naming and `notify`/handler contract by `go-task lint:ansible-semantics`,
+  variable naming by ansible-lint, and English-only text by
+  `go-task lint:english`. Other files point to the rule and its check instead
+  of rewriting it.
+- `go-task docs:instructions:check` fails when any doc references a missing
+  `go-task` target, role, playbook, or repository path, so a rename cannot
+  leave a stale instruction behind. This replaces manual cross-file fan-out:
+  remove the source rule once and the checks catch every dangling reference.
+- Nested `AGENTS.md` and `.github/instructions/*` carry only path-local rules
+  and reference this file for repo-wide rules.
+  `.github/copilot-instructions.md` is the condensed Copilot review surface and
+  stays under 4,000 characters.
+- Update role README files, and the architecture, adoption, security, and
+  migration/history docs, when role contracts or system-layer behavior change.
 - Keep `.ruff.toml` and `.github/linters/.ruff.toml` synchronized because
   local Ruff and Super-Linter read different config paths.
 - When adding versioned automation dependencies such as GitHub Actions,
-  reusable workflows, Docker images, pre-commit hooks, or future GitLab CI
-  includes, ensure Renovate can update them or document why they must be
-  updated manually.
+  reusable workflows, Docker images, or pre-commit hooks, ensure Renovate can
+  update them or document why they must be updated manually.
 
 ## Commit Rules
 
@@ -189,6 +200,9 @@ Ansible, `uv`, and `go-task`.
 - Do not include unrelated dirty worktree changes.
 
 ## Validation Matrix
+
+The README `Common Tasks` table is the authoritative `go-task` command
+reference; the rules below map change types to those commands.
 
 - Always run `git diff --check` before finishing non-trivial changes.
 - Run `go-task dotfiles:check` for user dotfiles, symlink mappings, cleanup,

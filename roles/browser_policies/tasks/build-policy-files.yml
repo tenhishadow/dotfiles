@@ -1,0 +1,49 @@
+---
+# Shared policy-file builder. Driven by a single family descriptor
+# (browser_policies_family, see browser_policies_families in defaults), it turns
+# the family targets into the {name, family, directory, path, content} spec list
+# consumed by policy-files.yml. Replaces the per-family chromium/firefox/
+# thunderbird/vscode task files that each repeated the same loop.
+- name: Browser Policies | Apply policy files for {{ browser_policies_family.name }}
+  ansible.builtin.include_tasks:
+    file: policy-files.yml
+  vars:
+    browser_policies_policy_files: >-
+      {%- set fam = browser_policies_family -%}
+      {%- set targets = lookup('ansible.builtin.vars', fam.targets_var) -%}
+      {%- set base = lookup('ansible.builtin.vars', fam.base_policies_var) -%}
+      {%- set ext_src = lookup('ansible.builtin.vars', fam.extension_settings_var) -%}
+      {%- if fam.extension_kind == 'merged_dict' -%}
+      {%-   set ext_merged = browser_policies_extension_block | combine(ext_src, recursive=True) -%}
+      {%-   set ext_piece = (ext_merged | length > 0) | ternary({fam.extension_key: ext_merged}, {}) -%}
+      {%- elif fam.extension_kind == 'json_string' -%}
+      {%-   set ext_piece = (ext_src | length > 0) | ternary({fam.extension_key: ext_src | to_json}, {}) -%}
+      {%- else -%}
+      {%-   set ext_piece = {} -%}
+      {%- endif -%}
+      {%- set ns = namespace(files=[]) -%}
+      {%- for target in targets if (target.enabled | default(true) | bool) -%}
+      {%-   set body =
+              base
+              | combine(target.policies | default({}), recursive=True)
+              | combine(ext_piece, recursive=True) -%}
+      {%-   set content = (fam.content_kind == 'wrapped') | ternary({'policies': body}, body) -%}
+      {%-   if fam.path_kind == 'dir_filename' -%}
+      {%-     set filename = target.policy_filename | default(lookup('ansible.builtin.vars', fam.filename_default_var)) -%}
+      {%-     set directory = target.policy_dir -%}
+      {%-     set path = target.policy_dir ~ '/' ~ filename -%}
+      {%-   else -%}
+      {%-     set directory = target.policy_path | dirname -%}
+      {%-     set path = target.policy_path -%}
+      {%-   endif -%}
+      {%-   set ns.files = ns.files + [{
+              'name': target.name,
+              'family': fam.name,
+              'directory': directory,
+              'path': path,
+              'content': content,
+            }] -%}
+      {%- endfor -%}
+      {{ ns.files }}
+  when:
+    - browser_policies_policy_files | length > 0

@@ -1,0 +1,30 @@
+---
+# Reset the legacy main-file settings for one system_dropins entry, only when
+# the main file still carries the managed marker (i.e. an earlier role version
+# wrote settings there before this role moved to drop-ins). Included per entry
+# by sys-dropins.yml with system_dropin set to the descriptor.
+- name: System | Read legacy drop-in main config
+  become: true
+  ansible.builtin.slurp:
+    path: "{{ system_dropin.main_path }}"
+  register: system_dropin_main_slurp
+
+- name: System | Reset legacy drop-in main settings
+  become: true
+  ansible.builtin.lineinfile:
+    path: "{{ system_dropin.main_path }}"
+    regexp: "{{ system_dropin_legacy_line.regexp }}"
+    line: "{{ system_dropin_legacy_line.line }}"
+    owner: "{{ system_config_owner }}"
+    group: "{{ system_config_group }}"
+    mode: "{{ system_config_file_mode }}"
+    backup: true
+  loop: "{{ system_dropin.legacy_main_lines }}"
+  loop_control:
+    loop_var: system_dropin_legacy_line
+    label: "{{ system_dropin_legacy_line.regexp }}"
+  notify: "{{ system_dropin.notify }}"
+  when:
+    - >-
+      (system_dropin_main_slurp.content | b64decode)
+      is regex('(?m)^' ~ (system_legacy_managed_marker | regex_escape) ~ '$')

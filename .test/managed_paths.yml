@@ -1,0 +1,48 @@
+---
+# Renders the managed paths owned by the system and browser_policies roles from
+# their actual variables and writes them as JSON to manifest_out. check_managed_
+# paths.py compares this against the literals in workstation_report.py, so a path
+# change in the role variables that is not mirrored in the report fails verify.
+# Run with: uv run ansible-playbook .test/managed_paths.yml -e manifest_out=...
+- name: Managed paths | Render report manifest
+  hosts: localhost
+  gather_facts: false
+  become: false
+  vars_files:
+    - "{{ playbook_dir }}/../roles/system/defaults/main.yml"
+    - "{{ playbook_dir }}/../roles/system/vars/archlinux.yml"
+    - "{{ playbook_dir }}/../roles/browser_policies/defaults/main.yml"
+  tasks:
+    - name: Managed paths | Write manifest
+      ansible.builtin.copy:
+        dest: "{{ manifest_out }}"
+        mode: "0644"
+        content: >-
+          {{
+            {
+              'system': [
+                system_pacman_config_path,
+                system_reflector_config_path,
+                system_locale_gen_path,
+                system_locale_conf_path,
+                system_vconsole_path,
+                system_motd_path,
+                system_issue_path,
+                system_sysctl_file_path,
+                system_limits_dropin_path,
+                system_docker_overlay_options_path,
+                system_docker_conf_dir ~ '/daemon.json',
+                system_journald_dropin_path,
+                system_timesyncd_dropin_path,
+                system_sshd_dropin_path,
+              ],
+              'browser_policies': [
+                browser_policies_chromium_targets[0].policy_dir ~ '/'
+                  ~ (browser_policies_chromium_targets[0].policy_filename
+                     | default(browser_policies_chromium_policy_filename)),
+                browser_policies_firefox_targets[0].policy_path,
+                browser_policies_thunderbird_targets[0].policy_path,
+                browser_policies_vscode_targets[0].policy_path,
+              ],
+            } | to_json
+          }}

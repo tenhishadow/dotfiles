@@ -85,19 +85,17 @@ go-task browser-policies:report
 ## Project Evolution
 
 `tenhishadow/ans-workstation` previously contained the standalone Arch Linux
-workstation automation. That layer has been consolidated into this repository.
-The consolidation did not change the execution boundary:
-
-- `go-task` / `playbook_install.yml` remains user-level and sudo-free.
-- `go-task system` / `playbook_system.yml` applies the opt-in system layer.
-- `go-task browser-policies` / `playbook_browser_policies.yml` applies the
-  opt-in browser, Thunderbird, and VS Code policy layer.
-- `go-task all` applies those three layers in order and is an explicit
-  privileged opt-in aggregate.
-
-The default dotfiles install path must not apply privileged configuration.
+workstation automation. It has been consolidated into this repository as the
+opt-in system workstation layer without changing the execution boundary: the
+default dotfiles install path must not apply privileged configuration. See
+[`docs/architecture.md`](docs/architecture.md) for the canonical layer model
+and safety boundaries.
 
 ## Execution Layers
+
+This table is a command quick-reference;
+[`docs/architecture.md`](docs/architecture.md) is the canonical layer model and
+safety boundary description.
 
 | Layer | Command | Privileged | Purpose |
 | ---- | ------- | ---------- | ------- |
@@ -140,6 +138,10 @@ then runs `playbook_system.yml` in Ansible check mode with diff output.
 | [`roles/browser_policies/README.md`](roles/browser_policies/README.md) | Browser, Thunderbird, and VS Code policy targets, variables, and rollback notes. |
 
 ## Common Tasks
+
+This table is the single source of truth for the `go-task` command catalog.
+Other documentation references these commands by name instead of repeating the
+table.
 
 | Command | Purpose |
 | ------- | ------- |
@@ -351,7 +353,10 @@ are documented in [`docs/github-labels.md`](docs/github-labels.md).
 The `ansible` workflow also runs a `task-all` job in an Arch Linux container.
 It executes `go-task all -- --skip-tags pkg,aur` to cover aggregate ordering across
 the user dotfiles, system, and browser policy layers without installing the
-full workstation package manifest or AUR helper on hosted runners.
+full workstation package manifest or AUR helper on hosted runners. A weekly
+`schedule` trigger reruns the workflow against a fresh Arch container to catch
+rolling-release upstream breakage; the cross-OS apply matrix is skipped on those
+scheduled runs.
 
 GitHub Copilot review guidance lives in `.github/copilot-instructions.md`,
 with path-specific rules under `.github/instructions/`.
@@ -369,11 +374,15 @@ updates `uv.lock`, refreshes the installed Ansible Galaxy collections allowed by
 Renovate PRs; use `go-task deps-report:github-actions` when you want a local
 Renovate extraction/dry-run report for workflow dependencies.
 
-Documentation and AI instructions are part of the repository contract. Update
-`README.md`, the nearest `AGENTS.md`, `.github/copilot-instructions.md`, and
-path-specific `.github/instructions/*.instructions.md` whenever commands,
-roles, inventory ownership, validation paths, automation, or runtime behavior
-change.
+Documentation and AI instructions are part of the repository contract. The
+[Common Tasks](#common-tasks) table is the single source of truth for the
+`go-task` command catalog: update it when commands change, and reference
+commands by name elsewhere instead of repeating the table. Repo-wide AI
+instruction rules are single-source in `AGENTS.md` and self-checked by
+`go-task lint:ansible-semantics`, `go-task lint:english`,
+`go-task docs:agents:check`, and `go-task docs:instructions:check`, so edit the
+canonical rule instead of copying it across files. See the `AGENTS.md`
+"Documentation And Instruction Sync" section.
 
 ## Safety Notes
 

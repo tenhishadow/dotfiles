@@ -13,6 +13,17 @@ system_timesyncd_enabled: true
 system_docker_enabled: true
 system_laptop_enabled: true
 system_user_services_enabled: true
+# Off-switches for the always-on subsystems. They default to true so the
+# applied configuration is unchanged; set one false to skip that include.
+# Environment guards (containers, CI, systemd availability) still apply inside
+# each subsystem.
+system_time_enabled: true
+system_locale_enabled: true
+system_console_enabled: true
+system_login_enabled: true
+system_cron_enabled: true
+system_journald_enabled: true
+system_sshd_enabled: true
 
 system_aur_build_root: "{{ ansible_facts.user_dir }}/.cache/aur"
 system_aur_helper_package: yay
@@ -100,6 +111,9 @@ system_timesyncd_dropin_path: "{{ system_timesyncd_dropin_dir }}/10-dotfiles.con
 system_timesyncd_legacy_dropin_paths:
   - "{{ system_timesyncd_dropin_dir }}/10-ans-workstation.conf"
 system_timesyncd_main_path: /etc/systemd/timesyncd.conf
+system_timesyncd_settings:
+  NTP: "{{ system_ntp_servers | join(' ') }}"
+  FallbackNTP: "{{ system_ntp_fallback_servers | join(' ') }}"
 system_sshd_dropin_dir: /etc/ssh/sshd_config.d
 system_sshd_dropin_path: "{{ system_sshd_dropin_dir }}/20-dotfiles.conf"
 system_sshd_dropin_include_path: "{{ system_sshd_dropin_dir }}/*.conf"
@@ -175,6 +189,35 @@ system_timesyncd_legacy_main_lines:
     line: "#NTP="
   - regexp: "^FallbackNTP=.*$"
     line: "#FallbackNTP="
+
+# Data-driven managed systemd drop-ins. sys-dropins.yml renders each entry with
+# the shared dropin-<render_style>.conf.j2 partial, resets legacy main-file
+# settings under the managed marker, and removes legacy drop-ins. sshd keeps its
+# own flow (sys-sshd.yml) because its verify-include/validate ordering and
+# absent-style main-file cleanup are not shared with these reset-style entries.
+system_dropins:
+  - name: journald
+    render_style: systemd
+    section: Journal
+    settings: "{{ system_journald_settings }}"
+    dropin_dir: "{{ system_journald_dropin_dir }}"
+    dropin_path: "{{ system_journald_dropin_path }}"
+    legacy_dropin_paths: "{{ system_journald_legacy_dropin_paths }}"
+    main_path: "{{ system_journald_main_path }}"
+    legacy_main_lines: "{{ system_journald_legacy_main_lines }}"
+    notify: Journald | Restart service
+    manage_when: "{{ system_journald_enabled | bool and not (system_is_container | bool) }}"
+  - name: timesyncd
+    render_style: systemd
+    section: Time
+    settings: "{{ system_timesyncd_settings }}"
+    dropin_dir: "{{ system_timesyncd_dropin_dir }}"
+    dropin_path: "{{ system_timesyncd_dropin_path }}"
+    legacy_dropin_paths: "{{ system_timesyncd_legacy_dropin_paths }}"
+    main_path: "{{ system_timesyncd_main_path }}"
+    legacy_main_lines: "{{ system_timesyncd_legacy_main_lines }}"
+    notify: Timesyncd | Restart service
+    manage_when: "{{ system_time_enabled | bool and system_can_manage_timesyncd | bool }}"
 system_sshd_legacy_main_cleanup:
   - key: Protocol
     value: "2"

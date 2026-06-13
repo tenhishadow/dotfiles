@@ -1,0 +1,60 @@
+---
+# Generic flow for the reset-style managed drop-ins described by system_dropins
+# (journald, timesyncd). Each step iterates the descriptors; per-entry manage_when
+# carries the same guards the dedicated task files used. sshd is intentionally
+# not here: its verify-include/validate ordering lives in sys-sshd.yml.
+- name: System | Reset legacy drop-in main files
+  ansible.builtin.include_tasks:
+    file: sys-dropin-reset.yml
+  loop: "{{ system_dropins | selectattr('legacy_main_lines', 'defined') | list }}"
+  loop_control:
+    loop_var: system_dropin
+    label: "{{ system_dropin.name }}"
+  when: system_dropin.manage_when | bool
+
+- name: System | Ensure drop-in directories
+  become: true
+  ansible.builtin.file:
+    path: "{{ system_dropin.dropin_dir }}"
+    state: directory
+    owner: "{{ system_config_owner }}"
+    group: "{{ system_config_group }}"
+    mode: "{{ system_config_dir_mode }}"
+  loop: "{{ system_dropins }}"
+  loop_control:
+    loop_var: system_dropin
+    label: "{{ system_dropin.name }}"
+  when: system_dropin.manage_when | bool
+
+- name: System | Write managed drop-ins
+  become: true
+  ansible.builtin.template:
+    backup: true
+    src: "dropin-{{ system_dropin.render_style }}.conf.j2"
+    dest: "{{ system_dropin.dropin_path }}"
+    owner: "{{ system_config_owner }}"
+    group: "{{ system_config_group }}"
+    mode: "{{ system_config_file_mode }}"
+  vars:
+    system_dropin_settings: "{{ system_dropin.settings }}"
+    system_dropin_section: "{{ system_dropin.section | default('') }}"
+  loop: "{{ system_dropins }}"
+  loop_control:
+    loop_var: system_dropin
+    label: "{{ system_dropin.name }}"
+  when: system_dropin.manage_when | bool
+  notify: "{{ system_dropin.notify }}"
+
+- name: System | Remove legacy drop-ins
+  become: true
+  ansible.builtin.file:
+    path: "{{ system_dropin_legacy.1 }}"
+    state: absent
+  loop: "{{ system_dropins | subelements('legacy_dropin_paths') }}"
+  loop_control:
+    loop_var: system_dropin_legacy
+    label: "{{ system_dropin_legacy.1 }}"
+  when:
+    - system_dropin_legacy.0.manage_when | bool
+    - system_dropin_legacy.1 != system_dropin_legacy.0.dropin_path
+  notify: "{{ system_dropin_legacy.0.notify }}"

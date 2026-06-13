@@ -18,6 +18,5 @@
     loop_var: system_sysctl_setting
     label: "{{ system_sysctl_setting.key }}"
   when:
-    - system_sysctl_enabled | bool
     - not (system_is_container | bool)
     - not (system_in_ci | bool)

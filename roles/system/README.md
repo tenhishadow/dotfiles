@@ -70,8 +70,9 @@ The role keeps privileged behavior explicit and guarded:
 5. Install the package manifest under tag `pkg` when packages are enabled.
 6. Bootstrap the AUR helper under tag `aur` when AUR is enabled, apply mode is
    active, and the host is safe.
-7. Run time, locale, console, login, limits, cron, sysctl, journald, SSHD, OS,
-   Docker, laptop, and user-service task files according to feature flags.
+7. Run time, locale, console, login, limits, cron, sysctl, drop-in (journald
+   and timesyncd, described by `system_dropins`), SSHD, OS, Docker, laptop, and
+   user-service task files according to feature flags.
 
 ## Feature Flags
 

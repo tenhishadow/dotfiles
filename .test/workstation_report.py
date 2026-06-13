@@ -20,6 +20,33 @@ ROOT = Path(__file__).resolve().parents[1]
 DOTFILES_VARS = ROOT / "inventory/host_vars/this_host/dotfiles.yml"
 ANSI_RE = re.compile(r"\x1b\[[0-9;]*m")
 
+# Managed paths owned by the Ansible roles. They are duplicated here on purpose
+# to keep this report dependency-light (stdlib only). check_managed_paths.py
+# renders the same paths from the role variables and asserts they match, so a
+# path change in Ansible that is not mirrored here fails go-task verify.
+SYSTEM_MANAGED_PATHS = [
+    "/etc/pacman.conf",
+    "/etc/xdg/reflector/reflector.conf",
+    "/etc/locale.gen",
+    "/etc/locale.conf",
+    "/etc/vconsole.conf",
+    "/etc/motd",
+    "/etc/issue",
+    "/etc/sysctl.d/999-ansible.conf",
+    "/etc/security/limits.d/10-dotfiles.conf",
+    "/etc/modprobe.d/99-dotfiles-overlay.conf",
+    "/etc/docker/daemon.json",
+    "/etc/systemd/journald.conf.d/10-dotfiles.conf",
+    "/etc/systemd/timesyncd.conf.d/10-dotfiles.conf",
+    "/etc/ssh/sshd_config.d/20-dotfiles.conf",
+]
+BROWSER_POLICY_PATHS = [
+    "/etc/brave/policies/managed/10-dotfiles-managed.json",
+    "/etc/firefox/policies/policies.json",
+    "/etc/thunderbird/policies/policies.json",
+    "/etc/vscode/policy.json",
+]
+
 
 class ReportError(Exception):
     """Expected report input error."""
@@ -256,24 +283,8 @@ def print_dotfiles_plan() -> None:
 
 
 def print_system_report() -> None:
-    managed_paths = [
-        "/etc/pacman.conf",
-        "/etc/xdg/reflector/reflector.conf",
-        "/etc/locale.gen",
-        "/etc/locale.conf",
-        "/etc/vconsole.conf",
-        "/etc/motd",
-        "/etc/issue",
-        "/etc/sysctl.d/999-ansible.conf",
-        "/etc/security/limits.d/10-dotfiles.conf",
-        "/etc/modprobe.d/99-dotfiles-overlay.conf",
-        "/etc/docker/daemon.json",
-        "/etc/systemd/journald.conf.d/10-dotfiles.conf",
-        "/etc/systemd/timesyncd.conf.d/10-dotfiles.conf",
-        "/etc/ssh/sshd_config.d/20-dotfiles.conf",
-    ]
     section("Managed System Paths")
-    for path in managed_paths:
+    for path in SYSTEM_MANAGED_PATHS:
         print(f"{path}: {status(Path(path))}")
 
     section("Docker Group")
@@ -308,12 +319,7 @@ def print_system_report() -> None:
 
 
 def print_browser_policies_report() -> None:
-    policy_paths = [
-        "/etc/brave/policies/managed/10-dotfiles-managed.json",
-        "/etc/firefox/policies/policies.json",
-        "/etc/thunderbird/policies/policies.json",
-        "/etc/vscode/policy.json",
-    ]
+    policy_paths = BROWSER_POLICY_PATHS
     policy_apps = (
         ("brave", ["--version"]),
         ("firefox", ["--version"]),

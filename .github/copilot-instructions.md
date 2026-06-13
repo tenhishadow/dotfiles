@@ -1,7 +1,10 @@
 # Repository Review Rules
 
 Review this dotfiles repo for reliability, security, idempotence, and low
-maintenance. Former `ans-workstation` automation is opt-in.
+maintenance. Former `ans-workstation` automation is opt-in. The root `AGENTS.md`
+is the canonical home for repo-wide rules; this file is the condensed Copilot
+review surface. Mechanical rules below say "enforced by ..." because a
+`go-task` check, not review, guarantees them.
 
 ## Contracts
 
@@ -15,10 +18,10 @@ maintenance. Former `ans-workstation` automation is opt-in.
 
 ## Ansible
 
-- Names use `<Domain> | <Verb> <object>`; include wrappers use `Run ... tasks`;
-  handler names and `notify` match; tags stay lowercase snake_case.
-- Role variables, registered facts, and non-trivial task vars use `dotfiles_`,
-  `system_`, or `browser_policies_`; non-trivial loops set `loop_control.loop_var`.
+- Naming (`<Domain> | <Verb> <object>`, `Run ... tasks` wrappers, exact
+  `notify`/handler match), role-prefixed snake_case variables, and English-only
+  text are enforced by `lint:ansible-semantics`, ansible-lint, and
+  `lint:english`; flag only what a check cannot (e.g. `loop_control.loop_var`).
 - Validate role inputs in `tasks/validate.yml`; keep host vars split under
   `inventory/host_vars/this_host/`.
 - Prefer FQCN modules, idempotence, explicit ownership/modes, and handlers.
@@ -65,14 +68,6 @@ maintenance. Former `ans-workstation` automation is opt-in.
 
 ## Suggested Validation
 
-- Ansible, inventory, role, Taskfile, playbook changes: `go-task lint`.
-- YAML-heavy changes: `go-task yamllint`.
-- Default dotfiles flow or mappings: `go-task dotfiles:check`; use `go-task`
-  when apply must be exercised.
-- Neovim config: `go-task test:nvim`; startup-sensitive changes also run
-  `go-task test:nvim:profile`.
-- Neovim keymaps: `go-task docs:nvim-keymaps:check`.
-- System role/packages: `go-task system:check` and `go-task test:system`.
-- Browser policies: `go-task browser-policies:check`.
-- CI or repo-wide lint behavior: `go-task superlinter` when Docker is available.
-- Full validation: `go-task verify`.
+The README `Common Tasks` table is the authoritative command reference, and the
+root `AGENTS.md` "Validation Matrix" maps change types to those commands. Run
+the narrowest matching check, then `go-task verify` for broad changes.

@@ -17,8 +17,10 @@ Keep the high-level flow predictable:
 - Validate role variables.
 - Install `system_packages` with tag `pkg`.
 - Run AUR helper tasks with tag `aur` only when guarded as safe.
-- Run timezone tasks and guarded timesyncd tasks.
-- Run locale, console, login, limits, cron, sysctl, journald, and SSHD tasks.
+- Run timezone tasks and guarded timesyncd service tasks.
+- Run locale, console, login, limits, cron, and sysctl tasks.
+- Run the shared drop-in flow (`sys-dropins.yml` over `system_dropins`:
+  journald and timesyncd) and the SSHD tasks.
 - Run Arch Linux tasks.
 - Run Docker tasks only when not in CI and not in a container; keep overlay
   module options behind `system_docker_overlay_options_enabled`.
@@ -33,7 +35,10 @@ Keep the high-level flow predictable:
 - Keep role input validation in `tasks/validate.yml`.
 - Preserve `become: true` where system paths or services require privilege.
 - Do not move privileged behavior into unguarded shell commands.
-- Prefer drop-ins over upstream main-file edits where supported.
+- Prefer drop-ins over upstream main-file edits where supported. Add a new
+  reset-style systemd drop-in as a `system_dropins` descriptor entry rendered by
+  `sys-dropins.yml`, not as a new parallel task file; sshd stays separate
+  because its verify-include/validate ordering is not shared.
 - Keep role-owned sysctl defaults in `system_sysctl_default_settings`; use
   `system_sysctl_settings` only for host-specific additions and overrides.
 - Manage PAM limits through `/etc/security/limits.d/`; do not edit

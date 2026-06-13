@@ -1,0 +1,6 @@
+# {{ ansible_managed }}
+# vim:ft=sshconfig
+
+{% for system_dropin_key, system_dropin_value in system_dropin_settings | dictsort %}
+{{ system_dropin_key }} {{ system_dropin_value }}
+{% endfor %}
