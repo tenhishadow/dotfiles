@@ -85,19 +85,17 @@ go-task browser-policies:report
 ## Project Evolution
 
 `tenhishadow/ans-workstation` previously contained the standalone Arch Linux
-workstation automation. That layer has been consolidated into this repository.
-The consolidation did not change the execution boundary:
-
-- `go-task` / `playbook_install.yml` remains user-level and sudo-free.
-- `go-task system` / `playbook_system.yml` applies the opt-in system layer.
-- `go-task browser-policies` / `playbook_browser_policies.yml` applies the
-  opt-in browser, Thunderbird, and VS Code policy layer.
-- `go-task all` applies those three layers in order and is an explicit
-  privileged opt-in aggregate.
-
-The default dotfiles install path must not apply privileged configuration.
+workstation automation. It has been consolidated into this repository as the
+opt-in system workstation layer without changing the execution boundary: the
+default dotfiles install path must not apply privileged configuration. See
+[`docs/architecture.md`](docs/architecture.md) for the canonical layer model
+and safety boundaries.
 
 ## Execution Layers
+
+This table is a command quick-reference;
+[`docs/architecture.md`](docs/architecture.md) is the canonical layer model and
+safety boundary description.
 
 | Layer | Command | Privileged | Purpose |
 | ---- | ------- | ---------- | ------- |

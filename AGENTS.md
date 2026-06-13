@@ -5,6 +5,9 @@ Ansible, `uv`, and `go-task`.
 
 ## Architecture
 
+`docs/architecture.md` is the canonical layer model and safety-boundary
+description; this section is the agent-facing file-location map.
+
 - `dotfiles/` contains the canonical user-level payload linked into `$HOME`.
 - `playbook_install.yml` is the default user-level install playbook.
 - `playbook_system.yml` is the explicit privileged workstation playbook.
