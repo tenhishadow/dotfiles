@@ -12,7 +12,7 @@ vars:
   DEPS_OS_ARCHLINUX: "{{.PACMAN_INSTALL}} uv git"
   DEPS_OS_SYSTEM_ARCHLINUX: "{{.PACMAN_INSTALL}} uv git sudo"
   DEPS_VERIFY_ARCHLINUX: "{{.PACMAN_INSTALL}} actionlint nodejs npm pre-commit stylua"
-  SUPERLINTER_IMAGE_TAG: "v8.6.0"
+  SUPERLINTER_IMAGE_TAG: "v8.7.0"
   SUPERLINTER_DOCKER_RUN: >-
     docker run
     --rm

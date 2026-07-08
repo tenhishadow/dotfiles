@@ -7,6 +7,9 @@
   "semanticCommits": "enabled",
   "semanticCommitType": "deps",
   "semanticCommitScope": null,
+  "lockFileMaintenance": {
+    "enabled": true
+  },
   "ansible-galaxy": {
     "enabled": true
   },
@@ -19,9 +22,9 @@
   "customManagers": [
     {
       "customType": "regex",
-      "description": "Update the Super-Linter container image used by Taskfile.yml.",
+      "description": "Update the SUPERLINTER_IMAGE_TAG variable in Taskfile.yml.",
       "managerFilePatterns": ["/^Taskfile\\.yml$/"],
-      "matchStrings": ["ghcr\\.io/super-linter/super-linter:(?<currentValue>v?\\d+\\.\\d+\\.\\d+)"],
+      "matchStrings": ["SUPERLINTER_IMAGE_TAG: \"(?<currentValue>v\\d+\\.\\d+\\.\\d+)\""],
       "depNameTemplate": "ghcr.io/super-linter/super-linter",
       "datasourceTemplate": "docker",
       "versioningTemplate": "docker"
