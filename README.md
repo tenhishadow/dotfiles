@@ -4,6 +4,7 @@ Personal Arch Linux dotfiles and workstation automation managed with Ansible
 and `go-task`.
 
 [![ansible](https://github.com/tenhishadow/dotfiles/actions/workflows/ansible.yml/badge.svg)](https://github.com/tenhishadow/dotfiles/actions/workflows/ansible.yml)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/tenhishadow/dotfiles)
 
 This repository contains the user-level dotfiles workflow and the former
 `ans-workstation` system automation layer. The default workflow remains
