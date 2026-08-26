@@ -1,0 +1,20 @@
+#!/bin/sh
+set -eu
+
+# Codex creates local histories and SQLite state; keep every newly created file
+# owner-only even on hosts whose interactive shell uses the usual 022 umask.
+umask 077
+data_home="${XDG_DATA_HOME:-${HOME}/.local/share}"
+binary="${data_home}/codex-cli/locked/node_modules/.bin/codex"
+if [ -x "${binary}" ]; then
+  exec "${binary}" "$@"
+fi
+
+for binary in /usr/local/bin/codex /usr/bin/codex /opt/homebrew/bin/codex; do
+  if [ -x "${binary}" ]; then
+    exec "${binary}" "$@"
+  fi
+done
+
+printf '%s\n' 'Codex is not installed; run go-task codex:install in the dotfiles repository.' >&2
+exit 127

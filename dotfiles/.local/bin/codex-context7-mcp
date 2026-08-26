@@ -1,0 +1,10 @@
+#!/bin/sh
+set -eu
+
+data_home="${XDG_DATA_HOME:-${HOME}/.local/share}"
+binary="${data_home}/codex-mcp/context7/node_modules/.bin/context7-mcp"
+if [ ! -x "${binary}" ]; then
+  printf '%s\n' 'Context7 MCP is not installed; run go-task codex:mcp:install in the dotfiles repository.' >&2
+  exit 127
+fi
+exec "${binary}" "$@"

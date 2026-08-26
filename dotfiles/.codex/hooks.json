@@ -1,0 +1,18 @@
+{
+  "description": "Portable, deterministic Codex guardrails.",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "^Bash$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ~/.codex/hooks/portable.py",
+            "timeout": 2,
+            "statusMessage": "Checking command safety"
+          }
+        ]
+      }
+    ]
+  }
+}

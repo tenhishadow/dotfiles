@@ -1,0 +1,7 @@
+{
+  "name": "codex-cli-lock",
+  "private": true,
+  "dependencies": {
+    "@openai/codex": "0.149.1"
+  }
+}

@@ -191,6 +191,25 @@ tasks:
     cmd: pre-commit run --all-files
   doctor:
     cmd: "python3 .test/workstation_report.py doctor"
+  codex:install:
+    desc: Install the lockfile-resolved Codex CLI and MCP packages.
+    cmds:
+      - >-
+        npm ci --ignore-scripts --no-audit --no-fund
+        --prefix "${XDG_DATA_HOME:-$HOME/.local/share}/codex-cli/locked"
+      - >-
+        "${XDG_DATA_HOME:-$HOME/.local/share}/codex-cli/locked/node_modules/.bin/codex"
+        --version
+      - task: codex:mcp:install
+  codex:mcp:install:
+    desc: Install the exact lockfile-resolved MCP packages without lifecycle scripts.
+    cmds:
+      - >-
+        npm ci --ignore-scripts --no-audit --no-fund
+        --prefix "${XDG_DATA_HOME:-$HOME/.local/share}/codex-mcp/context7"
+      - >-
+        npm ci --ignore-scripts --no-audit --no-fund
+        --prefix "${XDG_DATA_HOME:-$HOME/.local/share}/codex-mcp/playwright"
   dotfiles:plan:
     cmd: "python3 .test/workstation_report.py dotfiles-plan"
   system:report:
