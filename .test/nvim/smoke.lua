@@ -299,12 +299,7 @@ local function run_format(bufnr, test)
     log("Format: skip " .. test.name .. " (no available formatter)")
     return
   end
-  local ok, err = pcall(conform.format, {
-    bufnr = bufnr,
-    timeout_ms = 2000,
-    lsp_format = "never",
-    async = false,
-  })
+  local ok, err = pcall(vim.cmd, "Format")
   if not ok then
     add_error("Formatter failed for " .. test.name .. ": " .. tostring(err))
   else
@@ -394,7 +389,7 @@ local function run_plugin_checks()
     { plugin = "undotree", cmds = { "UndotreeToggle" } },
     { plugin = "fzf.vim", cmds = { "Files", "Rg", "Buffers" } },
     { plugin = "vimwiki", cmds = { "VimwikiIndex" } },
-    { plugin = "conform.nvim", cmds = { "ConformInfo" } },
+    { plugin = "conform.nvim", cmds = { "ConformInfo", "Format" } },
     { plugin = "nvim-lint", cmds = { "DotfilesLintManual" } },
     { plugin = "mason.nvim", cmds = mason_mode ~= "off" and { "Mason" } or {} },
     { plugin = "nvim-treesitter", cmds = {} },

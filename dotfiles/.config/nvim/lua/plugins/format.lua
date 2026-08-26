@@ -20,7 +20,7 @@ return {
   },
   {
     "stevearc/conform.nvim",
-    cmd = { "ConformInfo" },
+    cmd = { "ConformInfo", "Format" },
     opts = {
       formatters_by_ft = languages.formatters_by_ft,
       default_format_opts = { timeout_ms = 3000, lsp_format = "never" },
@@ -30,5 +30,12 @@ return {
         },
       },
     },
+    config = function(_, opts)
+      local conform = require("conform")
+      conform.setup(opts)
+      vim.api.nvim_create_user_command("Format", function()
+        conform.format()
+      end, { desc = "Format the current buffer" })
+    end,
   },
 }
