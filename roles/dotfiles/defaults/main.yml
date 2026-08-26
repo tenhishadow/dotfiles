@@ -9,7 +9,10 @@ dotfiles_bashrc_dir: "{{ dotfiles_home }}/.bashrc.d"
 dotfiles_gnupg_dir: "{{ dotfiles_home }}/.gnupg"
 dotfiles_ssh_dir: "{{ dotfiles_home }}/.ssh"
 dotfiles_ssh_config_dir: "{{ dotfiles_ssh_dir }}/config.d"
+dotfiles_nvim_restore_cron_enabled: false
 dotfiles_crontab_path: /usr/bin/crontab
+dotfiles_flock_path: /usr/bin/flock
+dotfiles_nvim_path: /usr/bin/nvim
 dotfiles_pam_environment_path: "{{ dotfiles_home }}/.pam_environment"
 dotfiles_nvim_state_dir: "{{ dotfiles_home }}/.local/state/nvim"
 dotfiles_nvim_restore_log_path: "{{ dotfiles_nvim_state_dir }}/lazy-restore.log"
@@ -19,8 +22,8 @@ dotfiles_nvim_restore_cron_name: neovim lazy restore
 dotfiles_nvim_restore_cron_job: >-
   install -d -m 700 {{ dotfiles_nvim_state_dir | quote }} &&
   PATH={{ dotfiles_cron_path }} NVIM_USE_MASON=off
-  flock -n {{ dotfiles_nvim_restore_lock_path | quote }}
-  nvim --headless
+  {{ dotfiles_flock_path | quote }} -n {{ dotfiles_nvim_restore_lock_path | quote }}
+  {{ dotfiles_nvim_path | quote }} --headless
   "+lua local ok,lazy=pcall(require,'lazy'); if ok then lazy.restore({wait=true,show=false}) end"
   +qa >> {{ dotfiles_nvim_restore_log_path | quote }} 2>&1
 dotfiles_legacy_cron_names:

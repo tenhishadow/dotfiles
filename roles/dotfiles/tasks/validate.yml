@@ -5,6 +5,8 @@
       - dotfiles_owner is string or dotfiles_owner is number
       - dotfiles_group is string or dotfiles_group is number
       - dotfiles_directory_mode is string
+      - dotfiles_home != "/"
+      - dotfiles_nvim_restore_cron_enabled is boolean
       - dotfiles_cron_path is string
       - dotfiles_cron_path | length > 0
       - dotfiles_nvim_restore_cron_name is string
@@ -40,6 +42,8 @@
     - dotfiles_ssh_dir
     - dotfiles_ssh_config_dir
     - dotfiles_crontab_path
+    - dotfiles_flock_path
+    - dotfiles_nvim_path
     - dotfiles_pam_environment_path
     - dotfiles_nvim_state_dir
     - dotfiles_nvim_restore_log_path
@@ -57,6 +61,11 @@
       - dotfiles_directory.path is defined
       - dotfiles_directory.path is string
       - dotfiles_directory.path is regex('^/')
+      - dotfiles_directory_relative_path != "."
+      - dotfiles_directory_relative_path is not regex('^\.\.(/|$)')
+      - >-
+        [dotfiles_home, dotfiles_directory_relative_path] | path_join
+        == dotfiles_directory.path
       - dotfiles_directory.mode is not defined or dotfiles_directory.mode is string
       - >-
         dotfiles_directory.owner is not defined
@@ -68,6 +77,9 @@
         or dotfiles_directory.group is number
     fail_msg: "Invalid dotfiles directory entry: {{ dotfiles_directory | to_nice_json }}"
     quiet: true
+  vars:
+    dotfiles_directory_relative_path: >-
+      {{ dotfiles_directory.path | relpath(dotfiles_home) }}
   loop: "{{ dotfiles_directories }}"
   loop_control:
     loop_var: dotfiles_directory
@@ -90,12 +102,42 @@
       - dotfiles_link.dest is defined
       - dotfiles_link.dest is string
       - dotfiles_link.dest is regex('^/')
+      - dotfiles_link_relative_dest != "."
+      - dotfiles_link_relative_dest is not regex('^\.\.(/|$)')
+      - >-
+        [dotfiles_home, dotfiles_link_relative_dest] | path_join
+        == dotfiles_link.dest
     fail_msg: "Invalid dotfiles mapping entry: {{ dotfiles_link | to_nice_json }}"
     quiet: true
+  vars:
+    dotfiles_link_relative_dest: >-
+      {{ dotfiles_link.dest | relpath(dotfiles_home) }}
   loop: "{{ dotfiles_mapping }}"
   loop_control:
     loop_var: dotfiles_link
     label: "{{ dotfiles_link.name | default('invalid link mapping') }}"
+  tags:
+    - configs
+
+- name: Dotfiles | Validate destination boundaries
+  ansible.builtin.assert:
+    that:
+      - >-
+        dotfiles_mapping
+        | rejectattr('name', 'equalto', dotfiles_link.name)
+        | map(attribute='dest')
+        | select(
+            'match',
+            '^' ~ (dotfiles_link.dest | regex_escape) ~ '/'
+          )
+        | list
+        | length == 0
+    fail_msg: "Overlapping dotfiles destination: {{ dotfiles_link.dest }}"
+    quiet: true
+  loop: "{{ dotfiles_mapping }}"
+  loop_control:
+    loop_var: dotfiles_link
+    label: "{{ dotfiles_link.name }}"
   tags:
     - configs
 
@@ -108,7 +150,10 @@
       - >-
         dotfiles_mapping | map(attribute='dest') | list | length
         == dotfiles_mapping | map(attribute='dest') | unique | list | length
-    fail_msg: "dotfiles_mapping names and destinations must be unique."
+      - >-
+        dotfiles_cleanup_paths | length
+        == dotfiles_cleanup_paths | unique | list | length
+    fail_msg: "dotfiles mapping and cleanup paths must be unique."
     quiet: true
   tags:
     - configs
@@ -118,8 +163,37 @@
     that:
       - dotfiles_cleanup_path is string
       - dotfiles_cleanup_path is regex('^/')
+      - dotfiles_cleanup_relative_path != "."
+      - dotfiles_cleanup_relative_path is not regex('^\.\.(/|$)')
+      - >-
+        [dotfiles_home, dotfiles_cleanup_relative_path] | path_join
+        == dotfiles_cleanup_path
+      - >-
+        dotfiles_mapping
+        | map(attribute='dest')
+        | select(
+            'match',
+            '^' ~ (dotfiles_cleanup_path | regex_escape) ~ '(/|$)'
+          )
+        | list
+        | length == 0
+      - >-
+        dotfiles_mapping | length == 0
+        or dotfiles_cleanup_path is not regex(
+          '^(?:' ~ dotfiles_mapping_destination_pattern ~ ')(/|$)'
+        )
     fail_msg: "Invalid dotfiles cleanup path: {{ dotfiles_cleanup_path }}"
     quiet: true
+  vars:
+    dotfiles_cleanup_relative_path: >-
+      {{ dotfiles_cleanup_path | relpath(dotfiles_home) }}
+    dotfiles_mapping_destination_pattern: >-
+      {{
+        dotfiles_mapping
+        | map(attribute='dest')
+        | map('regex_escape')
+        | join('|')
+      }}
   loop: "{{ dotfiles_cleanup_paths }}"
   loop_control:
     loop_var: dotfiles_cleanup_path
