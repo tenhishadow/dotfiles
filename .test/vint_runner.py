@@ -19,11 +19,18 @@ def _require(name: str) -> list[types.SimpleNamespace]:
         raise DistributionNotFound(name) from exc
 
 
-pkg_resources = types.ModuleType("pkg_resources")
-pkg_resources.__dict__["DistributionNotFound"] = DistributionNotFound
-pkg_resources.__dict__["require"] = _require
-sys.modules["pkg_resources"] = pkg_resources
+def _install_pkg_resources_shim() -> None:
+    pkg_resources = types.ModuleType("pkg_resources")
+    pkg_resources.__dict__["DistributionNotFound"] = DistributionNotFound
+    pkg_resources.__dict__["require"] = _require
+    sys.modules["pkg_resources"] = pkg_resources
+
+
+def main() -> None:
+    """Install the compatibility shim and delegate to vim-vint."""
+    _install_pkg_resources_shim()
+    importlib.import_module("vint").main()
 
 
 if __name__ == "__main__":
-    importlib.import_module("vint").main()
+    main()

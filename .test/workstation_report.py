@@ -242,9 +242,8 @@ def print_doctor() -> None:
 
     systemctl_path = shutil.which("systemctl")
     systemd_ok = Path("/run/systemd/system").is_dir()
-    print(
-        f"systemd runtime: {'available' if systemctl_path and systemd_ok else 'unavailable'}"
-    )
+    systemd_state = "available" if systemctl_path and systemd_ok else "unavailable"
+    print(f"systemd runtime: {systemd_state}")
 
 
 def print_dotfiles_plan() -> None:

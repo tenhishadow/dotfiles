@@ -24,8 +24,6 @@ from pathlib import Path
 
 # Files that make up the instruction / documentation layer.
 DOC_GLOBS = (
-    "AGENTS.md",
-    "*/AGENTS.md",
     "**/AGENTS.md",
     "CLAUDE.md",
     "GEMINI.md",

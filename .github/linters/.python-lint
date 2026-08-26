@@ -1,0 +1,8 @@
+[MAIN]
+py-version = 3.14
+
+[BASIC]
+no-docstring-rgx = ^(?:_|test_)
+
+[FORMAT]
+max-line-length = 88
