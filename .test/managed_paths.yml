@@ -12,6 +12,23 @@
     - "{{ playbook_dir }}/../roles/system/defaults/main.yml"
     - "{{ playbook_dir }}/../roles/system/vars/archlinux.yml"
     - "{{ playbook_dir }}/../roles/browser_policies/defaults/main.yml"
+  vars:
+    managed_paths_browser_policies: >-
+      {%- set ns = namespace(paths=[]) -%}
+      {%- for target in browser_policies_chromium_targets
+            if (target.enabled | default(true) | bool) -%}
+      {%-   set ns.paths = ns.paths + [
+              target.policy_dir ~ '/'
+              ~ (target.policy_filename | default(browser_policies_chromium_policy_filename))
+            ] -%}
+      {%- endfor -%}
+      {%- for family in browser_policies_families if family.path_kind == 'path' -%}
+      {%-   for target in lookup('ansible.builtin.vars', family.targets_var)
+              if (target.enabled | default(true) | bool) -%}
+      {%-     set ns.paths = ns.paths + [target.policy_path] -%}
+      {%-   endfor -%}
+      {%- endfor -%}
+      {{ ns.paths }}
   tasks:
     - name: Managed paths | Write manifest
       ansible.builtin.copy:
@@ -30,19 +47,13 @@
                 system_issue_path,
                 system_sysctl_file_path,
                 system_limits_dropin_path,
+                system_camera_blacklist_path,
                 system_docker_overlay_options_path,
                 system_docker_conf_dir ~ '/daemon.json',
                 system_journald_dropin_path,
                 system_timesyncd_dropin_path,
                 system_sshd_dropin_path,
               ],
-              'browser_policies': [
-                browser_policies_chromium_targets[0].policy_dir ~ '/'
-                  ~ (browser_policies_chromium_targets[0].policy_filename
-                     | default(browser_policies_chromium_policy_filename)),
-                browser_policies_firefox_targets[0].policy_path,
-                browser_policies_thunderbird_targets[0].policy_path,
-                browser_policies_vscode_targets[0].policy_path,
-              ],
+              'browser_policies': managed_paths_browser_policies,
             } | to_json
           }}

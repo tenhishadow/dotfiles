@@ -1,25 +1,29 @@
 ---
 - name: Locale | Check locale definitions
   ansible.builtin.stat:
-    path: "{{ system_locale_definition.1 }}/{{ system_locale_definition.0 }}"
-  loop: "{{ system_locales | product(system_locale_definition_dirs) | list }}"
+    path: "{{ system_locale_definition_dir }}/{{ system_locale_name }}"
+  loop: "{{ system_locales }}"
   loop_control:
-    loop_var: system_locale_definition
-    label: "{{ system_locale_definition.1 }}/{{ system_locale_definition.0 }}"
+    loop_var: system_locale_name
+    label: "{{ system_locale_name }}"
   register: system_locale_definition_stats
   changed_when: false
+  when:
+    - not (system_is_container | bool)
 
-- name: Locale | Build available locale list
-  ansible.builtin.set_fact:
-    system_locale_available_names: "{{ system_locale_available_names_tmp }}"
-    system_locale_missing_definitions: "{{ system_locales | difference(system_locale_available_names_tmp) }}"
-  vars:
-    system_locale_available_names_tmp: >-
-      {{ system_locale_definition_stats.results
-         | selectattr('stat.exists')
-         | map(attribute='system_locale_definition.0')
-         | unique
-         | list }}
+- name: Locale | Validate locale definitions
+  ansible.builtin.assert:
+    that:
+      - system_locale_definition_stat.stat.exists
+      - system_locale_definition_stat.stat.isreg
+    fail_msg: "Missing locale definition: {{ system_locale_definition_stat.system_locale_name }}"
+    quiet: true
+  loop: "{{ system_locale_definition_stats.results }}"
+  loop_control:
+    loop_var: system_locale_definition_stat
+    label: "{{ system_locale_definition_stat.system_locale_name }}"
+  when:
+    - not (system_is_container | bool)
 
 - name: Locale | Write locale.gen
   become: true
@@ -30,6 +34,7 @@
     owner: "{{ system_config_owner }}"
     group: "{{ system_config_group }}"
     mode: "{{ system_config_file_mode }}"
+  register: system_locale_gen_result
   notify:
     - Console | Restart vconsole setup
 
@@ -45,25 +50,10 @@
   notify:
     - Console | Restart vconsole setup
 
-- name: Locale | Read generated locale list
-  become: true
-  ansible.builtin.command: locale -a
-  register: system_locale_list
-  changed_when: false
-
-- name: Locale | Generate missing locales
+- name: Locale | Generate configured locales
   become: true
   ansible.builtin.command: locale-gen
   changed_when: true
-  vars:
-    system_locale_desired_names: >-
-      {{ system_locale_available_names
-         | map('regex_replace', '$', '.utf8')
-         | map('lower')
-         | list }}
-    system_locale_current_names: "{{ system_locale_list.stdout_lines | map('lower') | list }}"
-    system_locale_missing_names: >-
-      {{ system_locale_desired_names | difference(system_locale_current_names) }}
   when:
     - not (system_in_ci | bool)
-    - system_locale_missing_names | length > 0
+    - system_locale_gen_result is changed

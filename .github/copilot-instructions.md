@@ -1,73 +1,30 @@
-# Repository Review Rules
+# Copilot Review Deltas
 
-Review this dotfiles repo for reliability, security, idempotence, and low
-maintenance. Former `ans-workstation` automation is opt-in. The root `AGENTS.md`
-is the canonical home for repo-wide rules; this file is the condensed Copilot
-review surface. Mechanical rules below say "enforced by ..." because a
-`go-task` check, not review, guarantees them.
+The root and nearest `AGENTS.md` files are canonical. Use this file only for
+review checks that automation cannot prove.
 
-## Contracts
-
-- Default `go-task` stays user-level and sudo-free; `playbook_install.yml`
-  keeps `become: false` and only includes `roles/dotfiles`.
-- Privileged targets, including `go-task all`, stay opt-in.
-- Docs must not put privileged config in default `go-task` or present personal
-  workstation values as a generic hardening benchmark.
-- Reject secrets, profiles, caches, kubeconfigs, cloud credentials, AI/MCP
-  state, test workspaces, local configs, and runtime state.
-
-## Ansible
-
-- Naming (`<Domain> | <Verb> <object>`, `Run ... tasks` wrappers, exact
-  `notify`/handler match), role-prefixed snake_case variables, and English-only
-  text are enforced by `lint:ansible-semantics`, ansible-lint, and
-  `lint:english`; flag only what a check cannot (e.g. `loop_control.loop_var`).
-- Validate role inputs in `tasks/validate.yml`; keep host vars split under
-  `inventory/host_vars/this_host/`.
-- Prefer FQCN modules, idempotence, explicit ownership/modes, and handlers.
-- Flag shell/command without `changed_when`, `creates`, `removes`, or an
-  equivalent idempotence guard.
-- Dotfiles mappings use `name`, relative `payload`, and absolute `dest`.
-- Dotfiles cron jobs that redirect to state logs create the state dir first.
-- System setting maps use `system_journald_settings`, `system_sshd_settings`,
-  and `system_sysctl_settings`; preserve upstream key casing.
-- AUR helper/package management stays in `roles/system`, uses tag `aur`, and is
-  skipped in check mode, CI, and containers.
-- Prefer drop-ins over editing upstream main configs where supported.
-- Verify policy/privacy keys upstream; do not guess AI-client, browser,
-  package-manager, or developer-tool settings.
-- Use `/etc/security/limits.d/` for PAM limits and `/etc/modprobe.d/` for
-  kernel module options.
-- Put host sysctl overrides in `system_sysctl_settings`; defaults in
-  `system_sysctl_default_settings`.
-
-## Repository Review
-
-- Docs and nearest `AGENTS.md` files change with new commands, roles,
-  validation paths, automation, or runtime behavior.
-- For Neovim changes, enforce structured lazy.nvim layout, deterministic
-  `lazy-lock.json`, centralized tool lists, `NVIM_USE_MASON` opt-in behavior,
-  explicit Tree-sitter installs, first-buffer filetype detection, and
-  non-mutating save behavior. Lint may run on save; formatting and whitespace
-  stripping stay manual.
-- Neovim keymap changes update `lua/config/keymaps_spec.lua` and
-  `docs/nvim-keymaps.md`; docs state the leader key plainly and pass
-  `go-task docs:nvim-keymaps:check`.
-- Check role READMEs, issue forms, and PR templates when workflows,
-  validation, safety rules, managed files, variables, or rollback change.
-- Keep architecture, adoption, security, and migration docs aligned when system
-  behavior or consolidation wording changes.
-- Keep repository text, comments, task names, docs, and AI instructions English.
-- Keep GitHub Actions least-privilege, deterministic, and Renovate-managed.
-- Keep Renovate scoped to real dependency surfaces; `.test/` fixtures are not
-  Renovate dependencies.
-- Leave `pyproject.toml` constraints unpinned unless requested; `uv.lock`
-  records resolved versions.
-- Keep labeler, templates, Renovate, and AI instructions aligned.
-- Keep Super-Linter separate from `go-task lint`.
-
-## Suggested Validation
-
-The README `Common Tasks` table is the authoritative command reference, and the
-root `AGENTS.md` "Validation Matrix" maps change types to those commands. Run
-the narrowest matching check, then `go-task verify` for broad changes.
+- Flag any change that makes default `go-task` privileged, routes
+  `roles/system` or `roles/browser_policies` through `playbook_install.yml`, or
+  describes `go-task all` as the default.
+- Flag committed secrets, credentials, profiles, histories, caches,
+  kubeconfigs, AI/MCP account state, generated workspaces, or copied
+  machine-local configuration.
+- Flag undocumented AI-client, privacy, or policy keys and broadened cleanup or
+  removal paths.
+- For Ansible, focus on idempotence, unsafe shell or command behavior, missing
+  ownership or modes under `/etc`, missing role-input validation, and
+  privileged behavior without CI, container, and VM guards.
+- Flag direct edits to upstream main configuration when a supported drop-in or
+  snippet path exists.
+- Flag docs that present personal workstation settings as a generic hardening
+  benchmark or claim supported environments without matching evidence.
+- For Neovim, flag save-time mutation, lockfile drift, first-buffer filetype
+  regressions, duplicated language or tool inventories, and keymap changes
+  missing their specification and generated manual update.
+- For GitHub automation, flag broadened permissions, missing concurrency,
+  unpinned or Renovate-unmanaged dependencies, and changes that merge
+  Super-Linter into `go-task lint`.
+- Require documentation or ADR updates when architecture, managed paths,
+  validation, rollback, or runtime behavior changes.
+- Recommend the narrowest validation from the root `AGENTS.md`; use
+  `go-task verify` for broad cross-layer changes.

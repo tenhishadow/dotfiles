@@ -90,11 +90,49 @@
   tags:
     - configs
 
-- name: Dotfiles | Check crontab binary
+- name: Dotfiles | Check cron tool
   ansible.builtin.stat:
     path: "{{ dotfiles_crontab_path }}"
   register: dotfiles_crontab_stat
   changed_when: false
+
+- name: Dotfiles | Check Neovim restore tools
+  ansible.builtin.stat:
+    path: "{{ dotfiles_nvim_restore_tool_path }}"
+  loop:
+    - "{{ dotfiles_flock_path }}"
+    - "{{ dotfiles_nvim_path }}"
+  loop_control:
+    loop_var: dotfiles_nvim_restore_tool_path
+    label: "{{ dotfiles_nvim_restore_tool_path }}"
+  register: dotfiles_nvim_restore_tool_stats
+  changed_when: false
+
+- name: Dotfiles | Set cron capabilities
+  ansible.builtin.set_fact:
+    dotfiles_can_manage_cron: >-
+      {{
+        dotfiles_crontab_stat.stat.exists
+        and dotfiles_crontab_stat.stat.executable | default(false)
+      }}
+    dotfiles_can_schedule_nvim_restore_cron: >-
+      {{
+        dotfiles_nvim_restore_cron_enabled | bool
+        and dotfiles_crontab_stat.stat.exists
+        and dotfiles_crontab_stat.stat.executable | default(false)
+        and (
+          dotfiles_nvim_restore_tool_stats.results
+          | rejectattr('stat.executable', 'defined')
+          | list
+          | length == 0
+        )
+        and (
+          dotfiles_nvim_restore_tool_stats.results
+          | rejectattr('stat.executable')
+          | list
+          | length == 0
+        )
+      }}
 
 - name: Dotfiles | Ensure Neovim state directory
   ansible.builtin.file:
@@ -104,16 +142,17 @@
     group: "{{ dotfiles_group }}"
     mode: "{{ dotfiles_directory_mode }}"
   when:
-    - dotfiles_crontab_stat.stat.exists | default(false)
+    - dotfiles_can_schedule_nvim_restore_cron | bool
 
 - name: Dotfiles | Schedule Neovim restore
   ansible.builtin.cron:
-    state: present
+    state: >-
+      {{ dotfiles_can_schedule_nvim_restore_cron | ternary('present', 'absent') }}
     name: "{{ dotfiles_nvim_restore_cron_name }}"
     job: "{{ dotfiles_nvim_restore_cron_job }}"
     special_time: daily
   when:
-    - dotfiles_crontab_stat.stat.exists | default(false)
+    - dotfiles_can_manage_cron | bool
 
 - name: Dotfiles | Remove legacy cron jobs
   ansible.builtin.cron:
@@ -124,7 +163,7 @@
     loop_var: dotfiles_cron_name
     label: "{{ dotfiles_cron_name }}"
   when:
-    - dotfiles_crontab_stat.stat.exists | default(false)
+    - dotfiles_can_manage_cron | bool
 
 - name: Dotfiles | Remove legacy PAM environment
   ansible.builtin.file:

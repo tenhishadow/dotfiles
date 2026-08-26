@@ -25,6 +25,37 @@ Host-specific values live under `inventory/host_vars/this_host/` and stay split
 by ownership: dotfiles mappings, system settings, security-sensitive
 workstation settings, and browser policy overrides.
 
+## Environment Contract
+
+| Environment | User dotfiles | System role | Policy role | Evidence |
+| ----------- | ------------- | ----------- | ----------- | -------- |
+| Arch bare metal or laptop | Supported | Supported; physical-only tasks are explicit | Supported | Local check/apply paths and role validation |
+| Arch virtual machine | Supported | Supported by the role contract; hardware tasks are skipped, but VM behavior has no integration test | Supported | Role validation plus manual `go-task system:check` on the guest |
+| Arch container | Supported for integration tests | Container-safe subset only; systemd, Docker daemon, SSHD, sysctl, AUR, and hardware branches are skipped | Supported | `go-task test:system` first apply, assertions, and zero-change second apply |
+| Ubuntu or macOS | User layer only | Unsupported | Unsupported | Default-playbook CI matrix |
+
+The container test proves convergence only for branches that can safely run in
+an unprivileged container. A real VM or host is required to exercise systemd,
+Docker daemon restart, SSHD, sysctl loading, AUR package execution, and hardware
+behavior. Those gaps are explicit; tests must not falsify facts merely to make
+the branches appear covered.
+
+## AI Tool Contract
+
+| Concern | Canonical surface | Adapters |
+| ------- | ----------------- | -------- |
+| Always-on repository rules | Root and nearest `AGENTS.md` | `CLAUDE.md`, `GEMINI.md`, condensed Copilot review deltas |
+| Task-specific workflow | `.agents/skills/*/SKILL.md` | Native discovery in Codex and GitHub Copilot; other agents still follow the referenced ADR and Taskfile |
+| Deterministic local guard | Managed Codex hook | Runs only for its declared tool event; it does not inject files or credentials into model context |
+| External knowledge or actions | Explicit MCP/app profile | Disabled unless the workflow needs it; credentials and writable state stay local |
+| Observable correctness | `go-task` targets and Ansible assertions | The same commands run locally, in containers, CI, and agent environments with the required tools |
+
+Instructions define durable constraints; skills route repeatable work; hooks
+enforce a small deterministic event policy; MCP servers connect external data.
+Keeping those responsibilities separate avoids prompt duplication and makes
+the repository usable from Codex local/cloud, GitHub Copilot, Claude Code, and
+Gemini CLI without copying the engineering contract.
+
 ## Safety Model
 
 - The default `go-task` path runs `playbook_install.yml` only and is sudo-free.

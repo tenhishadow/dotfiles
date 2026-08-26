@@ -5,17 +5,18 @@ applyTo: ".github/**/*.yml,.github/**/*.yaml,.github/**/*.md,renovate.json,Taskf
 # GitHub Automation Review Instructions
 
 - Keep workflow permissions minimal and explicit.
+- Require full commit SHAs with version comments for every `uses:` reference;
+  keep those digests Renovate-managed.
 - Keep long-running or PR-triggered workflows covered by concurrency.
 - Keep workflow behavior aligned with `Taskfile.yml`.
-- Keep `go-task verify` as the local aggregate validation path for diff,
-  Ansible lint, YAML lint, actionlint, Renovate config validation, playbook
-  smoke checks, the system role container test, and Super-Linter.
+- Keep `go-task verify:fast` as the no-Docker repository contract and
+  `go-task verify` as the local aggregate that adds isolated Neovim checks,
+  Arch convergence, and Super-Linter without applying the local workstation.
 - Keep `go-task all` as an explicit apply target; it must not replace default
   `go-task` or `go-task verify`.
-- Keep the `task-all` CI job as an Arch Linux container check of
-  `go-task all -- --skip-tags pkg,aur` so aggregate ordering is covered without
-  installing the full workstation package manifest or AUR helper on hosted
-  runners.
+- Keep the Arch convergence CI job aligned with `go-task test:system`: apply
+  `go-task all -- --skip-tags pkg,aur`, assert observable state, and require
+  zero-change second playbook runs.
 - Do not reintroduce Super-Linter into `go-task lint`; it belongs to
   `go-task superlinter` and the aggregate `go-task verify` path.
 - Ensure new versioned GitHub Actions, reusable workflows, Docker images,
@@ -29,8 +30,7 @@ applyTo: ".github/**/*.yml,.github/**/*.yaml,.github/**/*.md,renovate.json,Taskf
   bumps should stay Renovate-managed, with `go-task deps-report:github-actions`
   available for local extraction/dry-run checks.
 - Keep `.github/labeler.yml` aligned with current repository paths, including
-  AI instructions under `AGENTS.md`, `.github/copilot-instructions.md`, and
-  `.github/instructions/`.
+  AI instructions, provider adapters, and `.agents/skills/`.
 - Keep labeler path labels present in GitHub and avoid a changed-file label
   limit that makes broad maintenance PRs skip all labels.
 - Keep `docs/github-labels.md` aligned with labeler rules and issue-template

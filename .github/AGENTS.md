@@ -9,13 +9,14 @@ automation under `.github/`.
 - Preserve CI responsibility boundaries.
 - Keep workflow behavior aligned with `Taskfile.yml`.
 - Keep `go-task verify` aligned with local validation and review automation.
-- Keep the `task-all` CI job aligned with the explicit `go-task all` aggregate
-  apply target. It runs in an Arch Linux container and skips package and AUR
-  installation to keep CI bounded.
+- Keep the Arch convergence job aligned with `go-task test:system`: it checks
+  the explicit `go-task all` order, observable state, and zero-change second
+  runs while skipping package and AUR installation.
 - Do not reintroduce super-linter into the `go-task lint` path.
 - Do not casually change release-please, Renovate, CODEOWNERS, or zizmor
   configuration.
-- Prefer pinned, reproducible, least-privilege automation changes.
+- Pin every `uses:` reference to a full commit SHA with a version comment;
+  Renovate maintains the digest.
 - Keep workflow permissions minimal and explicit.
 - Keep workflow concurrency explicit for long-running or PR-triggered jobs.
 - Keep `.github/labeler.yml` aligned with the current repository structure.
@@ -31,6 +32,13 @@ automation under `.github/`.
   `.github/instructions/*.instructions.md` carry path-specific rules.
 - Keep `.ruff.toml` and `.github/linters/.ruff.toml` synchronized. Local Ruff
   and Super-Linter read config from different paths.
+- Keep `.github/linters/.python-lint` shared by local Pylint and the early
+  Python validation job.
+- Keep `.github/linters/.markdown-lint.yml` as the shared Markdown rule source
+  for local pre-commit and Super-Linter. Do not replace fixes with blanket
+  file ignores or inline rule disables.
+- Keep `.github/linters/.yaml-lint.yml` linked to the canonical
+  `dotfiles/.yamllint` configuration.
 - Keep documentation-specific Copilot rules in
   `.github/instructions/documentation.instructions.md`.
 - Keep AI instructions clear that the former `ans-workstation` layer is now
@@ -53,13 +61,14 @@ automation under `.github/`.
 ## Validation
 
 - Run `uv run yamllint .` or `go-task yamllint` for workflow YAML changes.
+- Run `go-task lint:markdown` for Markdown rule or template changes.
 - Run `go-task lint` when automation changes affect Ansible validation paths.
 - Run `go-task verify` when automation changes affect local aggregate
   validation, issue/PR templates, labeler rules, or AI instructions.
   It includes the system role container test and Super-Linter, and requires a
   running Docker daemon.
-- For `task-all` workflow changes, validate the equivalent Arch container path
-  when Docker is available.
+- For Arch convergence workflow changes, run `go-task test:system` when Docker
+  is available.
 - Run `go-task superlinter` for repository-wide lint pipeline changes.
 - Remember that `go-task superlinter` requires Docker.
 

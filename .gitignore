@@ -6,5 +6,6 @@
 .test/nvim/.data/
 .test/nvim/.state/
 .test/nvim/.cache/
+.test/system/local.env
 __pycache__/
 *.pyc

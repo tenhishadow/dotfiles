@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Enforce the repo Ansible naming and notify/handler rules structurally.
 
 ansible-lint already covers FQCN, var-naming, modes, and the generic name
@@ -138,14 +137,15 @@ def check_names(root: Path, files: list[Path]) -> list[str]:
 def check_notify(root: Path, files: list[Path]) -> list[str]:
     """Return notify values that do not match a handler name in the role."""
     handlers = collect_handler_names(root)
-    known = set().union(*handlers.values()) if handlers else set()
     problems = []
     for path in files:
-        rel = path.relative_to(root)
         role = role_of(path, root)
-        scope = handlers.get(role, set()) if role else known
+        if role is None:
+            continue
+        rel = path.relative_to(root)
+        scope = handlers.get(role, set())
         for value in collect_notifies(path):
-            if value not in scope and value not in known:
+            if value not in scope:
                 problems.append(f"{rel}: notify '{value}' has no matching handler name")
     return problems
 
@@ -168,7 +168,8 @@ def main() -> int:
             print(f"  {problem}")
         return 1
     print(
-        f"ansible semantics consistent: {len(files)} files, names and notify/handlers match"
+        f"ansible semantics consistent: {len(files)} files, "
+        "names and notify/handlers match"
     )
     return 0
 

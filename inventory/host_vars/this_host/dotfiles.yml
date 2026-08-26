@@ -1,4 +1,6 @@
 ---
+dotfiles_nvim_restore_cron_enabled: true
+
 dotfiles_directories:
   - path: "{{ dotfiles_bashrc_dir }}"
   - path: "{{ dotfiles_home }}/.terraform.d/plugin-cache"
@@ -136,9 +138,74 @@ dotfiles_mapping:
   - name: starship
     payload: .config/starship.toml
     dest: "{{ dotfiles_config_dir }}/starship.toml"
+  - name: codex_profile_explorer
+    payload: .codex/explorer.config.toml
+    dest: "{{ dotfiles_home }}/.codex/explorer.config.toml"
+  - name: codex_profile_validator
+    payload: .codex/validator.config.toml
+    dest: "{{ dotfiles_home }}/.codex/validator.config.toml"
+  - name: codex_profile_deep_review
+    payload: .codex/deep-review.config.toml
+    dest: "{{ dotfiles_home }}/.codex/deep-review.config.toml"
+  - name: codex_profile_live_readonly
+    payload: .codex/live-readonly.config.toml
+    dest: "{{ dotfiles_home }}/.codex/live-readonly.config.toml"
+  - name: codex_profile_ui
+    payload: .codex/ui.config.toml
+    dest: "{{ dotfiles_home }}/.codex/ui.config.toml"
+  - name: codex_profile_github_write
+    payload: .codex/github-write.config.toml
+    dest: "{{ dotfiles_home }}/.codex/github-write.config.toml"
+  - name: codex_hooks_config
+    payload: .codex/hooks.json
+    dest: "{{ dotfiles_home }}/.codex/hooks.json"
+  - name: codex_hook_portable
+    payload: .codex/hooks/portable.py
+    dest: "{{ dotfiles_home }}/.codex/hooks/portable.py"
+  - name: agent_skill_ponytail
+    payload: .agents/skills/ponytail/SKILL.md
+    dest: "{{ dotfiles_home }}/.agents/skills/ponytail/SKILL.md"
+  - name: agent_skill_ponytail_license
+    payload: .agents/skills/ponytail/LICENSE
+    dest: "{{ dotfiles_home }}/.agents/skills/ponytail/LICENSE"
+  - name: codex_context7_launcher
+    payload: .local/bin/codex-context7-mcp
+    dest: "{{ dotfiles_home }}/.local/bin/codex-context7-mcp"
+  - name: codex_cli_launcher
+    payload: .local/bin/codex
+    dest: "{{ dotfiles_home }}/.local/bin/codex"
+  - name: codex_playwright_launcher
+    payload: .local/bin/codex-playwright-mcp
+    dest: "{{ dotfiles_home }}/.local/bin/codex-playwright-mcp"
+  - name: codex_context7_package
+    payload: .local/share/codex-mcp/context7/package.json
+    dest: "{{ dotfiles_home }}/.local/share/codex-mcp/context7/package.json"
+  - name: codex_context7_lock
+    payload: .local/share/codex-mcp/context7/package-lock.json
+    dest: "{{ dotfiles_home }}/.local/share/codex-mcp/context7/package-lock.json"
+  - name: codex_playwright_package
+    payload: .local/share/codex-mcp/playwright/package.json
+    dest: "{{ dotfiles_home }}/.local/share/codex-mcp/playwright/package.json"
+  - name: codex_playwright_lock
+    payload: .local/share/codex-mcp/playwright/package-lock.json
+    dest: "{{ dotfiles_home }}/.local/share/codex-mcp/playwright/package-lock.json"
+  - name: codex_cli_package
+    payload: .local/share/codex-cli/locked/package.json
+    dest: "{{ dotfiles_home }}/.local/share/codex-cli/locked/package.json"
+  - name: codex_cli_lock
+    payload: .local/share/codex-cli/locked/package-lock.json
+    dest: "{{ dotfiles_home }}/.local/share/codex-cli/locked/package-lock.json"
 
 dotfiles_cleanup_paths:
   - "{{ dotfiles_config_dir }}/nvim/init.vim"
   - "{{ dotfiles_home }}/.nvim"
   # Removed duplicate of gruvbox_dark.conf; drop the stale symlink on upgrade.
   - "{{ dotfiles_config_dir }}/kitty/gruvbox-dark.conf"
+  # Ponytail moved to the cross-agent user skill directory.
+  - "{{ dotfiles_home }}/.codex/skills/ponytail/SKILL.md"
+  - "{{ dotfiles_home }}/.codex/skills/ponytail/LICENSE"
+  # MCP runtime paths are stable now; remove only the old linked manifests.
+  - "{{ dotfiles_home }}/.local/share/codex-mcp/context7-4.0.2/package.json"
+  - "{{ dotfiles_home }}/.local/share/codex-mcp/context7-4.0.2/package-lock.json"
+  - "{{ dotfiles_home }}/.local/share/codex-mcp/playwright-0.0.78/package.json"
+  - "{{ dotfiles_home }}/.local/share/codex-mcp/playwright-0.0.78/package-lock.json"

@@ -23,12 +23,19 @@
 
 - name: System | Set execution guards
   ansible.builtin.set_fact:
-    system_in_ci: "{{ lookup('ansible.builtin.env', 'CI') == 'true' }}"
+    system_in_ci: >-
+      {{ system_ci_environment_value not in ['', '0', 'false', 'no', 'off'] }}
     system_is_container: >-
       {{
-        (ansible_facts.virtualization_type | default(''))
-        in system_container_virtualization_types
+        'container' in (ansible_facts.virtualization_tech_guest | default([]))
+        or (
+          (ansible_facts.virtualization_type | default('') | lower)
+          in system_container_virtualization_types
+        )
       }}
+  vars:
+    system_ci_environment_value: >-
+      {{ lookup('ansible.builtin.env', 'CI') | default('', true) | trim | lower }}
   tags:
     - always
 
@@ -71,7 +78,6 @@
       {{
         system_timesyncd_enabled | bool
         and system_can_manage_systemd | bool
-        and not (system_is_virtual_machine | bool)
       }}
   tags:
     - always
@@ -182,6 +188,9 @@
     file: laptop.yml
   when:
     - system_laptop_enabled | bool
+    - not (system_is_container | bool)
+    - not (system_is_virtual_machine | bool)
+    - not (system_in_ci | bool)
 
 - name: System | Run user service tasks
   ansible.builtin.include_tasks:

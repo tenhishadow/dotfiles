@@ -34,7 +34,7 @@ Apply the role:
 go-task system
 ```
 
-Run the container package availability, smoke, and idempotency test:
+Run the disposable Arch package, state, and convergence test:
 
 ```bash
 go-task test:system
@@ -46,17 +46,17 @@ go-task test:system
 | ---- | ----- |
 | Packages | Installs `system_packages` from `vars/archlinux-packages.yml` when `system_packages_enabled` is true, including Neovim support tools such as `tree-sitter-cli`. |
 | AUR | Optionally bootstraps the configured AUR helper, `yay` by default, through tasks tagged `aur` in apply mode on non-CI, non-container hosts. |
-| Time | Configures `system_timezone`, which defaults to `UTC` and should be overridden in host vars. Manages `systemd-timesyncd` only when `system_timesyncd_enabled` is true, systemd is manageable, and the host is not a virtual machine. |
+| Time | Configures `system_timezone`, which defaults to `UTC` and should be overridden in host vars. Manages `systemd-timesyncd` when `system_timesyncd_enabled` is true and systemd is manageable; VM owners can disable it explicitly. |
 | Journald | Writes `/etc/systemd/journald.conf.d/10-dotfiles.conf`. |
 | SSH daemon | Writes `/etc/ssh/sshd_config.d/20-dotfiles.conf` and validates effective sshd config. |
-| Locale and console | Manages `/etc/locale.gen`, `/etc/locale.conf`, and `/etc/vconsole.conf`. |
-| Sysctl | Applies `system_sysctl_default_settings` merged with `system_sysctl_settings` to `/etc/sysctl.d/999-ansible.conf` when `system_sysctl_enabled` is true. |
+| Locale and console | Validates locale definitions, owns `/etc/locale.gen`, regenerates locales when it changes, and manages `/etc/locale.conf` and `/etc/vconsole.conf`. |
+| Sysctl | Renders the complete sorted merge of `system_sysctl_default_settings` and `system_sysctl_settings` to `/etc/sysctl.d/999-ansible.conf`, then reloads it once. |
 | Limits | Writes `/etc/security/limits.d/10-dotfiles.conf` when `system_limits_enabled` is true. |
 | Pacman | Renders `/etc/pacman.conf` from the role template with an Ansible backup before replacement. |
 | Reflector | Configures reflector and its systemd timer when systemd is available. |
 | Docker | Configures daemon settings and overlay module options when `system_docker_enabled` is true and the host is not CI/container. |
-| Laptop | Applies laptop-specific settings such as camera blacklist when `system_laptop_enabled` is true. |
-| User services | Configures the user ssh-agent service when `system_user_services_enabled` is true. |
+| Laptop | Applies the camera blacklist on explicitly enabled physical hosts and removes the former module-managed entry. |
+| User services | Configures the user ssh-agent service only when a user systemd manager can be used safely. |
 
 ## Role Flow
 
@@ -76,19 +76,20 @@ The role keeps privileged behavior explicit and guarded:
 
 ## Feature Flags
 
-The role is opt-in at the playbook level, but these areas are enabled by default
-inside the system role:
+The role is opt-in at the playbook level. General workstation features are
+enabled by default; AUR execution and hardware-specific laptop behavior require
+explicit host opt-in:
 
 | Variable | Default | Controls |
 | -------- | ------- | -------- |
 | `system_packages_enabled` | `true` | Arch package manifest installation. |
-| `system_aur_enabled` | `true` | AUR helper bootstrap in apply mode on non-CI, non-container hosts. |
-| `system_timesyncd_enabled` | `true` | `systemd-timesyncd` drop-in management when the host is not a virtual machine. |
+| `system_aur_enabled` | `false` | AUR helper bootstrap in apply mode on non-CI, non-container hosts; this host opts in explicitly. |
+| `system_timesyncd_enabled` | `true` | `systemd-timesyncd` drop-in and service management when systemd is available. |
 | `system_sysctl_enabled` | `true` | Kernel parameter drop-in under `/etc/sysctl.d/`. |
 | `system_limits_enabled` | `true` | PAM limits drop-in under `/etc/security/limits.d/`. |
 | `system_docker_enabled` | `true` | Docker group, daemon config, and user membership. |
 | `system_docker_overlay_options_enabled` | `true` | Overlay kernel module options under `/etc/modprobe.d/`. |
-| `system_laptop_enabled` | `true` | Laptop-specific system settings. |
+| `system_laptop_enabled` | `false` | Laptop-specific system settings on a physical non-CI host. |
 | `system_user_services_enabled` | `true` | User-level systemd units managed by the system role. |
 
 Disable a feature in host vars instead of removing tasks from the role.
@@ -124,6 +125,7 @@ files:
 - `/etc/systemd/timesyncd.conf.d/10-dotfiles.conf`
 - `/etc/ssh/sshd_config.d/20-dotfiles.conf`
 - `/etc/security/limits.d/10-dotfiles.conf`
+- `/etc/modprobe.d/99-dotfiles-camera.conf`
 - `/etc/modprobe.d/99-dotfiles-overlay.conf`
 
 The role removes legacy `*-ans-workstation.conf` drop-ins after writing the
@@ -217,9 +219,16 @@ go-task test:system
 git diff --check
 ```
 
-`go-task test:system` first verifies the role's Arch package targets against a
-fresh pacman database, then runs the role twice in a fresh Arch Linux container
-with `--skip-tags pkg,aur`; the second pass must be idempotent.
+`go-task test:system` verifies Arch package targets with one pacman query, then
+applies the dotfiles, system, and policy layers in a fresh Arch container with
+`--skip-tags pkg,aur`. Native Ansible assertions verify observable links,
+files, ownership, modes, content, JSON policies, and guarded host-only paths.
+Machine-readable second passes must report zero changes, failures, ignored or
+rescued failures, and unreachable hosts.
+
+The container intentionally cannot cover systemd, SSHD, sysctl loading, Docker
+daemon restart, AUR execution, VM lifecycle, or hardware behavior. See
+`docs/adr/0001-validation-strategy.md` for the test boundary.
 
 ## Rollback
 
@@ -237,6 +246,9 @@ For package changes, review pacman history and any generated `.pacnew` or
 ```bash
 go-task pacdiff
 ```
+
+Feature flags stop managing a subsystem; they do not imply deletion of its
+previous drop-ins or files. Plan removal explicitly before disabling a feature.
 
 Do not remove managed drop-ins or snippets manually unless you are intentionally
 moving that configuration out of this role.

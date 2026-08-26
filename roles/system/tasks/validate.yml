@@ -40,9 +40,10 @@
       - system_locales is sequence
       - system_locales is not string
       - system_locales | length > 0
-      - system_locale_definition_dirs is sequence
-      - system_locale_definition_dirs is not string
-      - system_locale_definition_dirs | length > 0
+      - system_default_locale is string
+      - system_default_locale in system_locales
+      - system_camera_blacklist_module is string
+      - system_camera_blacklist_module is regex('^[A-Za-z0-9_-]+$')
       - system_config_owner is string
       - system_config_owner | length > 0
       - system_config_group is string
@@ -99,6 +100,7 @@
     fail_msg: "Invalid system path variable {{ system_path }}={{ lookup('ansible.builtin.vars', system_path) }}"
     quiet: true
   loop:
+    - system_locale_definition_dir
     - system_locale_gen_path
     - system_locale_conf_path
     - system_vconsole_path
@@ -122,6 +124,9 @@
     - system_user_systemd_dir
     - system_ssh_agent_service_path
     - system_crontab_bin
+    - system_camera_blacklist_path
+    - system_camera_legacy_blacklist_path
+    - system_docker_binary_path
     - system_docker_conf_dir
     - system_docker_modprobe_dir
     - system_docker_overlay_options_path
@@ -168,8 +173,14 @@
   ansible.builtin.assert:
     that:
       - system_setting.key is string
-      - system_setting.key | length > 0
+      - system_setting.key is regex('^[A-Za-z][A-Za-z0-9_.-]*$')
       - system_setting.value is string or system_setting.value is number or system_setting.value is boolean
+      - >-
+        system_setting.value is not string
+        or (
+          '\n' not in system_setting.value
+          and '\r' not in system_setting.value
+        )
     fail_msg: "Invalid managed setting: {{ system_setting | to_nice_json }}"
     quiet: true
   loop: >-
@@ -185,6 +196,20 @@
   loop_control:
     loop_var: system_setting
     label: "{{ system_setting.key }}"
+  tags:
+    - always
+
+- name: System | Validate locale names
+  ansible.builtin.assert:
+    that:
+      - system_locale_name is string
+      - system_locale_name is regex('^[A-Za-z0-9][A-Za-z0-9_@.-]*$')
+    fail_msg: "Invalid locale name: {{ system_locale_name }}"
+    quiet: true
+  loop: "{{ system_locales }}"
+  loop_control:
+    loop_var: system_locale_name
+    label: "{{ system_locale_name }}"
   tags:
     - always
 

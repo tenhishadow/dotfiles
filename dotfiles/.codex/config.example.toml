@@ -1,0 +1,136 @@
+# Portable Codex example only. Copy it once on a new host, then keep the live
+# config local because Codex writes project and hook trust state into it.
+model = "gpt-5.6-sol"
+model_reasoning_effort = "high"
+service_tier = "default"
+approval_policy = "on-request"
+sandbox_mode = "workspace-write"
+tool_output_token_limit = 8000
+model_auto_compact_token_limit = 64000
+model_auto_compact_token_limit_scope = "body_after_prefix"
+project_doc_max_bytes = 32768
+check_for_update_on_startup = false
+
+[analytics]
+enabled = false
+
+[sandbox_workspace_write]
+network_access = false
+
+[apps._default]
+enabled = false
+destructive_enabled = false
+open_world_enabled = false
+default_tools_approval_mode = "prompt"
+
+# An explicit empty plugin-MCP allowlist fail-closes bundled servers.
+[plugins]
+
+[mcp_servers.context7]
+command = "codex-context7-mcp"
+enabled = true
+enabled_tools = ["resolve-library-id", "query-docs"]
+default_tools_approval_mode = "approve"
+startup_timeout_sec = 60
+tool_timeout_sec = 120
+
+[mcp_servers.deepwiki]
+url = "https://mcp.deepwiki.com/mcp"
+enabled = false
+enabled_tools = ["read_wiki_structure", "read_wiki_contents", "ask_question"]
+default_tools_approval_mode = "approve"
+tool_timeout_sec = 120
+
+[mcp_servers.playwright]
+command = "codex-playwright-mcp"
+args = [
+  "--isolated",
+  "--headless",
+  "--browser",
+  "chromium",
+]
+enabled = false
+enabled_tools = [
+  "browser_click",
+  "browser_close",
+  "browser_console_messages",
+  "browser_drag",
+  "browser_drop",
+  "browser_evaluate",
+  "browser_fill_form",
+  "browser_find",
+  "browser_handle_dialog",
+  "browser_hover",
+  "browser_navigate",
+  "browser_navigate_back",
+  "browser_network_requests",
+  "browser_press_key",
+  "browser_resize",
+  "browser_select_option",
+  "browser_snapshot",
+  "browser_tabs",
+  "browser_take_screenshot",
+  "browser_type",
+  "browser_wait_for",
+]
+default_tools_approval_mode = "writes"
+startup_timeout_sec = 60
+tool_timeout_sec = 120
+
+[mcp_servers.openaiDeveloperDocs]
+url = "https://developers.openai.com/mcp"
+enabled = true
+enabled_tools = [
+  "search_openai_docs",
+  "list_openai_docs",
+  "fetch_openai_doc",
+  "list_api_endpoints",
+  "get_openapi_spec",
+]
+default_tools_approval_mode = "approve"
+tool_timeout_sec = 120
+
+# GRAFANA_URL and GRAFANA_SERVICE_ACCOUNT_TOKEN_FILE are intentionally local.
+[mcp_servers.grafana]
+command = "mcp-grafana"
+args = [
+  "--transport",
+  "stdio",
+  "--enabled-tools",
+  "search,datasource,prometheus,loki,dashboard,navigation",
+  "--disable-write",
+  "--disable-proxied",
+  "--max-loki-log-limit",
+  "100",
+  "--log-level",
+  "warn",
+]
+env_vars = ["GRAFANA_URL", "GRAFANA_SERVICE_ACCOUNT_TOKEN_FILE"]
+enabled = false
+enabled_tools = [
+  "search_dashboards",
+  "search_folders",
+  "get_dashboard_by_uid",
+  "get_dashboard_panel_queries",
+  "get_dashboard_property",
+  "get_dashboard_summary",
+  "generate_deeplink",
+  "get_datasource",
+  "list_datasources",
+  "check_datasources_health",
+  "query_prometheus",
+  "query_prometheus_histogram",
+  "list_prometheus_label_names",
+  "list_prometheus_label_values",
+  "list_prometheus_metric_metadata",
+  "list_prometheus_metric_names",
+  "query_loki_logs",
+  "query_loki_patterns",
+  "query_loki_stats",
+  "list_loki_label_names",
+  "list_loki_label_values",
+  "analyze_loki_labels",
+]
+default_tools_approval_mode = "approve"
+startup_timeout_sec = 20
+tool_timeout_sec = 120

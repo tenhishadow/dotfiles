@@ -94,20 +94,9 @@ description; this section is the agent-facing file-location map.
 
 - Use one format for all Ansible play, task, and handler names:
   `<Domain> | <Verb> <object>`. The format and exact `notify`/handler matching
-  are enforced by `go-task lint:ansible-semantics`; the verb and domain lists
-  below are illustrative guidance, not a closed set.
-- Keep domains short and stable, for example `Dotfiles`, `System`,
-  `Browser Policies`, `SSHD`, `Timesyncd`, `Journald`, `Sysctl`, `Limits`,
-  `Docker`, and `User systemd`.
-- Preserve upstream product casing such as `systemd`, `SSHD`, `VS Code`, and
-  `Neovim`.
-- Use concise imperative verbs such as `Apply`, `Add`, `Build`, `Check`,
-  `Configure`, `Disable`, `Enable`, `Ensure`, `Gather`, `Install`, `Link`,
-  `Load`, `Mask`, `Read`, `Remove`, `Reset`, `Restart`, `Run`, `Schedule`,
-  `Set`, `Validate`, `Verify`, and `Write`.
-- Make the object a concrete noun phrase that names the managed thing, for
-  example `drop-in directory`, `policy files`, `payload sources`, or
-  `service facts`.
+  are enforced by `go-task lint:ansible-semantics`.
+- Keep domains short, verbs imperative, objects concrete, and upstream product
+  casing intact (`systemd`, `SSHD`, `VS Code`, `Neovim`).
 - Name include wrappers as `Run ... tasks`.
 - Keep tags lowercase snake_case.
 
@@ -128,37 +117,15 @@ description; this section is the agent-facing file-location map.
 
 ## AI Review Rules
 
-- Review changes against this repo's history: early commits were small and
-  fix-heavy, while recent commits moved toward opt-in roles, validation, and
-  Conventional Commits. Prefer focused corrections over broad rewrites.
 - Treat the default `go-task` path as the highest-risk contract: it must stay
   user-level, local, sudo-free, and limited to `playbook_install.yml`.
-- Flag any privileged behavior that leaks into the default dotfiles playbook
-  or bypasses the explicit system and browser policy playbooks.
-- Flag docs that imply privileged configuration is part of the default
-  `go-task`, omit the former `ans-workstation` consolidation where relevant,
-  or describe this personal workstation baseline as a generic hardening
-  benchmark.
-- Flag undocumented policy/config keys and AI-client dotfiles that include
-  account state, credentials, MCP credentials, prompt history, or local session
-  data.
-- Flag Ansible tasks that are not idempotent, omit FQCN modules, omit explicit
-  modes for managed files, use unguarded shell/command calls, or duplicate
-  values that belong in inventory/defaults/vars.
-- Flag unprefixed Ansible variables, generic loop variables, or role input
-  variables that are missing validation.
-- Flag direct edits to supported system main configs when a drop-in path is
-  available, including PAM limits and kernel module option snippets.
+- Prefer focused corrections over broad rewrites and compare behavioral changes
+  with the repository's opt-in, validation, and rollback contracts.
 - Flag missing documentation, AGENTS, labeler, Renovate, or validation updates
   when repository layout, commands, automation, or runtime behavior changes.
 - Flag Neovim keymap changes that do not update
   `dotfiles/.config/nvim/lua/config/keymaps_spec.lua`,
   `docs/nvim-keymaps.md`, and the keymap documentation check.
-- Flag non-English repository text, comments, task names, docs, and AI
-  instructions unless the content is quoted external output.
-- Flag secrets, runtime state, generated test workspaces, copied local
-  configs, kubeconfigs, AI account state, mail/browser profiles, and
-  over-broad cleanup/removal patterns.
 
 ## Documentation And Instruction Sync
 
@@ -184,10 +151,19 @@ rule; do not fan the same rule out into every file.
   and reference this file for repo-wide rules.
   `.github/copilot-instructions.md` is the condensed Copilot review surface and
   stays under 4,000 characters.
+- `CLAUDE.md` and `GEMINI.md` import this file. Repository skills under
+  `.agents/skills/` contain task-specific workflows, not copies of always-on
+  rules.
 - Update role README files, and the architecture, adoption, security, and
   migration/history docs, when role contracts or system-layer behavior change.
 - Keep `.ruff.toml` and `.github/linters/.ruff.toml` synchronized because
   local Ruff and Super-Linter read different config paths.
+- Keep `.github/linters/.python-lint` as the shared Pylint configuration for
+  `go-task lint:python` and the early Python CI job. Super-Linter does not own
+  project-aware Pylint or Mypy execution.
+- Keep Markdown rules in `.github/linters/.markdown-lint.yml`; local
+  `markdownlint-cli2`, pre-commit, and Super-Linter share that file. Fix
+  violations instead of adding file ignores or inline rule disables.
 - When adding versioned automation dependencies such as GitHub Actions,
   reusable workflows, Docker images, or pre-commit hooks, ensure Renovate can
   update them or document why they must be updated manually.
@@ -195,6 +171,7 @@ rule; do not fan the same rule out into every file.
 ## Commit Rules
 
 - Use Conventional Commits when a commit is requested.
+- Keep commit messages compatible with `.commitlintrc.yaml`.
 - Keep commits scoped to the requested change.
 - Do not push unless explicitly requested.
 - Do not include unrelated dirty worktree changes.
@@ -206,26 +183,33 @@ reference; the rules below map change types to those commands.
 
 - Always run `git diff --check` before finishing non-trivial changes.
 - Run `go-task dotfiles:check` for user dotfiles, symlink mappings, cleanup,
-  or default install flow changes; run `go-task` when the apply path must be
-  exercised.
+  or default install flow changes.
 - Run `go-task lint` for Ansible, inventory, role, Taskfile, or playbook
   changes.
+- Run `go-task lint:markdown` for Markdown, AGENTS, skill, or template changes.
+- Run `go-task lint:python` for repository Python changes.
+- Run `go-task test:agent-tooling` for managed Codex profiles, hooks, package
+  manifests, or lockfiles.
+- Run `go-task test:python` for repository Python contract or regression tests.
 - Run `uv run yamllint .` or `go-task yamllint` for YAML-heavy changes.
 - Run `go-task vint` for Vimscript payloads or Vint configuration changes.
 - Run `go-task docs:nvim-keymaps:check` for Neovim keymap changes.
 - Run `go-task test:nvim` for Neovim config changes.
 - Run `go-task test:nvim:profile` for startup-sensitive Neovim changes.
 - Run `go-task system:check` for system role changes.
-- Run `go-task test:system` for system package manifest, task, template, or
-  handler behavior changes when Docker is available.
+- Run `go-task test:system` for dotfiles, system, or policy apply behavior when
+  Docker is available. It checks observable state and zero-change second runs
+  for all three playbooks.
 - Run `go-task browser-policies:check` for browser policy role or policy
   inventory changes.
 - Run `go-task superlinter` for focused CI or repository-wide lint changes
   when Docker is available.
+- Run `go-task verify:fast` for broad static validation without Docker or
+  managed-host writes.
 - Run `go-task verify` for a full local validation pass when Taskfile,
   inventory, playbooks, roles, or repository automation change together.
-  This includes the system role container test and Super-Linter, and requires a
-  running Docker daemon.
+  It adds isolated Neovim checks, Arch convergence, and Super-Linter, and
+  requires a running Docker daemon without applying the local workstation.
 
 ## Done Criteria
 

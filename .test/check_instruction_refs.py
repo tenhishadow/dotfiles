@@ -1,10 +1,9 @@
-#!/usr/bin/env python3
 """Fail when instruction docs reference things that no longer exist.
 
-The instruction layer (AGENTS.md files, Copilot instructions, README, docs)
-names go-task targets, roles, playbooks, and repository paths. When a target is
-renamed or a file is removed, those references silently rot. This check parses
-the docs and asserts that every reference resolves:
+The instruction layer (agent instructions, skills, README, role manuals, and
+docs) names go-task targets, roles, playbooks, and repository paths. When a
+target is renamed or a file is removed, those references silently rot. This
+check parses the docs and asserts that every reference resolves:
 
   * ``go-task <name>`` -> a real task key in Taskfile.yml (bare ``go-task`` is
     the default task).
@@ -25,17 +24,28 @@ from pathlib import Path
 
 # Files that make up the instruction / documentation layer.
 DOC_GLOBS = (
-    "AGENTS.md",
-    "*/AGENTS.md",
     "**/AGENTS.md",
+    "CLAUDE.md",
+    "GEMINI.md",
     "README.md",
+    ".agents/skills/*/SKILL.md",
     ".github/copilot-instructions.md",
     ".github/instructions/*.instructions.md",
-    "docs/*.md",
+    "docs/**/*.md",
+    "roles/*/README.md",
 )
 
 # Top-level repository entries a path reference may be anchored at.
-ANCHORS = ("roles/", "inventory/", "docs/", "dotfiles/", ".github/", ".test/")
+ANCHORS = (
+    "roles/",
+    "inventory/",
+    "docs/",
+    "dotfiles/",
+    ".agents/",
+    ".claude/",
+    ".github/",
+    ".test/",
+)
 
 # Vendored / generated trees that are not part of the instruction layer.
 EXCLUDED_DIRS = (".venv", ".git", ".collections", ".ansible", ".task", "node_modules")
@@ -43,7 +53,8 @@ EXCLUDED_DIRS = (".venv", ".git", ".collections", ".ansible", ".task", "node_mod
 # Match go-task only at a command boundary (line start or inside backticks) so
 # package lists like "pacman ... git go-task uv" are not read as invocations.
 GO_TASK_RE = re.compile(
-    r"(?:^[ \t$]*|`)go-task(?:\s+(?P<name>[a-z][a-z0-9:_-]*))?", re.M
+    r"(?:^[ \t$]*|`)go-task(?:[ \t]+(?P<name>[a-z][a-z0-9:_-]*))?",
+    re.MULTILINE,
 )
 # Backtick- or link-quoted tokens that look like repository paths.
 TOKEN_RE = re.compile(r"[`(]([A-Za-z0-9][A-Za-z0-9._/*-]+)[`)]")

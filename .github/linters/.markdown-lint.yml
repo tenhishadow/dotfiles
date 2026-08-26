@@ -1,0 +1,16 @@
+---
+default: true
+
+# release-please separates generated release sections with two blank lines.
+MD012:
+  maximum: 2
+
+# Keep hand-written prose readable without breaking generated links or tables.
+MD013:
+  line_length: 240
+  code_blocks: false
+  tables: false
+
+# Repeated headings are valid below different release headings in CHANGELOG.md.
+MD024:
+  siblings_only: true

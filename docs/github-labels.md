@@ -20,7 +20,7 @@ Keep these GitHub labels present when editing `.github/labeler.yml`:
 
 | Label | Purpose |
 | ----- | ------- |
-| `ai-instructions` | AI agent and Copilot instruction changes. |
+| `ai-instructions` | Agent instructions, provider adapters, skills, and managed AI-tool configuration. |
 | `ansible` | Ansible playbooks, inventory, roles, or Galaxy requirements. |
 | `automation` | Repository automation, Taskfile, Renovate, or release tooling. |
 | `browser-policies` | Browser, Thunderbird, and VS Code enterprise policy automation. |

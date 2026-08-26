@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Enforce the English-only repository-text rule mechanically.
 
 AGENTS.md requires repository text, comments, task names, docs, and AI
@@ -72,7 +71,8 @@ def main() -> int:
         if found is not None:
             line, char = found
             problems.append(
-                f"{rel}:{line}: non-English letter {char!r} (U+{ord(char):04X}) in committed file"
+                f"{rel}:{line}: non-English letter {char!r} "
+                f"(U+{ord(char):04X}) in committed file"
             )
 
     if problems:
@@ -80,7 +80,8 @@ def main() -> int:
         for problem in problems:
             print(f"  {problem}")
         print(
-            "  (allowlist quoted external output / proper nouns in ALLOWLIST if intentional)"
+            "  (allowlist quoted external output / proper nouns in "
+            "ALLOWLIST if intentional)"
         )
         return 1
     print("repository text is free of non-English letters (English-only guard passed)")
