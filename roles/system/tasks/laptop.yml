@@ -1,7 +1,30 @@
 ---
-- name: Laptop | Configure camera blacklist
+- name: Laptop | Ensure camera blacklist directory
   become: true
-  community.general.kernel_blacklist:
-    name: "{{ system_camera_blacklist_module }}"
-    state: present
-  failed_when: false
+  ansible.builtin.file:
+    path: "{{ system_camera_blacklist_path | dirname }}"
+    state: directory
+    owner: "{{ system_config_owner }}"
+    group: "{{ system_config_group }}"
+    mode: "{{ system_config_dir_mode }}"
+
+- name: Laptop | Write camera blacklist
+  become: true
+  ansible.builtin.copy:
+    dest: "{{ system_camera_blacklist_path }}"
+    content: "blacklist {{ system_camera_blacklist_module }}\n"
+    owner: "{{ system_config_owner }}"
+    group: "{{ system_config_group }}"
+    mode: "{{ system_config_file_mode }}"
+    backup: true
+
+- name: Laptop | Remove legacy camera blacklist entry
+  become: true
+  ansible.builtin.lineinfile:
+    path: "{{ system_camera_legacy_blacklist_path }}"
+    regexp: >-
+      ^blacklist[\t ]+{{ system_camera_blacklist_module | regex_escape }}[\t ]*$
+    state: absent
+    backup: true
+  when:
+    - system_camera_legacy_blacklist_path != system_camera_blacklist_path

@@ -35,7 +35,7 @@
     label: "{{ system_ntp_conflicting_service }}"
   when:
     - system_can_manage_timesyncd | bool
-    - system_ntp_conflicting_service ~ ".service" in (ansible_facts.services | default({}))
+    - system_ntp_conflicting_service in (ansible_facts.services | default({}))
 
 - name: Timesyncd | Ensure service enabled
   become: true

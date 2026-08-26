@@ -46,11 +46,23 @@
   tags:
     - pkg
 
+- name: Reflector | Ensure config directory
+  become: true
+  ansible.builtin.file:
+    path: "{{ system_reflector_config_path | dirname }}"
+    state: directory
+    owner: "{{ system_config_owner }}"
+    group: "{{ system_config_group }}"
+    mode: "{{ system_config_dir_mode }}"
+  when:
+    - system_reflector_enabled | bool
+
 - name: Reflector | Write config
   become: true
   ansible.builtin.template:
     src: templates/reflector.conf.j2
     dest: "{{ system_reflector_config_path }}"
+    backup: true
     owner: "{{ system_config_owner }}"
     group: "{{ system_config_group }}"
     mode: "{{ system_config_file_mode }}"

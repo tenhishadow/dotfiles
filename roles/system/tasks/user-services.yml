@@ -6,6 +6,8 @@
     owner: "{{ system_user_service_owner }}"
     group: "{{ system_user_service_group }}"
     mode: "{{ system_user_systemd_dir_mode }}"
+  when:
+    - system_can_manage_user_systemd | bool
 
 - name: User systemd | Write ssh-agent service
   become: false
@@ -17,8 +19,7 @@
     group: "{{ system_user_service_group }}"
     mode: "{{ system_user_service_file_mode }}"
   when:
-    - ansible_facts.service_mgr == "systemd"
-    - not (system_is_container | bool)
+    - system_can_manage_user_systemd | bool
   notify:
     - User systemd | Restart ssh-agent
 

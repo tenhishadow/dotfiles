@@ -4,6 +4,8 @@
   ansible.builtin.service:
     name: "{{ system_journald_service_name }}"
     state: restarted
+  when:
+    - system_can_manage_systemd | default(false) | bool
 
 - name: SSHD | Restart service
   become: true
@@ -11,12 +13,29 @@
     name: "{{ system_sshd_service_name }}"
     state: restarted
     enabled: true
+  when:
+    - system_can_manage_systemd | default(false) | bool
 
 - name: Docker | Restart service
   become: true
   ansible.builtin.service:
     name: "{{ system_docker_service_name }}"
     state: restarted
+    enabled: true
+  when:
+    - system_can_manage_systemd | default(false) | bool
+
+- name: Sysctl | Reload settings
+  become: true
+  ansible.builtin.command:
+    argv:
+      - /usr/bin/sysctl
+      - --load
+      - "{{ system_sysctl_file_path }}"
+  changed_when: true
+  when:
+    - not (system_is_container | default(false) | bool)
+    - not (system_in_ci | default(false) | bool)
 
 - name: Timesyncd | Restart service
   become: true
@@ -42,3 +61,5 @@
     state: restarted
     enabled: true
     daemon_reload: true
+  when:
+    - system_can_manage_user_systemd | default(false) | bool

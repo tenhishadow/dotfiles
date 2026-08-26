@@ -1,7 +1,9 @@
 ---
 ansible_managed: o_O
+system_aur_enabled: true
 system_timezone: Europe/Warsaw
 system_motd_message: o_O
+system_laptop_enabled: true
 
 system_journald_settings:
   Storage: persistent

@@ -1,22 +1,17 @@
 ---
-- name: Sysctl | Apply kernel parameters
+- name: Sysctl | Write kernel parameter drop-in
   become: true
-  ansible.posix.sysctl:
-    name: "{{ system_sysctl_setting.key }}"
-    value: "{{ system_sysctl_setting.value }}"
-    sysctl_set: true
-    state: present
-    reload: true
-    sysctl_file: "{{ system_sysctl_file_path }}"
-  loop: >-
-    {{
-      system_sysctl_default_settings
-      | combine(system_sysctl_settings)
-      | dict2items
-    }}
-  loop_control:
-    loop_var: system_sysctl_setting
-    label: "{{ system_sysctl_setting.key }}"
+  ansible.builtin.template:
+    src: sysctl-dropin.conf.j2
+    dest: "{{ system_sysctl_file_path }}"
+    owner: "{{ system_config_owner }}"
+    group: "{{ system_config_group }}"
+    mode: "{{ system_config_file_mode }}"
+    backup: true
+  vars:
+    system_sysctl_combined_settings: >-
+      {{ system_sysctl_default_settings | combine(system_sysctl_settings) }}
   when:
     - not (system_is_container | bool)
     - not (system_in_ci | bool)
+  notify: Sysctl | Reload settings

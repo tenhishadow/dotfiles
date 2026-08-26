@@ -8,10 +8,10 @@ system_timezone: UTC
 system_motd_message: ""
 
 system_packages_enabled: true
-system_aur_enabled: true
+system_aur_enabled: false
 system_timesyncd_enabled: true
 system_docker_enabled: true
-system_laptop_enabled: true
+system_laptop_enabled: false
 system_user_services_enabled: true
 # Off-switches for the always-on subsystems. They default to true so the
 # applied configuration is unchanged; set one false to skip that include.
@@ -56,10 +56,9 @@ system_locales:
   - cs_CZ
   - fr_FR
   - C
+system_default_locale: en_US
 
-system_locale_definition_dirs:
-  - /usr/local/share/i18n/locales
-  - /usr/share/i18n/locales
+system_locale_definition_dir: /usr/share/i18n/locales
 
 system_locale_gen_path: /etc/locale.gen
 system_locale_conf_path: /etc/locale.conf
@@ -81,10 +80,13 @@ system_user_service_group: "{{ ansible_facts.real_group_id }}"
 
 system_container_virtualization_types:
   - container
+  - containerd
   - docker
   - lxc
   - lxd
+  - openvz
   - podman
+  - systemd-nspawn
 
 system_pacman_parallel_downloads: 20
 system_pacman_download_user: >-
@@ -225,10 +227,12 @@ system_sshd_legacy_main_cleanup:
     value: "-ssh-rsa,-rsa-sha2-256,-rsa-sha2-512"
 
 system_ntp_conflicting_services:
-  - chronie
-  - ntpd
+  - chronyd.service
+  - ntpd.service
 
 system_camera_blacklist_module: uvcvideo
+system_camera_blacklist_path: /etc/modprobe.d/99-dotfiles-camera.conf
+system_camera_legacy_blacklist_path: /etc/modprobe.d/blacklist-ansible.conf
 system_user_systemd_dir: "{{ ansible_facts.user_dir }}/.config/systemd/user"
 system_ssh_agent_service_name: ssh-agent.service
 system_ssh_agent_service_path: >-

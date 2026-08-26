@@ -1,0 +1,6 @@
+# {{ ansible_managed }}
+# Managed by the system role. Do not edit manually.
+
+{% for system_sysctl_key, system_sysctl_value in system_sysctl_combined_settings | dictsort %}
+{{ system_sysctl_key }} = {{ system_sysctl_value }}
+{% endfor %}
