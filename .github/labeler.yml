@@ -10,10 +10,17 @@ ai-instructions:
       - any-glob-to-any-file:
           - "AGENTS.md"
           - "**/AGENTS.md"
+          - "CLAUDE.md"
+          - "GEMINI.md"
+          - ".agents/**/*"
+          - ".claude/**/*"
           - ".github/copilot-instructions.md"
           - ".github/instructions/**/*"
           - ".cursor/**/*"
           - ".windsurf/**/*"
+          - "dotfiles/.agents/**/*"
+          - "dotfiles/.codex/**/*"
+          - "dotfiles/.gemini/settings.json"
 
 ansible:
   - changed-files:
@@ -53,6 +60,8 @@ dependencies:
   - changed-files:
       - any-glob-to-any-file:
           - ".pre-commit-config.yaml"
+          - "dotfiles/.local/share/codex-cli/**/package*.json"
+          - "dotfiles/.local/share/codex-mcp/**/package*.json"
           - "pyproject.toml"
           - "requirements.yml"
           - "renovate.json"
