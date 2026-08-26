@@ -1,14 +1,91 @@
 #!/bin/bash
-set -euxo pipefail
+set -euo pipefail
 
-export UV_PROJECT_ENVIRONMENT="/tmp/${RANDOM}"
-export ANSIBLE_FORCE_COLOR="true"
+if ! /usr/bin/systemd-detect-virt --quiet --container; then
+  printf '%s\n' 'This destructive integration harness must run inside a container.' >&2
+  exit 1
+fi
+
+export ANSIBLE_FORCE_COLOR="false"
+export ANSIBLE_COLLECTIONS_PATH="/tmp/dotfiles-system-test-collections"
+export CI="true"
+export UV_PYTHON="/usr/bin/python3"
+export UV_PROJECT_ENVIRONMENT="/tmp/dotfiles-system-test-venv"
+
+validate_https_url() {
+  local authority
+  local variable_name="$1"
+  local value="$2"
+
+  authority="${value#https://}"
+  authority="${authority%%/*}"
+  if [[ "${value}" != https://* || "${value}" =~ [[:space:]] || -z "${authority}" || "${authority}" == *@* ]]; then
+    printf '%s must be an HTTPS URL without whitespace or user info.\n' "${variable_name}" >&2
+    exit 1
+  fi
+}
+
+validate_mirror_settings() {
+  local arch_placeholder="\$arch"
+  local repo_placeholder="\$repo"
+
+  if [[ -n "${DOTFILES_TEST_PACMAN_MIRROR_URL:-}" ]]; then
+    validate_https_url DOTFILES_TEST_PACMAN_MIRROR_URL "${DOTFILES_TEST_PACMAN_MIRROR_URL}"
+    if [[ "${DOTFILES_TEST_PACMAN_MIRROR_URL}" != *"${repo_placeholder}"* || "${DOTFILES_TEST_PACMAN_MIRROR_URL}" != *"${arch_placeholder}"* ]]; then
+      printf '%s\n' "DOTFILES_TEST_PACMAN_MIRROR_URL must contain literal \$repo and \$arch placeholders." >&2
+      exit 1
+    fi
+  fi
+
+  if [[ -n "${DOTFILES_TEST_PYPI_INDEX_URL:-}" ]]; then
+    validate_https_url DOTFILES_TEST_PYPI_INDEX_URL "${DOTFILES_TEST_PYPI_INDEX_URL}"
+  fi
+}
+
+configure_pacman_mirror() {
+  if [[ -z "${DOTFILES_TEST_PACMAN_MIRROR_URL:-}" ]]; then
+    return
+  fi
+
+  printf 'Server = %s\n' "${DOTFILES_TEST_PACMAN_MIRROR_URL}" >/etc/pacman.d/mirrorlist
+  printf '%s\n' 'Using the configured pacman mirror.'
+}
+
+install_bootstrap_packages() {
+  pacman --disable-sandbox -Syu --noconfirm --needed --noprogressbar \
+    go-task uv git python sudo
+}
+
+prepare_python_environment() {
+  if [[ -z "${DOTFILES_TEST_PYPI_INDEX_URL:-}" ]]; then
+    return
+  fi
+
+  printf '%s\n' 'Installing locked Python dependencies from the configured index.'
+  uv --no-config venv --python "${UV_PYTHON}" "${UV_PROJECT_ENVIRONMENT}" --quiet
+  if ! uv export \
+      --locked \
+      --no-dev \
+      --no-emit-project \
+      --format requirements-txt \
+      --quiet \
+      | uv --no-config pip sync \
+        --python "${UV_PROJECT_ENVIRONMENT}/bin/python" \
+        --default-index "${DOTFILES_TEST_PYPI_INDEX_URL}" \
+        --require-hashes \
+        --no-build \
+        --strict \
+        --quiet \
+        - >/dev/null 2>&1; then
+    printf '%s\n' 'The configured Python index could not provide the locked dependencies.' >&2
+    exit 1
+  fi
+  export UV_NO_SYNC="true"
+}
 
 check_system_package_targets() {
-  local package
   local package_targets_file
   local -a system_package_targets
-  local -a missing_package_targets=()
 
   package_targets_file="$(mktemp)"
   trap 'rm -f "${package_targets_file}"' RETURN
@@ -69,38 +146,50 @@ PY
   fi
 
   printf 'Checking %s Arch package targets...\n' "${#system_package_targets[@]}"
-
-  for package in "${system_package_targets[@]}"; do
-    if ! pacman -Si -- "${package}" >/dev/null 2>&1; then
-      missing_package_targets+=("${package}")
-    fi
-  done
-
-  if ((${#missing_package_targets[@]} > 0)); then
-    printf '%s\n' 'Missing Arch package targets:' >&2
-    printf '  - %s\n' "${missing_package_targets[@]}" >&2
+  if ! pacman -Si -- "${system_package_targets[@]}" >/dev/null; then
+    printf '%s\n' 'One or more Arch package targets are unavailable.' >&2
     exit 1
   fi
 }
 
-pacman --disable-sandbox -Sy --noconfirm --needed --noprogressbar reflector go-task uv git sudo >/dev/null
+run_convergence_check() {
+  local result_name="$1"
+  local playbook="$2"
+  local result_path
+  shift 2
 
-sudo reflector \
-  --ipv4 \
-  --protocol https \
-  --completion-percent 95 \
-  --score 10 \
-  --latest 30 \
-  --fastest 10 \
-  --threads 8 \
-  --connection-timeout 1 \
-  --download-timeout 2 \
-  --save /etc/pacman.d/mirrorlist
+  result_path="${convergence_results_dir}/${result_name}.json"
+  printf 'Checking %s convergence...\n' "${result_name}"
+  if ! ANSIBLE_JSON_INDENT=0 \
+    ANSIBLE_STDOUT_CALLBACK=ansible.posix.json \
+    uv run ansible-playbook "${playbook}" "$@" >"${result_path}"; then
+    printf 'Ansible convergence run failed; callback output follows:\n' >&2
+    sed -n '1,240p' "${result_path}" >&2
+    return 1
+  fi
+  python3 .test/assert_ansible_convergence.py "${result_path}"
+}
 
-pacman --disable-sandbox -Sy --noconfirm --noprogressbar >/dev/null
+validate_mirror_settings
+configure_pacman_mirror
+if [[ -n "${DOTFILES_TEST_PACMAN_MIRROR_URL:-}" ]]; then
+  if ! install_bootstrap_packages >/dev/null 2>&1; then
+    printf '%s\n' 'The configured pacman mirror could not provide the bootstrap packages.' >&2
+    exit 1
+  fi
+else
+  install_bootstrap_packages >/dev/null
+fi
+prepare_python_environment
 check_system_package_targets
 
-go-task system -- --skip-tags pkg,aur
+printf '%s\n' 'Applying all repository layers in the Arch container...'
+go-task all -- --skip-tags pkg,aur
 
-# idempotency
-go-task system -- --skip-tags pkg,aur
+printf '%s\n' 'Verifying observable post-install state...'
+uv run ansible-playbook .test/system/verify.yml
+
+convergence_results_dir="$(mktemp -d)"
+run_convergence_check dotfiles playbook_install.yml
+run_convergence_check system playbook_system.yml --skip-tags pkg,aur
+run_convergence_check browser-policies playbook_browser_policies.yml

@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Read-only workstation reports for dotfiles adoption and review."""
 
 # pylint: disable=missing-function-docstring
@@ -34,6 +33,7 @@ SYSTEM_MANAGED_PATHS = [
     "/etc/issue",
     "/etc/sysctl.d/999-ansible.conf",
     "/etc/security/limits.d/10-dotfiles.conf",
+    "/etc/modprobe.d/99-dotfiles-camera.conf",
     "/etc/modprobe.d/99-dotfiles-overlay.conf",
     "/etc/docker/daemon.json",
     "/etc/systemd/journald.conf.d/10-dotfiles.conf",
@@ -42,6 +42,7 @@ SYSTEM_MANAGED_PATHS = [
 ]
 BROWSER_POLICY_PATHS = [
     "/etc/brave/policies/managed/10-dotfiles-managed.json",
+    "/etc/chromium/policies/managed/10-dotfiles-managed.json",
     "/etc/firefox/policies/policies.json",
     "/etc/thunderbird/policies/policies.json",
     "/etc/vscode/policy.json",
@@ -56,9 +57,8 @@ def run_check(command: list[str], timeout: int = 5) -> tuple[bool, str]:
     try:
         result = subprocess.run(
             command,
+            capture_output=True,
             check=False,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
             text=True,
             timeout=timeout,
         )
@@ -227,6 +227,10 @@ def print_doctor() -> None:
         ("npm", ["--version"]),
         ("yarn", ["--version"]),
         ("pip", ["--version"]),
+        ("codex", ["--version"]),
+        ("codex-context7-mcp", ["--version"]),
+        ("codex-playwright-mcp", ["--version"]),
+        ("mcp-grafana", ["--version"]),
     )
     for command, args in managed_tools:
         print(tool_version_line(command, args))
@@ -322,6 +326,7 @@ def print_browser_policies_report() -> None:
     policy_paths = BROWSER_POLICY_PATHS
     policy_apps = (
         ("brave", ["--version"]),
+        ("chromium", ["--version"]),
         ("firefox", ["--version"]),
         ("thunderbird", ["--version"]),
         ("code", ["--version"]),

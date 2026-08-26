@@ -14,7 +14,11 @@ workspaces.
 - `.test/nvim/mason_tools.lua`
 - `.test/nvim/*` language sample fixtures
 - `.test/vint_runner.py`
+- `.test/assert_ansible_convergence.py`
+- `.test/role_contracts.yml`
 - `.test/system/exec.sh`
+- `.test/system/local.env.example`
+- `.test/system/verify.yml`
 - `.test/workstation_report.py`
 
 `.test/vint_runner.py` runs vim-vint with a minimal `pkg_resources`
@@ -23,9 +27,10 @@ compatibility shim so the project environment does not need `setuptools`.
 `.test/workstation_report.py` provides read-only local reports for adoption,
 dotfiles destination review, system paths, and policy file ownership.
 
-`.test/system/exec.sh` is the Arch Linux container system package target,
-smoke, and idempotency script used by `go-task test:system` and
-`go-task verify`.
+`.test/system/exec.sh` is the Arch Linux package-target and convergence harness
+used by `go-task test:system` and `go-task verify`. It applies all three layers,
+runs the observable-state assertions in `.test/system/verify.yml`, and requires
+zero changes or hidden failures on each second playbook run.
 
 ## Generated Files
 
@@ -36,6 +41,7 @@ source of truth:
 - `.test/nvim/.data`
 - `.test/nvim/.state`
 - `.test/nvim/.cache`
+- `.test/system/local.env` (optional private test mirrors)
 
 ## Editing Rules
 
@@ -43,6 +49,7 @@ source of truth:
 - Keep Neovim smoke fixture directories aligned with the `name` values in
   `.test/nvim/smoke.lua`.
 - Keep generated workspaces out of git.
+- Keep private mirror and package-index URLs in `.test/system/local.env` only.
 - Keep `.test/` excluded from Renovate because dependency-like files here are
   fixtures, not repository dependency surfaces.
 - Keep Neovim test language lists sourced from the canonical config when
@@ -59,6 +66,7 @@ go-task test:nvim
 go-task test:nvim:compat
 go-task test:nvim:mason-tools
 go-task docs:nvim-keymaps:check
+go-task test:contracts
 go-task test:system
 go-task doctor
 ```

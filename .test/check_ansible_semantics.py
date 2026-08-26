@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Enforce the repo Ansible naming and notify/handler rules structurally.
 
 ansible-lint already covers FQCN, var-naming, modes, and the generic name

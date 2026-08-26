@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Generate the nested-AGENTS.md ownership list inside the root AGENTS.md.
 
 The root AGENTS.md lists every nested AGENTS.md an editor must consult. That
@@ -25,6 +24,7 @@ END = "<!-- END GENERATED: nested-agents -->"
 
 # Vendored / generated trees whose AGENTS.md files are not ours.
 EXCLUDED_DIRS = (".venv", ".git", ".collections", ".ansible", ".task", "node_modules")
+EXCLUDED_PREFIXES = (Path(".test/nvim"),)
 
 
 def repo_root() -> Path:
@@ -38,9 +38,15 @@ def nested_agents(root: Path) -> list[str]:
     for path in root.rglob("AGENTS.md"):
         if path == root / "AGENTS.md":
             continue
-        if any(part in EXCLUDED_DIRS for part in path.relative_to(root).parts):
+        relative = path.relative_to(root)
+        if any(part in EXCLUDED_DIRS for part in relative.parts):
             continue
-        paths.append(str(path.relative_to(root)))
+        if any(
+            relative == prefix or prefix in relative.parents
+            for prefix in EXCLUDED_PREFIXES
+        ):
+            continue
+        paths.append(str(relative))
     return sorted(paths)
 
 

@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Enforce the English-only repository-text rule mechanically.
 
 AGENTS.md requires repository text, comments, task names, docs, and AI

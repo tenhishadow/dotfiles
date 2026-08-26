@@ -19,7 +19,7 @@ concurrency:
 jobs:
   ansible_lint:
     name: ansible-lint
-    uses: tenhishadow/github_actions_templates/.github/workflows/taskfile.uv.yaml@main
+    uses: tenhishadow/github_actions_templates/.github/workflows/taskfile.uv.yaml@39bafe28cfa188344b842194b575ecef42e2059d # main
     with:
       os: ubuntu-latest
       task_target: lint
@@ -34,36 +34,62 @@ jobs:
         os:
           - ubuntu-latest
           - macos-latest
-    uses: tenhishadow/github_actions_templates/.github/workflows/taskfile.uv.yaml@main
+    uses: tenhishadow/github_actions_templates/.github/workflows/taskfile.uv.yaml@39bafe28cfa188344b842194b575ecef42e2059d # main
     with:
       os: ${{ matrix.os }}
       task_target: default
 
-  task_all:
-    name: task-all (archlinux)
+  repository_contract:
+    name: repository-contract (archlinux)
+    if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
     container:
       image: archlinux:multilib-devel
     env:
-      ANSIBLE_FORCE_COLOR: "true"
-      UV_PROJECT_ENVIRONMENT: /tmp/dotfiles-task-all-venv
+      UV_PROJECT_ENVIRONMENT: /tmp/dotfiles-contract-venv
     steps:
-      - name: Install bootstrap tools
+      - name: Install validation tools
         run: >-
-          pacman --disable-sandbox -Sy
+          pacman --disable-sandbox -Syu
+          --noconfirm
+          --needed
+          --noprogressbar
+          actionlint
+          git
+          go-task
+          neovim
+          nodejs
+          npm
+          pre-commit
+          stylua
+          uv
+
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Validate repository contract
+        run: go-task verify:fast
+
+  workstation_convergence:
+    name: workstation-convergence (archlinux)
+    runs-on: ubuntu-latest
+    container:
+      image: archlinux:multilib-devel
+    steps:
+      - name: Install checkout dependency
+        run: >-
+          pacman --disable-sandbox -Syu
           --noconfirm
           --needed
           --noprogressbar
           git
-          go-task
-          reflector
-          sudo
-          uv
 
       - name: Checkout repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
 
-      - name: Run aggregate target
-        run: go-task all -- --skip-tags pkg,aur
+      - name: Verify workstation convergence
+        run: ./.test/system/exec.sh

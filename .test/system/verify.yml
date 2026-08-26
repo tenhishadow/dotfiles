@@ -1,0 +1,283 @@
+---
+- name: Container Test | Verify applied layers
+  hosts: this_host
+  become: false
+  gather_facts: true
+  vars:
+    dotfiles_home: "{{ ansible_facts.user_dir }}"
+    dotfiles_config_dir: "{{ dotfiles_home }}/.config"
+    dotfiles_bashrc_dir: "{{ dotfiles_home }}/.bashrc.d"
+    dotfiles_gnupg_dir: "{{ dotfiles_home }}/.gnupg"
+    dotfiles_ssh_dir: "{{ dotfiles_home }}/.ssh"
+    dotfiles_ssh_config_dir: "{{ dotfiles_ssh_dir }}/config.d"
+    container_test_repo_root: "{{ playbook_dir | dirname | dirname }}"
+    container_test_dotfiles_location: "{{ container_test_repo_root }}/dotfiles"
+    container_test_system_files:
+      - /etc/locale.gen
+      - /etc/locale.conf
+      - /etc/vconsole.conf
+      - /etc/motd
+      - /etc/issue
+      - /etc/security/limits.d/10-dotfiles.conf
+      - /etc/pacman.conf
+      - /etc/xdg/reflector/reflector.conf
+    container_test_system_content:
+      - path: /etc/locale.conf
+        pattern: '(?m)^LANG="en_US\.UTF-8"$'
+      - path: /etc/security/limits.d/10-dotfiles.conf
+        pattern: '(?m)^\* soft nofile 65535$'
+      - path: /etc/pacman.conf
+        pattern: "(?m)^ParallelDownloads = 20$"
+      - path: /etc/xdg/reflector/reflector.conf
+        pattern: '(?m)^--save /etc/pacman\.d/mirrorlist$'
+    container_test_skipped_paths:
+      - /etc/docker/daemon.json
+      - /etc/modprobe.d/99-dotfiles-overlay.conf
+      - /etc/modprobe.d/99-dotfiles-camera.conf
+      - /etc/ssh/sshd_config.d/20-dotfiles.conf
+      - /etc/sysctl.d/999-ansible.conf
+      - /etc/systemd/journald.conf.d/10-dotfiles.conf
+      - /etc/systemd/timesyncd.conf.d/10-dotfiles.conf
+      - /root/.config/systemd/user/ssh-agent.service
+    container_test_policy_specs:
+      - path: /etc/brave/policies/managed/10-dotfiles-managed.json
+        wrapped: false
+        key: BraveAIChatEnabled
+        value: false
+      - path: /etc/chromium/policies/managed/10-dotfiles-managed.json
+        wrapped: false
+        key: MetricsReportingEnabled
+        value: false
+      - path: /etc/firefox/policies/policies.json
+        wrapped: true
+        key: DisableTelemetry
+        value: true
+      - path: /etc/thunderbird/policies/policies.json
+        wrapped: true
+        key: DisableTelemetry
+        value: true
+      - path: /etc/vscode/policy.json
+        wrapped: false
+        key: TelemetryLevel
+        value: "off"
+  tasks:
+    - name: Dotfiles Test | Inspect managed links
+      ansible.builtin.stat:
+        path: "{{ container_test_dotfiles_mapping.dest }}"
+        follow: false
+      loop: "{{ dotfiles_mapping }}"
+      loop_control:
+        loop_var: container_test_dotfiles_mapping
+        label: "{{ container_test_dotfiles_mapping.dest }}"
+      register: container_test_dotfiles_stats
+      changed_when: false
+
+    - name: Dotfiles Test | Verify managed links
+      ansible.builtin.assert:
+        that:
+          - container_test_dotfiles_result.stat.islnk | default(false)
+          - >-
+            container_test_dotfiles_result.stat.lnk_source
+            == container_test_dotfiles_location ~ '/'
+            ~ container_test_dotfiles_result.container_test_dotfiles_mapping.payload
+        fail_msg: >-
+          Invalid managed link:
+          {{ container_test_dotfiles_result.container_test_dotfiles_mapping.dest }}
+        quiet: true
+      loop: "{{ container_test_dotfiles_stats.results }}"
+      loop_control:
+        loop_var: container_test_dotfiles_result
+        label: "{{ container_test_dotfiles_result.container_test_dotfiles_mapping.dest }}"
+
+    - name: Dotfiles Test | Inspect cleanup paths
+      ansible.builtin.stat:
+        path: "{{ container_test_cleanup_path }}"
+        follow: false
+      loop: "{{ dotfiles_cleanup_paths }}"
+      loop_control:
+        loop_var: container_test_cleanup_path
+        label: "{{ container_test_cleanup_path }}"
+      register: container_test_cleanup_stats
+      changed_when: false
+
+    - name: Dotfiles Test | Verify cleanup paths absent
+      ansible.builtin.assert:
+        that:
+          - not (container_test_cleanup_result.stat.exists | default(false))
+        fail_msg: >-
+          Legacy path remains:
+          {{ container_test_cleanup_result.container_test_cleanup_path }}
+        quiet: true
+      loop: "{{ container_test_cleanup_stats.results }}"
+      loop_control:
+        loop_var: container_test_cleanup_result
+        label: "{{ container_test_cleanup_result.container_test_cleanup_path }}"
+
+    - name: System Test | Inspect managed files
+      ansible.builtin.stat:
+        path: "{{ container_test_system_path }}"
+        follow: false
+      loop: "{{ container_test_system_files }}"
+      loop_control:
+        loop_var: container_test_system_path
+        label: "{{ container_test_system_path }}"
+      register: container_test_system_stats
+      changed_when: false
+
+    - name: System Test | Verify managed files
+      ansible.builtin.assert:
+        that:
+          - container_test_system_result.stat.isreg | default(false)
+          - container_test_system_result.stat.pw_name == "root"
+          - container_test_system_result.stat.gr_name == "root"
+          - container_test_system_result.stat.mode == "0644"
+        fail_msg: >-
+          Invalid managed system file:
+          {{ container_test_system_result.container_test_system_path }}
+        quiet: true
+      loop: "{{ container_test_system_stats.results }}"
+      loop_control:
+        loop_var: container_test_system_result
+        label: "{{ container_test_system_result.container_test_system_path }}"
+
+    - name: System Test | Read managed content
+      ansible.builtin.slurp:
+        src: "{{ container_test_content_spec.path }}"
+      loop: "{{ container_test_system_content }}"
+      loop_control:
+        loop_var: container_test_content_spec
+        label: "{{ container_test_content_spec.path }}"
+      register: container_test_system_content_results
+      changed_when: false
+
+    - name: System Test | Verify managed content
+      ansible.builtin.assert:
+        that:
+          - >-
+            (container_test_content_result.content | b64decode)
+            is regex(container_test_content_result.container_test_content_spec.pattern)
+        fail_msg: >-
+          Expected content missing from
+          {{ container_test_content_result.container_test_content_spec.path }}
+        quiet: true
+      loop: "{{ container_test_system_content_results.results }}"
+      loop_control:
+        loop_var: container_test_content_result
+        label: "{{ container_test_content_result.container_test_content_spec.path }}"
+
+    - name: Container Test | Verify container facts
+      ansible.builtin.assert:
+        that:
+          - >-
+            'container' in (ansible_facts.virtualization_tech_guest | default([]))
+            or (
+              ansible_facts.virtualization_type | default('')
+              in [
+                'container',
+                'containerd',
+                'docker',
+                'lxc',
+                'lxd',
+                'openvz',
+                'podman',
+                'systemd-nspawn',
+              ]
+            )
+        fail_msg: "The privileged smoke test must run inside a container."
+        quiet: true
+
+    - name: Container Test | Inspect guarded paths
+      ansible.builtin.stat:
+        path: "{{ container_test_skipped_path }}"
+        follow: false
+      loop: "{{ container_test_skipped_paths }}"
+      loop_control:
+        loop_var: container_test_skipped_path
+        label: "{{ container_test_skipped_path }}"
+      register: container_test_skipped_stats
+      changed_when: false
+
+    - name: Container Test | Verify guarded paths absent
+      ansible.builtin.assert:
+        that:
+          - not (container_test_skipped_result.stat.exists | default(false))
+        fail_msg: >-
+          Container guard leaked a host-only path:
+          {{ container_test_skipped_result.container_test_skipped_path }}
+        quiet: true
+      loop: "{{ container_test_skipped_stats.results }}"
+      loop_control:
+        loop_var: container_test_skipped_result
+        label: "{{ container_test_skipped_result.container_test_skipped_path }}"
+
+    - name: Browser Policies Test | Inspect policy files
+      ansible.builtin.stat:
+        path: "{{ container_test_policy_spec.path }}"
+        follow: false
+      loop: "{{ container_test_policy_specs }}"
+      loop_control:
+        loop_var: container_test_policy_spec
+        label: "{{ container_test_policy_spec.path }}"
+      register: container_test_policy_stats
+      changed_when: false
+
+    - name: Browser Policies Test | Verify policy files
+      ansible.builtin.assert:
+        that:
+          - container_test_policy_result.stat.isreg | default(false)
+          - container_test_policy_result.stat.pw_name == "root"
+          - container_test_policy_result.stat.gr_name == "root"
+          - container_test_policy_result.stat.mode == "0644"
+        fail_msg: >-
+          Invalid policy file:
+          {{ container_test_policy_result.container_test_policy_spec.path }}
+        quiet: true
+      loop: "{{ container_test_policy_stats.results }}"
+      loop_control:
+        loop_var: container_test_policy_result
+        label: "{{ container_test_policy_result.container_test_policy_spec.path }}"
+
+    - name: Browser Policies Test | Read policy files
+      ansible.builtin.slurp:
+        src: "{{ container_test_policy_spec.path }}"
+      loop: "{{ container_test_policy_specs }}"
+      loop_control:
+        loop_var: container_test_policy_spec
+        label: "{{ container_test_policy_spec.path }}"
+      register: container_test_policy_contents
+      changed_when: false
+
+    - name: Browser Policies Test | Verify policy content
+      ansible.builtin.assert:
+        that:
+          - container_test_policy_document is mapping
+          - >-
+            not container_test_policy_content.container_test_policy_spec.wrapped
+            or (
+              container_test_policy_document.policies is defined
+              and container_test_policy_document.policies is mapping
+            )
+          - >-
+            container_test_policy_content.container_test_policy_spec.key
+            in container_test_policy_body
+          - >-
+            container_test_policy_body[
+              container_test_policy_content.container_test_policy_spec.key
+            ] == container_test_policy_content.container_test_policy_spec.value
+        fail_msg: >-
+          Invalid policy content:
+          {{ container_test_policy_content.container_test_policy_spec.path }}
+        quiet: true
+      vars:
+        container_test_policy_document: >-
+          {{ container_test_policy_content.content | b64decode | from_json }}
+        container_test_policy_body: >-
+          {{
+            container_test_policy_document.policies
+            if container_test_policy_content.container_test_policy_spec.wrapped
+            else container_test_policy_document
+          }}
+      loop: "{{ container_test_policy_contents.results }}"
+      loop_control:
+        loop_var: container_test_policy_content
+        label: "{{ container_test_policy_content.container_test_policy_spec.path }}"

@@ -20,10 +20,10 @@ def _require(name: str) -> list[types.SimpleNamespace]:
 
 
 pkg_resources = types.ModuleType("pkg_resources")
-setattr(pkg_resources, "DistributionNotFound", DistributionNotFound)
-setattr(pkg_resources, "require", _require)
+pkg_resources.__dict__["DistributionNotFound"] = DistributionNotFound
+pkg_resources.__dict__["require"] = _require
 sys.modules["pkg_resources"] = pkg_resources
 
 
 if __name__ == "__main__":
-    getattr(importlib.import_module("vint"), "main")()
+    importlib.import_module("vint").main()

@@ -8,10 +8,7 @@ vars:
   RUN_BROWSER_PLAYBOOK: "uv run ansible-playbook playbook_browser_policies.yml"
   VINT_TARGETS: "dotfiles/.vimrc dotfiles/.config/nvim"
   STYLUA_TARGETS: "dotfiles/.config/nvim .test/nvim"
-  PACMAN_INSTALL: "pacman -Sy --noconfirm --needed --noprogressbar"
-  DEPS_OS_ARCHLINUX: "{{.PACMAN_INSTALL}} uv git"
-  DEPS_OS_SYSTEM_ARCHLINUX: "{{.PACMAN_INSTALL}} uv git sudo"
-  DEPS_VERIFY_ARCHLINUX: "{{.PACMAN_INSTALL}} actionlint nodejs npm pre-commit stylua"
+  RENOVATE_VERSION: "44.46.0"
   SUPERLINTER_IMAGE_TAG: "v8.7.0"
   SUPERLINTER_DOCKER_RUN: >-
     docker run
@@ -22,42 +19,46 @@ vars:
     -e VALIDATE_ALL_CODEBASE=true
     -e VALIDATE_BIOME_FORMAT=false
     -e VALIDATE_EDITORCONFIG=false
+    -e ENFORCE_COMMITLINT_CONFIGURATION_CHECK=true
     -e VALIDATE_GITHUB_ACTIONS_ZIZMOR=false
     -e VALIDATE_LUA=false
-    -e VALIDATE_MARKDOWN=false
     -e VALIDATE_MARKDOWN_PRETTIER=false
     -e VALIDATE_NATURAL_LANGUAGE=false
     -e VALIDATE_SHELL_SHFMT=false
     -e VALIDATE_TRIVY=false
-    -e FILTER_REGEX_EXCLUDE='(^|/)(\.ansible/|\.collections/|\.task/|\.test/nvim/|\.venv/)'
+    -e FILTER_REGEX_EXCLUDE='(^|/)(\.ansible/|\.collections/|\.task/|\.test/nvim/|\.test/system/local\.env$|\.venv/)'
     -v $(pwd):/tmp/lint
+    $([ ! -f .test/system/local.env ] || printf '%s' "-v $(pwd)/.test/system/local.env.example:/tmp/lint/.test/system/local.env:ro")
 
 tasks:
   deps-os:
-    status:
-      - $SHELL -c 'type -P uv'
-    cmd: >-
-      {{.DEPS_OS_ARCHLINUX}}
-      || sudo {{.DEPS_OS_ARCHLINUX}}
+    cmds:
+      - >-
+        command -v uv >/dev/null 2>&1
+        || {
+          printf '%s\n' 'uv is required; install it before running the user-level workflow.' >&2;
+          exit 1;
+        }
+      - >-
+        command -v git >/dev/null 2>&1
+        || {
+          printf '%s\n' 'git is required; install it before running the user-level workflow.' >&2;
+          exit 1;
+        }
   deps-os-system:
-    status:
-      - $SHELL -c 'type -P uv'
-      - $SHELL -c 'type -P git'
-      - $SHELL -c 'type -P sudo'
+    deps: [deps-os]
     cmd: >-
-      {{.DEPS_OS_SYSTEM_ARCHLINUX}}
-      || sudo {{.DEPS_OS_SYSTEM_ARCHLINUX}}
+      if [ "$(id -u)" -ne 0 ] && ! command -v sudo >/dev/null 2>&1; then
+        printf '%s\n' 'sudo is required for the privileged workstation workflow.' >&2;
+        exit 1;
+      fi
   deps-python:
     silent: true
     deps: [deps-os]
     cmd: >-
-      uv sync
-      --locked
-      --no-build
-      --no-install-project
-      --no-dev
-      --managed-python
-      --quiet
+      if [ "${UV_NO_SYNC:-false}" != "true" ]; then
+        uv sync --locked --no-build --no-install-project --no-dev --managed-python --quiet;
+      fi
   deps-galaxy:
     silent: true
     deps: [deps-python]
@@ -65,13 +66,14 @@ tasks:
       - "uv run ansible-galaxy install -r requirements.yml"
   deps-verify:
     deps: [deps-os]
-    status:
-      - $SHELL -c 'type -P actionlint'
-      - $SHELL -c 'type -P npx'
-      - $SHELL -c 'type -P pre-commit'
-      - $SHELL -c 'type -P stylua'
-    cmd: >-
-      {{.DEPS_VERIFY_ARCHLINUX}} || sudo {{.DEPS_VERIFY_ARCHLINUX}}
+    cmds:
+      - >-
+        for tool in actionlint npx pre-commit stylua; do
+          command -v "${tool}" >/dev/null 2>&1 || {
+            printf '%s\n' "${tool} is required for repository validation." >&2;
+            exit 1;
+          };
+        done
   deps-docker:
     silent: true
     cmds:
@@ -116,7 +118,7 @@ tasks:
   deps-report:github-actions:
     deps: [deps-verify]
     cmd: >-
-      npx --yes --package renovate renovate
+      npx --yes --package renovate@{{.RENOVATE_VERSION}} renovate
       --platform=local
       --dry-run=full
       --require-config=required
@@ -136,6 +138,14 @@ tasks:
     cmd: "uv run python .test/check_ansible_semantics.py"
   lint:english:
     cmd: "python3 .test/check_repo_english.py"
+  lint:markdown:
+    deps: [deps-verify]
+    cmd: "pre-commit run markdownlint-cli2 --all-files"
+  lint:python:
+    deps: [deps-python]
+    cmds:
+      - "uv run ruff check ."
+      - "uv run ruff format --check ."
   yamllint:
     deps: [deps-python]
     cmd: "uv run yamllint ."
@@ -184,7 +194,8 @@ tasks:
     cmd: >-
       if type -P renovate-config-validator >/dev/null;
       then renovate-config-validator --strict;
-      else npx --yes --package renovate renovate-config-validator --strict;
+      else npx --yes --package renovate@{{.RENOVATE_VERSION}}
+      renovate-config-validator --strict;
       fi
   pre-commit:
     deps: [deps-verify]
@@ -223,13 +234,17 @@ tasks:
       trap 'rm -f "${manifest}"' EXIT;
       uv run ansible-playbook .test/managed_paths.yml -e manifest_out="${manifest}" >/dev/null;
       python3 .test/check_managed_paths.py "${manifest}"
-  verify:
+  test:contracts:
+    deps: [deps-galaxy]
+    cmd: "uv run ansible-playbook .test/role_contracts.yml"
+  verify:fast:
     deps: [deps-galaxy, deps-verify]
     cmds:
       - task: diff-check
       - task: lint
       - task: lint:ansible-semantics
       - task: lint:english
+      - task: lint:python
       - task: yamllint
       - task: vint
       - task: stylua
@@ -240,15 +255,17 @@ tasks:
       - task: renovate
       - task: pre-commit
       - task: managed-paths:check
-      - task: default
-      - task: system:check
+      - task: test:contracts
+
+  verify:
+    cmds:
+      - task: verify:fast
+      - task: test:nvim:all
       - task: test:system
-      - task: browser-policies:check
       - task: superlinter
   superlinter:
     deps: [deps-docker]
-    cmds:
-      - "{{.SUPERLINTER_DOCKER_RUN}} ghcr.io/super-linter/super-linter:{{.SUPERLINTER_IMAGE_TAG}}"
+    cmd: "{{.SUPERLINTER_DOCKER_RUN}} ghcr.io/super-linter/super-linter:{{.SUPERLINTER_IMAGE_TAG}}"
   superlinter:latest:
     deps: [deps-docker]
     vars:
@@ -369,7 +386,12 @@ tasks:
   test:system:
     deps: [deps-docker]
     cmd: >-
-      docker run --rm -i
+      test_env_file="${DOTFILES_TEST_ENV_FILE:-.test/system/local.env}";
+      if [ -z "${DOTFILES_TEST_ENV_FILE:-}" ] && [ ! -f "${test_env_file}" ]; then
+        test_env_file=/dev/null;
+      fi;
+      docker run --pull always --rm -i
+      --env-file "${test_env_file}"
       -v "$(pwd):/.dotfiles:ro"
       archlinux:multilib-devel
       bash -c 'cd .dotfiles && ./.test/system/exec.sh'

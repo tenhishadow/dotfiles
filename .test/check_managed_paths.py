@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Assert workstation_report.py managed paths match the Ansible role variables.
 
 Reads the JSON manifest rendered by managed_paths.yml and compares it against

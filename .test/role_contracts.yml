@@ -1,0 +1,100 @@
+---
+- name: Contract Tests | Verify rejected role inputs
+  hosts: this_host
+  become: false
+  gather_facts: true
+  tasks:
+    - name: Contract Tests | Set cleanup rejection result
+      ansible.builtin.set_fact:
+        contract_tests_cleanup_rejected: false
+
+    - name: Contract Tests | Run dotfiles validation tasks
+      block:
+        - name: Contract Tests | Include dotfiles validation tasks
+          ansible.builtin.include_role:
+            name: dotfiles
+            tasks_from: validate
+          vars:
+            dotfiles_cleanup_paths:
+              - /etc/dotfiles-contract-escape
+      rescue:
+        - name: Contract Tests | Set cleanup rejection result
+          ansible.builtin.set_fact:
+            contract_tests_cleanup_rejected: >-
+              {{
+                'Invalid dotfiles cleanup path:'
+                in (ansible_failed_result | string)
+              }}
+
+    - name: Contract Tests | Verify cleanup rejection
+      ansible.builtin.assert:
+        that:
+          - contract_tests_cleanup_rejected | bool
+        fail_msg: "dotfiles cleanup accepted a path outside dotfiles_home."
+        quiet: true
+
+    - name: Contract Tests | Set mapping rejection result
+      ansible.builtin.set_fact:
+        contract_tests_mapping_rejected: false
+
+    - name: Contract Tests | Run overlapping mapping validation
+      block:
+        - name: Contract Tests | Include dotfiles validation tasks
+          ansible.builtin.include_role:
+            name: dotfiles
+            tasks_from: validate
+          vars:
+            dotfiles_mapping:
+              - name: parent
+                payload: .bashrc
+                dest: "{{ dotfiles_home }}/.contract-parent"
+              - name: child
+                payload: .bashrc
+                dest: "{{ dotfiles_home }}/.contract-parent/child"
+            dotfiles_cleanup_paths: []
+      rescue:
+        - name: Contract Tests | Set mapping rejection result
+          ansible.builtin.set_fact:
+            contract_tests_mapping_rejected: >-
+              {{
+                'Overlapping dotfiles destination:'
+                in (ansible_failed_result | string)
+              }}
+
+    - name: Contract Tests | Verify mapping rejection
+      ansible.builtin.assert:
+        that:
+          - contract_tests_mapping_rejected | bool
+        fail_msg: "dotfiles validation accepted overlapping destinations."
+        quiet: true
+
+    - name: Contract Tests | Set policy rejection result
+      ansible.builtin.set_fact:
+        contract_tests_policy_rejected: false
+
+    - name: Contract Tests | Run browser policy validation tasks
+      block:
+        - name: Contract Tests | Include browser policy validation tasks
+          ansible.builtin.include_role:
+            name: browser_policies
+            tasks_from: validate
+          vars:
+            browser_policies_chromium_targets:
+              - name: traversal
+                policy_dir: /etc/chromium/policies/managed
+                policy_filename: ../escape.json
+      rescue:
+        - name: Contract Tests | Set policy rejection result
+          ansible.builtin.set_fact:
+            contract_tests_policy_rejected: >-
+              {{
+                'Invalid Chromium target:'
+                in (ansible_failed_result | string)
+              }}
+
+    - name: Contract Tests | Verify policy rejection
+      ansible.builtin.assert:
+        that:
+          - contract_tests_policy_rejected | bool
+        fail_msg: "browser policy validation accepted a non-basename filename."
+        quiet: true
