@@ -23,6 +23,12 @@
       - browser_policies_chromium_extension_settings is mapping
       - browser_policies_extension_block_defaults is mapping
       - browser_policies_extension_block is mapping
+      - browser_policies_chromium_policy_filename is string
+      - browser_policies_chromium_policy_filename | length > 0
+      - >-
+        (browser_policies_chromium_policy_filename | basename)
+        == browser_policies_chromium_policy_filename
+      - browser_policies_chromium_policy_filename not in [".", ".."]
       - browser_policies_firefox_base_policies is mapping
       - browser_policies_firefox_extension_settings is mapping
       - browser_policies_thunderbird_base_policies is mapping
@@ -51,6 +57,10 @@
         or (
           browser_policies_chromium_target.policy_filename is string
           and browser_policies_chromium_target.policy_filename | length > 0
+          and (
+            browser_policies_chromium_target.policy_filename | basename
+          ) == browser_policies_chromium_target.policy_filename
+          and browser_policies_chromium_target.policy_filename not in [".", ".."]
         )
       - >-
         browser_policies_chromium_target.policies is not defined

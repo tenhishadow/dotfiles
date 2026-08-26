@@ -90,10 +90,15 @@ browser_policies_chromium_targets:
       DefaultBraveFingerprintingV2Setting: 3
       DefaultBraveHttpsUpgradeSetting: 3
       DefaultBraveReferrersSetting: 2
+  - name: chromium
+    enabled: true
+    policy_dir: /etc/chromium/policies/managed
 
 browser_policies_firefox_base_policies:
   DisableTelemetry: true
   DisableFirefoxStudies: true
+  DisableFeedbackCommands: true
+  DisableRemoteImprovements: true
   DisableFirefoxAccounts: true
   DisablePocket: true
   PasswordManagerEnabled: false

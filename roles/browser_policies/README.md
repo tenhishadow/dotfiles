@@ -99,6 +99,10 @@ The same target pattern works for `google-chrome`, `microsoft-edge`,
 `vivaldi`, and other Chromium-based browsers with a Linux managed policy
 directory.
 
+The default targets cover both Brave and Chromium. They share the documented
+Chromium privacy baseline, while Brave-specific policy keys remain scoped to
+the Brave target.
+
 ## Firefox-Based Browsers
 
 Add targets to `browser_policies_firefox_targets`. Each item owns the complete
@@ -117,6 +121,10 @@ browser_policies_firefox_targets:
 
 The same target pattern works for other Firefox-based browsers when they
 support the Firefox enterprise policy file format.
+
+The Firefox baseline disables telemetry, studies, feedback commands, and
+remote experimental improvements. Browser updates remain owned by the system
+package manager.
 
 ## Thunderbird
 
@@ -249,6 +257,10 @@ changes in git and reapply:
 ```bash
 go-task browser-policies
 ```
+
+Apply `state: absent` while a target is still declared and enabled; only then
+disable or remove the target from inventory. Disabling a target skips it and
+does not discover or delete a previously managed file.
 
 Removing policy files does not remove data already stored in browser,
 Thunderbird, or VS Code profiles.
