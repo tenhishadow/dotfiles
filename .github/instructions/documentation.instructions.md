@@ -30,6 +30,8 @@ Sync" section.
 - Keep generated manuals current. For Neovim keymaps, regenerate
   `docs/nvim-keymaps.md` with `go-task docs:nvim-keymaps` and verify it with
   `go-task docs:nvim-keymaps:check`.
+- Run `go-task lint:markdown` and fix the source. Do not add file ignores or
+  inline rule disables to bypass documentation failures.
 - Keep documented variable names aligned with the role contracts:
   `dotfiles_*`, `system_*`, and `browser_policies_*`.
 - Document system role feature flags, managed paths, and drop-in/snippet paths
