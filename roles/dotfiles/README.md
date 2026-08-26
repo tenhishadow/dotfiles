@@ -76,6 +76,9 @@ runtime profiles.
 Codex authentication, conversation and memory state, hook trust state, MCP
 credentials, and the Grafana URL and service-account token file are deliberately
 local. The hook does not read workspace files or inject extra model context.
+It blocks direct Bash references to local `.env`, Kubernetes config, GnuPG
+private keys, the Grafana token-file variable, and non-public SSH paths while
+allowing managed SSH and GnuPG config and public `.pub` keys.
 Review new or changed hooks with `/hooks` before trusting them.
 
 K9s is configured with `readOnly: true`, so the managed default is intentionally

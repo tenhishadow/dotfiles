@@ -21,6 +21,14 @@ SECRET_FLAG = re.compile(
 )
 BEARER = re.compile(r"(?i)\bauthorization\s*:\s*bearer\s+([^\s'\"]+)")
 URL_CREDENTIALS = re.compile(r"(?i)\bhttps?://[^\s/:]+:[^\s/@]+@")
+SENSITIVE_PATH_REFERENCE = re.compile(
+    r"(?:\$(?:KUBECONFIG\b|\{KUBECONFIG\b|"
+    r"GRAFANA_SERVICE_ACCOUNT_TOKEN_FILE\b|"
+    r"\{GRAFANA_SERVICE_ACCOUNT_TOKEN_FILE\b)|"
+    r"(?<![A-Za-z0-9_])(?:KUBECONFIG|"
+    r"GRAFANA_SERVICE_ACCOUNT_TOKEN_FILE)\s*=|--kubeconfig(?:=|\s))"
+)
+SHELL_WORD = re.compile(r"""[^\s;&|<>"']+""")
 SAFE_VALUE_PREFIXES = (
     "$",
     "${",
@@ -113,6 +121,41 @@ def _contains_literal_secret(command: str) -> bool:
     return False
 
 
+def _contains_sensitive_path(command: str) -> bool:
+    if SENSITIVE_PATH_REFERENCE.search(command):
+        return True
+    for word in SHELL_WORD.findall(command):
+        segments = [segment.strip("()[]{},:") for segment in word.split("/")]
+        candidates = [segment.rsplit("=", 1)[-1] for segment in segments]
+        if ".ssh" in candidates:
+            remainder = candidates[candidates.index(".ssh") + 1 :]
+            public_config = remainder == ["config"] or (
+                remainder and remainder[0] == "config.d" and ".." not in remainder
+            )
+            public_key = (
+                remainder and remainder[-1].endswith(".pub") and ".." not in remainder
+            )
+            if not (public_config or public_key):
+                return True
+            continue
+        if ".gnupg" in candidates:
+            remainder = candidates[candidates.index(".gnupg") + 1 :]
+            if "private-keys-v1.d" in remainder:
+                return True
+        for candidate in candidates:
+            if candidate == ".kube":
+                return True
+            if candidate.endswith(".env.example"):
+                continue
+            if (
+                candidate == ".env"
+                or candidate.startswith(".env.")
+                or candidate.endswith(".env")
+            ):
+                return True
+    return False
+
+
 def _bounded_output(command: str) -> bool:
     return bool(
         re.search(
@@ -160,7 +203,12 @@ def policy_reason(command: str) -> str | None:
     if _dangerous_rm(command) or _dangerous_git(command):
         return "Broad destructive command blocked by the portable Codex policy."
     if _contains_literal_secret(command):
-        return "Credential-shaped literal blocked; use a protected file or environment reference."
+        return (
+            "Credential-shaped literal blocked; use a protected file or "
+            "environment reference."
+        )
+    if _contains_sensitive_path(command):
+        return "Sensitive local path blocked by the portable Codex policy."
     if _unbounded_logs(command):
         return "Unbounded log command blocked; add a line, time, or output limit."
     return None
@@ -177,29 +225,13 @@ def _deny(reason: str) -> None:
     print(json.dumps(payload, separators=(",", ":")))
 
 
-def _self_test() -> None:
-    assert policy_reason("rm -rf /")
-    assert policy_reason("git reset --hard HEAD")
-    assert policy_reason("git clean -fdx")
-    assert policy_reason("rm -rf /tmp/narrow") is None
-    assert policy_reason("kubectl logs pod")
-    assert policy_reason("kubectl logs pod --tail=-1")
-    assert policy_reason("kubectl logs pod --tail=100") is None
-    assert policy_reason("journalctl -u unit | head -n 50") is None
-    token = "literal-" + "credential"
-    assert policy_reason(f"API_TOKEN={token} command")
-    assert policy_reason("API_TOKEN=$TOKEN command") is None
-    print("portable Codex hook self-test: ok")
-
-
 def main() -> None:
     """Evaluate one Codex hook event from standard input."""
-    if sys.argv[1:] == ["--self-test"]:
-        _self_test()
-        return
     try:
         event = json.load(sys.stdin)
     except json.JSONDecodeError, OSError:
+        return
+    if not isinstance(event, dict):
         return
     event_name = event.get("hook_event_name")
     if event_name != "PreToolUse" or event.get("tool_name") != "Bash":

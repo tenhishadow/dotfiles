@@ -104,6 +104,7 @@ security:
   - changed-files:
       - any-glob-to-any-file:
           - ".github/CODEOWNERS"
+          - "dotfiles/.codex/hooks/**/*"
           - "dotfiles/.config/k9s/**/*"
           - "dotfiles/.config/pip/**/*"
           - "dotfiles/.gemini/**/*"
