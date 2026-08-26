@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.4.0](https://github.com/tenhishadow/dotfiles/compare/v2.3.0...v2.4.0) (2026-08-26)
+
+
+### Features
+
+* harden workstation automation and validation ([#177](https://github.com/tenhishadow/dotfiles/issues/177)) ([4325e05](https://github.com/tenhishadow/dotfiles/commit/4325e0550d87e2c71211e16f79e4bf5da13d1623))
+
 ## [2.3.0](https://github.com/tenhishadow/dotfiles/compare/v2.2.3...v2.3.0) (2026-06-13)
 
 
