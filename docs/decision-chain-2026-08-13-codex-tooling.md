@@ -20,8 +20,8 @@ machine-only path, if the default play would replace the live
 or if check mode reaches a managed or privileged host.
 
 The checks are path-only secret scanning, TOML and JSON parsing, npm lock
-inspection, the hook self-test, Ansible validation, and the repository's native
-validation tasks.
+inspection, black-box hook tests, Ansible validation, and the repository's
+native validation tasks.
 
 ## Evidence
 
@@ -37,7 +37,8 @@ validation tasks.
   installation remains an explicit `go-task codex:install` operation and uses
   `--ignore-scripts`.
 - The portable hook is dependency-free, reads only the hook event from standard
-  input, emits generic denial reasons, and includes a self-test.
+  input, and emits generic denial reasons. Standard-library tests exercise its
+  real JSON interface under normal and optimized Python.
 
 ## Alternatives
 
@@ -59,6 +60,9 @@ validation tasks.
   a new host, then add that host's values locally.
 - Link immutable task profiles, hooks, the pinned Ponytail skill, launchers,
   package manifests, and lockfiles through the existing user-level mapping.
+- Keep public SSH and GnuPG config paths readable while the Bash hook blocks
+  direct references to `.env`, Kubernetes config, GnuPG private keys, the
+  Grafana token-file variable, and non-public `.ssh` paths.
 - Keep Context7 and the official OpenAI documentation server in the portable
   example. Keep Playwright, Grafana, and GitHub writes opt-in through dedicated
   profiles.
@@ -68,9 +72,10 @@ validation tasks.
 ## Verification
 
 Use the repository validation workflow rather than recording machine-specific
-rollout evidence in Git. At minimum, verify the hook self-test, parse all
-managed TOML and JSON, inspect npm lock integrity, and run the user-level
-dotfiles check. Broad changes require `go-task verify`, which also exercises
+rollout evidence in Git. `go-task test:agent-tooling` parses all managed TOML
+and JSON, checks exact npm manifest/lock agreement and artifact integrity, and
+tests hook allow and deny decisions through its JSON interface. Also run the
+user-level dotfiles check. Broad changes require `go-task verify`, which adds
 container convergence and Super-Linter. No privileged playbook substitutes for
 an unavailable isolated check.
 

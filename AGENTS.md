@@ -158,6 +158,9 @@ rule; do not fan the same rule out into every file.
   migration/history docs, when role contracts or system-layer behavior change.
 - Keep `.ruff.toml` and `.github/linters/.ruff.toml` synchronized because
   local Ruff and Super-Linter read different config paths.
+- Keep `.github/linters/.python-lint` as the shared Pylint configuration for
+  `go-task lint:python` and the early Python CI job. Super-Linter does not own
+  project-aware Pylint or Mypy execution.
 - Keep Markdown rules in `.github/linters/.markdown-lint.yml`; local
   `markdownlint-cli2`, pre-commit, and Super-Linter share that file. Fix
   violations instead of adding file ignores or inline rule disables.
@@ -185,6 +188,9 @@ reference; the rules below map change types to those commands.
   changes.
 - Run `go-task lint:markdown` for Markdown, AGENTS, skill, or template changes.
 - Run `go-task lint:python` for repository Python changes.
+- Run `go-task test:agent-tooling` for managed Codex profiles, hooks, package
+  manifests, or lockfiles.
+- Run `go-task test:python` for repository Python contract or regression tests.
 - Run `uv run yamllint .` or `go-task yamllint` for YAML-heavy changes.
 - Run `go-task vint` for Vimscript payloads or Vint configuration changes.
 - Run `go-task docs:nvim-keymaps:check` for Neovim keymap changes.

@@ -14,7 +14,11 @@ workspaces.
 - `.test/nvim/mason_tools.lua`
 - `.test/nvim/*` language sample fixtures
 - `.test/vint_runner.py`
+- `.test/test_agent_tooling.py`
+- `.test/test_portable_hook.py`
+- `.test/test_check_ansible_semantics.py`
 - `.test/assert_ansible_convergence.py`
+- `.test/test_assert_ansible_convergence.py`
 - `.test/role_contracts.yml`
 - `.test/system/exec.sh`
 - `.test/system/local.env.example`
@@ -23,6 +27,10 @@ workspaces.
 
 `.test/vint_runner.py` runs vim-vint with a minimal `pkg_resources`
 compatibility shim so the project environment does not need `setuptools`.
+
+The `test_*.py` suite uses standard-library `unittest` for reusable repository
+contracts. `test_agent_tooling.py` validates Codex configuration and npm locks;
+`test_portable_hook.py` exercises the hook through its JSON interface.
 
 `.test/workstation_report.py` provides read-only local reports for adoption,
 dotfiles destination review, system paths, and policy file ownership.
@@ -57,6 +65,9 @@ source of truth:
 - Keep Tree-sitter parser installation optional in the test sandbox and skip
   cleanly when required external tools are missing.
 - Keep shell scripts robust with safe flags where practical.
+- Keep Python tests discoverable as `test_*.py`. Prefer local helpers and
+  `subTest` data tables over base classes or a fixture framework.
+- Keep tests deterministic, network-free, secret-free, and bounded.
 - Keep comments, sample text, and documentation in English.
 
 ## Validation
@@ -66,6 +77,8 @@ go-task test:nvim
 go-task test:nvim:compat
 go-task test:nvim:mason-tools
 go-task docs:nvim-keymaps:check
+go-task test:agent-tooling
+go-task test:python
 go-task test:contracts
 go-task test:system
 go-task doctor

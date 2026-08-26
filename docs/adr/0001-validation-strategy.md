@@ -15,11 +15,12 @@ AI agents without introducing a second orchestration framework.
 
 ## Decision
 
-Validation has four layers:
+Validation has five layers:
 
 | Layer | Mechanism | Contract |
 | ----- | --------- | -------- |
 | Static | Existing lint, documentation, instruction, and managed-path checks | Source and repository contracts are structurally valid. |
+| Python logic | Standard-library `unittest` discovered by `go-task test:python` | Reusable validators, security-hook I/O, and regression cases accept valid inputs and reject known-bad inputs. |
 | Input | `ansible.builtin.assert` in each role plus `.test/role_contracts.yml` | Public variables are valid before mutation; destructive path and filename boundaries reject known-bad inputs. |
 | Observable state | `.test/system/verify.yml` in a disposable Arch container | Managed links, files, ownership, modes, selected content, policy JSON, and container guards match the applied configuration. |
 | Convergence | `ansible.posix.json` plus `.test/assert_ansible_convergence.py` | A second run of each playbook reports zero changes, failures, ignored failures, rescued failures, and unreachable hosts. |
@@ -49,9 +50,17 @@ not prove the resulting state.
 
 ## Framework Choice
 
-No additional Python test dependency is used. The repository already has the
-required Ansible collection, and Python's standard `json` module is sufficient
-for callback validation.
+Python's standard-library `unittest` covers reusable validation logic with
+multiple input cases. Data tables use `subTest`; command and hook boundaries
+use bounded subprocesses. No additional Python test dependency, fixture layer,
+or base test hierarchy is used.
+
+GitHub Actions runs the same Ruff, Pylint, and test discovery contracts as an
+early named check and writes the verbose result to the job summary. Pylint runs
+there with the locked project imports instead of inside Super-Linter; Mypy is
+not added without a demonstrated type-checking need. Only the expensive
+convergence job waits for that check; independent lint and cross-platform jobs
+remain parallel.
 
 The following frameworks are rejected for the current scope:
 

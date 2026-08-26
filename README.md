@@ -15,7 +15,8 @@ browser policy changes remain explicit opt-ins. The former
 - `git`, `go-task`, and `uv`
 - Arch Linux and `sudo` for the opt-in system and policy layers
 - Docker for full local validation
-- Node.js and npm for repository validation and the managed Codex/MCP runtimes
+- Node.js 24.x (24.11.0 or newer) and npm for repository validation; Node.js
+  and npm for the managed Codex/MCP runtimes
 
 On Arch Linux:
 
@@ -82,11 +83,13 @@ remain discoverable with `go-task --list-all`.
 | `go-task browser-policies` | Apply system policy files. |
 | `go-task browser-policies:report` | Report expected policy paths and installed applications. |
 | `go-task test:system` | Validate package targets and convergence of all layers in a disposable Arch container. |
+| `go-task test:python` | Run repository Python contract and regression tests. |
+| `go-task test:agent-tooling` | Validate managed Codex configs, dependency locks, and hook behavior. |
 | `go-task verify:fast` | Run static repository checks without Docker or managed-host writes. |
 | `go-task verify` | Run the full local validation aggregate, including Docker-backed checks. |
 | `go-task lint` | Run `ansible-lint`. |
 | `go-task lint:markdown` | Lint every tracked Markdown file with the shared repository rules. |
-| `go-task lint:python` | Lint and format-check repository Python. |
+| `go-task lint:python` | Lint and format-check repository Python with Ruff and Pylint. |
 | `go-task yamllint` | Lint YAML through the locked Python environment. |
 | `go-task vint` | Lint Vimscript with Neovim syntax enabled. |
 | `go-task test:nvim` | Run the isolated Neovim smoke test. |
@@ -97,6 +100,11 @@ remain discoverable with `go-task --list-all`.
 | `go-task codex:install` | Install lockfile-resolved Codex, Context7, and Playwright packages. |
 | `go-task codex:mcp:install` | Install only the lockfile-resolved MCP packages. |
 | `go-task pacdiff` | List pending pacman `.pacnew` and `.pacsave` files. |
+
+## Neovim Formatting
+
+`:Format` formats the current buffer on demand. Use `:ConformInfo` to inspect
+formatter resolution; formatting never runs on save or falls back to LSP.
 
 ## Repository Layout
 
@@ -119,13 +127,17 @@ Always-on repository rules live once in `AGENTS.md`; nearest nested
 `AGENTS.md` files add path-local deltas. Claude Code and Gemini CLI import the
 same contract through their native root files. Task-specific workflows belong
 in `.agents/skills/`: `validate-dotfiles-change` routes a diff to the smallest
-useful test, while `write-markdown` applies the shared documentation contract.
+useful test, `write-markdown` applies the shared documentation contract, and
+the two dotfiles-test skills write or review repository validation code.
 
 The managed user payload places Ponytail 4.9.0 in `~/.agents/skills/`, the
 cross-agent user skill location. Codex profiles, hooks, launchers, manifests,
 and lockfiles are linked from `dotfiles/`; writable authentication, trust,
 history, databases, credentials, and `~/.codex/config.toml` remain local.
 `go-task codex:install` uses `npm ci`; agent startup never downloads packages.
+`go-task test:agent-tooling` checks managed configs, exact npm lock agreement,
+integrity hashes, and the hook's real JSON interface. `go-task test:python`
+runs the complete standard-library regression suite.
 
 Context7 and the official OpenAI documentation server are sufficient for this
 repository's public documentation work. Playwright, Grafana, and GitHub writes
@@ -183,6 +195,11 @@ public sources. Select another env file for a one-off run with
 
 GitHub Actions runs the user-level path on Linux and macOS and runs the full
 Arch convergence harness on pull requests, pushes, and a weekly fresh-image
-schedule. Renovate owns supported dependency updates. Repository instructions,
-skills, labels, and documentation are validated as code; no MCP server or AI
-account state is committed.
+schedule. A fast Python contract check runs the locked Ruff/Pylint contract and
+reports named test results before the expensive convergence job. Super-Linter
+checks changed pull-request files, while local `go-task verify` retains the
+full-tree scan. Renovate owns supported
+dependency updates and the Taskfile rejects incompatible local Node.js versions
+before running its pinned Renovate release. Repository instructions, skills,
+labels, and documentation are validated as code; no MCP server or AI account
+state is committed.
