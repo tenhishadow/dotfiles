@@ -5,6 +5,8 @@ applyTo: ".github/**/*.yml,.github/**/*.yaml,.github/**/*.md,renovate.json,Taskf
 # GitHub Automation Review Instructions
 
 - Keep workflow permissions minimal and explicit.
+- Require full commit SHAs with version comments for every `uses:` reference;
+  keep those digests Renovate-managed.
 - Keep long-running or PR-triggered workflows covered by concurrency.
 - Keep workflow behavior aligned with `Taskfile.yml`.
 - Keep `go-task verify:fast` as the no-Docker repository contract and

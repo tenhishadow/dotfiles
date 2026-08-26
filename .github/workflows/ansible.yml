@@ -17,6 +17,57 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  python_contracts:
+    name: python-contracts
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.14"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        with:
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+
+      - name: Install go-task
+        uses: arduino/setup-task@b91d5d2c96a56797b48ac1e0e89220bf64044611 # v2.0.0
+
+      - name: Run Python validation
+        id: python_tests
+        run: |
+          set -o pipefail
+          {
+            uv sync --locked --no-build --no-install-project --no-dev
+            export UV_NO_SYNC=true
+            go-task lint:python
+            go-task test:python
+          } 2>&1 | tee "${RUNNER_TEMP}/python-contracts.log"
+
+      - name: Summarize Python contract tests
+        if: always()
+        env:
+          TEST_OUTCOME: ${{ steps.python_tests.outcome }}
+        run: |
+          {
+            printf '## Python contract tests\n\n'
+            printf "Result: \`%s\`\n\n" "${TEST_OUTCOME}"
+            printf '```text\n'
+            if [ -f "${RUNNER_TEMP}/python-contracts.log" ]; then
+              tail -n 100 "${RUNNER_TEMP}/python-contracts.log"
+            else
+              printf '%s\n' 'The test command did not produce a log.'
+            fi
+            printf '```\n'
+          } >> "${GITHUB_STEP_SUMMARY}"
+
   ansible_lint:
     name: ansible-lint
     uses: tenhishadow/github_actions_templates/.github/workflows/taskfile.uv.yaml@39bafe28cfa188344b842194b575ecef42e2059d # main
@@ -58,7 +109,7 @@ jobs:
           git
           go-task
           neovim
-          nodejs
+          nodejs-lts-krypton
           npm
           pre-commit
           stylua
@@ -72,11 +123,30 @@ jobs:
       - name: Trust checkout directory
         run: git config --global --add safe.directory "${GITHUB_WORKSPACE}"
 
+      - name: Resolve validation runtime
+        id: runtime
+        run: >-
+          printf 'python=%s\n'
+          "$(python -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')"
+          >> "${GITHUB_OUTPUT}"
+
+      - name: Restore validation caches
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            /github/home/.cache/pre-commit
+            /github/home/.cache/uv
+            /github/home/.npm/_cacache
+          key: repository-contract-${{ runner.os }}-archlinux-py${{ steps.runtime.outputs.python }}-${{ hashFiles('.pre-commit-config.yaml', 'uv.lock', 'Taskfile.yml') }}
+          restore-keys: |
+            repository-contract-${{ runner.os }}-archlinux-py${{ steps.runtime.outputs.python }}-
+
       - name: Validate repository contract
         run: go-task verify:fast
 
   workstation_convergence:
     name: workstation-convergence (archlinux)
+    needs: python_contracts
     runs-on: ubuntu-latest
     container:
       image: archlinux:multilib-devel

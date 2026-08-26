@@ -15,7 +15,8 @@ automation under `.github/`.
 - Do not reintroduce super-linter into the `go-task lint` path.
 - Do not casually change release-please, Renovate, CODEOWNERS, or zizmor
   configuration.
-- Prefer pinned, reproducible, least-privilege automation changes.
+- Pin every `uses:` reference to a full commit SHA with a version comment;
+  Renovate maintains the digest.
 - Keep workflow permissions minimal and explicit.
 - Keep workflow concurrency explicit for long-running or PR-triggered jobs.
 - Keep `.github/labeler.yml` aligned with the current repository structure.
@@ -31,6 +32,8 @@ automation under `.github/`.
   `.github/instructions/*.instructions.md` carry path-specific rules.
 - Keep `.ruff.toml` and `.github/linters/.ruff.toml` synchronized. Local Ruff
   and Super-Linter read config from different paths.
+- Keep `.github/linters/.python-lint` shared by local Pylint and the early
+  Python validation job.
 - Keep `.github/linters/.markdown-lint.yml` as the shared Markdown rule source
   for local pre-commit and Super-Linter. Do not replace fixes with blanket
   file ignores or inline rule disables.

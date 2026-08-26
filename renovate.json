@@ -1,8 +1,7 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["config:recommended", ":dependencyDashboard"],
+  "extends": ["config:recommended", ":dependencyDashboard", "helpers:pinGitHubActionDigests"],
   "enabledManagers": ["ansible-galaxy", "github-actions", "npm", "pep621", "pre-commit", "custom.regex"],
-  "ignorePaths": [".test/**"],
   "labels": ["dependencies"],
   "semanticCommits": "enabled",
   "semanticCommitType": "deps",
@@ -22,9 +21,9 @@
   "customManagers": [
     {
       "customType": "regex",
-      "description": "Update the SUPERLINTER_IMAGE_TAG variable in Taskfile.yml.",
+      "description": "Update the slim SUPERLINTER_IMAGE_TAG variable in Taskfile.yml.",
       "managerFilePatterns": ["/^Taskfile\\.yml$/"],
-      "matchStrings": ["SUPERLINTER_IMAGE_TAG: \"(?<currentValue>v\\d+\\.\\d+\\.\\d+)\""],
+      "matchStrings": ["SUPERLINTER_IMAGE_TAG: \"slim-(?<currentValue>v\\d+\\.\\d+\\.\\d+)\""],
       "depNameTemplate": "ghcr.io/super-linter/super-linter",
       "datasourceTemplate": "docker",
       "versioningTemplate": "docker"
@@ -39,6 +38,11 @@
     }
   ],
   "packageRules": [
+    {
+      "matchManagers": ["npm", "pep621"],
+      "matchFileNames": [".test/**"],
+      "enabled": false
+    },
     {
       "matchManagers": ["github-actions"],
       "groupName": "github actions",

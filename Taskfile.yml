@@ -8,8 +8,9 @@ vars:
   RUN_BROWSER_PLAYBOOK: "uv run ansible-playbook playbook_browser_policies.yml"
   VINT_TARGETS: "dotfiles/.vimrc dotfiles/.config/nvim"
   STYLUA_TARGETS: "dotfiles/.config/nvim .test/nvim"
-  RENOVATE_VERSION: "44.46.0"
-  SUPERLINTER_IMAGE_TAG: "v8.7.0"
+  RENOVATE_VERSION: "44.46.3"
+  RENOVATE_NODE_MIN_VERSION: "24.11.0"
+  SUPERLINTER_IMAGE_TAG: "slim-v8.7.0"
   SUPERLINTER_DOCKER_RUN: >-
     docker run
     --rm
@@ -25,6 +26,8 @@ vars:
     -e VALIDATE_LUA=false
     -e VALIDATE_MARKDOWN_PRETTIER=false
     -e VALIDATE_NATURAL_LANGUAGE=false
+    -e VALIDATE_PYTHON_MYPY=false
+    -e VALIDATE_PYTHON_PYLINT=false
     -e VALIDATE_SHELL_SHFMT=false
     -e VALIDATE_TRIVY=false
     -e FILTER_REGEX_EXCLUDE='(^|/)(\.ansible/|\.collections/|\.task/|\.test/nvim/|\.test/system/local\.env$|\.venv/)'
@@ -75,6 +78,22 @@ tasks:
             exit 1;
           };
         done
+  deps-renovate:
+    deps: [deps-verify]
+    cmd: >-
+      node -e '
+        const actual = process.versions.node.split(".").map(Number);
+        const minimum = "{{.RENOVATE_NODE_MIN_VERSION}}".split(".").map(Number);
+        if (actual[0] !== minimum[0]) process.exit(1);
+        for (let index = 1; index < minimum.length; index += 1) {
+          if (actual[index] > minimum[index]) process.exit(0);
+          if (actual[index] < minimum[index]) process.exit(1);
+        }
+      '
+      || {
+        printf '%s Found %s.\n' 'Renovate {{.RENOVATE_VERSION}} requires Node.js ^{{.RENOVATE_NODE_MIN_VERSION}}.' "$(node --version)" >&2;
+        exit 1;
+      }
   deps-docker:
     silent: true
     cmds:
@@ -117,7 +136,7 @@ tasks:
   deps-upgrade:nvim:
     cmd: NVIM_USE_MASON=off nvim --headless "+Lazy! update" +qa
   deps-report:github-actions:
-    deps: [deps-verify]
+    deps: [deps-renovate]
     cmd: >-
       npx --yes --package renovate@{{.RENOVATE_VERSION}} renovate
       --platform=local
@@ -147,6 +166,10 @@ tasks:
     cmds:
       - "uv run ruff check ."
       - "uv run ruff format --check ."
+      - >-
+        git ls-files -z --cached --others --exclude-standard
+        -- '*.py' ':(exclude).test/nvim/**'
+        | xargs -0 uv run pylint --rcfile=.github/linters/.python-lint
   yamllint:
     deps: [deps-python]
     cmd: "uv run yamllint ."
@@ -191,7 +214,7 @@ tasks:
     deps: [deps-verify]
     cmd: actionlint .github/workflows/*.yml
   renovate:
-    deps: [deps-verify]
+    deps: [deps-renovate]
     cmd: >-
       if type -P renovate-config-validator >/dev/null;
       then renovate-config-validator --strict;
@@ -238,25 +261,36 @@ tasks:
   test:contracts:
     deps: [deps-galaxy]
     cmd: "uv run ansible-playbook .test/role_contracts.yml"
+  test:agent-tooling:
+    desc: Validate managed Codex configs, dependency locks, and hook behavior.
+    deps: [deps-python]
+    cmds:
+      - "uv run python .test/test_agent_tooling.py -v"
+      - "uv run python .test/test_portable_hook.py -v"
+  test:python:
+    desc: Run repository Python contract and regression tests.
+    deps: [deps-python]
+    cmd: "uv run python -m unittest discover -s .test -p 'test_*.py' -v"
   verify:fast:
     deps: [deps-galaxy, deps-verify]
     cmds:
       - task: diff-check
-      - task: lint
-      - task: lint:ansible-semantics
       - task: lint:english
       - task: lint:python
       - task: yamllint
-      - task: vint
       - task: stylua
-      - task: docs:nvim-keymaps:check
       - task: docs:agents:check
       - task: docs:instructions:check
+      - task: docs:nvim-keymaps:check
       - task: actionlint
-      - task: renovate
-      - task: pre-commit
+      - task: test:python
+      - task: lint:ansible-semantics
+      - task: vint
       - task: managed-paths:check
+      - task: lint
       - task: test:contracts
+      - task: pre-commit
+      - task: renovate
 
   verify:
     cmds:
@@ -270,7 +304,7 @@ tasks:
   superlinter:latest:
     deps: [deps-docker]
     vars:
-      SUPERLINTER_IMAGE_TAG: "latest"
+      SUPERLINTER_IMAGE_TAG: "slim-latest"
     cmds:
       - "{{.SUPERLINTER_DOCKER_RUN}} ghcr.io/super-linter/super-linter:{{.SUPERLINTER_IMAGE_TAG}}"
   clear:
