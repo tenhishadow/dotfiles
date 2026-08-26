@@ -8,7 +8,9 @@ settings here are personal defaults, not a generic security benchmark.
 | Tool or area | Surface | Managed path |
 | ------------ | ------- | ------------ |
 | Gemini CLI | User settings and environment variables | `~/.gemini/settings.json`, `.bashrc`, `environment.d` |
-| Chromium/Brave | Enterprise policy | `/etc/brave/policies/managed/10-dotfiles-managed.json` |
+| AI agents | Shared instructions and validation workflow | `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `.agents/skills/` |
+| Codex | Portable profiles, hook, launchers, lockfiles, and a bootstrap example | `~/.codex/*.config.toml`, `~/.codex/hooks.json`, `~/.codex/hooks/`, `~/.agents/skills/ponytail/`, `dotfiles/.codex/config.example.toml` |
+| Chromium/Brave | Enterprise policy | `/etc/chromium/policies/managed/10-dotfiles-managed.json`, `/etc/brave/policies/managed/10-dotfiles-managed.json` |
 | Firefox | Enterprise policy | `/etc/firefox/policies/policies.json` |
 | Thunderbird | Enterprise policy | `/etc/thunderbird/policies/policies.json` |
 | VS Code | Enterprise policy | `/etc/vscode/policy.json` |
@@ -44,6 +46,33 @@ credentials, local conversation history, MCP server credentials, extension
 state, or project `.gemini` directories. Those files are account, project, or
 runtime state and must stay out of git.
 
+The portable Codex example defaults to workspace-only writes without sandbox
+network access and keeps apps disabled. Context7 and the official OpenAI
+documentation MCP server are the only MCP servers enabled in that example.
+The live `~/.codex/config.toml` remains an owner-only, host-local regular file
+because Codex stores project and hook trust state there and local Grafana
+configuration belongs there. Dedicated managed profiles narrow the model,
+tool-output budget, filesystem access, and MCP surface for exploration,
+validation, deep review, live Grafana reads, browser UI work, and GitHub writes.
+The GitHub-write profile allows approved writes but disables destructive and
+open-world app capabilities.
+The Grafana launcher is read-only, excludes proxied tools, and caps Loki output;
+its URL and token-file path come from local environment variables.
+Context7 and Playwright launch through local wrappers backed by checked-in npm
+lockfiles. `go-task codex:mcp:install` installs those exact graphs with lifecycle
+scripts disabled; no `npx -y` download occurs during a Codex session.
+The stable Codex CLI version and registry integrity are recorded by an npm lock;
+`go-task codex:install` installs that graph with `npm ci` into a dedicated local
+runtime. The launcher prefers it, falls back to an existing system Codex, and
+sets an owner-only umask before Codex creates local history or SQLite state.
+
+The managed Codex hook blocks only high-confidence destructive commands,
+literal credentials, and unbounded operational log commands. It does not read
+or inject a workspace brief. Codex requires explicit trust for new or changed
+user hooks. Ponytail is vendored at version 4.9.0 and commit
+`2ed6c52c9d7e5e56942508591085fd45dea277d3` under its MIT license and is linked
+through the cross-agent user skill path.
+
 K9s is intentionally read-only by default through `readOnly: true`. This is an
 operational guard, not just a privacy setting, and it does not manage
 kubeconfig, cluster context history, namespace history, cluster names, or
@@ -78,6 +107,8 @@ tools are introduced later.
 
 - Kubeconfigs, cluster tokens, K9s cluster context history, and namespace
   history.
+- Codex authentication, conversation history, memories, local databases, logs,
+  hook trust state, MCP credentials, and Grafana endpoints and token files.
 - Browser, Thunderbird, and VS Code runtime profiles.
 - Mail accounts, local mail cache, address books, calendars, cookies, and
   sessions.
@@ -130,3 +161,10 @@ Official references used for these surfaces include:
   <https://yarnpkg.com/advanced/telemetry>
 - pip configuration:
   <https://pip.pypa.io/en/stable/topics/configuration/>
+- Codex configuration, profiles, hooks, and skills:
+  <https://learn.chatgpt.com/docs/config-file/config-basic>,
+  <https://learn.chatgpt.com/docs/config-file/config-advanced>,
+  <https://learn.chatgpt.com/docs/hooks>, and
+  <https://learn.chatgpt.com/docs/build-skills>
+- Ponytail source and license:
+  <https://github.com/DietrichGebert/ponytail>
