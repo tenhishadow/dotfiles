@@ -37,8 +37,11 @@ jobs:
           enable-cache: true
           cache-dependency-glob: uv.lock
 
-      - name: Install go-task
+      - name: Install Task
         uses: arduino/setup-task@b91d5d2c96a56797b48ac1e0e89220bf64044611 # v2.0.0
+        with:
+          version: 3.x
+          repo-token: ${{ github.token }}
 
       - name: Run Python validation
         id: python_tests
@@ -47,8 +50,8 @@ jobs:
           {
             uv sync --locked --no-build --no-install-project --no-dev
             export UV_NO_SYNC=true
-            go-task lint:python
-            go-task test:python
+            task lint:python
+            task test:python
           } 2>&1 | tee "${RUNNER_TEMP}/python-contracts.log"
 
       - name: Summarize Python contract tests
