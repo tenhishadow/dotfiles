@@ -5,6 +5,7 @@ version = "2.3.0"
 dependencies = [
     "ansible-lint",
     "ansible",
+    "ruff",
     "yamllint",
     "vim-vint",
 ]
