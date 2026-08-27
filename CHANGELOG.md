@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.4.1](https://github.com/tenhishadow/dotfiles/compare/v2.4.0...v2.4.1) (2026-08-27)
+
+
+### Bug Fixes
+
+* update dependency @openai/codex to v0.150.1 ([#181](https://github.com/tenhishadow/dotfiles/issues/181)) ([55711fb](https://github.com/tenhishadow/dotfiles/commit/55711fb5fcd2ebec60bec9324e7e22b22945a3a1))
+
 ## [2.4.0](https://github.com/tenhishadow/dotfiles/compare/v2.3.0...v2.4.0) (2026-08-26)
 
 
