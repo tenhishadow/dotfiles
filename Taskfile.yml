@@ -8,7 +8,7 @@ vars:
   RUN_BROWSER_PLAYBOOK: "uv run ansible-playbook playbook_browser_policies.yml"
   VINT_TARGETS: "dotfiles/.vimrc dotfiles/.config/nvim"
   STYLUA_TARGETS: "dotfiles/.config/nvim .test/nvim"
-  RENOVATE_VERSION: "44.46.4"
+  RENOVATE_VERSION: "44.46.5"
   RENOVATE_NODE_MIN_VERSION: "24.11.0"
   SUPERLINTER_IMAGE_TAG: "slim-v8.7.0"
   SUPERLINTER_DOCKER_RUN: >-
