@@ -72,13 +72,9 @@
   tags:
     - always
 
-- name: System | Set timesyncd guard
-  ansible.builtin.set_fact:
-    system_can_manage_timesyncd: >-
-      {{
-        system_timesyncd_enabled | bool
-        and system_can_manage_systemd | bool
-      }}
+- name: System | Run time backend tasks
+  ansible.builtin.include_tasks:
+    file: time-backend.yml
   tags:
     - always
 

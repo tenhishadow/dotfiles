@@ -16,32 +16,122 @@
   when:
     - not (system_is_container | bool)
 
-- name: Timesyncd | Gather service facts
+- name: Chrony | Install package
+  become: true
+  ansible.builtin.package:
+    name: "{{ system_chrony_package }}"
+    state: present
+  when:
+    - system_can_manage_chrony | bool
+    - system_packages_enabled | bool
+  tags:
+    - pkg
+
+- name: Chrony | Inspect configuration validator
+  ansible.builtin.stat:
+    path: "{{ system_chrony_binary_path }}"
+  register: system_chrony_binary_result
+  when:
+    - system_can_manage_chrony | bool
+
+- name: Chrony | Validate package availability
+  ansible.builtin.assert:
+    that:
+      - >-
+        ansible_check_mode
+        or (system_chrony_binary_result.stat.exists | default(false))
+    fail_msg: >-
+      Chrony is selected for this virtual machine, but
+      {{ system_chrony_binary_path }} is unavailable. Enable package management
+      or install {{ system_chrony_package }} before applying the system role.
+    quiet: true
+  when:
+    - system_can_manage_chrony | bool
+
+- name: Time | Gather service facts
   become: true
   ansible.builtin.service_facts:
   when:
-    - system_can_manage_timesyncd | bool
+    - system_time_backend != 'none'
 
-- name: Timesyncd | Disable conflicting NTP services
+- name: Time | Validate selected service
+  ansible.builtin.assert:
+    that:
+      - >-
+        ansible_check_mode
+        or system_time_service_name in (ansible_facts.services | default({}))
+    fail_msg: >-
+      Selected time synchronization service {{ system_time_service_name }} is
+      unavailable after package setup.
+    quiet: true
+  when:
+    - system_time_backend != 'none'
+
+- name: Chrony | Render configuration
+  become: true
+  ansible.builtin.template:
+    src: chrony.conf.j2
+    dest: "{{ system_chrony_config_path }}"
+    owner: "{{ system_config_owner }}"
+    group: "{{ system_config_group }}"
+    mode: "{{ system_config_file_mode }}"
+    backup: true
+    validate: >-
+      {{
+        (system_chrony_binary_result.stat.exists | default(false))
+        | ternary(system_chrony_binary_path ~ ' -p -f %s', omit)
+      }}
+  notify: Chrony | Restart service
+  when:
+    - system_can_manage_chrony | bool
+
+- name: Chrony | Remove inactive timesyncd drop-ins
+  become: true
+  ansible.builtin.file:
+    path: "{{ system_timesyncd_inactive_dropin_path }}"
+    state: absent
+  loop: >-
+    {{
+      ([system_timesyncd_dropin_path] + system_timesyncd_legacy_dropin_paths)
+      | unique
+      | list
+    }}
+  loop_control:
+    loop_var: system_timesyncd_inactive_dropin_path
+    label: "{{ system_timesyncd_inactive_dropin_path }}"
+  when:
+    - system_can_manage_chrony | bool
+
+- name: Time | Disable conflicting services
   become: true
   ansible.builtin.systemd_service:
-    name: "{{ system_ntp_conflicting_service }}"
+    name: "{{ system_time_conflicting_service }}"
     state: stopped
     enabled: false
     masked: true
-  loop: "{{ system_ntp_conflicting_services }}"
+  loop: "{{ system_time_conflicting_services }}"
   loop_control:
-    loop_var: system_ntp_conflicting_service
-    label: "{{ system_ntp_conflicting_service }}"
+    loop_var: system_time_conflicting_service
+    label: "{{ system_time_conflicting_service }}"
   when:
-    - system_can_manage_timesyncd | bool
-    - system_ntp_conflicting_service in (ansible_facts.services | default({}))
+    - system_time_backend != 'none'
+    - system_time_conflicting_service in (ansible_facts.services | default({}))
 
-- name: Timesyncd | Ensure service enabled
+- name: Time | Unmask selected service
   become: true
-  ansible.builtin.service:
-    name: "{{ system_ntp_service }}"
+  ansible.builtin.systemd_service:
+    name: "{{ system_time_service_name }}"
+    masked: false
+  when:
+    - system_time_backend != 'none'
+    - system_time_service_name in (ansible_facts.services | default({}))
+
+- name: Time | Enable selected service
+  become: true
+  ansible.builtin.systemd_service:
+    name: "{{ system_time_service_name }}"
     state: started
     enabled: true
   when:
-    - system_can_manage_timesyncd | bool
+    - system_time_backend != 'none'
+    - system_time_service_name in (ansible_facts.services | default({}))

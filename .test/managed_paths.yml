@@ -52,6 +52,7 @@
                 system_docker_conf_dir ~ '/daemon.json',
                 system_journald_dropin_path,
                 system_timesyncd_dropin_path,
+                system_chrony_config_path,
                 system_sshd_dropin_path,
               ],
               'browser_policies': managed_paths_browser_policies,

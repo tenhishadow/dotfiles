@@ -18,6 +18,8 @@ Review especially:
 - Sysctl tuning
 - Package installation in the opt-in system layer
 - AUR helper source, PKGBUILD, and build behavior in the opt-in system layer
+- VM time synchronization and Chrony's configured permission to step a clock
+  that differs by more than one second
 - npm, Yarn, pip, Terraform, K9s, and other user-level tool defaults
 
 Do not treat these values as universally secure. Adapt them to the host, threat

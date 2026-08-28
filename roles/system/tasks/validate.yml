@@ -11,6 +11,7 @@
       - system_motd_message is string
       - system_packages_enabled is boolean
       - system_aur_enabled is boolean
+      - system_chrony_enabled is boolean
       - system_timesyncd_enabled is boolean
       - system_docker_enabled is boolean
       - system_laptop_enabled is boolean
@@ -29,14 +30,37 @@
       - system_aur_helper_repo | length > 0
       - system_aur_helper_ref is string
       - system_aur_helper_ref | length > 0
-      - system_ntp_service is string
-      - not (system_timesyncd_enabled | bool) or system_ntp_service | length > 0
+      - system_time_backend is in ['none', 'chrony', 'timesyncd']
+      - system_time_service_candidates is sequence
+      - system_time_service_candidates is not string
+      - system_time_service_candidates | unique | length == system_time_service_candidates | length
+      - system_chrony_service_name in system_time_service_candidates
+      - system_timesyncd_service_name in system_time_service_candidates
+      - system_chrony_service_name != system_timesyncd_service_name
       - system_ntp_servers is sequence
       - system_ntp_servers is not string
-      - not (system_timesyncd_enabled | bool) or system_ntp_servers | length > 0
+      - >-
+        not (system_time_enabled | bool)
+        or not (
+          system_chrony_enabled | bool
+          or system_timesyncd_enabled | bool
+        )
+        or system_ntp_servers | length > 0
       - system_ntp_fallback_servers is sequence
       - system_ntp_fallback_servers is not string
       - not (system_timesyncd_enabled | bool) or system_ntp_fallback_servers | length > 0
+      - system_chrony_pool_max_sources is number
+      - system_chrony_pool_max_sources > 0
+      - system_chrony_makestep_threshold is number
+      - system_chrony_makestep_threshold > 0
+      - system_chrony_makestep_limit is number
+      - >-
+        system_chrony_makestep_limit == -1
+        or system_chrony_makestep_limit > 0
+      - system_chrony_max_update_skew is number
+      - system_chrony_max_update_skew > 0
+      - system_chrony_leap_timezone is string
+      - system_chrony_leap_timezone is regex('^[A-Za-z0-9_+./-]+$')
       - system_locales is sequence
       - system_locales is not string
       - system_locales | length > 0
@@ -80,8 +104,6 @@
       - system_docker_overlay_options_content | length > 0
       - system_docker_overlay_legacy_options_paths is sequence
       - system_docker_overlay_legacy_options_paths is not string
-      - system_ntp_conflicting_services is sequence
-      - system_ntp_conflicting_services is not string
       - system_masked_services is sequence
       - system_masked_services is not string
       - system_packages is sequence
@@ -108,6 +130,9 @@
     - system_issue_path
     - system_sysctl_file_path
     - system_sshd_binary_path
+    - system_chrony_binary_path
+    - system_chrony_config_path
+    - system_chrony_drift_path
     - system_aur_build_root
     - system_aur_helper_binary_path
     - system_aur_helper_build_dir
@@ -150,6 +175,8 @@
   loop:
     - system_cron_package
     - system_cron_service_name
+    - system_chrony_package
+    - system_chrony_service_name
     - system_docker_group
     - system_docker_service_name
     - system_aur_helper_package
@@ -158,6 +185,7 @@
     - system_reflector_legacy_cron_name
     - system_root_user
     - system_journald_service_name
+    - system_timesyncd_service_name
     - system_sshd_service_name
     - system_sshd_dropin_include_path
     - system_camera_blacklist_module
@@ -166,6 +194,35 @@
   loop_control:
     loop_var: system_name
     label: "{{ system_name }}"
+  tags:
+    - always
+
+- name: System | Validate time service candidates
+  ansible.builtin.assert:
+    that:
+      - system_time_service_candidate is string
+      - system_time_service_candidate is regex('^[A-Za-z0-9@_.-]+\\.service$')
+    fail_msg: >-
+      Invalid time service candidate: {{ system_time_service_candidate }}
+    quiet: true
+  loop: "{{ system_time_service_candidates }}"
+  loop_control:
+    loop_var: system_time_service_candidate
+    label: "{{ system_time_service_candidate }}"
+  tags:
+    - always
+
+- name: System | Validate NTP servers
+  ansible.builtin.assert:
+    that:
+      - system_ntp_server is string
+      - system_ntp_server is regex('^[A-Za-z0-9][A-Za-z0-9.:-]*$')
+    fail_msg: "Invalid NTP server: {{ system_ntp_server }}"
+    quiet: true
+  loop: "{{ system_ntp_servers + system_ntp_fallback_servers }}"
+  loop_control:
+    loop_var: system_ntp_server
+    label: "{{ system_ntp_server }}"
   tags:
     - always
 

@@ -9,6 +9,7 @@ system_motd_message: ""
 
 system_packages_enabled: true
 system_aur_enabled: false
+system_chrony_enabled: true
 system_timesyncd_enabled: true
 system_docker_enabled: true
 system_laptop_enabled: false
@@ -32,7 +33,12 @@ system_aur_helper_ref: master
 system_aur_helper_binary_path: /usr/bin/yay
 system_aur_helper_build_dir: "{{ system_aur_build_root }}/{{ system_aur_helper_package }}"
 
-system_ntp_service: systemd-timesyncd
+system_chrony_service_name: chronyd.service
+system_timesyncd_service_name: systemd-timesyncd.service
+system_time_service_candidates:
+  - "{{ system_chrony_service_name }}"
+  - "{{ system_timesyncd_service_name }}"
+  - ntpd.service
 
 system_ntp_servers:
   - 2.europe.pool.ntp.org
@@ -46,6 +52,14 @@ system_ntp_fallback_servers:
   - 0.arch.pool.ntp.org
   - 3.arch.pool.ntp.org
   - 1.arch.pool.ntp.org
+
+system_chrony_config_path: /etc/chrony.conf
+system_chrony_drift_path: /var/lib/chrony/drift
+system_chrony_pool_max_sources: 1
+system_chrony_makestep_threshold: 1.0
+system_chrony_makestep_limit: -1
+system_chrony_max_update_skew: 100.0
+system_chrony_leap_timezone: right/UTC
 
 system_locales:
   - en_US
@@ -225,10 +239,6 @@ system_sshd_legacy_main_cleanup:
     value: "2"
   - key: PubkeyAcceptedAlgorithms
     value: "-ssh-rsa,-rsa-sha2-256,-rsa-sha2-512"
-
-system_ntp_conflicting_services:
-  - chronyd.service
-  - ntpd.service
 
 system_camera_blacklist_module: uvcvideo
 system_camera_blacklist_path: /etc/modprobe.d/99-dotfiles-camera.conf

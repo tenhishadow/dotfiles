@@ -38,6 +38,7 @@ SYSTEM_MANAGED_PATHS = [
     "/etc/docker/daemon.json",
     "/etc/systemd/journald.conf.d/10-dotfiles.conf",
     "/etc/systemd/timesyncd.conf.d/10-dotfiles.conf",
+    "/etc/chrony.conf",
     "/etc/ssh/sshd_config.d/20-dotfiles.conf",
 ]
 BROWSER_POLICY_PATHS = [

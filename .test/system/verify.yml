@@ -38,6 +38,7 @@
       - /etc/sysctl.d/999-ansible.conf
       - /etc/systemd/journald.conf.d/10-dotfiles.conf
       - /etc/systemd/timesyncd.conf.d/10-dotfiles.conf
+      - /etc/chrony.conf
       - /root/.config/systemd/user/ssh-agent.service
     container_test_policy_specs:
       - path: /etc/brave/policies/managed/10-dotfiles-managed.json

@@ -65,6 +65,12 @@ Review these host values before privileged use:
 - `inventory/host_vars/this_host/browser_policies.yml`
 - `roles/system/defaults/main.yml` AUR helper defaults
 
+Also review time-daemon selection before applying the system layer. Virtual
+machines use Chrony and permit corrections larger than one second to step at
+any update so suspended guests can recover promptly; physical hosts use
+`systemd-timesyncd`. Confirm that VM clock stepping is acceptable for the
+workloads on the target host.
+
 The local host values are personal workstation choices. They are not a generic
 security baseline and should not be copied to servers, shared systems, or other
 workstations without review.

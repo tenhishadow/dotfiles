@@ -2,6 +2,8 @@
 system_crontab_bin: /usr/bin/crontab
 system_cron_package: cronie
 system_cron_service_name: cronie
+system_chrony_package: chrony
+system_chrony_binary_path: /usr/bin/chronyd
 system_docker_group: docker
 system_docker_service_name: docker
 system_docker_binary_path: /usr/bin/dockerd

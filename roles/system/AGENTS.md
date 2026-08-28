@@ -12,12 +12,13 @@ Keep the high-level flow predictable:
 
 - Assert supported OS.
 - Include distro-specific vars.
-- Derive CI, container, virtual machine, systemd, timesyncd, and AUR capability
-  guards.
+- Derive CI, container, virtual machine, systemd, time-backend, and AUR
+  capability guards.
 - Validate role variables.
 - Install `system_packages` with tag `pkg`.
 - Run AUR helper tasks with tag `aur` only when guarded as safe.
-- Run timezone tasks and guarded timesyncd service tasks.
+- Run timezone tasks and select Chrony for virtual machines or timesyncd for
+  physical hosts when systemd is manageable.
 - Run locale, console, login, limits, cron, and sysctl tasks.
 - Run the shared drop-in flow (`sys-dropins.yml` over `system_dropins`:
   journald and timesyncd) and the SSHD tasks.
@@ -32,6 +33,10 @@ Keep the high-level flow predictable:
 - Keep AUR helper/package management tasks tagged `aur` and skipped in check
   mode, CI, and containers.
 - Preserve `ansible_facts` based OS and virtualization checks.
+- Keep time-daemon selection in `tasks/time-backend.yml`: virtual machines use
+  Chrony, physical hosts use timesyncd, and container/CI guards select neither.
+- Unmask the selected time service before enabling it, and never include that
+  service in the computed conflict list.
 - Keep role input validation in `tasks/validate.yml`.
 - Preserve `become: true` where system paths or services require privilege.
 - Do not move privileged behavior into unguarded shell commands.

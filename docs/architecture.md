@@ -29,8 +29,8 @@ workstation settings, and browser policy overrides.
 
 | Environment | User dotfiles | System role | Policy role | Evidence |
 | ----------- | ------------- | ----------- | ----------- | -------- |
-| Arch bare metal or laptop | Supported | Supported; physical-only tasks are explicit | Supported | Local check/apply paths and role validation |
-| Arch virtual machine | Supported | Supported by the role contract; hardware tasks are skipped, but VM behavior has no integration test | Supported | Role validation plus manual `go-task system:check` on the guest |
+| Arch bare metal or laptop | Supported | Supported; physical-only tasks are explicit and timesyncd is the time backend | Supported | Local check/apply paths and role validation |
+| Arch virtual machine | Supported | Supported; hardware tasks are skipped and Chrony is the time backend | Supported | Backend contract assertions plus check/apply verification on a real guest |
 | Arch container | Supported for integration tests | Container-safe subset only; systemd, Docker daemon, SSHD, sysctl, AUR, and hardware branches are skipped | Supported | `go-task test:system` first apply, assertions, and zero-change second apply |
 | Ubuntu or macOS | User layer only | Unsupported | Unsupported | Default-playbook CI matrix |
 
@@ -39,6 +39,12 @@ an unprivileged container. A real VM or host is required to exercise systemd,
 Docker daemon restart, SSHD, sysctl loading, AUR package execution, and hardware
 behavior. Those gaps are explicit; tests must not falsify facts merely to make
 the branches appear covered.
+
+On manageable systemd hosts, the system role selects exactly one time daemon:
+Chrony on virtual machines and `systemd-timesyncd` on physical hosts. It
+unmasks the selected service and masks other known NTP daemons. Containers and
+CI select no backend. The native role contract proves selection logic; only a
+real host can prove service activation and clock synchronization.
 
 ## AI Tool Contract
 

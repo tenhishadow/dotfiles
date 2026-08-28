@@ -113,6 +113,7 @@ package_targets = [
     "base-devel",
     role_vars["system_reflector_package"],
     role_vars["system_tzdata_package"],
+    role_vars["system_chrony_package"],
     *role_vars["system_packages"],
 ]
 

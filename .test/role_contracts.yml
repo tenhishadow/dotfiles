@@ -1,5 +1,5 @@
 ---
-- name: Contract Tests | Verify rejected role inputs
+- name: Contract Tests | Verify role contracts
   hosts: this_host
   become: false
   gather_facts: true
@@ -97,4 +97,76 @@
         that:
           - contract_tests_policy_rejected | bool
         fail_msg: "browser policy validation accepted a non-basename filename."
+        quiet: true
+
+    - name: Contract Tests | Derive virtual machine time backend
+      ansible.builtin.include_role:
+        name: system
+        tasks_from: time-backend
+      vars:
+        system_time_enabled: true
+        system_chrony_enabled: true
+        system_timesyncd_enabled: true
+        system_can_manage_systemd: true
+        system_is_virtual_machine: true
+
+    - name: Contract Tests | Verify virtual machine time backend
+      ansible.builtin.assert:
+        that:
+          - system_time_backend == 'chrony'
+          - system_can_manage_chrony | bool
+          - not (system_can_manage_timesyncd | bool)
+          - system_time_service_name == 'chronyd.service'
+          - >-
+            system_time_conflicting_services
+            == ['systemd-timesyncd.service', 'ntpd.service']
+          - system_time_service_name not in system_time_conflicting_services
+        fail_msg: "Virtual machines must select Chrony exclusively."
+        quiet: true
+
+    - name: Contract Tests | Derive physical host time backend
+      ansible.builtin.include_role:
+        name: system
+        tasks_from: time-backend
+      vars:
+        system_time_enabled: true
+        system_chrony_enabled: true
+        system_timesyncd_enabled: true
+        system_can_manage_systemd: true
+        system_is_virtual_machine: false
+
+    - name: Contract Tests | Verify physical host time backend
+      ansible.builtin.assert:
+        that:
+          - system_time_backend == 'timesyncd'
+          - not (system_can_manage_chrony | bool)
+          - system_can_manage_timesyncd | bool
+          - system_time_service_name == 'systemd-timesyncd.service'
+          - >-
+            system_time_conflicting_services
+            == ['chronyd.service', 'ntpd.service']
+          - system_time_service_name not in system_time_conflicting_services
+        fail_msg: "Physical hosts must select systemd-timesyncd exclusively."
+        quiet: true
+
+    - name: Contract Tests | Derive guarded time backend
+      ansible.builtin.include_role:
+        name: system
+        tasks_from: time-backend
+      vars:
+        system_time_enabled: true
+        system_chrony_enabled: true
+        system_timesyncd_enabled: true
+        system_can_manage_systemd: false
+        system_is_virtual_machine: true
+
+    - name: Contract Tests | Verify guarded time backend
+      ansible.builtin.assert:
+        that:
+          - system_time_backend == 'none'
+          - not (system_can_manage_chrony | bool)
+          - not (system_can_manage_timesyncd | bool)
+          - system_time_service_name | length == 0
+          - system_time_conflicting_services | length == 0
+        fail_msg: "Guarded hosts must not select a time service."
         quiet: true

@@ -39,12 +39,23 @@
 
 - name: Timesyncd | Restart service
   become: true
-  ansible.builtin.service:
-    name: "{{ system_ntp_service }}"
+  ansible.builtin.systemd_service:
+    name: "{{ system_timesyncd_service_name }}"
     state: restarted
     enabled: true
+    masked: false
   when:
     - system_can_manage_timesyncd | default(false) | bool
+
+- name: Chrony | Restart service
+  become: true
+  ansible.builtin.systemd_service:
+    name: "{{ system_chrony_service_name }}"
+    state: restarted
+    enabled: true
+    masked: false
+  when:
+    - system_can_manage_chrony | default(false) | bool
 
 - name: Console | Restart vconsole setup
   become: true

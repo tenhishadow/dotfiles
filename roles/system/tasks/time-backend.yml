@@ -1,0 +1,51 @@
+---
+- name: Time | Select synchronization backend
+  ansible.builtin.set_fact:
+    system_time_backend: >-
+      {{
+        'none'
+        if not (system_time_enabled | bool)
+        or not (system_can_manage_systemd | bool)
+        else (
+          'chrony'
+          if (system_is_virtual_machine | bool)
+          and (system_chrony_enabled | bool)
+          else (
+            'timesyncd'
+            if not (system_is_virtual_machine | bool)
+            and (system_timesyncd_enabled | bool)
+            else 'none'
+          )
+        )
+      }}
+  tags:
+    - always
+
+- name: Time | Set synchronization guards
+  ansible.builtin.set_fact:
+    system_can_manage_chrony: "{{ system_time_backend == 'chrony' }}"
+    system_can_manage_timesyncd: "{{ system_time_backend == 'timesyncd' }}"
+    system_time_service_name: >-
+      {{
+        {
+          'chrony': system_chrony_service_name,
+          'timesyncd': system_timesyncd_service_name,
+        }.get(system_time_backend, '')
+      }}
+  tags:
+    - always
+
+- name: Time | Set conflicting services
+  ansible.builtin.set_fact:
+    system_time_conflicting_services: >-
+      {{
+        (
+          system_time_service_candidates
+          | reject('equalto', system_time_service_name)
+          | list
+        )
+        if system_time_service_name | length > 0
+        else []
+      }}
+  tags:
+    - always

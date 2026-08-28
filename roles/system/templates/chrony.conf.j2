@@ -1,0 +1,12 @@
+# {{ ansible_managed }}
+# vim: ft=conf
+
+{% for system_chrony_pool in system_ntp_servers %}
+pool {{ system_chrony_pool }} iburst maxsources {{ system_chrony_pool_max_sources }}
+{% endfor %}
+
+driftfile {{ system_chrony_drift_path }}
+makestep {{ system_chrony_makestep_threshold }} {{ system_chrony_makestep_limit }}
+maxupdateskew {{ system_chrony_max_update_skew }}
+rtcsync
+leapsectz {{ system_chrony_leap_timezone }}
