@@ -2,6 +2,7 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": ["config:recommended", ":dependencyDashboard", "helpers:pinGitHubActionDigests"],
   "enabledManagers": ["ansible-galaxy", "github-actions", "npm", "pep621", "pre-commit", "custom.regex"],
+  "ignorePaths": [".test/**"],
   "labels": ["dependencies"],
   "semanticCommits": "enabled",
   "semanticCommitType": "deps",
@@ -52,10 +53,6 @@
   ],
   "packageRules": [
     {
-      "matchFileNames": [".test/**"],
-      "enabled": false
-    },
-    {
       "matchManagers": ["custom.regex"],
       "matchDepNames": ["suzuki-shunsuke/pinact"],
       "allowedVersions": "/^v4\\./"
@@ -83,7 +80,8 @@
     {
       "matchManagers": ["ansible-galaxy"],
       "groupName": "ansible collections",
-      "addLabels": ["ansible"]
+      "addLabels": ["ansible"],
+      "registryUrls": ["https://galaxy.ansible.com/api/"]
     },
     {
       "matchManagers": ["pep621"],

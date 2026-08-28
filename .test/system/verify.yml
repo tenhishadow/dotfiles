@@ -15,6 +15,8 @@
     container_test_preserved_cleanup_path: "{{ dotfiles_home }}/.nvim"
     container_test_preserved_cleanup_target: /tmp/dotfiles-user-owned-nvim
     container_test_removed_cleanup_path: "{{ dotfiles_config_dir }}/nvim/init.vim"
+    container_test_legacy_ponytail_root: >-
+      {{ dotfiles_home }}/.agents/skills/ponytail
     container_test_system_files:
       - /etc/locale.gen
       - /etc/locale.conf
@@ -65,6 +67,22 @@
         key: TelemetryLevel
         value: "off"
   tasks:
+    - name: Dotfiles Test | Inspect migrated Ponytail directory
+      ansible.builtin.stat:
+        path: "{{ container_test_legacy_ponytail_root }}"
+        follow: false
+      register: container_test_legacy_ponytail_stat
+      changed_when: false
+
+    - name: Dotfiles Test | Verify migrated Ponytail directory
+      ansible.builtin.assert:
+        that:
+          - container_test_legacy_ponytail_stat.stat.isdir | default(false)
+          - not (container_test_legacy_ponytail_stat.stat.islnk | default(false))
+        fail_msg: >-
+          The legacy Ponytail root was not migrated to a regular directory.
+        quiet: true
+
     - name: Dotfiles Test | Inspect managed links
       ansible.builtin.stat:
         path: "{{ container_test_dotfiles_mapping.dest }}"

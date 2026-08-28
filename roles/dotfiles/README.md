@@ -19,6 +19,7 @@ Core defaults:
 | `dotfiles_owner` / `dotfiles_group` | Owner and group for created user directories. |
 | `dotfiles_directory_mode` | Mode for automatically created user directories. |
 | `dotfiles_mapping` | Managed symlink declarations. |
+| `dotfiles_legacy_directory_links` | Exact repository-owned directory links migrated before file linking. |
 | `dotfiles_baseline_files` | Copy-once files that applications or hosts may mutate. |
 | `dotfiles_directories` | Extra directories not implied by mapping destinations. |
 | `dotfiles_cleanup_paths` | Narrow legacy paths removed by the role. |
@@ -44,10 +45,10 @@ changes. A legacy symlink is migrated only when it points to that baseline's
 repository payload. Use `dotfiles_directories` only for extra directories that
 are not implied by a managed destination.
 
-When a directory mapping replaces an older tree of individual links, the role
-converts that tree only if its relative paths exactly match the payload and
-every file is a link to its corresponding payload entry. Unexpected files,
-links, or directory shapes stop the apply without removing local content.
+`dotfiles_legacy_directory_links` supports narrow migrations from an old
+directory link to individual managed files. The role removes the old link only
+when its normalized target is the declared repository payload. It leaves normal
+directories untouched and rejects links to any other target.
 
 Use `dotfiles_cleanup_paths` for narrow, explicit legacy symlink removals. The
 role removes only symlinks whose normalized targets are beneath
@@ -71,9 +72,9 @@ project and hook trust state into it; bootstrap a new host from
 `dotfiles/.codex/config.example.toml`, then keep its live config local and
 owner-only. Grafana and Playwright are disabled unless their dedicated profile
 is selected; GitHub writes require the explicit, non-destructive
-`github-write` profile. Ponytail is linked to `~/.agents/skills/ponytail`, the
-cross-agent user skill location. Its local policy defaults to lite and prevents
-implicit Codex invocation.
+`github-write` profile. Ponytail's three portable files are linked below the
+cross-agent `~/.agents/skills/ponytail` directory. Its local policy defaults to
+lite and prevents implicit Codex invocation.
 The `codex` launcher prefers the exact dependency graph installed from the
 checked-in npm lock, falls back to an existing system Codex, and applies an
 owner-only umask before startup so newly created histories and databases do not
@@ -117,8 +118,8 @@ The role keeps the default install path deterministic:
 
 1. Validate role variables and mapping entries.
 2. Verify every linked and baseline payload exists under `dotfiles_location`.
-3. Create extra and managed-file parent directories.
-4. Convert exact legacy directory-link trees, then link managed payloads.
+3. Remove only declared repository-owned legacy directory links.
+4. Create extra and managed-file parent directories, then link payloads.
 5. Migrate repository-linked baselines, then seed missing baseline files.
 6. Remove explicit legacy cleanup symlinks.
 7. Detect cron and Neovim restore capabilities.

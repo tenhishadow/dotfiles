@@ -65,6 +65,103 @@
   tags:
     - configs
 
+- name: Dotfiles | Check legacy directory payloads
+  ansible.builtin.stat:
+    path: "{{ dotfiles_location }}/{{ dotfiles_legacy_link.payload }}"
+    follow: false
+  loop: "{{ dotfiles_legacy_directory_links }}"
+  loop_control:
+    loop_var: dotfiles_legacy_link
+    label: "{{ dotfiles_location }}/{{ dotfiles_legacy_link.payload }}"
+  register: dotfiles_legacy_directory_payload_stats
+  changed_when: false
+  tags:
+    - configs
+
+- name: Dotfiles | Validate legacy directory payloads
+  ansible.builtin.assert:
+    that:
+      - dotfiles_legacy_payload_stat.stat.exists
+      - dotfiles_legacy_payload_stat.stat.isdir
+      - not dotfiles_legacy_payload_stat.stat.islnk
+    fail_msg: >-
+      Legacy directory payload must be a repository directory:
+      {{ dotfiles_location }}/{{ dotfiles_legacy_link.payload }}
+    quiet: true
+  vars:
+    dotfiles_legacy_link: "{{ dotfiles_legacy_payload_stat.dotfiles_legacy_link }}"
+  loop: "{{ dotfiles_legacy_directory_payload_stats.results }}"
+  loop_control:
+    loop_var: dotfiles_legacy_payload_stat
+    label: >-
+      {{ dotfiles_location }}/{{
+        dotfiles_legacy_payload_stat.dotfiles_legacy_link.payload
+      }}
+  tags:
+    - configs
+
+- name: Dotfiles | Inspect legacy directory links
+  ansible.builtin.stat:
+    path: "{{ dotfiles_legacy_link.dest }}"
+    follow: false
+  loop: "{{ dotfiles_legacy_directory_links }}"
+  loop_control:
+    loop_var: dotfiles_legacy_link
+    label: "{{ dotfiles_legacy_link.dest }}"
+  register: dotfiles_legacy_directory_link_stats
+  changed_when: false
+  tags:
+    - configs
+
+- name: Dotfiles | Validate legacy directory link targets
+  ansible.builtin.assert:
+    that:
+      - >-
+        not (dotfiles_legacy_link_stat.stat.islnk | default(false))
+        or dotfiles_legacy_resolved_source == dotfiles_legacy_expected_source
+    fail_msg: >-
+      Refusing foreign legacy directory link:
+      {{ dotfiles_legacy_link.dest }}
+    quiet: true
+  vars:
+    dotfiles_legacy_link: "{{ dotfiles_legacy_link_stat.dotfiles_legacy_link }}"
+    dotfiles_legacy_raw_source: >-
+      {{ dotfiles_legacy_link_stat.stat.lnk_source | default('') }}
+    dotfiles_legacy_resolved_source: >-
+      {{
+        (
+          dotfiles_legacy_raw_source
+          if dotfiles_legacy_raw_source is regex('^/')
+          else [
+            dotfiles_legacy_link.dest | dirname,
+            dotfiles_legacy_raw_source
+          ] | path_join
+        ) | realpath
+      }}
+    dotfiles_legacy_expected_source: >-
+      {{
+        (dotfiles_location ~ '/' ~ dotfiles_legacy_link.payload)
+        | realpath
+      }}
+  loop: "{{ dotfiles_legacy_directory_link_stats.results }}"
+  loop_control:
+    loop_var: dotfiles_legacy_link_stat
+    label: "{{ dotfiles_legacy_link_stat.dotfiles_legacy_link.dest }}"
+  tags:
+    - configs
+
+- name: Dotfiles | Remove repository-owned legacy directory links
+  ansible.builtin.file:
+    path: "{{ dotfiles_legacy_link_stat.dotfiles_legacy_link.dest }}"
+    state: absent
+  loop: "{{ dotfiles_legacy_directory_link_stats.results }}"
+  loop_control:
+    loop_var: dotfiles_legacy_link_stat
+    label: "{{ dotfiles_legacy_link_stat.dotfiles_legacy_link.dest }}"
+  when: dotfiles_legacy_link_stat.stat.islnk | default(false)
+  tags:
+    - configs
+
 - name: Dotfiles | Ensure extra directories
   ansible.builtin.file:
     path: "{{ dotfiles_directory.path }}"
@@ -101,54 +198,6 @@
   tags:
     - configs
 
-- name: Dotfiles | Initialize directory link migrations
-  ansible.builtin.set_fact:
-    dotfiles_directory_migration_names: []
-  changed_when: false
-  tags:
-    - configs
-
-- name: Dotfiles | Inspect directory mapping destinations
-  ansible.builtin.stat:
-    path: "{{ dotfiles_directory_payload_stat.dotfiles_payload.dest }}"
-    follow: false
-  loop: >-
-    {{
-      dotfiles_mapping_payload_stats.results
-      | selectattr('stat.isdir', 'defined')
-      | selectattr('stat.isdir')
-      | list
-    }}
-  loop_control:
-    loop_var: dotfiles_directory_payload_stat
-    label: "{{ dotfiles_directory_payload_stat.dotfiles_payload.dest }}"
-  register: dotfiles_directory_destination_stats
-  changed_when: false
-  tags:
-    - configs
-
-- name: Dotfiles | Run directory link migration tasks
-  ansible.builtin.include_tasks:
-    file: migrate-directory-link.yml
-  loop: "{{ dotfiles_directory_destination_stats.results }}"
-  loop_control:
-    loop_var: dotfiles_directory_destination_stat
-    label: >-
-      {{ dotfiles_directory_destination_stat.dotfiles_directory_payload_stat.dotfiles_payload.dest
-         | default('skipped directory mapping') }}
-  when:
-    - not (dotfiles_directory_destination_stat.skipped | default(false))
-    - dotfiles_directory_destination_stat.stat.isdir | default(false)
-    - not (dotfiles_directory_destination_stat.stat.islnk | default(false))
-  vars:
-    dotfiles_directory_mapping: >-
-      {{ dotfiles_directory_destination_stat.dotfiles_directory_payload_stat.dotfiles_payload }}
-    dotfiles_directory_source: >-
-      {{ dotfiles_location }}/{{ dotfiles_directory_mapping.payload }}
-    dotfiles_directory_destination: "{{ dotfiles_directory_mapping.dest }}"
-  tags:
-    - configs
-
 - name: Dotfiles | Link managed files
   ansible.builtin.file:
     src: "{{ dotfiles_location }}/{{ dotfiles_link.payload }}"
@@ -159,10 +208,6 @@
   loop_control:
     loop_var: dotfiles_link
     label: "{{ dotfiles_link.dest }}"
-  when:
-    - >-
-      not ansible_check_mode
-      or dotfiles_link.name not in dotfiles_directory_migration_names
   tags:
     - configs
 
@@ -182,6 +227,7 @@
 - name: Dotfiles | Initialize baseline destination metadata
   ansible.builtin.set_fact:
     dotfiles_baseline_destinations: []
+  changed_when: false
   tags:
     - configs
 
@@ -257,24 +303,12 @@
   tags:
     - configs
 
-- name: Dotfiles | Remove legacy baseline symlinks
-  ansible.builtin.file:
-    path: "{{ dotfiles_baseline_destination.file.dest }}"
-    state: absent
-  loop: "{{ dotfiles_baseline_destinations }}"
-  loop_control:
-    loop_var: dotfiles_baseline_destination
-    label: "{{ dotfiles_baseline_destination.file.dest }}"
-  when: dotfiles_baseline_destination.is_legacy_symlink | bool
-  tags:
-    - configs
-
 - name: Dotfiles | Seed baseline files
   ansible.builtin.copy:
     src: >-
       {{ dotfiles_location }}/{{ dotfiles_baseline_destination.file.payload }}
     dest: "{{ dotfiles_baseline_destination.file.dest }}"
-    force: false
+    force: "{{ dotfiles_baseline_destination.is_legacy_symlink | bool }}"
     follow: false
     owner: "{{ dotfiles_owner }}"
     group: "{{ dotfiles_group }}"

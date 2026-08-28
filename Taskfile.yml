@@ -126,17 +126,14 @@ tasks:
     desc: Update every managed dependency without committing or pushing changes.
     deps: [deps-upgrade:check]
     cmds:
-      - task: deps-upgrade:repository
-      # Reparse the Taskfile so this run uses repository pins resolved above.
-      - '"{{.TASK_EXE}}" deps-upgrade:after-repository-pins'
-  deps-upgrade:after-repository-pins:
-    cmds:
       - task: deps-upgrade:python
       - task: deps-upgrade:ansible
       - task: deps-upgrade:pre-commit
       - task: deps-upgrade:npm
       - task: deps-upgrade:nvim
       - task: deps-upgrade:github-actions
+      # Update bootstrap tool pins last so newly downloaded code is reviewed first.
+      - task: deps-upgrade:repository
   deps-upgrade:check:
     silent: true
     deps: [deps-os]

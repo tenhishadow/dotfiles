@@ -271,6 +271,45 @@ prepare_dotfiles_cleanup_contract() {
   ln -s "${removed_target}" /root/.config/nvim/init.vim
 }
 
+check_legacy_ponytail_link_contract() {
+  local foreign_target="/tmp/dotfiles-user-owned-ponytail"
+  local legacy_path="/root/.agents/skills/ponytail"
+  local repository_target="${PWD}/dotfiles/.agents/skills/ponytail"
+  local rejection_output
+
+  mkdir -p /root/.agents/skills "${foreign_target}"
+  printf '%s\n' 'foreign-ponytail-preserved' >"${foreign_target}/marker"
+  ln -s "${foreign_target}" "${legacy_path}"
+
+  if rejection_output="$(
+    uv run ansible-playbook playbook_install.yml --tags configs 2>&1
+  )"; then
+    printf '%s\n' 'A foreign legacy Ponytail link was accepted.' >&2
+    exit 1
+  fi
+  if ! grep -Fq \
+    'Refusing foreign legacy directory link: /root/.agents/skills/ponytail' \
+    <<<"${rejection_output}"; then
+    printf '%s\n' 'The legacy-link rejection did not explain the unsafe path.' >&2
+    exit 1
+  fi
+  if [[ ! -L "${legacy_path}" \
+      || "$(readlink -- "${legacy_path}")" != "${foreign_target}" \
+      || "$(<"${foreign_target}/marker")" != 'foreign-ponytail-preserved' ]]; then
+    printf '%s\n' 'The rejected legacy Ponytail link was modified.' >&2
+    exit 1
+  fi
+
+  rm -f -- "${legacy_path}"
+  ln -s "${repository_target}" "${legacy_path}"
+  uv run ansible-playbook playbook_install.yml --check --tags configs >/dev/null
+  if [[ ! -L "${legacy_path}" \
+      || "$(readlink -- "${legacy_path}")" != "${repository_target}" ]]; then
+    printf '%s\n' 'Check mode modified the repository-owned Ponytail link.' >&2
+    exit 1
+  fi
+}
+
 check_foreign_baseline_symlink_rejection() {
   local baseline_path="/root/.config/htop/htoprc"
   local foreign_target="/tmp/dotfiles-user-owned-htoprc"
@@ -302,50 +341,6 @@ check_foreign_baseline_symlink_rejection() {
   rm -f -- "${baseline_path}" "${foreign_target}"
 }
 
-prepare_dotfiles_directory_link_migration_contract() {
-  local legacy_skill_dir="/root/.agents/skills/ponytail"
-  local payload_dir="${PWD}/dotfiles/.agents/skills/ponytail"
-  local rejection_output
-  local user_file="${legacy_skill_dir}/user-note.txt"
-
-  mkdir -p "${legacy_skill_dir}/agents"
-  ln -s "${payload_dir}/LICENSE" "${legacy_skill_dir}/LICENSE"
-  ln -s "${payload_dir}/SKILL.md" "${legacy_skill_dir}/SKILL.md"
-  ln -s \
-    "${payload_dir}/agents/openai.yaml" \
-    "${legacy_skill_dir}/agents/openai.yaml"
-  printf '%s\n' 'preserve-user-content' >"${user_file}"
-
-  if rejection_output="$(
-    uv run ansible-playbook playbook_install.yml --tags configs 2>&1
-  )"; then
-    printf '%s\n' 'A directory-link migration accepted unexpected content.' >&2
-    exit 1
-  fi
-  if ! grep -Fq \
-    'Refusing unsafe directory-link migration with unexpected content:' \
-    <<<"${rejection_output}"; then
-    printf '%s\n' 'The directory-link migration rejection was not explained.' >&2
-    exit 1
-  fi
-  if [[ -L "${legacy_skill_dir}" \
-      || "$(<"${user_file}")" != 'preserve-user-content' \
-      || "$(readlink -- "${legacy_skill_dir}/SKILL.md")" != "${payload_dir}/SKILL.md" \
-      || "$(readlink -- "${legacy_skill_dir}/agents/openai.yaml")" != "${payload_dir}/agents/openai.yaml" ]]; then
-    printf '%s\n' 'The rejected directory-link migration modified local content.' >&2
-    exit 1
-  fi
-
-  rm -f -- "${user_file}"
-  uv run ansible-playbook playbook_install.yml --check --tags configs >/dev/null
-  if [[ -L "${legacy_skill_dir}" \
-      || "$(readlink -- "${legacy_skill_dir}/SKILL.md")" != "${payload_dir}/SKILL.md" \
-      || "$(readlink -- "${legacy_skill_dir}/agents/openai.yaml")" != "${payload_dir}/agents/openai.yaml" ]]; then
-    printf '%s\n' 'Check mode modified or rejected the exact legacy skill tree.' >&2
-    exit 1
-  fi
-}
-
 prepare_dotfiles_baseline_contract() {
   local htop_target
 
@@ -353,6 +348,44 @@ prepare_dotfiles_baseline_contract() {
   htop_target="$(realpath --relative-to=/root/.config/htop "${PWD}/dotfiles/.config/htop/htoprc")"
   ln -s "${htop_target}" /root/.config/htop/htoprc
   ln -s "${PWD}/dotfiles/.mplayer/config" /root/.mplayer/config
+}
+
+check_dotfiles_baseline_check_mode() {
+  local baseline_path
+  local check_output
+  local expected_htop_target
+  local seed_output
+
+  expected_htop_target="$(
+    realpath --relative-to=/root/.config/htop \
+      "${PWD}/dotfiles/.config/htop/htoprc"
+  )"
+  if ! check_output="$(
+    uv run ansible-playbook playbook_install.yml --check --diff --tags configs 2>&1
+  )"; then
+    printf '%s\n' 'Baseline migration failed in check mode.' >&2
+    printf '%s\n' "${check_output}" >&2
+    exit 1
+  fi
+  seed_output="$(
+    sed -n \
+      '/TASK \[dotfiles : Dotfiles | Seed baseline files\]/,/^TASK \[/p' \
+      <<<"${check_output}"
+  )"
+  for baseline_path in /root/.config/htop/htoprc /root/.mplayer/config; do
+    if ! grep -Fq "changed: [this_host] => (item=${baseline_path})" \
+      <<<"${seed_output}"; then
+      printf 'Check mode did not predict seeding %s.\n' "${baseline_path}" >&2
+      exit 1
+    fi
+  done
+  if [[ ! -L /root/.config/htop/htoprc \
+      || "$(readlink -- /root/.config/htop/htoprc)" != "${expected_htop_target}" \
+      || ! -L /root/.mplayer/config \
+      || "$(readlink -- /root/.mplayer/config)" != "${PWD}/dotfiles/.mplayer/config" ]]; then
+    printf '%s\n' 'Check mode modified a legacy baseline symlink.' >&2
+    exit 1
+  fi
 }
 
 mutate_dotfiles_baseline() {
@@ -380,10 +413,11 @@ prepare_python_environment
 check_system_package_targets
 check_time_tag_contract
 install_time_contract_package
-prepare_dotfiles_directory_link_migration_contract
+check_legacy_ponytail_link_contract
 check_foreign_baseline_symlink_rejection
 prepare_dotfiles_cleanup_contract
 prepare_dotfiles_baseline_contract
+check_dotfiles_baseline_check_mode
 convergence_results_dir="$(mktemp -d)"
 check_nodejs_package_migration
 

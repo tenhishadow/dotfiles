@@ -230,50 +230,28 @@ class GitHubAuthenticationTest(unittest.TestCase):
                 )
 
 
-class GitHubReleaseSelectionTest(unittest.TestCase):
-    """Keep Go module updates inside their declared semantic major."""
+class GitHubReleaseTest(unittest.TestCase):
+    """Read the latest release and surface unsupported pinact majors."""
 
-    def test_selects_latest_stable_release_in_required_major(self) -> None:
-        releases = [
-            {"tag_name": "v5.0.0", "draft": False, "prerelease": False},
-            {"tag_name": "v4.3.0", "draft": False, "prerelease": False},
-            {"tag_name": "v4.4.0", "draft": False, "prerelease": True},
-            {"tag_name": "v4.2.9", "draft": False, "prerelease": False},
-            {"tag_name": "v4.5.0", "draft": True, "prerelease": False},
-        ]
+    def test_repository_pin_resolution_rejects_new_pinact_major(self) -> None:
+        renovate = {"version": "44.50.1", "engines": {"node": "^24.11.0"}}
 
-        self.assertEqual(
-            "v4.3.0",
-            update_dependencies.latest_stable_release_tag(releases, required_major=4),
-        )
+        def fetch_json(url: str, **_kwargs: str) -> object:
+            if url.endswith("/renovate/latest"):
+                return renovate
+            tag = "v5.0.0" if "/pinact/" in url else "v8.7.0"
+            return {"tag_name": tag}
 
-    def test_rejects_missing_required_major(self) -> None:
-        releases = [{"tag_name": "v5.0.0", "draft": False, "prerelease": False}]
+        with (
+            mock.patch.object(
+                update_dependencies, "_fetch_json", side_effect=fetch_json
+            ) as fetch,
+            self.assertRaisesRegex(ValueError, "pinact major changed"),
+        ):
+            vars(update_dependencies)["_resolve_repository_pins"]("secret")
 
-        with self.assertRaisesRegex(ValueError, "major v4"):
-            update_dependencies.latest_stable_release_tag(releases, required_major=4)
-
-    def test_paginates_release_history_for_required_major(self) -> None:
-        first_page = [
-            {"tag_name": "v5.0.0", "draft": False, "prerelease": False}
-        ] * update_dependencies.GITHUB_RELEASE_PAGE_SIZE
-        second_page = [{"tag_name": "v4.9.0", "draft": False, "prerelease": False}]
-
-        with mock.patch.object(
-            update_dependencies,
-            "_fetch_json",
-            side_effect=(first_page, second_page),
-        ) as fetch_json:
-            version = vars(update_dependencies)["_latest_github_release"](
-                "owner/repository",
-                "secret",
-                required_major=4,
-            )
-
-        self.assertEqual("v4.9.0", version)
-        self.assertEqual(2, fetch_json.call_count)
-        self.assertIn("page=1", fetch_json.call_args_list[0].args[0])
-        self.assertIn("page=2", fetch_json.call_args_list[1].args[0])
+        urls = [call.args[0] for call in fetch.call_args_list]
+        self.assertTrue(any(url.endswith("/pinact/releases/latest") for url in urls))
 
 
 class AnsibleRequirementsUpdateTest(unittest.TestCase):
@@ -331,6 +309,54 @@ class AnsibleRequirementsUpdateTest(unittest.TestCase):
                 )
 
 
+class GalaxyVersionResolutionTest(unittest.TestCase):
+    """Resolve stable collection versions across bounded Galaxy pages."""
+
+    def test_follows_relative_next_link(self) -> None:
+        next_link = "/api/v3/next"
+        pages = (
+            {"data": [{"version": "9.9.0"}], "links": {"next": next_link}},
+            {"data": [{"version": "10.0.0"}], "links": {"next": None}},
+        )
+
+        with mock.patch.object(
+            update_dependencies, "_fetch_json", side_effect=pages
+        ) as fetch_json:
+            self.assertEqual(
+                "10.0.0",
+                vars(update_dependencies)["_latest_collection_version"](
+                    "community.general"
+                ),
+            )
+
+        self.assertEqual(2, fetch_json.call_count)
+        self.assertEqual(
+            f"https://galaxy.ansible.com{next_link}",
+            fetch_json.call_args_list[1].args[0],
+        )
+
+    def test_rejects_version_history_beyond_page_limit(self) -> None:
+        page = {
+            "data": [{"version": "1.0.0"}],
+            "links": {"next": "/api/v3/next"},
+        }
+
+        with (
+            mock.patch.object(
+                update_dependencies, "_fetch_json", return_value=page
+            ) as fetch_json,
+            self.assertRaisesRegex(ValueError, "exceeds .* pages"),
+        ):
+            vars(update_dependencies)["_latest_collection_version"](
+                "example.collection"
+            )
+
+        self.assertEqual(
+            update_dependencies.GALAXY_VERSION_MAX_PAGES,
+            fetch_json.call_count,
+        )
+
+
 class ReusableWorkflowUpdateTest(unittest.TestCase):
     """Replace a reusable workflow branch digest only when it is unambiguous."""
 
@@ -386,6 +412,17 @@ class ReusableWorkflowUpdateTest(unittest.TestCase):
 class NpmDependencyCommandTest(unittest.TestCase):
     """Build one deterministic lock-only npm update command per manifest."""
 
+    def setUp(self) -> None:
+        self.root = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, self.root)
+
+    def _write_package(self, relative: Path, manifest: str = "{}\n") -> Path:
+        package = self.root / relative
+        package.mkdir(parents=True)
+        (package / "package.json").write_text(manifest, encoding="utf-8")
+        (package / "package-lock.json").write_text("{}\n", encoding="utf-8")
+        return package
+
     def test_discovers_sorted_direct_dependencies(self) -> None:
         manifest = {
             "name": "managed-tools",
@@ -406,7 +443,8 @@ class NpmDependencyCommandTest(unittest.TestCase):
         expected = tuple(
             shlex.split(
                 "npm install --package-lock-only --ignore-scripts --no-audit "
-                "--no-fund --save-exact --prefix "
+                "--no-fund --save-exact --registry=https://registry.npmjs.org/ "
+                "--prefix "
                 "dotfiles/.local/share/example @scope/tool@latest alpha@latest"
             )
         )
@@ -425,61 +463,32 @@ class NpmDependencyCommandTest(unittest.TestCase):
 
     def test_managed_discovery_excludes_test_fixtures(self) -> None:
         discover_manifests = vars(update_dependencies)["_managed_npm_manifests"]
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            managed_directory = (
-                root / update_dependencies.NPM_MANIFEST_ROOTS[0] / "locked-package"
-            )
-            fixture_directory = root / ".test/nvim/typescript"
-            for package_directory in (managed_directory, fixture_directory):
-                package_directory.mkdir(parents=True)
-                (package_directory / "package.json").write_text(
-                    "{}\n", encoding="utf-8"
-                )
-                (package_directory / "package-lock.json").write_text(
-                    "{}\n", encoding="utf-8"
-                )
+        managed = self._write_package(
+            update_dependencies.NPM_MANIFEST_ROOTS[0] / "locked-package"
+        )
+        self._write_package(Path(".test/nvim/typescript"))
 
-            self.assertEqual(
-                (managed_directory / "package.json",),
-                discover_manifests(root),
-            )
+        self.assertEqual((managed / "package.json",), discover_manifests(self.root))
 
     def test_cli_reports_malformed_manifest_without_a_traceback(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            managed_directory = root / update_dependencies.NPM_MANIFEST_ROOTS[0]
-            managed_directory.mkdir(parents=True)
-            (managed_directory / "package.json").write_text(
-                "{invalid json}\n", encoding="utf-8"
-            )
-            (managed_directory / "package-lock.json").write_text(
-                "{}\n", encoding="utf-8"
-            )
-            stderr = io.StringIO()
+        self._write_package(
+            update_dependencies.NPM_MANIFEST_ROOTS[0], "{invalid json}\n"
+        )
+        stderr = io.StringIO()
+        with redirect_stderr(stderr):
+            status = update_dependencies.main(("--root", str(self.root), "npm"))
 
-            with redirect_stderr(stderr):
-                status = update_dependencies.main(("--root", str(root), "npm"))
-
-            self.assertEqual(1, status)
-            self.assertIn("dependency update failed:", stderr.getvalue())
-            self.assertNotIn("Traceback", stderr.getvalue())
+        self.assertEqual(1, status)
+        self.assertIn("dependency update failed:", stderr.getvalue())
+        self.assertNotIn("Traceback", stderr.getvalue())
 
     def test_npm_update_has_a_bounded_subprocess(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            managed_directory = root / update_dependencies.NPM_MANIFEST_ROOTS[0]
-            managed_directory.mkdir(parents=True)
-            (managed_directory / "package.json").write_text(
-                '{"dependencies":{"example":"1.0.0"}}\n',
-                encoding="utf-8",
-            )
-            (managed_directory / "package-lock.json").write_text(
-                "{}\n", encoding="utf-8"
-            )
-
-            with mock.patch.object(update_dependencies.subprocess, "run") as run:
-                update_dependencies.update_npm(root)
+        self._write_package(
+            update_dependencies.NPM_MANIFEST_ROOTS[0],
+            '{"dependencies":{"example":"1.0.0"}}\n',
+        )
+        with mock.patch.object(update_dependencies.subprocess, "run") as run:
+            update_dependencies.update_npm(self.root)
 
         self.assertEqual(
             update_dependencies.PACKAGE_COMMAND_TIMEOUT_SECONDS,
@@ -494,6 +503,11 @@ class RepositoryUpdateIntegrationTest(unittest.TestCase):
     NEW_SHA = "a" * 40
     REPOSITORY = "tenhishadow/github_actions_templates"
 
+    def setUp(self) -> None:
+        self.root = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, self.root)
+        self.taskfile, self.workflow = self._create_root(self.root)
+
     def _create_root(self, root: Path) -> tuple[Path, Path]:
         taskfile = root / "Taskfile.yml"
         taskfile.write_text(
@@ -506,12 +520,16 @@ class RepositoryUpdateIntegrationTest(unittest.TestCase):
         )
         workflow = root / ".github/workflows/verify.yml"
         workflow.parent.mkdir(parents=True)
+        reusable_workflow = (
+            f"{self.REPOSITORY}/.github/workflows/taskfile.uv.yaml@{self.OLD_SHA}"
+            " # renovate: branch=main\n"
+        )
         workflow.write_text(
             "jobs:\n"
             "  verify:\n"
-            "    uses: "
-            f"{self.REPOSITORY}/.github/workflows/taskfile.uv.yaml@{self.OLD_SHA}"
-            " # renovate: branch=main\n",
+            f"    # uses: {reusable_workflow}"
+            f"    description: uses: {reusable_workflow}"
+            f"    uses: {reusable_workflow}",
             encoding="utf-8",
         )
         return taskfile, workflow
@@ -524,66 +542,59 @@ class RepositoryUpdateIntegrationTest(unittest.TestCase):
             super_linter="slim-v8.7.0",
         )
 
+    def _common_patches(self) -> tuple[object, object]:
+        return (
+            mock.patch.object(
+                update_dependencies,
+                "validate_github_authentication",
+                return_value="secret",
+            ),
+            mock.patch.object(
+                update_dependencies,
+                "_resolve_repository_pins",
+                return_value=self._pins(),
+            ),
+        )
+
     def test_second_run_is_byte_identical(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            taskfile, workflow = self._create_root(root)
-            patches = (
-                mock.patch.object(
-                    update_dependencies,
-                    "validate_github_authentication",
-                    return_value="secret",
-                ),
-                mock.patch.object(
-                    update_dependencies,
-                    "_resolve_repository_pins",
-                    return_value=self._pins(),
-                ),
-                mock.patch.object(
-                    update_dependencies,
-                    "_resolve_workflow_refs",
-                    return_value={(self.REPOSITORY, "main"): self.NEW_SHA},
-                ),
-            )
-            with patches[0], patches[1], patches[2]:
-                update_dependencies.update_repository_pins(root)
-                first = (taskfile.read_bytes(), workflow.read_bytes())
-                update_dependencies.update_repository_pins(root)
-                second = (taskfile.read_bytes(), workflow.read_bytes())
+        auth, pins = self._common_patches()
+        with (
+            auth,
+            pins,
+            mock.patch.object(
+                update_dependencies,
+                "_resolve_git_branch",
+                return_value=self.NEW_SHA,
+            ),
+        ):
+            update_dependencies.update_repository_pins(self.root)
+            first = (self.taskfile.read_bytes(), self.workflow.read_bytes())
+            update_dependencies.update_repository_pins(self.root)
+            second = (self.taskfile.read_bytes(), self.workflow.read_bytes())
 
         self.assertEqual(first, second)
         self.assertIn(b'RENOVATE_VERSION: "44.50.1"', first[0])
-        self.assertIn(self.NEW_SHA.encode(), first[1])
+        self.assertEqual(2, first[1].count(self.OLD_SHA.encode()))
+        self.assertEqual(1, first[1].count(self.NEW_SHA.encode()))
 
     def test_resolution_failure_does_not_write(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            taskfile, workflow = self._create_root(root)
-            original = (taskfile.read_bytes(), workflow.read_bytes())
+        original = (self.taskfile.read_bytes(), self.workflow.read_bytes())
+        auth, pins = self._common_patches()
+        with (
+            auth,
+            pins,
+            mock.patch.object(
+                update_dependencies,
+                "_resolve_git_branch",
+                side_effect=ValueError("resolution failed"),
+            ),
+            self.assertRaisesRegex(ValueError, "resolution failed"),
+        ):
+            update_dependencies.update_repository_pins(self.root)
 
-            with (
-                mock.patch.object(
-                    update_dependencies,
-                    "validate_github_authentication",
-                    return_value="secret",
-                ),
-                mock.patch.object(
-                    update_dependencies,
-                    "_resolve_repository_pins",
-                    return_value=self._pins(),
-                ),
-                mock.patch.object(
-                    update_dependencies,
-                    "_resolve_workflow_refs",
-                    side_effect=ValueError("resolution failed"),
-                ),
-                self.assertRaisesRegex(ValueError, "resolution failed"),
-            ):
-                update_dependencies.update_repository_pins(root)
-
-            current = (taskfile.read_bytes(), workflow.read_bytes())
-
-        self.assertEqual(original, current)
+        self.assertEqual(
+            original, (self.taskfile.read_bytes(), self.workflow.read_bytes())
+        )
 
 
 class AtomicDependencyWriteTest(unittest.TestCase):
@@ -653,18 +664,12 @@ class DependencyUpgradeOrchestrationTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         cls.taskfile = (ROOT / "Taskfile.yml").read_text(encoding="utf-8")
+        cls.renovate = json.loads((ROOT / "renovate.json").read_text(encoding="utf-8"))
 
     def test_aggregate_runs_every_managed_dependency_surface_in_order(self) -> None:
         aggregate = _task_block(self.taskfile, "deps-upgrade")
-        after_pins = _task_block(self.taskfile, "deps-upgrade:after-repository-pins")
 
         self.assertIn("deps: [deps-upgrade:check]", aggregate)
-        self.assertEqual(
-            ["deps-upgrade:repository"],
-            re.findall(r"^\s+- task: ([a-z0-9:_-]+)$", aggregate, re.MULTILINE),
-        )
-        self.assertIn('"{{.TASK_EXE}}" deps-upgrade:after-repository-pins', aggregate)
-        self.assertNotIn("internal: true", after_pins)
         self.assertEqual(
             [
                 "deps-upgrade:python",
@@ -673,25 +678,12 @@ class DependencyUpgradeOrchestrationTest(unittest.TestCase):
                 "deps-upgrade:npm",
                 "deps-upgrade:nvim",
                 "deps-upgrade:github-actions",
+                "deps-upgrade:repository",
             ],
-            re.findall(r"^\s+- task: ([a-z0-9:_-]+)$", after_pins, re.MULTILINE),
+            re.findall(r"^\s+- task: ([a-z0-9:_-]+)$", aggregate, re.MULTILINE),
         )
+        self.assertNotIn("TASK_EXE", aggregate)
         self.assertNotIn("task: renovate", aggregate)
-
-    def test_reparsed_continuation_is_cli_callable(self) -> None:
-        task_binary = shutil.which("go-task") or shutil.which("task")
-        self.assertIsNotNone(task_binary)
-
-        completed = subprocess.run(
-            (task_binary, "--dry", "deps-upgrade:after-repository-pins"),
-            cwd=ROOT,
-            check=False,
-            capture_output=True,
-            text=True,
-            timeout=30,
-        )
-
-        self.assertEqual(0, completed.returncode, completed.stderr)
 
     def test_preflight_provisions_tools_and_validates_auth_before_updates(self) -> None:
         task = _task_block(self.taskfile, "deps-upgrade:check")
@@ -874,17 +866,35 @@ class DependencyUpgradeOrchestrationTest(unittest.TestCase):
         )
 
     def test_renovate_does_not_update_its_version_without_node_engine(self) -> None:
-        config = json.loads((ROOT / "renovate.json").read_text(encoding="utf-8"))
         renovate_version_managers = [
             manager
-            for manager in config["customManagers"]
+            for manager in self.renovate["customManagers"]
             if "RENOVATE_VERSION" in "\n".join(manager.get("matchStrings", []))
         ]
 
         self.assertEqual([], renovate_version_managers)
 
+    def test_renovate_ignores_fixtures_and_uses_public_galaxy(self) -> None:
+        self.assertIn(".test/**", self.renovate["ignorePaths"])
+        self.assertFalse(
+            any(
+                ".test/**" in rule.get("matchFileNames", [])
+                for rule in self.renovate["packageRules"]
+            )
+        )
+        rules = [
+            rule
+            for rule in self.renovate["packageRules"]
+            if rule.get("matchManagers") == ["ansible-galaxy"]
+        ]
+
+        self.assertEqual(1, len(rules))
+        self.assertEqual(
+            ["https://galaxy.ansible.com/api/"],
+            rules[0]["registryUrls"],
+        )
+
     def test_renovate_custom_managers_match_every_declared_surface(self) -> None:
-        config = json.loads((ROOT / "renovate.json").read_text(encoding="utf-8"))
         paths = [
             ROOT / "Taskfile.yml",
             *sorted((ROOT / ".github/workflows").glob("*.yml")),
@@ -897,7 +907,7 @@ class DependencyUpgradeOrchestrationTest(unittest.TestCase):
         }
         actual_matches: dict[str, int] = {}
 
-        for manager in config["customManagers"]:
+        for manager in self.renovate["customManagers"]:
             file_patterns = [
                 re.compile(pattern.removeprefix("/").removesuffix("/"))
                 for pattern in manager["managerFilePatterns"]

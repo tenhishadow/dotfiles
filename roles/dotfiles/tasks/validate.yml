@@ -19,6 +19,8 @@
       - dotfiles_directories is not string
       - dotfiles_mapping is sequence
       - dotfiles_mapping is not string
+      - dotfiles_legacy_directory_links is sequence
+      - dotfiles_legacy_directory_links is not string
       - dotfiles_baseline_files is sequence
       - dotfiles_baseline_files is not string
       - dotfiles_cleanup_paths is sequence
@@ -86,6 +88,40 @@
   loop_control:
     loop_var: dotfiles_directory
     label: "{{ dotfiles_directory.path | default('invalid directory entry') }}"
+  tags:
+    - configs
+
+- name: Dotfiles | Validate legacy directory links
+  ansible.builtin.assert:
+    that:
+      - dotfiles_legacy_link is mapping
+      - dotfiles_legacy_link.name is defined
+      - dotfiles_legacy_link.name is string
+      - dotfiles_legacy_link.name is regex('^[a-z0-9_]+$')
+      - dotfiles_legacy_link.payload is defined
+      - dotfiles_legacy_link.payload is string
+      - dotfiles_legacy_link.payload | length > 0
+      - dotfiles_legacy_link.payload is not regex('^/')
+      - dotfiles_legacy_link.payload is not regex('(^|/)\\.\\.(/|$)')
+      - dotfiles_legacy_link.dest is defined
+      - dotfiles_legacy_link.dest is string
+      - dotfiles_legacy_link.dest is regex('^/')
+      - dotfiles_legacy_relative_dest != "."
+      - dotfiles_legacy_relative_dest is not regex('^\\.\\.(/|$)')
+      - >-
+        [dotfiles_home, dotfiles_legacy_relative_dest] | path_join
+        == dotfiles_legacy_link.dest
+    fail_msg: >-
+      Invalid legacy directory link:
+      {{ dotfiles_legacy_link | to_nice_json }}
+    quiet: true
+  vars:
+    dotfiles_legacy_relative_dest: >-
+      {{ dotfiles_legacy_link.dest | relpath(dotfiles_home) }}
+  loop: "{{ dotfiles_legacy_directory_links }}"
+  loop_control:
+    loop_var: dotfiles_legacy_link
+    label: "{{ dotfiles_legacy_link.name | default('invalid legacy link') }}"
   tags:
     - configs
 
@@ -199,7 +235,17 @@
       - >-
         dotfiles_cleanup_paths | length
         == dotfiles_cleanup_paths | unique | list | length
-    fail_msg: "dotfiles mapping, baseline files, and cleanup paths must be unique."
+      - >-
+        dotfiles_legacy_directory_links | map(attribute='name') | list | length
+        == dotfiles_legacy_directory_links
+        | map(attribute='name') | unique | list | length
+      - >-
+        dotfiles_legacy_directory_links | map(attribute='dest') | list | length
+        == dotfiles_legacy_directory_links
+        | map(attribute='dest') | unique | list | length
+    fail_msg: >-
+      Dotfiles mappings, legacy directory links, baseline files, and cleanup
+      paths must be unique.
     quiet: true
   tags:
     - configs

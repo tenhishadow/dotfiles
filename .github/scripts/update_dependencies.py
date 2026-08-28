@@ -23,8 +23,8 @@ from typing import Any
 HTTP_TIMEOUT_SECONDS = 30
 SHORT_COMMAND_TIMEOUT_SECONDS = 30
 PACKAGE_COMMAND_TIMEOUT_SECONDS = 600
-GITHUB_RELEASE_PAGE_SIZE = 100
-GITHUB_RELEASE_MAX_PAGES = 100
+GALAXY_VERSION_MAX_PAGES = 10
+NPM_REGISTRY = "https://registry.npmjs.org/"
 USER_AGENT = "tenhishadow-dotfiles-dependency-updater"
 NPM_MANIFEST_ROOTS = (
     Path("dotfiles/.local/share/codex-cli"),
@@ -53,12 +53,13 @@ _COLLECTION_SOURCE_RE = re.compile(
     r"^[ \t]*source:[ \t]*(?P<source>\S+)[ \t]*(?:#.*)?$"
 )
 _REUSABLE_WORKFLOW_RE = re.compile(
-    r"uses:[ \t]+"
+    r"^(?P<prefix>[ \t]*uses:[ \t]+)"
     r"(?P<repository>[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+)/"
     r"(?P<workflow>[^@ \t\r\n]+)@"
     r"(?P<sha>[a-f0-9]{40})"
-    r"[ \t]+#[ \t]+renovate:[ \t]+branch="
-    r"(?P<branch>[A-Za-z0-9._/-]+)"
+    r"(?P<suffix>[ \t]+#[ \t]+renovate:[ \t]+branch="
+    r"(?P<branch>[A-Za-z0-9._/-]+)[ \t]*)$",
+    re.MULTILINE,
 )
 
 
@@ -138,37 +139,6 @@ def resolve_github_token(
             "GITHUB_TOKEN, or authenticate the gh CLI"
         )
     return token
-
-
-def latest_stable_release_tag(
-    payload: object, *, required_major: int | None = None
-) -> str:
-    """Select the highest stable semantic release, optionally within one major."""
-
-    if not isinstance(payload, list):
-        raise DependencyUpdateError("GitHub releases response must be a list")
-    candidates: list[tuple[tuple[int, int, int], str]] = []
-    for release in payload:
-        if not isinstance(release, dict):
-            continue
-        if release.get("draft") is True or release.get("prerelease") is True:
-            continue
-        tag = release.get("tag_name")
-        if not isinstance(tag, str):
-            continue
-        match = _SEMVER_RE.fullmatch(tag)
-        if match is None:
-            continue
-        version = tuple(int(part) for part in match.group("version").split("."))
-        if required_major is not None and version[0] != required_major:
-            continue
-        candidates.append((version, tag))
-    if not candidates:
-        major = "" if required_major is None else f" in major v{required_major}"
-        raise DependencyUpdateError(
-            f"GitHub returned no stable semantic releases{major}"
-        )
-    return max(candidates, key=lambda candidate: candidate[0])[1]
 
 
 def _line_body_and_ending(line: str) -> tuple[str, str]:
@@ -281,24 +251,18 @@ def replace_reusable_workflow_sha(
     if not re.fullmatch(r"[a-f0-9]{40}", sha):
         raise DependencyUpdateError(f"invalid Git commit SHA: {sha!r}")
 
-    pattern = re.compile(
-        r"(?P<prefix>uses:[ \t]+" + re.escape(repository) + r"/[^@ \t\r\n]+@)"
-        r"[a-f0-9]{40}"
-        r"(?P<suffix>[ \t]+#[ \t]+renovate:[ \t]+branch="
-        + re.escape(branch)
-        + r"(?:[ \t]*)(?=$|\r?\n))",
-        re.MULTILINE,
-    )
-    matches = list(pattern.finditer(text))
+    matches = [
+        match
+        for match in _REUSABLE_WORKFLOW_RE.finditer(text)
+        if match.group("repository") == repository and match.group("branch") == branch
+    ]
     if len(matches) != 1:
         raise DependencyUpdateError(
             "expected exactly one reusable workflow reference for "
             f"{repository}@{branch}, found {len(matches)}"
         )
-    return pattern.sub(
-        lambda match: f"{match.group('prefix')}{sha}{match.group('suffix')}",
-        text,
-    )
+    match = matches[0]
+    return text[: match.start("sha")] + sha + text[match.end("sha") :]
 
 
 def direct_npm_dependencies(manifest: object) -> tuple[str, ...]:
@@ -345,6 +309,7 @@ def build_npm_update_command(
         "--no-audit",
         "--no-fund",
         "--save-exact",
+        f"--registry={NPM_REGISTRY}",
     ]
     if save_flag is not None:
         command.append(save_flag)
@@ -406,21 +371,41 @@ def _latest_collection_version(name: str) -> str:
     namespace, collection = name.split(".", maxsplit=1)
     url = (
         "https://galaxy.ansible.com/api/v3/plugin/ansible/content/published/"
-        f"collections/index/{namespace}/{collection}/versions/?limit=100"
+        f"collections/index/{namespace}/{collection}/versions/"
+        "?limit=100"
     )
-    payload = _fetch_json(url)
-    if not isinstance(payload, dict) or not isinstance(payload.get("data"), list):
-        raise DependencyUpdateError(f"invalid Galaxy response for {name}")
     stable_versions: list[tuple[tuple[int, int, int], str]] = []
-    for entry in payload["data"]:
-        if not isinstance(entry, dict):
-            continue
-        version = entry.get("version")
-        if not isinstance(version, str):
-            continue
-        match = re.fullmatch(r"(\d+)\.(\d+)\.(\d+)", version)
-        if match:
-            stable_versions.append((tuple(map(int, match.groups())), version))
+    for _page in range(GALAXY_VERSION_MAX_PAGES):
+        payload = _fetch_json(url)
+        if not isinstance(payload, dict) or not isinstance(payload.get("data"), list):
+            raise DependencyUpdateError(f"invalid Galaxy response for {name}")
+        for entry in payload["data"]:
+            if not isinstance(entry, dict):
+                continue
+            version = entry.get("version")
+            if not isinstance(version, str):
+                continue
+            match = re.fullmatch(r"(\d+)\.(\d+)\.(\d+)", version)
+            if match:
+                stable_versions.append((tuple(map(int, match.groups())), version))
+
+        links = payload.get("links", {})
+        if not isinstance(links, dict):
+            raise DependencyUpdateError(f"invalid Galaxy pagination for {name}")
+        next_link = links.get("next")
+        if next_link is None:
+            break
+        if not isinstance(next_link, str):
+            raise DependencyUpdateError(f"invalid Galaxy pagination for {name}")
+        url = urllib.parse.urljoin(url, next_link)
+        parsed_url = urllib.parse.urlparse(url)
+        if parsed_url.scheme != "https" or parsed_url.netloc != "galaxy.ansible.com":
+            raise DependencyUpdateError(f"invalid Galaxy pagination URL for {name}")
+    else:
+        raise DependencyUpdateError(
+            f"Galaxy version history for {name} exceeds "
+            f"{GALAXY_VERSION_MAX_PAGES} pages"
+        )
     if not stable_versions:
         raise DependencyUpdateError(f"Galaxy returned no stable versions for {name}")
     return max(stable_versions)[1]
@@ -429,46 +414,20 @@ def _latest_collection_version(name: str) -> str:
 def _latest_github_release(
     repository: str,
     github_token: str,
-    *,
-    required_major: int | None = None,
 ) -> str:
-    if required_major is None:
-        url = f"https://api.github.com/repos/{repository}/releases/latest"
-        payload = _fetch_json(url, github_token=github_token)
-        releases = [payload]
-    else:
-        releases = []
-        for page in range(1, GITHUB_RELEASE_MAX_PAGES + 1):
-            url = (
-                f"https://api.github.com/repos/{repository}/releases"
-                f"?per_page={GITHUB_RELEASE_PAGE_SIZE}&page={page}"
-            )
-            payload = _fetch_json(url, github_token=github_token)
-            if not isinstance(payload, list):
-                raise DependencyUpdateError(
-                    f"invalid releases response for {repository}: expected a list"
-                )
-            releases.extend(payload)
-            if len(payload) < GITHUB_RELEASE_PAGE_SIZE:
-                break
-        else:
-            raise DependencyUpdateError(
-                f"GitHub release history for {repository} exceeds "
-                f"{GITHUB_RELEASE_MAX_PAGES} pages"
-            )
-    try:
-        return latest_stable_release_tag(releases, required_major=required_major)
-    except DependencyUpdateError as error:
-        raise DependencyUpdateError(
-            f"invalid releases response for {repository}: {error}"
-        ) from error
+    url = f"https://api.github.com/repos/{repository}/releases/latest"
+    payload = _fetch_json(url, github_token=github_token)
+    tag = payload.get("tag_name") if isinstance(payload, dict) else None
+    if not isinstance(tag, str) or _SEMVER_RE.fullmatch(tag) is None:
+        raise DependencyUpdateError(f"invalid latest release for {repository}")
+    return tag
 
 
 def _resolve_repository_pins(github_token: str) -> RepositoryPins:
     urls: dict[str, Callable[[], Any]] = {
-        "renovate": lambda: _fetch_json("https://registry.npmjs.org/renovate/latest"),
+        "renovate": lambda: _fetch_json(f"{NPM_REGISTRY}renovate/latest"),
         "pinact": lambda: _latest_github_release(
-            GITHUB_RELEASES["pinact"], github_token, required_major=4
+            GITHUB_RELEASES["pinact"], github_token
         ),
         "super-linter": lambda: _latest_github_release(
             GITHUB_RELEASES["super-linter"], github_token
@@ -589,20 +548,14 @@ def _tracked_reusable_workflows(
 def _update_workflow_refs(
     text: str, resolved_refs: Mapping[tuple[str, str], str]
 ) -> str:
-    output: list[str] = []
-    for line in text.splitlines(keepends=True):
-        match = _REUSABLE_WORKFLOW_RE.search(line)
-        if not match:
-            output.append(line)
-            continue
-        repository = match.group("repository")
-        branch = match.group("branch")
-        output.append(
-            replace_reusable_workflow_sha(
-                line, repository, branch, resolved_refs[(repository, branch)]
-            )
+    def replace(match: re.Match[str]) -> str:
+        sha = resolved_refs[(match.group("repository"), match.group("branch"))]
+        return (
+            f"{match.group('prefix')}{match.group('repository')}/"
+            f"{match.group('workflow')}@{sha}{match.group('suffix')}"
         )
-    return "".join(output)
+
+    return _REUSABLE_WORKFLOW_RE.sub(replace, text)
 
 
 def _resolve_workflow_refs(

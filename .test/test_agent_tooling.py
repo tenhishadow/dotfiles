@@ -142,10 +142,21 @@ class AgentToolingContractTest(unittest.TestCase):
         )
         self.assertIn("$ponytail", openai_config["interface"]["default_prompt"])
 
-    def test_ponytail_deploys_as_one_skill_directory_link(self) -> None:
+    def test_ponytail_deploys_as_explicit_skill_files(self) -> None:
         with DOTFILES_INVENTORY.open(encoding="utf-8") as stream:
             inventory = yaml.safe_load(stream)
 
+        legacy_links = {
+            link["name"]: link for link in inventory["dotfiles_legacy_directory_links"]
+        }
+        self.assertEqual(
+            {
+                "name": "agent_skill_ponytail_directory",
+                "payload": ".agents/skills/ponytail",
+                "dest": "{{ dotfiles_home }}/.agents/skills/ponytail",
+            },
+            legacy_links["agent_skill_ponytail_directory"],
+        )
         ponytail_mappings = [
             mapping
             for mapping in inventory["dotfiles_mapping"]
@@ -156,9 +167,21 @@ class AgentToolingContractTest(unittest.TestCase):
             [
                 {
                     "name": "agent_skill_ponytail",
-                    "payload": ".agents/skills/ponytail",
-                    "dest": "{{ dotfiles_home }}/.agents/skills/ponytail",
-                }
+                    "payload": ".agents/skills/ponytail/SKILL.md",
+                    "dest": "{{ dotfiles_home }}/.agents/skills/ponytail/SKILL.md",
+                },
+                {
+                    "name": "agent_skill_ponytail_license",
+                    "payload": ".agents/skills/ponytail/LICENSE",
+                    "dest": "{{ dotfiles_home }}/.agents/skills/ponytail/LICENSE",
+                },
+                {
+                    "name": "agent_skill_ponytail_openai",
+                    "payload": ".agents/skills/ponytail/agents/openai.yaml",
+                    "dest": (
+                        "{{ dotfiles_home }}/.agents/skills/ponytail/agents/openai.yaml"
+                    ),
+                },
             ],
             ponytail_mappings,
         )
