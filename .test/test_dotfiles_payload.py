@@ -59,7 +59,11 @@ class DotfilesPayloadTest(unittest.TestCase):
                 "production.tfvars.json",
                 "terraform.tfstate",
                 "tfplan",
+                "tfplan.binary",
                 "production.tfplan",
+                "production.tfplan.binary",
+                "production.tfbackend",
+                "production.tfbackend.json",
                 ".terraform.d/credentials.tfrc.json",
             ):
                 with self.subTest(candidate=candidate):
@@ -79,23 +83,30 @@ class DotfilesPayloadTest(unittest.TestCase):
                     )
                     self.assertEqual(0, result.returncode)
 
-            result = subprocess.run(
-                [
-                    "git",
-                    "-c",
-                    f"core.excludesFile={GLOBAL_GITIGNORE}",
-                    "check-ignore",
-                    "--quiet",
-                    "--no-index",
-                    "example.tfvars.example",
-                ],
-                cwd=repository,
-                check=False,
-                timeout=10,
-            )
-            self.assertEqual(1, result.returncode)
+            for candidate in (
+                "example.tfvars.example",
+                "backend.tfbackend.example",
+                "notes-tfplan.md",
+                "terraform-plan-notes.md",
+            ):
+                with self.subTest(candidate=candidate):
+                    result = subprocess.run(
+                        [
+                            "git",
+                            "-c",
+                            f"core.excludesFile={GLOBAL_GITIGNORE}",
+                            "check-ignore",
+                            "--quiet",
+                            "--no-index",
+                            candidate,
+                        ],
+                        cwd=repository,
+                        check=False,
+                        timeout=10,
+                    )
+                    self.assertEqual(1, result.returncode)
 
-    def test_interactive_startup_does_not_run_completion_generators(self) -> None:
+    def test_completion_generators_are_lazy_and_work_on_first_use(self) -> None:
         commands = (
             "checkov",
             "docker",
@@ -150,6 +161,62 @@ class DotfilesPayloadTest(unittest.TestCase):
                 trace_path.exists(),
                 "interactive startup eagerly invoked a completion generator",
             )
+
+            go_task_path = binary_directory / "go-task"
+            go_task_path.write_text(
+                "#!/bin/sh\n"
+                "printf '%s\\n' generator >>\"$DOTFILES_COMPLETION_TRACE\"\n"
+                "printf '%s\\n' '_task() { printf \"%s\\n\" completion "
+                '>>"$DOTFILES_COMPLETION_TRACE"; }\'\n',
+                encoding="utf-8",
+            )
+            subprocess.run(
+                [
+                    "bash",
+                    "--noprofile",
+                    "--rcfile",
+                    str(BASHRC),
+                    "-i",
+                    "-c",
+                    "_dotfiles_load_go_task_completion; exit",
+                ],
+                check=True,
+                env=environment,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                timeout=15,
+            )
+            self.assertEqual(
+                ["generator", "completion"],
+                trace_path.read_text(encoding="utf-8").splitlines(),
+            )
+
+    def test_dumb_terminal_does_not_receive_less_color_sequences(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            environment = os.environ.copy()
+            for name in tuple(environment):
+                if name.startswith("LESS_TERMCAP_"):
+                    environment.pop(name)
+            environment.update({"HOME": temporary_directory, "TERM": "dumb"})
+
+            result = subprocess.run(
+                [
+                    "bash",
+                    "--noprofile",
+                    "--rcfile",
+                    str(BASHRC),
+                    "-i",
+                    "-c",
+                    'printf \'%s\\n\' "$LESS" "${LESS_TERMCAP_md-unset}"',
+                ],
+                check=True,
+                capture_output=True,
+                env=environment,
+                text=True,
+                timeout=15,
+            )
+
+        self.assertEqual(["-R", "unset"], result.stdout.splitlines()[-2:])
 
     def test_mplayer_baseline_uses_auto_selection(self) -> None:
         config_text = MPLAYER_CONFIG.read_text(encoding="utf-8")

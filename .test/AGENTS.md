@@ -25,6 +25,7 @@ workspaces.
 - `.test/test_assert_ansible_convergence.py`
 - `.test/role_contracts.yml`
 - `.test/system/exec.sh`
+- `.test/system/chrony_validation_contract.yml`
 - `.test/system/local.env.example`
 - `.test/system/time_contract.yml`
 - `.test/system/verify.yml`

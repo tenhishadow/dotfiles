@@ -90,7 +90,7 @@ class TaskfileScalarReplacementTest(unittest.TestCase):
 
 
 class RepositoryPinReplacementTest(unittest.TestCase):
-    """Keep coupled tool pins updated as one repository transaction."""
+    """Keep coupled tool pins updated from one resolved version set."""
 
     def test_replaces_renovate_version_and_node_engine_together(self) -> None:
         content = (
@@ -586,6 +586,67 @@ class RepositoryUpdateIntegrationTest(unittest.TestCase):
         self.assertEqual(original, current)
 
 
+class AtomicDependencyWriteTest(unittest.TestCase):
+    """Keep each dependency file replacement complete and mode-preserving."""
+
+    def test_changed_file_is_replaced_from_its_own_directory(self) -> None:
+        write_if_changed = vars(update_dependencies)["_write_if_changed"]
+
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "Taskfile.yml"
+            path.write_text("old\n", encoding="utf-8")
+            path.chmod(0o640)
+            real_replace = os.replace
+            replacements: list[tuple[Path, Path]] = []
+
+            def record_replace(
+                source: str | os.PathLike[str],
+                destination: str | os.PathLike[str],
+            ) -> None:
+                source_path = Path(source)
+                destination_path = Path(destination)
+                replacements.append((source_path, destination_path))
+                real_replace(source_path, destination_path)
+
+            with mock.patch.object(
+                update_dependencies.os,
+                "replace",
+                side_effect=record_replace,
+            ):
+                write_if_changed(path, "old\n", "new\n")
+
+            updated = path.read_text(encoding="utf-8")
+            updated_mode = path.stat().st_mode & 0o777
+            remaining_paths = tuple(Path(directory).iterdir())
+
+        self.assertEqual("new\n", updated)
+        self.assertEqual(0o640, updated_mode)
+        self.assertEqual(1, len(replacements))
+        self.assertEqual(path.parent, replacements[0][0].parent)
+        self.assertEqual(path, replacements[0][1])
+        self.assertEqual((path,), remaining_paths)
+
+    def test_failed_replace_leaves_original_and_removes_temporary_file(self) -> None:
+        write_if_changed = vars(update_dependencies)["_write_if_changed"]
+
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "Taskfile.yml"
+            path.write_text("old\n", encoding="utf-8")
+
+            with (
+                mock.patch.object(
+                    update_dependencies.os,
+                    "replace",
+                    side_effect=OSError("replace failed"),
+                ),
+                self.assertRaisesRegex(OSError, "replace failed"),
+            ):
+                write_if_changed(path, "old\n", "new\n")
+
+            self.assertEqual("old\n", path.read_text(encoding="utf-8"))
+            self.assertEqual((path,), tuple(Path(directory).iterdir()))
+
+
 class DependencyUpgradeOrchestrationTest(unittest.TestCase):
     """Keep the public upgrade task complete, isolated, and mutation-only."""
 
@@ -595,8 +656,15 @@ class DependencyUpgradeOrchestrationTest(unittest.TestCase):
 
     def test_aggregate_runs_every_managed_dependency_surface_in_order(self) -> None:
         aggregate = _task_block(self.taskfile, "deps-upgrade")
+        after_pins = _task_block(self.taskfile, "deps-upgrade:after-repository-pins")
 
         self.assertIn("deps: [deps-upgrade:check]", aggregate)
+        self.assertEqual(
+            ["deps-upgrade:repository"],
+            re.findall(r"^\s+- task: ([a-z0-9:_-]+)$", aggregate, re.MULTILINE),
+        )
+        self.assertIn('"{{.TASK_EXE}}" deps-upgrade:after-repository-pins', aggregate)
+        self.assertNotIn("internal: true", after_pins)
         self.assertEqual(
             [
                 "deps-upgrade:python",
@@ -605,16 +673,42 @@ class DependencyUpgradeOrchestrationTest(unittest.TestCase):
                 "deps-upgrade:npm",
                 "deps-upgrade:nvim",
                 "deps-upgrade:github-actions",
-                "deps-upgrade:repository",
             ],
-            re.findall(r"^\s+- task: ([a-z0-9:_-]+)$", aggregate, re.MULTILINE),
+            re.findall(r"^\s+- task: ([a-z0-9:_-]+)$", after_pins, re.MULTILINE),
         )
         self.assertNotIn("task: renovate", aggregate)
 
-    def test_preflight_validates_github_authentication_before_updates(self) -> None:
+    def test_reparsed_continuation_is_cli_callable(self) -> None:
+        task_binary = shutil.which("go-task") or shutil.which("task")
+        self.assertIsNotNone(task_binary)
+
+        completed = subprocess.run(
+            (task_binary, "--dry", "deps-upgrade:after-repository-pins"),
+            cwd=ROOT,
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+
+        self.assertEqual(0, completed.returncode, completed.stderr)
+
+    def test_preflight_provisions_tools_and_validates_auth_before_updates(self) -> None:
         task = _task_block(self.taskfile, "deps-upgrade:check")
 
+        self.assertIn("deps: [deps-os]", task)
         self.assertIn("for tool in git go npm nvim python3 timeout uv", task)
+        self.assertIn(
+            "timeout {{.DEPENDENCY_COMMAND_TIMEOUT}}\n"
+            "        uv sync --locked --no-build --no-install-project --no-dev "
+            "--managed-python --quiet",
+            task,
+        )
+        self.assertIn(
+            "timeout {{.DEPENDENCY_COMMAND_TIMEOUT}}\n"
+            "        uv run pre-commit --version",
+            task,
+        )
         self.assertIn(
             "timeout {{.DEPENDENCY_AUTH_TIMEOUT}} python3\n"
             "        .github/scripts/update_dependencies.py check",
@@ -622,7 +716,7 @@ class DependencyUpgradeOrchestrationTest(unittest.TestCase):
         )
 
     def test_github_action_upgrade_reports_authentication_failures(self) -> None:
-        task_binary = shutil.which("go-task")
+        task_binary = shutil.which("go-task") or shutil.which("task")
         shell_binary = shutil.which("sh")
         timeout_binary = shutil.which("timeout")
         self.assertIsNotNone(task_binary)
@@ -672,13 +766,68 @@ class DependencyUpgradeOrchestrationTest(unittest.TestCase):
                 self.assertIn(expected, output)
                 self.assertNotIn("command not found", output)
 
-    def test_shared_python_sync_has_a_hard_timeout(self) -> None:
+    def test_shared_python_sync_is_portable_and_upgrade_sync_is_bounded(self) -> None:
         task = _task_block(self.taskfile, "deps-python")
+        upgrade_task = _task_block(self.taskfile, "deps-upgrade:python")
 
-        self.assertIn(
-            "timeout {{.DEPENDENCY_COMMAND_TIMEOUT}} uv sync --locked",
-            task,
+        self.assertIn("uv sync --locked", task)
+        self.assertNotIn("timeout", task)
+        self.assertIn("timeout {{.DEPENDENCY_COMMAND_TIMEOUT}}", upgrade_task)
+
+    def test_pre_commit_is_managed_by_the_project_environment(self) -> None:
+        project = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
+        verify = _task_block(self.taskfile, "deps-verify")
+
+        self.assertIsNotNone(re.search(r'^    "pre-commit",$', project, re.MULTILINE))
+        self.assertIn("deps: [deps-python]", verify)
+        self.assertIn("uv run pre-commit --version", verify)
+
+    def test_local_super_linter_leaves_commit_validation_to_ci(self) -> None:
+        workflow = (ROOT / ".github/workflows/github-super-linter.yml").read_text(
+            encoding="utf-8"
         )
+
+        self.assertIn("-e VALIDATE_GIT_COMMITLINT=false", self.taskfile)
+        self.assertNotIn(
+            "-e ENFORCE_COMMITLINT_CONFIGURATION_CHECK=true", self.taskfile
+        )
+        self.assertIn("ENFORCE_COMMITLINT_CONFIGURATION_CHECK: true", workflow)
+        self.assertNotIn("VALIDATE_GIT_COMMITLINT: false", workflow)
+
+    def test_super_linter_uses_ruff_as_the_only_python_formatter(self) -> None:
+        workflow = (ROOT / ".github/workflows/github-super-linter.yml").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertIn("-e VALIDATE_PYTHON_BLACK=false", self.taskfile)
+        self.assertIn("VALIDATE_PYTHON_BLACK: false", workflow)
+        self.assertNotIn("VALIDATE_PYTHON_RUFF_FORMAT: false", self.taskfile)
+        self.assertNotIn("VALIDATE_PYTHON_RUFF_FORMAT: false", workflow)
+
+    def test_system_role_and_ci_share_the_node_runtime_package(self) -> None:
+        system_vars = (ROOT / "roles/system/vars/archlinux.yml").read_text(
+            encoding="utf-8"
+        )
+        package_match = re.search(
+            r"^system_nodejs_package: (?P<package>[a-z0-9@._+-]+)$",
+            system_vars,
+            re.MULTILINE,
+        )
+        self.assertIsNotNone(package_match)
+        assert package_match is not None
+        package = package_match.group("package")
+
+        package_manifest = (
+            ROOT / "roles/system/vars/archlinux-packages.yml"
+        ).read_text(encoding="utf-8")
+        system_tasks = (ROOT / "roles/system/tasks/main.yml").read_text(
+            encoding="utf-8"
+        )
+        workflow = (ROOT / ".github/workflows/ansible.yml").read_text(encoding="utf-8")
+
+        self.assertIn('  - "{{ system_nodejs_package }}"', package_manifest)
+        self.assertIn("- system_nodejs_package in system_packages", system_tasks)
+        self.assertRegex(workflow, rf"(?m)^\s+{re.escape(package)}$")
 
     def test_neovim_upgrade_uses_an_isolated_workspace(self) -> None:
         task = _task_block(self.taskfile, "deps-upgrade:nvim")
@@ -733,6 +882,50 @@ class DependencyUpgradeOrchestrationTest(unittest.TestCase):
         ]
 
         self.assertEqual([], renovate_version_managers)
+
+    def test_renovate_custom_managers_match_every_declared_surface(self) -> None:
+        config = json.loads((ROOT / "renovate.json").read_text(encoding="utf-8"))
+        paths = [
+            ROOT / "Taskfile.yml",
+            *sorted((ROOT / ".github/workflows").glob("*.yml")),
+            *sorted((ROOT / ".github/workflows").glob("*.yaml")),
+        ]
+        expected_matches = {
+            "ghcr.io/super-linter/super-linter": 1,
+            "suzuki-shunsuke/pinact": 1,
+            "tenhishadow/github_actions_templates": 2,
+        }
+        actual_matches: dict[str, int] = {}
+
+        for manager in config["customManagers"]:
+            file_patterns = [
+                re.compile(pattern.removeprefix("/").removesuffix("/"))
+                for pattern in manager["managerFilePatterns"]
+            ]
+            match_patterns = [
+                re.compile(
+                    re.sub(r"\(\?<([A-Za-z][A-Za-z0-9_]*)>", r"(?P<\1>", pattern)
+                )
+                for pattern in manager["matchStrings"]
+            ]
+            count = 0
+            for path in paths:
+                relative_path = path.relative_to(ROOT).as_posix()
+                if not any(pattern.search(relative_path) for pattern in file_patterns):
+                    continue
+                content = path.read_text(encoding="utf-8")
+                count += sum(
+                    len(tuple(pattern.finditer(content))) for pattern in match_patterns
+                )
+            dependency = manager["depNameTemplate"]
+            self.assertNotIn(
+                dependency,
+                actual_matches,
+                f"duplicate custom manager for {dependency}",
+            )
+            actual_matches[dependency] = count
+
+        self.assertEqual(expected_matches, actual_matches)
 
 
 class GitHubActionsPinInventoryTest(unittest.TestCase):

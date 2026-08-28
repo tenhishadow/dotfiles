@@ -32,11 +32,12 @@ vars:
     -e VALIDATE_ALL_CODEBASE=true
     -e VALIDATE_BIOME_FORMAT=false
     -e VALIDATE_EDITORCONFIG=false
-    -e ENFORCE_COMMITLINT_CONFIGURATION_CHECK=true
+    -e VALIDATE_GIT_COMMITLINT=false
     -e VALIDATE_GITHUB_ACTIONS_ZIZMOR=false
     -e VALIDATE_LUA=false
     -e VALIDATE_MARKDOWN_PRETTIER=false
     -e VALIDATE_NATURAL_LANGUAGE=false
+    -e VALIDATE_PYTHON_BLACK=false
     -e VALIDATE_PYTHON_MYPY=false
     -e VALIDATE_PYTHON_PYLINT=false
     -e VALIDATE_SHELL_SHFMT=false
@@ -72,7 +73,7 @@ tasks:
     deps: [deps-os]
     cmd: >-
       if [ "${UV_NO_SYNC:-false}" != "true" ]; then
-        timeout {{.DEPENDENCY_COMMAND_TIMEOUT}} uv sync --locked --no-build --no-install-project --no-dev --managed-python --quiet;
+        uv sync --locked --no-build --no-install-project --no-dev --managed-python --quiet;
       fi
   deps-galaxy:
     silent: true
@@ -80,15 +81,16 @@ tasks:
     cmds:
       - "uv run ansible-galaxy install -r requirements.yml"
   deps-verify:
-    deps: [deps-os]
+    deps: [deps-python]
     cmds:
       - >-
-        for tool in actionlint npx pre-commit stylua; do
+        for tool in actionlint npx stylua; do
           command -v "${tool}" >/dev/null 2>&1 || {
             printf '%s\n' "${tool} is required for repository validation." >&2;
             exit 1;
           };
         done
+      - "uv run pre-commit --version >/dev/null"
   deps-renovate:
     deps: [deps-verify]
     cmd: >-
@@ -124,15 +126,20 @@ tasks:
     desc: Update every managed dependency without committing or pushing changes.
     deps: [deps-upgrade:check]
     cmds:
+      - task: deps-upgrade:repository
+      # Reparse the Taskfile so this run uses repository pins resolved above.
+      - '"{{.TASK_EXE}}" deps-upgrade:after-repository-pins'
+  deps-upgrade:after-repository-pins:
+    cmds:
       - task: deps-upgrade:python
       - task: deps-upgrade:ansible
       - task: deps-upgrade:pre-commit
       - task: deps-upgrade:npm
       - task: deps-upgrade:nvim
       - task: deps-upgrade:github-actions
-      - task: deps-upgrade:repository
   deps-upgrade:check:
     silent: true
+    deps: [deps-os]
     cmds:
       - >-
         for tool in git go npm nvim python3 timeout uv; do
@@ -141,6 +148,12 @@ tasks:
             exit 1;
           };
         done
+      - >-
+        timeout {{.DEPENDENCY_COMMAND_TIMEOUT}}
+        uv sync --locked --no-build --no-install-project --no-dev --managed-python --quiet
+      - >-
+        timeout {{.DEPENDENCY_COMMAND_TIMEOUT}}
+        uv run pre-commit --version >/dev/null
       - >-
         timeout {{.DEPENDENCY_AUTH_TIMEOUT}} python3
         .github/scripts/update_dependencies.py check
@@ -245,7 +258,7 @@ tasks:
     cmd: "python3 .test/check_repo_english.py"
   lint:markdown:
     deps: [deps-verify]
-    cmd: "pre-commit run markdownlint-cli2 --all-files"
+    cmd: "uv run pre-commit run markdownlint-cli2 --all-files"
   lint:python:
     deps: [deps-python]
     cmds:
@@ -308,7 +321,7 @@ tasks:
       fi
   pre-commit:
     deps: [deps-verify]
-    cmd: pre-commit run --all-files
+    cmd: uv run pre-commit run --all-files
   doctor:
     cmd: "python3 .test/workstation_report.py doctor"
   codex:install:

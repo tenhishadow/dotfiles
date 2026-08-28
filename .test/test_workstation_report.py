@@ -113,6 +113,18 @@ dotfiles_cleanup_paths:
         self.assertEqual([], directories)
         self.assertEqual(["/tmp/obsolete"], cleanup)
 
+    def test_report_paths_match_fixed_role_config_directory(self) -> None:
+        with mock.patch.dict(
+            report.os.environ,
+            {"XDG_CONFIG_HOME": "/tmp/unmanaged-xdg-config"},
+        ):
+            variables = report.known_dotfiles_vars()
+
+        self.assertEqual(
+            str(Path.home() / ".config"),
+            variables["dotfiles_config_dir"],
+        )
+
     def test_baseline_report_rejects_foreign_symlinks(self) -> None:
         with tempfile.TemporaryDirectory() as temporary_directory:
             temporary_path = Path(temporary_directory)

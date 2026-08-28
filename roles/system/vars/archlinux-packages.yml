@@ -182,6 +182,7 @@ system_packages:
   - openjdk-doc
   - openjdk-src
   - yarn
+  - "{{ system_nodejs_package }}"
   - npm
   - starship
   - ttf-nerd-fonts-symbols

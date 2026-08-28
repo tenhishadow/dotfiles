@@ -33,11 +33,22 @@
     label: >-
       {{ system_time_conflicting_service_mask.system_time_conflicting_service }}
 
-- name: Time | Disable existing conflicting services
+- name: Time | Stop existing conflicting services
   become: true
   ansible.builtin.systemd_service:
     name: "{{ system_time_conflicting_service }}"
     state: stopped
+  loop: "{{ system_time_conflicting_services }}"
+  loop_control:
+    loop_var: system_time_conflicting_service
+    label: "{{ system_time_conflicting_service }}"
+  when:
+    - system_time_conflicting_service in (ansible_facts.services | default({}))
+
+- name: Time | Disable existing unmasked conflicting services
+  become: true
+  ansible.builtin.systemd_service:
+    name: "{{ system_time_conflicting_service }}"
     enabled: false
   loop: "{{ system_time_conflicting_services }}"
   loop_control:

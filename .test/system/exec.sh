@@ -153,6 +153,78 @@ PY
   fi
 }
 
+check_time_tag_contract() {
+  local package_tasks
+  local preinstalled_tasks
+
+  package_tasks="$(uv run ansible-playbook --list-tasks --tags pkg playbook_system.yml)"
+  preinstalled_tasks="$(uv run ansible-playbook --list-tasks --skip-tags pkg playbook_system.yml)"
+
+  if ! grep -Fq 'Chrony | Install package' <<<"${package_tasks}" \
+      || grep -Fq 'Chrony | Render configuration' <<<"${package_tasks}"; then
+    printf '%s\n' 'The pkg tag does not isolate time package installation.' >&2
+    exit 1
+  fi
+  if grep -Fq 'Chrony | Install package' <<<"${preinstalled_tasks}" \
+      || ! grep -Fq 'Chrony | Render configuration' <<<"${preinstalled_tasks}"; then
+    printf '%s\n' 'Skipping pkg also skipped non-package time configuration.' >&2
+    exit 1
+  fi
+}
+
+check_nodejs_package_migration() {
+  local -a nodejs_contract
+  local nodejs_minimum
+  local nodejs_package
+
+  mapfile -t nodejs_contract < <(
+    uv run python - <<'PY'
+from pathlib import Path
+
+import yaml
+
+with Path("roles/system/vars/archlinux.yml").open(encoding="utf-8") as handle:
+    role_vars = yaml.safe_load(handle) or {}
+with Path("Taskfile.yml").open(encoding="utf-8") as handle:
+    taskfile = yaml.safe_load(handle) or {}
+
+print(role_vars["system_nodejs_package"])
+print(taskfile["vars"]["RENOVATE_NODE_MIN_VERSION"])
+PY
+  )
+  nodejs_package="${nodejs_contract[0]}"
+  nodejs_minimum="${nodejs_contract[1]}"
+
+  printf '%s\n' 'Verifying the Node.js LTS package migration...'
+  pacman --disable-sandbox -S --noconfirm --needed --noprogressbar \
+    -- nodejs-lts-jod npm >/dev/null
+  uv run ansible-playbook playbook_system.yml \
+    --tags pkg \
+    -e "{\"system_packages\":[\"${nodejs_package}\"],\"system_time_enabled\":false}"
+
+  pacman -Q -- "${nodejs_package}" >/dev/null
+  if pacman -Q -- nodejs-lts-jod >/dev/null 2>&1; then
+    printf '%s\n' 'The previous Node.js LTS provider remains installed.' >&2
+    exit 1
+  fi
+  npm --version >/dev/null
+  node - "${nodejs_minimum}" <<'JS'
+const actual = process.versions.node.split(".").map(Number);
+const minimum = process.argv[2].split(".").map(Number);
+if (actual[0] !== minimum[0]) process.exit(1);
+for (let index = 1; index < minimum.length; index += 1) {
+  if (actual[index] > minimum[index]) process.exit(0);
+  if (actual[index] < minimum[index]) process.exit(1);
+}
+JS
+
+  run_convergence_check \
+    nodejs-package \
+    playbook_system.yml \
+    --tags pkg \
+    -e "{\"system_packages\":[\"${nodejs_package}\"],\"system_time_enabled\":false}"
+}
+
 install_time_contract_package() {
   local time_contract_package
 
@@ -199,6 +271,81 @@ prepare_dotfiles_cleanup_contract() {
   ln -s "${removed_target}" /root/.config/nvim/init.vim
 }
 
+check_foreign_baseline_symlink_rejection() {
+  local baseline_path="/root/.config/htop/htoprc"
+  local foreign_target="/tmp/dotfiles-user-owned-htoprc"
+  local rejection_output
+
+  mkdir -p /root/.config/htop
+  printf '%s\n' 'foreign-baseline-preserved' >"${foreign_target}"
+  ln -s "${foreign_target}" "${baseline_path}"
+
+  if rejection_output="$(
+    uv run ansible-playbook playbook_install.yml --tags configs 2>&1
+  )"; then
+    printf '%s\n' 'A foreign baseline symlink was accepted.' >&2
+    exit 1
+  fi
+  if ! grep -Fq \
+    'Refusing unsafe baseline destination: /root/.config/htop/htoprc' \
+    <<<"${rejection_output}"; then
+    printf '%s\n' 'The baseline rejection did not explain the unsafe path.' >&2
+    exit 1
+  fi
+  if [[ ! -L "${baseline_path}" \
+      || "$(readlink -- "${baseline_path}")" != "${foreign_target}" \
+      || "$(<"${foreign_target}")" != 'foreign-baseline-preserved' ]]; then
+    printf '%s\n' 'The rejected baseline symlink or its target was modified.' >&2
+    exit 1
+  fi
+
+  rm -f -- "${baseline_path}" "${foreign_target}"
+}
+
+prepare_dotfiles_directory_link_migration_contract() {
+  local legacy_skill_dir="/root/.agents/skills/ponytail"
+  local payload_dir="${PWD}/dotfiles/.agents/skills/ponytail"
+  local rejection_output
+  local user_file="${legacy_skill_dir}/user-note.txt"
+
+  mkdir -p "${legacy_skill_dir}/agents"
+  ln -s "${payload_dir}/LICENSE" "${legacy_skill_dir}/LICENSE"
+  ln -s "${payload_dir}/SKILL.md" "${legacy_skill_dir}/SKILL.md"
+  ln -s \
+    "${payload_dir}/agents/openai.yaml" \
+    "${legacy_skill_dir}/agents/openai.yaml"
+  printf '%s\n' 'preserve-user-content' >"${user_file}"
+
+  if rejection_output="$(
+    uv run ansible-playbook playbook_install.yml --tags configs 2>&1
+  )"; then
+    printf '%s\n' 'A directory-link migration accepted unexpected content.' >&2
+    exit 1
+  fi
+  if ! grep -Fq \
+    'Refusing unsafe directory-link migration with unexpected content:' \
+    <<<"${rejection_output}"; then
+    printf '%s\n' 'The directory-link migration rejection was not explained.' >&2
+    exit 1
+  fi
+  if [[ -L "${legacy_skill_dir}" \
+      || "$(<"${user_file}")" != 'preserve-user-content' \
+      || "$(readlink -- "${legacy_skill_dir}/SKILL.md")" != "${payload_dir}/SKILL.md" \
+      || "$(readlink -- "${legacy_skill_dir}/agents/openai.yaml")" != "${payload_dir}/agents/openai.yaml" ]]; then
+    printf '%s\n' 'The rejected directory-link migration modified local content.' >&2
+    exit 1
+  fi
+
+  rm -f -- "${user_file}"
+  uv run ansible-playbook playbook_install.yml --check --tags configs >/dev/null
+  if [[ -L "${legacy_skill_dir}" \
+      || "$(readlink -- "${legacy_skill_dir}/SKILL.md")" != "${payload_dir}/SKILL.md" \
+      || "$(readlink -- "${legacy_skill_dir}/agents/openai.yaml")" != "${payload_dir}/agents/openai.yaml" ]]; then
+    printf '%s\n' 'Check mode modified or rejected the exact legacy skill tree.' >&2
+    exit 1
+  fi
+}
+
 prepare_dotfiles_baseline_contract() {
   local htop_target
 
@@ -231,9 +378,14 @@ else
 fi
 prepare_python_environment
 check_system_package_targets
+check_time_tag_contract
 install_time_contract_package
+prepare_dotfiles_directory_link_migration_contract
+check_foreign_baseline_symlink_rejection
 prepare_dotfiles_cleanup_contract
 prepare_dotfiles_baseline_contract
+convergence_results_dir="$(mktemp -d)"
+check_nodejs_package_migration
 
 if [[ -e /usr/lib/systemd/system/dotfiles-absent-ntpd.service || -L /etc/systemd/system/dotfiles-absent-ntpd.service ]]; then
   printf '%s\n' 'The absent-unit time contract fixture unexpectedly exists.' >&2
@@ -253,7 +405,6 @@ go-task all -- --skip-tags pkg,aur
 printf '%s\n' 'Verifying observable post-install state...'
 uv run ansible-playbook .test/system/verify.yml
 
-convergence_results_dir="$(mktemp -d)"
 mutate_dotfiles_baseline
 run_convergence_check \
   time-contract \

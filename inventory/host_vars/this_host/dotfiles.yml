@@ -160,14 +160,8 @@ dotfiles_mapping:
     payload: .codex/hooks/portable.py
     dest: "{{ dotfiles_home }}/.codex/hooks/portable.py"
   - name: agent_skill_ponytail
-    payload: .agents/skills/ponytail/SKILL.md
-    dest: "{{ dotfiles_home }}/.agents/skills/ponytail/SKILL.md"
-  - name: agent_skill_ponytail_license
-    payload: .agents/skills/ponytail/LICENSE
-    dest: "{{ dotfiles_home }}/.agents/skills/ponytail/LICENSE"
-  - name: agent_skill_ponytail_openai
-    payload: .agents/skills/ponytail/agents/openai.yaml
-    dest: "{{ dotfiles_home }}/.agents/skills/ponytail/agents/openai.yaml"
+    payload: .agents/skills/ponytail
+    dest: "{{ dotfiles_home }}/.agents/skills/ponytail"
   - name: codex_context7_launcher
     payload: .local/bin/codex-context7-mcp
     dest: "{{ dotfiles_home }}/.local/bin/codex-context7-mcp"

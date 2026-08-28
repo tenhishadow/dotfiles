@@ -161,7 +161,7 @@ def print_tool_group(tools: tuple[tuple[str, tuple[str, ...]], ...]) -> list[str
 
 def known_dotfiles_vars() -> dict[str, str]:
     home = Path.home()
-    config_home = Path(os.environ.get("XDG_CONFIG_HOME", home / ".config"))
+    config_home = home / ".config"
     ssh_dir = home / ".ssh"
     nvim_state = home / ".local/state/nvim"
     return {

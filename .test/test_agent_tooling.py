@@ -7,9 +7,12 @@ import tomllib
 import unittest
 from pathlib import Path
 
+import yaml
+
 ROOT = Path(__file__).resolve().parent.parent
 CODEX_DIR = ROOT / "dotfiles/.codex"
 PONYTAIL_DIR = ROOT / "dotfiles/.agents/skills/ponytail"
+DOTFILES_INVENTORY = ROOT / "inventory/host_vars/this_host/dotfiles.yml"
 PACKAGE_DIRS = (
     ROOT / "dotfiles/.local/share/codex-cli/locked",
     ROOT / "dotfiles/.local/share/codex-mcp/context7",
@@ -127,14 +130,38 @@ class AgentToolingContractTest(unittest.TestCase):
 
     def test_ponytail_is_explicit_only_and_does_not_limit_validation(self) -> None:
         skill = (PONYTAIL_DIR / "SKILL.md").read_text(encoding="utf-8")
-        openai_config = (PONYTAIL_DIR / "agents/openai.yaml").read_text(
-            encoding="utf-8"
-        )
+        with (PONYTAIL_DIR / "agents/openai.yaml").open(encoding="utf-8") as stream:
+            openai_config = yaml.safe_load(stream)
 
         self.assertIn('local_policy: "opt-in-lite"', skill)
         self.assertIn("does not cap the number or size of tests", skill)
-        self.assertIn("allow_implicit_invocation: false", openai_config)
-        self.assertIn("$ponytail", openai_config)
+        self.assertIsInstance(openai_config, dict)
+        self.assertIs(
+            openai_config["policy"]["allow_implicit_invocation"],
+            False,
+        )
+        self.assertIn("$ponytail", openai_config["interface"]["default_prompt"])
+
+    def test_ponytail_deploys_as_one_skill_directory_link(self) -> None:
+        with DOTFILES_INVENTORY.open(encoding="utf-8") as stream:
+            inventory = yaml.safe_load(stream)
+
+        ponytail_mappings = [
+            mapping
+            for mapping in inventory["dotfiles_mapping"]
+            if mapping["payload"] == ".agents/skills/ponytail"
+            or mapping["payload"].startswith(".agents/skills/ponytail/")
+        ]
+        self.assertEqual(
+            [
+                {
+                    "name": "agent_skill_ponytail",
+                    "payload": ".agents/skills/ponytail",
+                    "dest": "{{ dotfiles_home }}/.agents/skills/ponytail",
+                }
+            ],
+            ponytail_mappings,
+        )
 
     def test_package_locks_match_manifests_and_have_integrity(self) -> None:
         for directory in PACKAGE_DIRS:

@@ -3,6 +3,9 @@
   hosts: this_host
   become: false
   gather_facts: true
+  vars_files:
+    - ../roles/system/vars/archlinux.yml
+    - ../roles/system/vars/archlinux-packages.yml
   tasks:
     - name: Contract Tests | Set cleanup rejection result
       ansible.builtin.set_fact:
@@ -208,3 +211,46 @@
           - system_time_conflicting_services | length == 0
         fail_msg: "Guarded hosts must not select a time service."
         quiet: true
+
+    - name: Contract Tests | Derive disabled virtual machine time backend
+      ansible.builtin.include_role:
+        name: system
+        tasks_from: time-backend
+      vars:
+        system_time_enabled: true
+        system_chrony_enabled: false
+        system_timesyncd_enabled: true
+        system_can_manage_systemd: true
+        system_is_virtual_machine: true
+
+    - name: Contract Tests | Verify disabled virtual machine time backend
+      ansible.builtin.assert:
+        that:
+          - system_time_backend == 'none'
+          - not (system_can_manage_chrony | bool)
+          - not (system_can_manage_timesyncd | bool)
+          - system_time_service_name | length == 0
+          - system_time_conflicting_services | length == 0
+        fail_msg: >-
+          A virtual machine with Chrony disabled must not fall back to another
+          time service.
+        quiet: true
+
+    - name: Contract Tests | Run invalid Chrony tuning cases
+      ansible.builtin.include_tasks: system/chrony_validation_contract.yml
+      loop:
+        - name: fractional pool source count
+          values:
+            pool_max_sources: 1.5
+        - name: fractional makestep limit
+          values:
+            makestep_limit: 1.5
+        - name: boolean makestep threshold
+          values:
+            makestep_threshold: true
+        - name: boolean maximum update skew
+          values:
+            max_update_skew: true
+      loop_control:
+        loop_var: contract_tests_chrony_case
+        label: "{{ contract_tests_chrony_case.name }}"

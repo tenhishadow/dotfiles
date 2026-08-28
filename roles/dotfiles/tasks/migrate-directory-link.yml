@@ -1,0 +1,143 @@
+---
+- name: Dotfiles | Inspect directory link migration source
+  ansible.builtin.find:
+    paths: "{{ dotfiles_directory_source }}"
+    file_type: any
+    follow: false
+    hidden: true
+    recurse: true
+  register: dotfiles_directory_source_scan
+  changed_when: false
+
+- name: Dotfiles | Inspect directory link migration destination
+  ansible.builtin.find:
+    paths: "{{ dotfiles_directory_destination }}"
+    file_type: any
+    follow: false
+    hidden: true
+    recurse: true
+  register: dotfiles_directory_destination_scan
+  changed_when: false
+
+- name: Dotfiles | Validate directory link migration shape
+  ansible.builtin.assert:
+    that:
+      - dotfiles_directory_source_entries == dotfiles_directory_destination_entries
+    fail_msg: >-
+      Refusing unsafe directory-link migration with unexpected content:
+      {{ dotfiles_directory_destination }}
+    quiet: true
+  vars:
+    dotfiles_directory_source_entries: >-
+      {{
+        dotfiles_directory_source_scan.files
+        | map(attribute='path')
+        | map('relpath', dotfiles_directory_source)
+        | sort
+        | list
+      }}
+    dotfiles_directory_destination_entries: >-
+      {{
+        dotfiles_directory_destination_scan.files
+        | map(attribute='path')
+        | map('relpath', dotfiles_directory_destination)
+        | sort
+        | list
+      }}
+
+- name: Dotfiles | Inspect directory link migration entries
+  ansible.builtin.stat:
+    path: "{{ dotfiles_directory_destination_entry.path }}"
+    follow: false
+  loop: "{{ dotfiles_directory_destination_scan.files }}"
+  loop_control:
+    loop_var: dotfiles_directory_destination_entry
+    label: "{{ dotfiles_directory_destination_entry.path }}"
+  register: dotfiles_directory_destination_entry_stats
+  changed_when: false
+
+- name: Dotfiles | Inspect directory link migration payload entries
+  ansible.builtin.stat:
+    path: >-
+      {{
+        [
+          dotfiles_directory_source,
+          dotfiles_directory_destination_entry_stat.dotfiles_directory_destination_entry.path
+          | relpath(dotfiles_directory_destination)
+        ] | path_join
+      }}
+    follow: false
+  loop: "{{ dotfiles_directory_destination_entry_stats.results }}"
+  loop_control:
+    loop_var: dotfiles_directory_destination_entry_stat
+    label: "{{ dotfiles_directory_destination_entry_stat.dotfiles_directory_destination_entry.path }}"
+  register: dotfiles_directory_source_entry_stats
+  changed_when: false
+
+- name: Dotfiles | Validate directory link migration entries
+  ansible.builtin.assert:
+    that:
+      - >-
+        (
+          dotfiles_directory_source_entry.stat.isdir | default(false)
+          and dotfiles_directory_destination_entry.stat.isdir | default(false)
+          and not (dotfiles_directory_destination_entry.stat.islnk | default(false))
+        )
+        or
+        (
+          (
+            dotfiles_directory_source_entry.stat.isreg | default(false)
+            or dotfiles_directory_source_entry.stat.islnk | default(false)
+          )
+          and dotfiles_directory_destination_entry.stat.islnk | default(false)
+          and dotfiles_directory_destination_resolved_source
+              == dotfiles_directory_expected_source
+        )
+    fail_msg: >-
+      Refusing unsafe directory-link migration entry:
+      {{ dotfiles_directory_destination_entry.dotfiles_directory_destination_entry.path }}
+    quiet: true
+  loop: "{{ dotfiles_directory_source_entry_stats.results }}"
+  loop_control:
+    loop_var: dotfiles_directory_source_entry
+    label: >-
+      {{ dotfiles_directory_destination_entry.dotfiles_directory_destination_entry.path }}
+  vars:
+    dotfiles_directory_destination_entry: >-
+      {{ dotfiles_directory_source_entry.dotfiles_directory_destination_entry_stat }}
+    dotfiles_directory_relative_entry: >-
+      {{
+        dotfiles_directory_destination_entry.dotfiles_directory_destination_entry.path
+        | relpath(dotfiles_directory_destination)
+      }}
+    dotfiles_directory_expected_source: >-
+      {{
+        [dotfiles_directory_source, dotfiles_directory_relative_entry]
+        | path_join
+        | realpath
+      }}
+    dotfiles_directory_raw_source: >-
+      {{ dotfiles_directory_destination_entry.stat.lnk_source | default('') }}
+    dotfiles_directory_resolved_source_path: >-
+      {{
+        dotfiles_directory_raw_source
+        if dotfiles_directory_raw_source is regex('^/')
+        else [
+          dotfiles_directory_destination_entry.dotfiles_directory_destination_entry.path
+          | dirname,
+          dotfiles_directory_raw_source
+        ] | path_join
+      }}
+    dotfiles_directory_destination_resolved_source: >-
+      {{ dotfiles_directory_resolved_source_path | realpath }}
+
+- name: Dotfiles | Record directory link migration
+  ansible.builtin.set_fact:
+    dotfiles_directory_migration_names: >-
+      {{ dotfiles_directory_migration_names + [dotfiles_directory_mapping.name] }}
+  changed_when: false
+
+- name: Dotfiles | Remove exact legacy directory link tree
+  ansible.builtin.file:
+    path: "{{ dotfiles_directory_destination }}"
+    state: absent

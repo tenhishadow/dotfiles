@@ -19,8 +19,10 @@ The default `go-task` command in this repository does not apply system-wide
 configuration. It runs `playbook_install.yml` and remains limited to the
 user-level dotfiles workflow.
 
-The consolidated system role now owns time-backend selection: virtual machines
-use a validated `/etc/chrony.conf`, while physical systemd hosts use the
-timesyncd drop-in. The selected unit is explicitly unmasked and competing NTP
-units are masked. This remains part of the explicit opt-in system layer and is
-not applied by the default dotfiles workflow.
+The consolidated system role now owns time-backend selection. With the
+applicable backend enabled, virtual machines use a validated `/etc/chrony.conf`,
+while physical systemd hosts use the timesyncd drop-in. The selected unit is
+explicitly unmasked, and competing NTP units are stopped and masked. Disabling
+the applicable backend selects no fallback daemon. This remains part of the
+explicit opt-in system layer and is not applied by the default dotfiles
+workflow.

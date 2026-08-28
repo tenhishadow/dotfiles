@@ -1,7 +1,5 @@
 # Pre-commit hooks configuration
-# Install: pip install pre-commit
-# Setup: pre-commit install
-# Run manually: pre-commit run --all-files
+# Run: go-task pre-commit
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0

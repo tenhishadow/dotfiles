@@ -1,0 +1,43 @@
+---
+- name: Contract Tests | Reset Chrony tuning rejection result
+  ansible.builtin.set_fact:
+    contract_tests_chrony_tuning_rejected: false
+
+- name: Contract Tests | Run system validation with invalid Chrony tuning
+  block:
+    - name: Contract Tests | Set invalid Chrony tuning values
+      ansible.builtin.set_fact:
+        system_chrony_pool_max_sources: >-
+          {{ contract_tests_chrony_case['values']['pool_max_sources'] | default(1) }}
+        system_chrony_makestep_threshold: >-
+          {{ contract_tests_chrony_case['values']['makestep_threshold'] | default(1.0) }}
+        system_chrony_makestep_limit: >-
+          {{ contract_tests_chrony_case['values']['makestep_limit'] | default(-1) }}
+        system_chrony_max_update_skew: >-
+          {{ contract_tests_chrony_case['values']['max_update_skew'] | default(100.0) }}
+
+    - name: Contract Tests | Include system validation tasks
+      ansible.builtin.include_role:
+        name: system
+        tasks_from: validate
+      vars:
+        system_time_backend: none
+        system_can_manage_timesyncd: false
+        system_is_container: true
+  rescue:
+    - name: Contract Tests | Record Chrony tuning rejection
+      ansible.builtin.set_fact:
+        contract_tests_chrony_tuning_rejected: >-
+          {{
+            'Invalid Chrony tuning variables.'
+            in (ansible_failed_result | string)
+          }}
+
+- name: Contract Tests | Verify Chrony tuning rejection
+  ansible.builtin.assert:
+    that:
+      - contract_tests_chrony_tuning_rejected | bool
+    fail_msg: >-
+      System validation accepted invalid Chrony tuning case
+      {{ contract_tests_chrony_case.name }}.
+    quiet: true

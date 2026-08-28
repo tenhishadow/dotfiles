@@ -44,6 +44,11 @@ changes. A legacy symlink is migrated only when it points to that baseline's
 repository payload. Use `dotfiles_directories` only for extra directories that
 are not implied by a managed destination.
 
+When a directory mapping replaces an older tree of individual links, the role
+converts that tree only if its relative paths exactly match the payload and
+every file is a link to its corresponding payload entry. Unexpected files,
+links, or directory shapes stop the apply without removing local content.
+
 Use `dotfiles_cleanup_paths` for narrow, explicit legacy symlink removals. The
 role removes only symlinks whose normalized targets are beneath
 `dotfiles_location`; it preserves user-owned symlinks, regular files, and
@@ -85,9 +90,9 @@ runtime profiles.
 Codex authentication, conversation and memory state, hook trust state, MCP
 credentials, and the Grafana URL and service-account token file are deliberately
 local. The hook does not read workspace files or inject extra model context.
-It blocks direct Bash references to local `.env`, Kubernetes config, GnuPG
-private keys, the Grafana token-file variable, and non-public SSH paths while
-allowing managed SSH and GnuPG config and public `.pub` keys.
+It blocks only unmistakably broad recursive removals and destructive Git
+worktree operations at the top command level. It is an accidental-damage guard,
+not a shell security boundary or a substitute for secret-handling rules.
 Review new or changed hooks with `/hooks` before trusting them.
 
 K9s is configured with `readOnly: true`, so the managed default is intentionally
@@ -113,7 +118,7 @@ The role keeps the default install path deterministic:
 1. Validate role variables and mapping entries.
 2. Verify every linked and baseline payload exists under `dotfiles_location`.
 3. Create extra and managed-file parent directories.
-4. Link managed payloads into `dotfiles_home`.
+4. Convert exact legacy directory-link trees, then link managed payloads.
 5. Migrate repository-linked baselines, then seed missing baseline files.
 6. Remove explicit legacy cleanup symlinks.
 7. Detect cron and Neovim restore capabilities.

@@ -66,13 +66,12 @@ The stable Codex CLI version and registry integrity are recorded by an npm lock;
 runtime. The launcher prefers it, falls back to an existing system Codex, and
 sets an owner-only umask before Codex creates local history or SQLite state.
 
-The managed Codex hook blocks only high-confidence destructive commands,
-literal credentials, unbounded operational log commands, and direct references
-to local `.env`, Kubernetes config, GnuPG private keys, the Grafana token-file
-variable, and non-public SSH paths. Managed SSH and GnuPG config paths, public
-`.pub` keys, and `.env.example` files remain readable. The hook does not read or
-inject a workspace brief. Codex requires explicit trust for new or changed user
-hooks. Ponytail is locally adapted from version 4.9.0 and commit
+The managed Codex hook blocks unmistakably broad recursive removals and
+destructive Git worktree operations at the top command level. It deliberately
+does not inspect quoted text for credential-shaped values or pretend to be a
+complete shell security boundary. The hook does not read or inject a workspace
+brief. Codex requires explicit trust for new or changed user hooks. Ponytail is
+locally adapted from version 4.9.0 and commit
 `2ed6c52c9d7e5e56942508591085fd45dea277d3` under its MIT license. The managed
 cross-agent copy defaults to lite, and Codex may invoke it only explicitly.
 

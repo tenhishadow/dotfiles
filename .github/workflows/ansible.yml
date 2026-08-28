@@ -115,7 +115,6 @@ jobs:
           nodejs-lts-krypton
           npm
           openssh
-          pre-commit
           stylua
           tree-sitter-cli
           uv

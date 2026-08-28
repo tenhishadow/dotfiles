@@ -44,9 +44,9 @@ go-task test:system
 
 | Area | Notes |
 | ---- | ----- |
-| Packages | Installs `system_packages` from `vars/archlinux-packages.yml` when `system_packages_enabled` is true, including Neovim support tools such as `tree-sitter-cli`. |
+| Packages | Installs `system_packages` from `vars/archlinux-packages.yml` when `system_packages_enabled` is true. A selected Node.js LTS provider replaces a conflicting installed provider atomically before the manifest is applied. The manifest also includes Neovim support tools such as `tree-sitter-cli`. |
 | AUR | Optionally bootstraps the configured AUR helper, `yay` by default, through tasks tagged `aur` in apply mode on non-CI, non-container hosts. |
-| Time | Configures `system_timezone`, selects Chrony for virtual machines and `systemd-timesyncd` for physical hosts, and keeps the other known NTP services masked. Containers and CI do not select a time daemon. |
+| Time | Configures `system_timezone`; when the applicable backend flag is enabled, selects Chrony for virtual machines or `systemd-timesyncd` for physical hosts and stops and masks other known NTP services. Disabled applicable backends, containers, and CI select no daemon. |
 | Journald | Writes `/etc/systemd/journald.conf.d/10-dotfiles.conf`. |
 | SSH daemon | Writes `/etc/ssh/sshd_config.d/20-dotfiles.conf` and validates effective sshd config. |
 | Locale and console | Validates locale definitions, owns `/etc/locale.gen`, regenerates locales when it changes, and manages `/etc/locale.conf` and `/etc/vconsole.conf`. |
@@ -67,7 +67,8 @@ The role keeps privileged behavior explicit and guarded:
 3. Derive CI, container, virtual machine, systemd, user systemd, time backend,
    and AUR capability guards.
 4. Validate public role variables and host overrides.
-5. Install the package manifest under tag `pkg` when packages are enabled.
+5. Replace a conflicting Node.js provider in one pacman transaction, then
+   install the package manifest under tag `pkg` when packages are enabled.
 6. Bootstrap the AUR helper under tag `aur` when AUR is enabled, apply mode is
    active, and the host is safe.
 7. Run time, locale, console, login, limits, cron, sysctl, drop-in (journald and
@@ -244,10 +245,12 @@ applies the dotfiles, system, and policy layers in a fresh Arch container with
 `--skip-tags pkg,aur`. Native Ansible assertions verify observable links,
 files, ownership, modes, content, JSON policies, and guarded host-only paths.
 Machine-readable second passes must report zero changes, failures, ignored or
-rescued failures, and unreachable hosts.
+rescued failures, and unreachable hosts. A focused package test first replaces
+the former Node.js LTS provider with the selected provider, verifies the Node.js
+and npm runtime, and requires a zero-change second package pass.
 
-The native role contract test verifies VM, physical-host, and guarded time
-backend selection. The container intentionally cannot cover service
+The native role contract test verifies VM, physical-host, disabled, and guarded
+time backend selection. The container intentionally cannot cover service
 enablement, real NTP synchronization, SSHD, sysctl loading, Docker daemon
 restart, AUR execution, VM lifecycle, or hardware behavior. A real guest or
 physical host must verify the selected time daemon after check mode. See

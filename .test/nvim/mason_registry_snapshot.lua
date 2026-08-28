@@ -1,7 +1,7 @@
 -- Curated package snapshot from mason-org/mason-registry at the pinned commit.
 
 return {
-  registry_commit = "c3d46b83801c551dc1a46d31b46272e3b514236b",
+  registry_commit = "c3d46b83801c551dc1a46d31b46272e3b514236b", -- pragma: allowlist secret
   packages = {
     "actionlint",
     "ansible-language-server",

@@ -60,9 +60,10 @@ native validation tasks.
   a new host, then add that host's values locally.
 - Link immutable task profiles, hooks, the opt-in Ponytail skill, launchers,
   package manifests, and lockfiles through the existing user-level mapping.
-- Keep public SSH and GnuPG config paths readable while the Bash hook blocks
-  direct references to `.env`, Kubernetes config, GnuPG private keys, the
-  Grafana token-file variable, and non-public `.ssh` paths.
+- Keep the Bash hook narrow: block only unmistakably broad recursive removals
+  and destructive Git worktree operations at the top command level. Secret
+  handling remains an agent instruction and filesystem-permission concern;
+  command-text heuristics are too noisy to be a security boundary.
 - Keep Context7 and the official OpenAI documentation server in the portable
   example. Keep Playwright, Grafana, and GitHub writes opt-in through dedicated
   profiles.
@@ -94,3 +95,5 @@ local service values remain outside the managed payload.
   registry artifacts represented by the checked lockfiles.
 - Hook trust remains a Codex-controlled local decision and must be reviewed
   again whenever a managed hook changes.
+- The hook intentionally does not parse nested shell programs. It reduces
+  accidental damage but does not replace sandboxing, review, or backups.

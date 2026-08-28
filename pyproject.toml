@@ -5,6 +5,7 @@ version = "2.4.1"
 dependencies = [
     "ansible",
     "ansible-lint",
+    "pre-commit",
     "pylint",
     "pyyaml",
     "ruff",

@@ -9,7 +9,10 @@
     system_time_conflicting_services:
       - dotfiles-absent-ntpd.service
     system_time_contract_config_path: /tmp/dotfiles-chrony.conf
+    system_time_contract_fake_systemctl: /tmp/systemctl
+    system_time_contract_masked_service: dotfiles-masked-running.service
     system_time_contract_negative_tests: true
+    system_time_contract_stop_marker: /tmp/dotfiles-time-contract-stop
     system_time_contract_foreign_link: >-
       /etc/systemd/system/dotfiles-foreign-link.service
     system_time_contract_foreign_link_target: >-
@@ -41,6 +44,80 @@
           the role ran.
         quiet: true
 
+    - name: Container Time Test | Install fake systemctl
+      ansible.builtin.copy:
+        content: |
+          #!/bin/sh
+          set -eu
+
+          case "${1:-}" in
+            show)
+              printf '%s\n' 'LoadState=masked' 'ActiveState=active'
+              ;;
+            stop)
+              : > "{{ system_time_contract_stop_marker }}"
+              ;;
+            *)
+              printf 'Unexpected fake systemctl command: %s\n' "$*" >&2
+              exit 2
+              ;;
+          esac
+        dest: "{{ system_time_contract_fake_systemctl }}"
+        owner: root
+        group: root
+        mode: "0755"
+      when: system_time_contract_negative_tests | bool
+
+    - name: Container Time Test | Create fake masked running service
+      ansible.builtin.file:
+        src: /dev/null
+        dest: >-
+          {{ system_systemd_system_unit_dir }}/{{
+            system_time_contract_masked_service
+          }}
+        state: link
+        force: false
+      when: system_time_contract_negative_tests | bool
+
+    - name: Container Time Test | Reset masked service stop marker
+      ansible.builtin.file:
+        path: "{{ system_time_contract_stop_marker }}"
+        state: absent
+      when: system_time_contract_negative_tests | bool
+
+    - name: Container Time Test | Stop fake masked running service
+      ansible.builtin.include_role:
+        name: system
+        tasks_from: time-conflicts
+        apply:
+          environment:
+            PATH: /tmp:/usr/local/sbin:/usr/local/bin:/usr/bin
+      vars:
+        ansible_facts:
+          services:
+            dotfiles-masked-running.service:
+              name: dotfiles-masked-running.service
+              source: systemd
+              state: running
+              status: masked
+        system_time_conflicting_services:
+          - "{{ system_time_contract_masked_service }}"
+      when: system_time_contract_negative_tests | bool
+
+    - name: Container Time Test | Inspect masked service stop marker
+      ansible.builtin.stat:
+        path: "{{ system_time_contract_stop_marker }}"
+      register: system_time_contract_stop_marker_state
+      when: system_time_contract_negative_tests | bool
+
+    - name: Container Time Test | Verify masked service was stopped
+      ansible.builtin.assert:
+        that:
+          - system_time_contract_stop_marker_state.stat.isreg | default(false)
+        fail_msg: "A running masked time service was not stopped."
+        quiet: true
+      when: system_time_contract_negative_tests | bool
+
     - name: Container Time Test | Create unmanaged unit override
       ansible.builtin.copy:
         content: "foreign-unit-preserved\n"
@@ -67,7 +144,11 @@
       rescue:
         - name: Container Time Test | Record unit rejection
           ansible.builtin.set_fact:
-            system_time_contract_unit_rejected: true
+            system_time_contract_unit_rejected: >-
+              {{
+                'Refusing to replace unmanaged systemd unit override'
+                in (ansible_failed_result | string)
+              }}
 
     - name: Container Time Test | Inspect preserved unit override
       ansible.builtin.stat:
@@ -125,7 +206,11 @@
       rescue:
         - name: Container Time Test | Record symlink rejection
           ansible.builtin.set_fact:
-            system_time_contract_symlink_rejected: true
+            system_time_contract_symlink_rejected: >-
+              {{
+                'Refusing to replace unmanaged systemd unit override'
+                in (ansible_failed_result | string)
+              }}
 
     - name: Container Time Test | Inspect preserved unit symlink
       ansible.builtin.stat:
@@ -156,3 +241,69 @@
         group: root
         mode: "0600"
         validate: "{{ system_chrony_binary_path }} -p -f %s"
+
+    - name: Container Time Test | Read rendered Chrony configuration
+      ansible.builtin.slurp:
+        src: "{{ system_time_contract_config_path }}"
+      register: system_time_contract_config_content
+
+    - name: Container Time Test | Decode rendered Chrony configuration
+      ansible.builtin.set_fact:
+        system_time_contract_config_lines: >-
+          {{
+            (system_time_contract_config_content.content | b64decode).splitlines()
+          }}
+
+    - name: Container Time Test | Verify Chrony pool entries
+      ansible.builtin.assert:
+        that:
+          - >-
+            (
+              'pool ' ~ system_time_contract_pool
+              ~ ' iburst maxsources '
+              ~ (system_chrony_pool_max_sources | string)
+            ) in system_time_contract_config_lines
+        fail_msg: >-
+          The rendered Chrony configuration is missing the expected pool entry
+          for {{ system_time_contract_pool }}.
+        quiet: true
+      loop: "{{ system_ntp_servers }}"
+      loop_control:
+        loop_var: system_time_contract_pool
+        label: "{{ system_time_contract_pool }}"
+
+    - name: Container Time Test | Verify Chrony tuning
+      ansible.builtin.assert:
+        that:
+          - >-
+            (
+              system_time_contract_config_lines
+              | select('match', '^pool ')
+              | list
+              | length
+            ) == (system_ntp_servers | length)
+          - >-
+            (
+              'driftfile ' ~ system_chrony_drift_path
+            ) in system_time_contract_config_lines
+          - >-
+            (
+              'makestep '
+              ~ (system_chrony_makestep_threshold | string)
+              ~ ' '
+              ~ (system_chrony_makestep_limit | string)
+            ) in system_time_contract_config_lines
+          - >-
+            (
+              'maxupdateskew '
+              ~ (system_chrony_max_update_skew | string)
+            ) in system_time_contract_config_lines
+          - "'rtcsync' in system_time_contract_config_lines"
+          - >-
+            (
+              'leapsectz ' ~ system_chrony_leap_timezone
+            ) in system_time_contract_config_lines
+        fail_msg: >-
+          The rendered Chrony configuration does not contain the complete
+          declarative tuning contract.
+        quiet: true

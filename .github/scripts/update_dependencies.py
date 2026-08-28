@@ -7,8 +7,10 @@ import argparse
 import json
 import os
 import re
+import stat
 import subprocess
 import sys
+import tempfile
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -532,10 +534,27 @@ def _resolve_git_branch(repository: str, branch: str) -> str:
 
 
 def _write_if_changed(path: Path, old: str, new: str) -> None:
+    """Replace one changed file atomically without changing its mode."""
+
     if new == old:
         print(f"up to date: {path}")
         return
-    path.write_text(new, encoding="utf-8")
+
+    descriptor, temporary_name = tempfile.mkstemp(
+        dir=path.parent,
+        prefix=f".{path.name}.",
+        text=True,
+    )
+    temporary_path = Path(temporary_name)
+    try:
+        with os.fdopen(descriptor, "w", encoding="utf-8", newline="") as stream:
+            stream.write(new)
+            stream.flush()
+            os.fsync(stream.fileno())
+        temporary_path.chmod(stat.S_IMODE(path.stat().st_mode))
+        os.replace(temporary_path, path)
+    finally:
+        temporary_path.unlink(missing_ok=True)
     print(f"updated: {path}")
 
 

@@ -40,6 +40,8 @@ jobs:
           # rewrite release-please output without adding structural checks.
           VALIDATE_MARKDOWN_PRETTIER: false
           VALIDATE_NATURAL_LANGUAGE: false
+          # Ruff is the canonical Python formatter for this repository.
+          VALIDATE_PYTHON_BLACK: false
           # Project-aware Pylint runs in the early Python validation job.
           # Mypy is not part of this repository's selected Python toolchain.
           VALIDATE_PYTHON_MYPY: false

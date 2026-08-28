@@ -15,7 +15,7 @@ the layer model.
 
 | Layer | Entry points | Purpose |
 | ----- | ------------ | ------- |
-| User dotfiles | `go-task`, `playbook_install.yml`, `roles/dotfiles/` | Link managed files from `dotfiles/` into `$HOME` and remove explicit legacy user paths. |
+| User dotfiles | `go-task`, `playbook_install.yml`, `roles/dotfiles/` | Link managed files from `dotfiles/` into `$HOME` and remove only listed legacy symlinks that resolve into the repository payload. |
 | System workstation | `go-task system:check`, `go-task system`, `playbook_system.yml`, `roles/system/` | Check or apply the opt-in Arch Linux workstation layer. |
 | Browser, Thunderbird, and VS Code policies | `go-task browser-policies:check`, `go-task browser-policies`, `playbook_browser_policies.yml`, `roles/browser_policies/` | Check or apply opt-in system policy files under `/etc`. |
 | All opt-in apply | `go-task all` | Apply user dotfiles, system workstation, and browser policy layers in order. |
@@ -40,11 +40,13 @@ Docker daemon restart, SSHD, sysctl loading, AUR package execution, and hardware
 behavior. Those gaps are explicit; tests must not falsify facts merely to make
 the branches appear covered.
 
-On manageable systemd hosts, the system role selects exactly one time daemon:
-Chrony on virtual machines and `systemd-timesyncd` on physical hosts. It
-unmasks the selected service and masks other known NTP daemons. Containers and
-CI select no backend. The native role contract proves selection logic; only a
-real host can prove service activation and clock synchronization.
+When time management and the host-class backend are enabled on a manageable
+systemd host, the system role selects exactly one time daemon: Chrony on virtual
+machines and `systemd-timesyncd` on physical hosts. It unmasks the selected
+service and stops and masks other known NTP daemons. A disabled applicable
+backend, containers, and CI select no daemon. The native role contract proves
+selection logic; only a real host can prove service activation and clock
+synchronization.
 
 ## AI Tool Contract
 

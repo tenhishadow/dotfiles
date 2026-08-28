@@ -8,6 +8,7 @@ system_docker_group: docker
 system_docker_service_name: docker
 system_docker_binary_path: /usr/bin/dockerd
 system_docker_conf_dir: /etc/docker
+system_nodejs_package: nodejs-lts-krypton
 system_aur_build_packages:
   - base-devel
   - git

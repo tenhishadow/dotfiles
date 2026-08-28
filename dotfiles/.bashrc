@@ -295,22 +295,26 @@ GPG_TTY=$(tty)
 export GPG_TTY
 
 # Avoid spawning tput repeatedly during every interactive shell startup.
-export LESS_TERMCAP_mb=$'\e[1;32m'     # bold green
-export LESS_TERMCAP_md=$'\e[1;36m'     # bold cyan
-export LESS_TERMCAP_me=$'\e[0m'
-export LESS_TERMCAP_so=$'\e[1;33;44m'  # bold yellow on blue
-export LESS_TERMCAP_se=$'\e[0m'
-export LESS_TERMCAP_us=$'\e[4;1;37m'   # underlined bold white
-export LESS_TERMCAP_ue=$'\e[0m'
-export LESS_TERMCAP_mr=$'\e[7m'
-export LESS_TERMCAP_mh=$'\e[2m'
-export LESS_TERMCAP_ZN=''
-export LESS_TERMCAP_ZV=''
-export LESS_TERMCAP_ZO=''
-export LESS_TERMCAP_ZW=''
+if [[ ${TERM:-dumb} != dumb ]]; then
+  export LESS_TERMCAP_mb=$'\e[1;32m'     # bold green
+  export LESS_TERMCAP_md=$'\e[1;36m'     # bold cyan
+  export LESS_TERMCAP_me=$'\e[0m'
+  export LESS_TERMCAP_so=$'\e[1;33;44m'  # bold yellow on blue
+  export LESS_TERMCAP_se=$'\e[0m'
+  export LESS_TERMCAP_us=$'\e[4;1;37m'   # underlined bold white
+  export LESS_TERMCAP_ue=$'\e[0m'
+  export LESS_TERMCAP_mr=$'\e[7m'
+  export LESS_TERMCAP_mh=$'\e[2m'
+  export LESS_TERMCAP_ZN=''
+  export LESS_TERMCAP_ZV=''
+  export LESS_TERMCAP_ZO=''
+  export LESS_TERMCAP_ZW=''
+  # shellcheck disable=SC2016
+  export LESS='-R --use-color -Dd+r$Du+b$'
+else
+  export LESS='-R'
+fi
 export GROFF_NO_SGR=1 # For Konsole and Gnome-terminal
-# shellcheck disable=SC2016
-export LESS='-R --use-color -Dd+r$Du+b$'
 
 PAGER="less -RFMIX"
 export PAGER

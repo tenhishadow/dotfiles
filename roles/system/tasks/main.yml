@@ -97,6 +97,20 @@
   tags:
     - always
 
+- name: System Packages | Install Node.js LTS provider
+  become: true
+  community.general.pacman:
+    name: "{{ system_nodejs_package }}"
+    state: present
+    # ALPM question bit 4 permits only removal of a conflicting package,
+    # allowing one Node.js LTS provider to replace another atomically.
+    extra_args: --ask 4
+  when:
+    - system_packages_enabled | bool
+    - system_nodejs_package in system_packages
+  tags:
+    - pkg
+
 - name: System Packages | Install manifest
   become: true
   ansible.builtin.package:
@@ -116,11 +130,8 @@
     - aur
 
 - name: System | Run time tasks
-  ansible.builtin.include_tasks:
+  ansible.builtin.import_tasks:
     file: time.yml
-    apply:
-      tags:
-        - time
   when:
     - system_time_enabled | bool
   tags:

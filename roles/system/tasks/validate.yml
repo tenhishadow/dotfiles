@@ -49,16 +49,6 @@
       - system_ntp_fallback_servers is sequence
       - system_ntp_fallback_servers is not string
       - not (system_timesyncd_enabled | bool) or system_ntp_fallback_servers | length > 0
-      - system_chrony_pool_max_sources is number
-      - system_chrony_pool_max_sources > 0
-      - system_chrony_makestep_threshold is number
-      - system_chrony_makestep_threshold > 0
-      - system_chrony_makestep_limit is number
-      - >-
-        system_chrony_makestep_limit == -1
-        or system_chrony_makestep_limit > 0
-      - system_chrony_max_update_skew is number
-      - system_chrony_max_update_skew > 0
       - system_chrony_leap_timezone is string
       - system_chrony_leap_timezone is regex('^[A-Za-z0-9_+./-]+$')
       - system_locales is sequence
@@ -110,6 +100,26 @@
       - system_packages is not string
       - not (system_packages_enabled | bool) or system_packages | length > 0
     fail_msg: "system role variables are invalid."
+    quiet: true
+  tags:
+    - always
+
+- name: System | Validate Chrony tuning variables
+  ansible.builtin.assert:
+    that:
+      - system_chrony_pool_max_sources is integer
+      - system_chrony_pool_max_sources > 0
+      - system_chrony_makestep_threshold is number
+      - system_chrony_makestep_threshold is not boolean
+      - system_chrony_makestep_threshold > 0
+      - system_chrony_makestep_limit is integer
+      - >-
+        system_chrony_makestep_limit == -1
+        or system_chrony_makestep_limit > 0
+      - system_chrony_max_update_skew is number
+      - system_chrony_max_update_skew is not boolean
+      - system_chrony_max_update_skew > 0
+    fail_msg: "Invalid Chrony tuning variables."
     quiet: true
   tags:
     - always
@@ -178,6 +188,7 @@
     - system_cron_service_name
     - system_chrony_package
     - system_chrony_service_name
+    - system_nodejs_package
     - system_docker_group
     - system_docker_service_name
     - system_aur_helper_package
