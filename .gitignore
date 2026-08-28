@@ -6,6 +6,11 @@
 .test/nvim/.data/
 .test/nvim/.state/
 .test/nvim/.cache/
+.test/nvim/.home/
+.test/nvim/terraform/.terraform/*
+!.test/nvim/terraform/.terraform/.gitkeep
+.test/nvim/terragrunt/.terraform/*
+!.test/nvim/terragrunt/.terraform/.gitkeep
 .test/system/local.env
 __pycache__/
 *.pyc

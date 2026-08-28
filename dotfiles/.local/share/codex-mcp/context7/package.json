@@ -2,6 +2,6 @@
   "name": "codex-context7-mcp-lock",
   "private": true,
   "dependencies": {
-    "@upstash/context7-mcp": "4.0.3"
+    "@upstash/context7-mcp": "4.0.4"
   }
 }

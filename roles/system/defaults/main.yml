@@ -35,6 +35,7 @@ system_aur_helper_build_dir: "{{ system_aur_build_root }}/{{ system_aur_helper_p
 
 system_chrony_service_name: chronyd.service
 system_timesyncd_service_name: systemd-timesyncd.service
+system_systemd_system_unit_dir: /etc/systemd/system
 system_time_service_candidates:
   - "{{ system_chrony_service_name }}"
   - "{{ system_timesyncd_service_name }}"

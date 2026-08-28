@@ -58,7 +58,7 @@ native validation tasks.
 - Keep `~/.codex/config.toml` local, regular, and owner-only. Never map it from
   this repository. Use `dotfiles/.codex/config.example.toml` only to bootstrap
   a new host, then add that host's values locally.
-- Link immutable task profiles, hooks, the pinned Ponytail skill, launchers,
+- Link immutable task profiles, hooks, the opt-in Ponytail skill, launchers,
   package manifests, and lockfiles through the existing user-level mapping.
 - Keep public SSH and GnuPG config paths readable while the Bash hook blocks
   direct references to `.env`, Kubernetes config, GnuPG private keys, the

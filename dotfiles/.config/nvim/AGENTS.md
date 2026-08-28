@@ -61,8 +61,8 @@ not source of truth.
   tools and schema data in `lua/config/languages.lua`.
 - Keep Tree-sitter explicit and quiet: do not enable automatic parser installs
   at startup, keep parser install requirements in `lua/config/languages.lua`,
-  and make tests skip parser installation when required external tools are
-  missing.
+  and let ordinary local tests skip parser installation when required external
+  tools are missing. CI uses required mode and must fail instead of skipping.
 - Keep cold installs deterministic: `Lazy restore` must not update
   `lazy-lock.json`, Mason is opt-in via `NVIM_USE_MASON`, and blink.cmp must
   not require Rust or a prebuilt binary download by default.
@@ -105,7 +105,8 @@ Run `go-task docs:nvim-keymaps:check` for keymap changes. It verifies that
 `docs/nvim-keymaps.md` matches `lua/config/keymaps_spec.lua`.
 
 Run `go-task test:nvim:mason-tools` after changing Mason tool inventories. It
-verifies sorted, unique Mason package names against the Mason registry.
+verifies sorted, unique Mason package names against the pinned, network-free
+registry snapshot.
 
 ## Done Criteria
 

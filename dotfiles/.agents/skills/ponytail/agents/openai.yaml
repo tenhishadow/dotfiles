@@ -1,0 +1,6 @@
+interface:
+  display_name: "Ponytail"
+  short_description: "Use the smallest complete coding solution"
+  default_prompt: "Use $ponytail in lite mode for the smallest complete solution."
+policy:
+  allow_implicit_invocation: false

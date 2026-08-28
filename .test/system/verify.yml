@@ -12,6 +12,9 @@
     dotfiles_ssh_config_dir: "{{ dotfiles_ssh_dir }}/config.d"
     container_test_repo_root: "{{ playbook_dir | dirname | dirname }}"
     container_test_dotfiles_location: "{{ container_test_repo_root }}/dotfiles"
+    container_test_preserved_cleanup_path: "{{ dotfiles_home }}/.nvim"
+    container_test_preserved_cleanup_target: /tmp/dotfiles-user-owned-nvim
+    container_test_removed_cleanup_path: "{{ dotfiles_config_dir }}/nvim/init.vim"
     container_test_system_files:
       - /etc/locale.gen
       - /etc/locale.conf
@@ -90,6 +93,35 @@
         loop_var: container_test_dotfiles_result
         label: "{{ container_test_dotfiles_result.container_test_dotfiles_mapping.dest }}"
 
+    - name: Dotfiles Test | Inspect baseline files
+      ansible.builtin.stat:
+        path: "{{ container_test_baseline_file.dest }}"
+        follow: false
+      loop: "{{ dotfiles_baseline_files }}"
+      loop_control:
+        loop_var: container_test_baseline_file
+        label: "{{ container_test_baseline_file.dest }}"
+      register: container_test_baseline_stats
+      changed_when: false
+
+    - name: Dotfiles Test | Verify baseline files
+      ansible.builtin.assert:
+        that:
+          - container_test_baseline_result.stat.isreg | default(false)
+          - not (container_test_baseline_result.stat.islnk | default(false))
+          - >-
+            container_test_baseline_result.stat.mode
+            == container_test_baseline_result.container_test_baseline_file.mode
+            | default('0600')
+        fail_msg: >-
+          Invalid baseline file:
+          {{ container_test_baseline_result.container_test_baseline_file.dest }}
+        quiet: true
+      loop: "{{ container_test_baseline_stats.results }}"
+      loop_control:
+        loop_var: container_test_baseline_result
+        label: "{{ container_test_baseline_result.container_test_baseline_file.dest }}"
+
     - name: Dotfiles Test | Inspect cleanup paths
       ansible.builtin.stat:
         path: "{{ container_test_cleanup_path }}"
@@ -101,18 +133,54 @@
       register: container_test_cleanup_stats
       changed_when: false
 
-    - name: Dotfiles Test | Verify cleanup paths absent
+    - name: Dotfiles Test | Verify repository cleanup links absent
       ansible.builtin.assert:
         that:
-          - not (container_test_cleanup_result.stat.exists | default(false))
+          - >-
+            not (container_test_cleanup_result.stat.islnk | default(false))
+            or container_test_cleanup_result.stat.lnk_source is not regex(
+              '^' ~ (container_test_dotfiles_location | regex_escape) ~ '(/|$)'
+            )
         fail_msg: >-
-          Legacy path remains:
+          Repository-linked legacy path remains:
           {{ container_test_cleanup_result.container_test_cleanup_path }}
         quiet: true
       loop: "{{ container_test_cleanup_stats.results }}"
       loop_control:
         loop_var: container_test_cleanup_result
         label: "{{ container_test_cleanup_result.container_test_cleanup_path }}"
+
+    - name: Dotfiles Test | Inspect cleanup boundary fixtures
+      ansible.builtin.stat:
+        path: "{{ container_test_cleanup_fixture.path }}"
+        follow: false
+      loop:
+        - name: preserved
+          path: "{{ container_test_preserved_cleanup_path }}"
+        - name: removed
+          path: "{{ container_test_removed_cleanup_path }}"
+      loop_control:
+        loop_var: container_test_cleanup_fixture
+        label: "{{ container_test_cleanup_fixture.name }}"
+      register: container_test_cleanup_fixture_stats
+      changed_when: false
+
+    - name: Dotfiles Test | Verify cleanup boundary
+      ansible.builtin.assert:
+        that:
+          - container_test_cleanup_fixture_stats.results[0].stat.islnk | default(false)
+          - >-
+            container_test_cleanup_fixture_stats.results[0].stat.lnk_source
+            == container_test_preserved_cleanup_target
+          - >-
+            not (
+              container_test_cleanup_fixture_stats.results[1].stat.exists
+              | default(false)
+            )
+        fail_msg: >-
+          Cleanup must preserve user-owned symlinks and remove only links into
+          the repository payload.
+        quiet: true
 
     - name: System Test | Inspect managed files
       ansible.builtin.stat:

@@ -1,0 +1,69 @@
+---
+- name: Time | Inspect conflicting service masks
+  become: true
+  ansible.builtin.stat:
+    path: >-
+      {{ system_systemd_system_unit_dir }}/{{ system_time_conflicting_service }}
+    follow: false
+  loop: "{{ system_time_conflicting_services }}"
+  loop_control:
+    loop_var: system_time_conflicting_service
+    label: "{{ system_time_conflicting_service }}"
+  register: system_time_conflicting_service_masks
+
+- name: Time | Reject unmanaged conflicting service overrides
+  ansible.builtin.assert:
+    that:
+      - >-
+        not (system_time_conflicting_service_mask.stat.exists | default(false))
+        or
+        (
+          system_time_conflicting_service_mask.stat.islnk | default(false)
+          and system_time_conflicting_service_mask.stat.lnk_source == '/dev/null'
+        )
+    fail_msg: >-
+      Refusing to replace unmanaged systemd unit override
+      {{ system_systemd_system_unit_dir }}/{{
+        system_time_conflicting_service_mask.system_time_conflicting_service
+      }}. Remove or adopt it explicitly before applying the system role.
+    quiet: true
+  loop: "{{ system_time_conflicting_service_masks.results }}"
+  loop_control:
+    loop_var: system_time_conflicting_service_mask
+    label: >-
+      {{ system_time_conflicting_service_mask.system_time_conflicting_service }}
+
+- name: Time | Disable existing conflicting services
+  become: true
+  ansible.builtin.systemd_service:
+    name: "{{ system_time_conflicting_service }}"
+    state: stopped
+    enabled: false
+  loop: "{{ system_time_conflicting_services }}"
+  loop_control:
+    loop_var: system_time_conflicting_service
+    label: "{{ system_time_conflicting_service }}"
+  when:
+    - system_time_conflicting_service in (ansible_facts.services | default({}))
+    - >-
+      (ansible_facts.services[system_time_conflicting_service].status
+      | default('')) not in ['masked', 'masked-runtime']
+
+- name: Time | Mask conflicting services
+  become: true
+  ansible.builtin.file:
+    src: /dev/null
+    dest: >-
+      {{ system_systemd_system_unit_dir }}/{{
+        system_time_conflicting_service_mask.system_time_conflicting_service
+      }}
+    state: link
+    force: false
+    follow: false
+  loop: "{{ system_time_conflicting_service_masks.results }}"
+  loop_control:
+    loop_var: system_time_conflicting_service_mask
+    label: >-
+      {{ system_time_conflicting_service_mask.system_time_conflicting_service }}
+  when: not (system_time_conflicting_service_mask.stat.exists | default(false))
+  notify: Time | Reload systemd

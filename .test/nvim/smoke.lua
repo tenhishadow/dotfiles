@@ -8,8 +8,21 @@ end
 
 local errors = {}
 
+if string.lower(vim.env.NVIM_TS_INSTALL or "auto") == "required" then
+  local marker = vim.fn.stdpath("state") .. "/treesitter_install_ok"
+  if vim.fn.filereadable(marker) ~= 1 then
+    table.insert(errors, "Required Tree-sitter install marker is missing")
+  end
+end
+
 local function add_error(msg)
   table.insert(errors, msg)
+end
+
+local expected_home = vim.fn.fnamemodify(vim.fn.getcwd() .. "/.test/nvim/.home", ":p")
+local actual_home = vim.fn.fnamemodify(vim.env.HOME or "", ":p")
+if actual_home ~= expected_home then
+  add_error("Neovim test HOME is not isolated: " .. actual_home)
 end
 
 local function safe_require(name)
@@ -372,6 +385,64 @@ local function run_treesitter(bufnr, test)
   end
 end
 
+local function run_vimwiki_command_check()
+  local ok_lazy_config, lazy_config = pcall(require, "lazy.core.config")
+  if not ok_lazy_config then
+    add_error("Lazy config unavailable for Vimwiki command check")
+    return
+  end
+
+  local plugin = lazy_config.plugins.vimwiki
+  if not plugin then
+    add_error("Vimwiki plugin metadata unavailable")
+    return
+  end
+  if plugin._ and plugin._.loaded then
+    add_error("Vimwiki loaded before its command trigger")
+  end
+  if vim.fn.exists(":VimwikiIndex") == 0 then
+    add_error("VimwikiIndex lazy command is not registered before plugin load")
+  end
+
+  local wiki_root = vim.fn.tempname()
+  if vim.fn.mkdir(wiki_root, "p") == 0 then
+    add_error("Failed to create Vimwiki command fixture")
+    return
+  end
+
+  vim.g.vimwiki_global_ext = 0
+  vim.g.vimwiki_list = {
+    {
+      path = wiki_root .. "/",
+      syntax = "default",
+      ext = ".wiki",
+    },
+  }
+
+  local ok_command, command_error = pcall(vim.cmd, "VimwikiIndex")
+  if not ok_command then
+    add_error("VimwikiIndex command failed: " .. tostring(command_error))
+  else
+    if not (plugin._ and plugin._.loaded) then
+      add_error("VimwikiIndex did not load the Vimwiki plugin")
+    end
+
+    local expected_path = vim.fn.fnamemodify(wiki_root .. "/index.wiki", ":p")
+    local actual_path = vim.fn.fnamemodify(vim.api.nvim_buf_get_name(0), ":p")
+    if actual_path ~= expected_path then
+      add_error("VimwikiIndex opened unexpected path: " .. actual_path)
+    end
+    if vim.bo.filetype ~= "vimwiki" then
+      add_error("VimwikiIndex opened buffer with filetype: " .. vim.bo.filetype)
+    end
+  end
+
+  local bufnr = vim.api.nvim_get_current_buf()
+  vim.bo[bufnr].modified = false
+  pcall(vim.api.nvim_buf_delete, bufnr, { force = true })
+  vim.fn.delete(wiki_root, "rf")
+end
+
 local function run_plugin_checks()
   local ok_lazy, lazy = pcall(require, "lazy")
   if not ok_lazy then
@@ -388,7 +459,6 @@ local function run_plugin_checks()
     { plugin = "which-key.nvim", cmds = { "WhichKey" } },
     { plugin = "undotree", cmds = { "UndotreeToggle" } },
     { plugin = "fzf.vim", cmds = { "Files", "Rg", "Buffers" } },
-    { plugin = "vimwiki", cmds = { "VimwikiIndex" } },
     { plugin = "conform.nvim", cmds = { "ConformInfo", "Format" } },
     { plugin = "nvim-lint", cmds = { "DotfilesLintManual" } },
     { plugin = "mason.nvim", cmds = mason_mode ~= "off" and { "Mason" } or {} },
@@ -700,6 +770,7 @@ end
 
 run_mason_utils_tests()
 run_executable_utils_tests()
+run_vimwiki_command_check()
 run_plugin_checks()
 run_tool_inventory_checks()
 run_save_behavior_checks()

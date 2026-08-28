@@ -118,8 +118,13 @@
 - name: System | Run time tasks
   ansible.builtin.include_tasks:
     file: time.yml
+    apply:
+      tags:
+        - time
   when:
     - system_time_enabled | bool
+  tags:
+    - time
 
 - name: System | Run locale tasks
   ansible.builtin.include_tasks:

@@ -68,6 +68,44 @@
         fail_msg: "dotfiles validation accepted overlapping destinations."
         quiet: true
 
+    - name: Contract Tests | Set mixed destination rejection result
+      ansible.builtin.set_fact:
+        contract_tests_mixed_destination_rejected: false
+
+    - name: Contract Tests | Run mixed destination validation
+      block:
+        - name: Contract Tests | Include dotfiles validation tasks
+          ansible.builtin.include_role:
+            name: dotfiles
+            tasks_from: validate
+          vars:
+            dotfiles_mapping:
+              - name: parent
+                payload: .bashrc
+                dest: "{{ dotfiles_home }}/.contract-parent"
+            dotfiles_baseline_files:
+              - name: child
+                payload: .config/htop/htoprc
+                dest: "{{ dotfiles_home }}/.contract-parent/child"
+            dotfiles_cleanup_paths: []
+      rescue:
+        - name: Contract Tests | Set mixed destination rejection result
+          ansible.builtin.set_fact:
+            contract_tests_mixed_destination_rejected: >-
+              {{
+                'Overlapping dotfiles destination:'
+                in (ansible_failed_result | string)
+              }}
+
+    - name: Contract Tests | Verify mixed destination rejection
+      ansible.builtin.assert:
+        that:
+          - contract_tests_mixed_destination_rejected | bool
+        fail_msg: >-
+          dotfiles validation accepted overlapping mapping and baseline
+          destinations.
+        quiet: true
+
     - name: Contract Tests | Set policy rejection result
       ansible.builtin.set_fact:
         contract_tests_policy_rejected: false

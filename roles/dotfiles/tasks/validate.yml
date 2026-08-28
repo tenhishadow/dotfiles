@@ -19,6 +19,8 @@
       - dotfiles_directories is not string
       - dotfiles_mapping is sequence
       - dotfiles_mapping is not string
+      - dotfiles_baseline_files is sequence
+      - dotfiles_baseline_files is not string
       - dotfiles_cleanup_paths is sequence
       - dotfiles_cleanup_paths is not string
     fail_msg: "dotfiles role variables are invalid."
@@ -119,25 +121,58 @@
   tags:
     - configs
 
+- name: Dotfiles | Validate baseline files
+  ansible.builtin.assert:
+    that:
+      - dotfiles_baseline_file is mapping
+      - dotfiles_baseline_file.name is defined
+      - dotfiles_baseline_file.name is string
+      - dotfiles_baseline_file.name is regex('^[a-z0-9_]+$')
+      - dotfiles_baseline_file.payload is defined
+      - dotfiles_baseline_file.payload is string
+      - dotfiles_baseline_file.payload | length > 0
+      - dotfiles_baseline_file.payload is not regex('^/')
+      - dotfiles_baseline_file.payload is not regex('(^|/)\\.\\.(/|$)')
+      - dotfiles_baseline_file.dest is defined
+      - dotfiles_baseline_file.dest is string
+      - dotfiles_baseline_file.dest is regex('^/')
+      - dotfiles_baseline_relative_dest != "."
+      - dotfiles_baseline_relative_dest is not regex('^\\.\\.(/|$)')
+      - >-
+        [dotfiles_home, dotfiles_baseline_relative_dest] | path_join
+        == dotfiles_baseline_file.dest
+      - dotfiles_baseline_file.mode is not defined or dotfiles_baseline_file.mode is string
+    fail_msg: "Invalid dotfiles baseline file: {{ dotfiles_baseline_file | to_nice_json }}"
+    quiet: true
+  vars:
+    dotfiles_baseline_relative_dest: >-
+      {{ dotfiles_baseline_file.dest | relpath(dotfiles_home) }}
+  loop: "{{ dotfiles_baseline_files }}"
+  loop_control:
+    loop_var: dotfiles_baseline_file
+    label: "{{ dotfiles_baseline_file.name | default('invalid baseline file') }}"
+  tags:
+    - configs
+
 - name: Dotfiles | Validate destination boundaries
   ansible.builtin.assert:
     that:
       - >-
-        dotfiles_mapping
-        | rejectattr('name', 'equalto', dotfiles_link.name)
+        (dotfiles_mapping + dotfiles_baseline_files)
+        | rejectattr('dest', 'equalto', dotfiles_managed_entry.dest)
         | map(attribute='dest')
         | select(
             'match',
-            '^' ~ (dotfiles_link.dest | regex_escape) ~ '/'
+            '^' ~ (dotfiles_managed_entry.dest | regex_escape) ~ '/'
           )
         | list
         | length == 0
-    fail_msg: "Overlapping dotfiles destination: {{ dotfiles_link.dest }}"
+    fail_msg: "Overlapping dotfiles destination: {{ dotfiles_managed_entry.dest }}"
     quiet: true
-  loop: "{{ dotfiles_mapping }}"
+  loop: "{{ dotfiles_mapping + dotfiles_baseline_files }}"
   loop_control:
-    loop_var: dotfiles_link
-    label: "{{ dotfiles_link.name }}"
+    loop_var: dotfiles_managed_entry
+    label: "{{ dotfiles_managed_entry.name }}"
   tags:
     - configs
 
@@ -151,9 +186,20 @@
         dotfiles_mapping | map(attribute='dest') | list | length
         == dotfiles_mapping | map(attribute='dest') | unique | list | length
       - >-
+        dotfiles_baseline_files | map(attribute='name') | list | length
+        == dotfiles_baseline_files | map(attribute='name') | unique | list | length
+      - >-
+        dotfiles_baseline_files | map(attribute='dest') | list | length
+        == dotfiles_baseline_files | map(attribute='dest') | unique | list | length
+      - >-
+        (dotfiles_mapping + dotfiles_baseline_files)
+        | map(attribute='dest') | list | length
+        == (dotfiles_mapping + dotfiles_baseline_files)
+        | map(attribute='dest') | unique | list | length
+      - >-
         dotfiles_cleanup_paths | length
         == dotfiles_cleanup_paths | unique | list | length
-    fail_msg: "dotfiles mapping and cleanup paths must be unique."
+    fail_msg: "dotfiles mapping, baseline files, and cleanup paths must be unique."
     quiet: true
   tags:
     - configs
@@ -169,7 +215,7 @@
         [dotfiles_home, dotfiles_cleanup_relative_path] | path_join
         == dotfiles_cleanup_path
       - >-
-        dotfiles_mapping
+        (dotfiles_mapping + dotfiles_baseline_files)
         | map(attribute='dest')
         | select(
             'match',
@@ -178,18 +224,18 @@
         | list
         | length == 0
       - >-
-        dotfiles_mapping | length == 0
+        (dotfiles_mapping + dotfiles_baseline_files) | length == 0
         or dotfiles_cleanup_path is not regex(
-          '^(?:' ~ dotfiles_mapping_destination_pattern ~ ')(/|$)'
+          '^(?:' ~ dotfiles_managed_destination_pattern ~ ')(/|$)'
         )
     fail_msg: "Invalid dotfiles cleanup path: {{ dotfiles_cleanup_path }}"
     quiet: true
   vars:
     dotfiles_cleanup_relative_path: >-
       {{ dotfiles_cleanup_path | relpath(dotfiles_home) }}
-    dotfiles_mapping_destination_pattern: >-
+    dotfiles_managed_destination_pattern: >-
       {{
-        dotfiles_mapping
+        (dotfiles_mapping + dotfiles_baseline_files)
         | map(attribute='dest')
         | map('regex_escape')
         | join('|')

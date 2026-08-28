@@ -72,9 +72,9 @@ to local `.env`, Kubernetes config, GnuPG private keys, the Grafana token-file
 variable, and non-public SSH paths. Managed SSH and GnuPG config paths, public
 `.pub` keys, and `.env.example` files remain readable. The hook does not read or
 inject a workspace brief. Codex requires explicit trust for new or changed user
-hooks. Ponytail is vendored at version 4.9.0 and commit
-`2ed6c52c9d7e5e56942508591085fd45dea277d3` under its MIT license and is linked
-through the cross-agent user skill path.
+hooks. Ponytail is locally adapted from version 4.9.0 and commit
+`2ed6c52c9d7e5e56942508591085fd45dea277d3` under its MIT license. The managed
+cross-agent copy defaults to lite, and Codex may invoke it only explicitly.
 
 K9s is intentionally read-only by default through `readOnly: true`. This is an
 operational guard, not just a privacy setting, and it does not manage

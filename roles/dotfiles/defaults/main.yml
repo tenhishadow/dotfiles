@@ -32,4 +32,5 @@ dotfiles_legacy_cron_names:
 
 dotfiles_directories: []
 dotfiles_mapping: []
+dotfiles_baseline_files: []
 dotfiles_cleanup_paths: []

@@ -19,6 +19,35 @@ ROOT = Path(__file__).resolve().parents[1]
 DOTFILES_VARS = ROOT / "inventory/host_vars/this_host/dotfiles.yml"
 ANSI_RE = re.compile(r"\x1b\[[0-9;]*m")
 
+DOCTOR_REQUIRED_TOOLS = (
+    ("uv", ("--version",)),
+    ("git", ("--version",)),
+    ("go-task", ("--version",)),
+    ("node", ("--version",)),
+    ("npm", ("--version",)),
+    ("codex", ("--version",)),
+    ("codex-context7-mcp", ("--version",)),
+    ("codex-playwright-mcp", ("--version",)),
+)
+DOCTOR_HOST_TOOLS = (
+    ("docker", ("--version",)),
+    ("crontab", ("-V",)),
+    ("systemctl", ("--version",)),
+)
+DOCTOR_MANAGED_USER_TOOLS = (
+    ("gemini", ("--version",)),
+    ("k9s", ("version", "--short")),
+    ("delta", ("--version",)),
+    ("terraform", ("version",)),
+    ("bat", ("--version",)),
+    ("rg", ("--version",)),
+    ("btop", ("--version",)),
+    ("direnv", ("version",)),
+    ("yarn", ("--version",)),
+    ("pip", ("--version",)),
+    ("mcp-grafana", ("--version",)),
+)
+
 # Managed paths owned by the Ansible roles. They are duplicated here on purpose
 # to keep this report dependency-light (stdlib only). check_managed_paths.py
 # renders the same paths from the role variables and asserts they match, so a
@@ -94,23 +123,40 @@ def read_os_release() -> dict[str, str]:
     return values
 
 
-def tool_line(command: str) -> str:
-    path = shutil.which(command)
-    return f"{command}: {path or 'missing'}"
-
-
-def tool_version_line(command: str, args: list[str] | None = None) -> str:
+def tool_version_status(
+    command: str, args: tuple[str, ...] | list[str] | None = None
+) -> tuple[bool, str]:
     path = shutil.which(command)
     if not path:
-        return f"{command}: missing"
-    ok, output = run_check([command, *(args or ["--version"])], timeout=3)
+        return False, f"{command}: path=missing; version=unavailable"
+    resolved_path = str(Path(path).resolve())
+    ok, output = run_check([path, *(args or ("--version",))], timeout=3)
     if ok and output:
         first_line = ANSI_RE.sub("", output.splitlines()[0])
-        return f"{command}: {path} ({first_line})"
+        return True, f"{command}: path={resolved_path}; version={first_line}"
     if output:
         first_line = ANSI_RE.sub("", output.splitlines()[0])
-        return f"{command}: {path} (version unavailable: {first_line})"
-    return f"{command}: {path} (version unavailable)"
+        return (
+            False,
+            f"{command}: path={resolved_path}; version=unavailable ({first_line})",
+        )
+    return False, f"{command}: path={resolved_path}; version=unavailable"
+
+
+def tool_version_line(
+    command: str, args: tuple[str, ...] | list[str] | None = None
+) -> str:
+    return tool_version_status(command, args)[1]
+
+
+def print_tool_group(tools: tuple[tuple[str, tuple[str, ...]], ...]) -> list[str]:
+    unavailable: list[str] = []
+    for command, args in tools:
+        available, line = tool_version_status(command, args)
+        print(line)
+        if not available:
+            unavailable.append(command)
+    return unavailable
 
 
 def known_dotfiles_vars() -> dict[str, str]:
@@ -146,36 +192,44 @@ def unresolved(value: str) -> bool:
     return "{{" in value or "}}" in value
 
 
-def parse_dotfiles_inventory() -> tuple[list[dict[str, str]], list[str], list[str]]:
+def inventory_section(line: str) -> str | None:
+    section_headers = {
+        "dotfiles_directories:": "directories",
+        "dotfiles_mapping:": "mapping",
+        "dotfiles_baseline_files:": "baseline",
+        "dotfiles_cleanup_paths:": "cleanup",
+    }
+    return section_headers.get(line)
+
+
+def parse_dotfiles_inventory() -> tuple[
+    list[dict[str, str]], list[dict[str, str]], list[str], list[str]
+]:
     """Parse the current simple dotfiles host vars shape.
 
     This intentionally supports only the repository's current
-    dotfiles_directories, dotfiles_mapping, and dotfiles_cleanup_paths list
-    structure. It is a read-only report helper, not a general YAML parser.
+    dotfiles_directories, dotfiles_mapping, dotfiles_baseline_files, and
+    dotfiles_cleanup_paths list structure. It is a read-only report helper,
+    not a general YAML parser.
     """
     if not DOTFILES_VARS.is_file():
         raise ReportError(f"{DOTFILES_VARS}: missing")
 
     mappings: list[dict[str, str]] = []
+    baselines: list[dict[str, str]] = []
     directories: list[str] = []
     cleanup: list[str] = []
     current_section = ""
     current_mapping: dict[str, str] | None = None
+    mapping_sections = {"mapping": mappings, "baseline": baselines}
 
     for raw_line in DOTFILES_VARS.read_text(encoding="utf-8").splitlines():
         line = raw_line.rstrip()
         if not line or line.lstrip().startswith("#"):
             continue
-        if line.startswith("dotfiles_directories:"):
-            current_section = "directories"
-            current_mapping = None
-            continue
-        if line.startswith("dotfiles_mapping:"):
-            current_section = "mapping"
-            current_mapping = None
-            continue
-        if line.startswith("dotfiles_cleanup_paths:"):
-            current_section = "cleanup"
+        next_section = inventory_section(line)
+        if next_section:
+            current_section = next_section
             current_mapping = None
             continue
 
@@ -186,55 +240,95 @@ def parse_dotfiles_inventory() -> tuple[list[dict[str, str]], list[str], list[st
         if current_section == "cleanup" and stripped.startswith("- "):
             cleanup.append(render_value(stripped[2:]))
             continue
-        if current_section != "mapping":
+        if current_section not in {"mapping", "baseline"}:
             continue
         if stripped.startswith("- name:"):
             current_mapping = {"name": stripped.split(":", 1)[1].strip()}
-            mappings.append(current_mapping)
+            mapping_sections[current_section].append(current_mapping)
             continue
         if current_mapping is None or ":" not in stripped:
             continue
         key, value = stripped.split(":", 1)
-        if key in {"payload", "dest"}:
+        if key in {"payload", "dest"} or (
+            current_section == "baseline" and key == "mode"
+        ):
             current_mapping[key] = render_value(value)
 
-    return mappings, directories, cleanup
+    return mappings, baselines, directories, cleanup
 
 
-def print_doctor() -> None:
+def print_symlink_mapping(mapping: dict[str, str]) -> None:
+    name = mapping.get("name", "unnamed")
+    missing_keys = sorted({"payload", "dest"} - mapping.keys())
+    if missing_keys:
+        print(f"{name}: invalid mapping (missing {', '.join(missing_keys)})")
+        return
+    dest_value = mapping["dest"]
+    payload_value = mapping["payload"]
+    if unresolved(dest_value) or unresolved(payload_value):
+        print(f"{name}: unresolved template ({payload_value} -> {dest_value})")
+        return
+    dest = Path(dest_value)
+    payload = ROOT / "dotfiles" / payload_value
+    if dest.is_symlink() and dest.resolve() == payload.resolve():
+        state = "managed symlink"
+    elif dest.exists() or dest.is_symlink():
+        state = "conflict or existing path"
+    else:
+        state = "missing"
+    print(f"{name}: {dest} -> {state}")
+
+
+def print_baseline_file(baseline: dict[str, str]) -> None:
+    name = baseline.get("name", "unnamed")
+    missing_keys = sorted({"payload", "dest"} - baseline.keys())
+    if missing_keys:
+        print(f"{name}: invalid baseline (missing {', '.join(missing_keys)})")
+        return
+    dest_value = baseline["dest"]
+    payload_value = baseline["payload"]
+    if unresolved(dest_value) or unresolved(payload_value):
+        print(f"{name}: unresolved template ({payload_value} -> {dest_value})")
+        return
+    dest = Path(dest_value)
+    payload = ROOT / "dotfiles" / payload_value
+    if dest.is_symlink() and dest.resolve() == payload.resolve():
+        state = "legacy managed symlink (will migrate to a local copy)"
+    elif dest.is_symlink():
+        state = "conflict or existing path"
+    elif dest.is_file():
+        state = "present (local changes preserved)"
+    elif dest.exists():
+        state = "conflict or existing path"
+    else:
+        state = "missing (will seed a local copy)"
+    print(f"{name}: {dest} -> {state}")
+
+
+def print_path_group(title: str, paths: list[str]) -> None:
+    section(title)
+    for path in paths:
+        if unresolved(path):
+            print(f"{path}: unresolved template")
+            continue
+        print(f"{path}: {status(Path(path))}")
+
+
+def print_doctor() -> list[str]:
     os_release = read_os_release()
     section("Host")
     print(f"os: {os_release.get('PRETTY_NAME', 'unknown')}")
     print(f"user: {getpass.getuser()}")
     print(f"home: {Path.home()}")
 
-    section("Tools")
-    for command in ("uv", "git", "go-task", "docker", "crontab", "systemctl"):
-        if command == "crontab":
-            print(tool_line(command))
-        else:
-            print(tool_version_line(command))
+    section("Required Tools")
+    unavailable = print_tool_group(DOCTOR_REQUIRED_TOOLS)
+
+    section("Optional Host Tools")
+    print_tool_group(DOCTOR_HOST_TOOLS)
 
     section("Managed User Tools")
-    managed_tools = (
-        ("gemini", ["--version"]),
-        ("k9s", ["version", "--short"]),
-        ("delta", ["--version"]),
-        ("terraform", ["version"]),
-        ("bat", ["--version"]),
-        ("rg", ["--version"]),
-        ("btop", ["--version"]),
-        ("direnv", ["version"]),
-        ("npm", ["--version"]),
-        ("yarn", ["--version"]),
-        ("pip", ["--version"]),
-        ("codex", ["--version"]),
-        ("codex-context7-mcp", ["--version"]),
-        ("codex-playwright-mcp", ["--version"]),
-        ("mcp-grafana", ["--version"]),
-    )
-    for command, args in managed_tools:
-        print(tool_version_line(command, args))
+    print_tool_group(DOCTOR_MANAGED_USER_TOOLS)
 
     docker_ok, docker_output = run_check(["docker", "info"])
     print(f"docker daemon: {'available' if docker_ok else 'unavailable'}")
@@ -245,45 +339,21 @@ def print_doctor() -> None:
     systemd_ok = Path("/run/systemd/system").is_dir()
     systemd_state = "available" if systemctl_path and systemd_ok else "unavailable"
     print(f"systemd runtime: {systemd_state}")
+    return unavailable
 
 
 def print_dotfiles_plan() -> None:
-    mappings, directories, cleanup = parse_dotfiles_inventory()
+    mappings, baselines, directories, cleanup = parse_dotfiles_inventory()
     section("Dotfiles Destinations")
     for mapping in mappings:
-        name = mapping.get("name", "unnamed")
-        missing_keys = sorted({"payload", "dest"} - mapping.keys())
-        if missing_keys:
-            print(f"{name}: invalid mapping (missing {', '.join(missing_keys)})")
-            continue
-        dest_value = mapping["dest"]
-        payload_value = mapping["payload"]
-        if unresolved(dest_value) or unresolved(payload_value):
-            print(f"{name}: unresolved template ({payload_value} -> {dest_value})")
-            continue
-        dest = Path(dest_value)
-        payload = ROOT / "dotfiles" / payload_value
-        if dest.is_symlink() and dest.resolve() == payload.resolve():
-            state = "managed symlink"
-        elif dest.exists() or dest.is_symlink():
-            state = "conflict or existing path"
-        else:
-            state = "missing"
-        print(f"{name}: {dest} -> {state}")
+        print_symlink_mapping(mapping)
 
-    section("Extra Directories")
-    for directory in directories:
-        if unresolved(directory):
-            print(f"{directory}: unresolved template")
-            continue
-        print(f"{directory}: {status(Path(directory))}")
+    section("Baseline Files (copy once; local changes preserved)")
+    for baseline in baselines:
+        print_baseline_file(baseline)
 
-    section("Explicit Cleanup Paths")
-    for path in cleanup:
-        if unresolved(path):
-            print(f"{path}: unresolved template")
-            continue
-        print(f"{path}: {status(Path(path))}")
+    print_path_group("Extra Directories", directories)
+    print_path_group("Explicit Cleanup Paths", cleanup)
 
 
 def print_system_report() -> None:
@@ -353,7 +423,13 @@ def main() -> int:
 
     try:
         if args.report == "doctor":
-            print_doctor()
+            unavailable = print_doctor()
+            if unavailable:
+                print(
+                    "mandatory components unavailable: " + ", ".join(unavailable),
+                    file=sys.stderr,
+                )
+                return 1
         elif args.report == "dotfiles-plan":
             print_dotfiles_plan()
         elif args.report == "system-report":

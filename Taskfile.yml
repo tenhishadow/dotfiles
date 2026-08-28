@@ -8,8 +8,19 @@ vars:
   RUN_BROWSER_PLAYBOOK: "uv run ansible-playbook playbook_browser_policies.yml"
   VINT_TARGETS: "dotfiles/.vimrc dotfiles/.config/nvim"
   STYLUA_TARGETS: "dotfiles/.config/nvim .test/nvim"
-  RENOVATE_VERSION: "44.48.3"
+  RENOVATE_VERSION: "44.50.1"
   RENOVATE_NODE_MIN_VERSION: "24.11.0"
+  PINACT_VERSION: "v4.1.1"
+  DEPENDENCY_AUTH_TIMEOUT: "30s"
+  DEPENDENCY_COMMAND_TIMEOUT: "600s"
+  NVIM_TEST_ENV: >-
+    env
+    HOME="{{.PWD}}/.test/nvim/.home"
+    XDG_CONFIG_HOME="{{.PWD}}/.test/nvim/.config"
+    XDG_DATA_HOME="{{.PWD}}/.test/nvim/.data"
+    XDG_STATE_HOME="{{.PWD}}/.test/nvim/.state"
+    XDG_CACHE_HOME="{{.PWD}}/.test/nvim/.cache"
+    GOENV="{{.PWD}}/.test/nvim/.state/go/env"
   SUPERLINTER_IMAGE_TAG: "slim-v8.7.0"
   SUPERLINTER_DOCKER_RUN: >-
     docker run
@@ -61,7 +72,7 @@ tasks:
     deps: [deps-os]
     cmd: >-
       if [ "${UV_NO_SYNC:-false}" != "true" ]; then
-        uv sync --locked --no-build --no-install-project --no-dev --managed-python --quiet;
+        timeout {{.DEPENDENCY_COMMAND_TIMEOUT}} uv sync --locked --no-build --no-install-project --no-dev --managed-python --quiet;
       fi
   deps-galaxy:
     silent: true
@@ -110,17 +121,35 @@ tasks:
           exit 1;
         }
   deps-upgrade:
+    desc: Update every managed dependency without committing or pushing changes.
+    deps: [deps-upgrade:check]
     cmds:
       - task: deps-upgrade:python
       - task: deps-upgrade:ansible
       - task: deps-upgrade:pre-commit
+      - task: deps-upgrade:npm
       - task: deps-upgrade:nvim
-      - task: renovate
+      - task: deps-upgrade:github-actions
+      - task: deps-upgrade:repository
+  deps-upgrade:check:
+    silent: true
+    cmds:
+      - >-
+        for tool in git go npm nvim python3 timeout uv; do
+          command -v "${tool}" >/dev/null 2>&1 || {
+            printf '%s\n' "${tool} is required for dependency upgrades." >&2;
+            exit 1;
+          };
+        done
+      - >-
+        timeout {{.DEPENDENCY_AUTH_TIMEOUT}} python3
+        .github/scripts/update_dependencies.py check
   deps-upgrade:python:
     deps: [deps-os]
     cmds:
-      - uv lock --upgrade
+      - timeout {{.DEPENDENCY_COMMAND_TIMEOUT}} uv lock --upgrade
       - >-
+        timeout {{.DEPENDENCY_COMMAND_TIMEOUT}}
         uv sync
         --locked
         --no-build
@@ -129,12 +158,68 @@ tasks:
         --managed-python
   deps-upgrade:ansible:
     deps: [deps-python]
-    cmd: "uv run ansible-galaxy collection install -r requirements.yml --upgrade"
+    cmds:
+      - >-
+        timeout {{.DEPENDENCY_COMMAND_TIMEOUT}}
+        uv run python .github/scripts/update_dependencies.py ansible
+      - >-
+        timeout {{.DEPENDENCY_COMMAND_TIMEOUT}}
+        uv run ansible-galaxy collection install -r requirements.yml --upgrade
   deps-upgrade:pre-commit:
-    deps: [deps-verify]
-    cmd: pre-commit autoupdate
+    cmd: >-
+      timeout {{.DEPENDENCY_COMMAND_TIMEOUT}} uv run pre-commit autoupdate
+  deps-upgrade:npm:
+    cmd: >-
+      timeout {{.DEPENDENCY_COMMAND_TIMEOUT}}
+      uv run python .github/scripts/update_dependencies.py npm
   deps-upgrade:nvim:
-    cmd: NVIM_USE_MASON=off nvim --headless "+Lazy! update" +qa
+    cmd: >-
+      workspace="$(mktemp -d)";
+      trap 'rm -rf -- "${workspace}"' EXIT;
+      mkdir -p
+      "${workspace}/home"
+      "${workspace}/config"
+      "${workspace}/data"
+      "${workspace}/state"
+      "${workspace}/cache";
+      cp -a dotfiles/.config/nvim "${workspace}/config/nvim";
+      env
+      HOME="${workspace}/home"
+      XDG_CONFIG_HOME="${workspace}/config"
+      XDG_DATA_HOME="${workspace}/data"
+      XDG_STATE_HOME="${workspace}/state"
+      XDG_CACHE_HOME="${workspace}/cache"
+      NVIM_USE_MASON=off
+      timeout 300s nvim --headless "+Lazy! update" +qa;
+      cp "${workspace}/config/nvim/lazy-lock.json"
+      dotfiles/.config/nvim/lazy-lock.json
+  deps-upgrade:github-actions:
+    cmd: >-
+      github_token="${PINACT_GITHUB_TOKEN:-${GITHUB_TOKEN:-}}";
+      if [ -z "${github_token}" ]; then
+        if ! command -v gh >/dev/null 2>&1; then
+          printf '%s\n' 'GitHub authentication is required; export PINACT_GITHUB_TOKEN or GITHUB_TOKEN, or authenticate the gh CLI.' >&2;
+          exit 1;
+        fi;
+        github_token="$(timeout {{.DEPENDENCY_AUTH_TIMEOUT}} gh auth token --hostname github.com 2>/dev/null)" || true;
+        if [ -z "${github_token}" ]; then
+          printf '%s\n' 'GitHub authentication is required; export PINACT_GITHUB_TOKEN or GITHUB_TOKEN, or authenticate the gh CLI.' >&2;
+          exit 1;
+        fi;
+      fi;
+      PINACT_GITHUB_TOKEN="${github_token}"
+      GITHUB_TOKEN="${github_token}"
+      timeout {{.DEPENDENCY_COMMAND_TIMEOUT}}
+      go run
+      github.com/suzuki-shunsuke/pinact/v4/cmd/pinact@{{.PINACT_VERSION}}
+      run
+      --update
+      --verify-comment
+      --exclude '^tenhishadow/github_actions_templates/'
+  deps-upgrade:repository:
+    cmd: >-
+      timeout {{.DEPENDENCY_COMMAND_TIMEOUT}}
+      uv run python .github/scripts/update_dependencies.py repository
   deps-report:github-actions:
     deps: [deps-renovate]
     cmd: >-
@@ -353,15 +438,6 @@ tasks:
     deps: [deps-galaxy]
     cmd: "{{.RUN_BROWSER_PLAYBOOK}} --check --diff {{.CLI_ARGS}}"
   test:nvim:
-    env:
-      XDG_CONFIG_HOME: &xdg_config_home "{{.PWD}}/.test/nvim/.config"
-      XDG_DATA_HOME: &xdg_data_home "{{.PWD}}/.test/nvim/.data"
-      XDG_STATE_HOME: &xdg_state_home "{{.PWD}}/.test/nvim/.state"
-      XDG_CACHE_HOME: &xdg_cache_home "{{.PWD}}/.test/nvim/.cache"
-      GOENV: "{{.PWD}}/.test/nvim/.state/go/env"
-      NVIM_USE_MASON: "off"
-      NVIM_TS_INSTALL: "auto"
-      NVIM_TS_TIMEOUT_MS: "120000"
     cmds:
       - &nvim_bootstrap_clean >-
         rm -rf
@@ -369,52 +445,88 @@ tasks:
         .test/nvim/.data/nvim
         .test/nvim/.state/nvim
         .test/nvim/.cache/nvim
-      - &nvim_bootstrap_mkdir mkdir -p .test/nvim/.config .test/nvim/.data .test/nvim/.state .test/nvim/.cache
+        .test/nvim/.home
+      - &nvim_bootstrap_mkdir >-
+        mkdir -p
+        .test/nvim/.config
+        .test/nvim/.data
+        .test/nvim/.state
+        .test/nvim/.cache
+        .test/nvim/.home
       - &nvim_bootstrap_copy cp -a dotfiles/.config/nvim .test/nvim/.config/
-      - timeout 300s nvim --headless "+Lazy! restore" +qa
+      - >-
+        {{.NVIM_TEST_ENV}}
+        NVIM_USE_MASON=off
+        NVIM_TS_INSTALL='{{default "auto" .NVIM_TS_INSTALL}}'
+        NVIM_TS_TIMEOUT_MS=120000
+        timeout 300s nvim --headless "+Lazy! restore" +qa
       - diff -u dotfiles/.config/nvim/lazy-lock.json .test/nvim/.config/nvim/lazy-lock.json
+      - >-
+        {{.NVIM_TEST_ENV}}
+        NVIM_USE_MASON=off
+        NVIM_TS_INSTALL='{{default "auto" .NVIM_TS_INSTALL}}'
+        NVIM_TS_TIMEOUT_MS=120000
+        timeout 120s nvim --headless
+        .test/nvim/vimwiki/index.wiki
+        "+lua dofile('.test/nvim/vimwiki_first_buffer.lua')"
       - task: test:nvim:mason-tools
-      - timeout 180s nvim --headless "+lua dofile('.test/nvim/treesitter_install.lua')" +qa
-      - timeout 120s nvim --headless "+checkhealth" +qa
-      - timeout 120s nvim --headless "+checkhealth vim.lsp" +qa
-      - timeout 120s nvim --headless "+lua dofile('.test/nvim/smoke.lua')"
+      - >-
+        {{.NVIM_TEST_ENV}}
+        NVIM_USE_MASON=off
+        NVIM_TS_INSTALL='{{default "auto" .NVIM_TS_INSTALL}}'
+        NVIM_TS_TIMEOUT_MS=120000
+        timeout 180s nvim --headless "+lua dofile('.test/nvim/treesitter_install.lua')" +qa
+      - >-
+        {{.NVIM_TEST_ENV}}
+        NVIM_USE_MASON=off
+        NVIM_TS_INSTALL='{{default "auto" .NVIM_TS_INSTALL}}'
+        NVIM_TS_TIMEOUT_MS=120000
+        timeout 120s nvim --headless "+checkhealth" +qa
+      - >-
+        {{.NVIM_TEST_ENV}}
+        NVIM_USE_MASON=off
+        NVIM_TS_INSTALL='{{default "auto" .NVIM_TS_INSTALL}}'
+        NVIM_TS_TIMEOUT_MS=120000
+        timeout 120s nvim --headless "+checkhealth vim.lsp" +qa
+      - >-
+        {{.NVIM_TEST_ENV}}
+        NVIM_USE_MASON=off
+        NVIM_TS_INSTALL='{{default "auto" .NVIM_TS_INSTALL}}'
+        NVIM_TS_TIMEOUT_MS=120000
+        timeout 120s nvim --headless "+lua dofile('.test/nvim/smoke.lua')"
   test:nvim:mason-tools:
     cmds:
       - >-
+        {{.NVIM_TEST_ENV}}
         timeout 120s nvim --headless --clean -u NONE
         '+lua dofile(".test/nvim/mason_tools.lua")'
   test:nvim:compat:
-    env:
-      XDG_CONFIG_HOME: *xdg_config_home
-      XDG_DATA_HOME: *xdg_data_home
-      XDG_STATE_HOME: *xdg_state_home
-      XDG_CACHE_HOME: *xdg_cache_home
-      NVIM_DOTFILES_DISABLE_PLUGINS: "1"
-      NVIM_USE_MASON: "off"
     cmds:
       - *nvim_bootstrap_clean
       - *nvim_bootstrap_mkdir
       - *nvim_bootstrap_copy
-      - timeout 60s nvim --headless "+lua dofile('.test/nvim/compat.lua')"
+      - >-
+        {{.NVIM_TEST_ENV}}
+        NVIM_DOTFILES_DISABLE_PLUGINS=1
+        NVIM_USE_MASON=off
+        timeout 60s nvim --headless "+lua dofile('.test/nvim/compat.lua')"
   test:nvim:all:
     cmds:
       - task: test:nvim
       - task: test:nvim:compat
   test:nvim:profile:
     deps: [test:nvim]
-    env:
-      XDG_CONFIG_HOME: *xdg_config_home
-      XDG_DATA_HOME: *xdg_data_home
-      XDG_STATE_HOME: *xdg_state_home
-      XDG_CACHE_HOME: *xdg_cache_home
-      NVIM_USE_MASON: "off"
     cmds:
       - >-
         profile_log="$(mktemp)";
         trap 'rm -f "${profile_log}"' EXIT;
+        {{.NVIM_TEST_ENV}}
+        NVIM_USE_MASON=off
         timeout 120s nvim --headless --startuptime "${profile_log}" +qa >/dev/null 2>&1;
         awk '/--- NVIM STARTED ---/ { printf "startup_ms=%s\n", $1 }' "${profile_log}"
       - >-
+        {{.NVIM_TEST_ENV}}
+        NVIM_USE_MASON=off
         timeout 120s nvim --headless
         '+lua local cfg=require("lazy.core.config"); local names={}; local total=0; for name,p in pairs(cfg.plugins) do total=total+1; if p._ and p._.loaded then table.insert(names,name) end end; table.sort(names); print("plugins_total=" .. total); print("plugins_loaded=" .. #names); print("loaded_plugins=" .. table.concat(names,","))'
         +qa

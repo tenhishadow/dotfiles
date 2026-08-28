@@ -15,13 +15,18 @@ workspaces.
 - `.test/nvim/*` language sample fixtures
 - `.test/vint_runner.py`
 - `.test/test_agent_tooling.py`
+- `.test/test_dotfiles_payload.py`
 - `.test/test_portable_hook.py`
+- `.test/test_ssh_config.py`
+- `.test/test_workstation_report.py`
 - `.test/test_check_ansible_semantics.py`
+- `.test/test_dependency_upgrade.py`
 - `.test/assert_ansible_convergence.py`
 - `.test/test_assert_ansible_convergence.py`
 - `.test/role_contracts.yml`
 - `.test/system/exec.sh`
 - `.test/system/local.env.example`
+- `.test/system/time_contract.yml`
 - `.test/system/verify.yml`
 - `.test/workstation_report.py`
 
@@ -36,9 +41,10 @@ contracts. `test_agent_tooling.py` validates Codex configuration and npm locks;
 dotfiles destination review, system paths, and policy file ownership.
 
 `.test/system/exec.sh` is the Arch Linux package-target and convergence harness
-used by `go-task test:system` and `go-task verify`. It applies all three layers,
-runs the observable-state assertions in `.test/system/verify.yml`, and requires
-zero changes or hidden failures on each second playbook run.
+used by `go-task test:system` and `go-task verify`. It validates preventative
+time-service masking and Chrony syntax, applies all three layers, runs the
+observable-state assertions in `.test/system/verify.yml`, and requires zero
+changes or hidden failures on each second playbook run.
 
 ## Generated Files
 
@@ -49,6 +55,7 @@ source of truth:
 - `.test/nvim/.data`
 - `.test/nvim/.state`
 - `.test/nvim/.cache`
+- `.test/nvim/.home`
 - `.test/system/local.env` (optional private test mirrors)
 
 ## Editing Rules
@@ -62,8 +69,9 @@ source of truth:
   fixtures, not repository dependency surfaces.
 - Keep Neovim test language lists sourced from the canonical config when
   possible, especially `config.languages`.
-- Keep Tree-sitter parser installation optional in the test sandbox and skip
-  cleanly when required external tools are missing.
+- Keep Tree-sitter parser installation optional for ordinary local smoke tests.
+  CI must use required mode and fail when tools, parsers, or the success marker
+  are missing.
 - Keep shell scripts robust with safe flags where practical.
 - Keep Python tests discoverable as `test_*.py`. Prefer local helpers and
   `subTest` data tables over base classes or a fixture framework.

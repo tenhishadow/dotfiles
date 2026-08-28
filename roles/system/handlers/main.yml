@@ -57,6 +57,13 @@
   when:
     - system_can_manage_chrony | default(false) | bool
 
+- name: Time | Reload systemd
+  become: true
+  ansible.builtin.systemd_service:
+    daemon_reload: true
+  when:
+    - system_can_manage_systemd | default(false) | bool
+
 - name: Console | Restart vconsole setup
   become: true
   ansible.builtin.service:

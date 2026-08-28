@@ -16,7 +16,7 @@ automation under `.github/`.
 - Do not casually change release-please, Renovate, CODEOWNERS, or zizmor
   configuration.
 - Pin every `uses:` reference to a full commit SHA with a version comment;
-  Renovate maintains the digest.
+  Renovate and `go-task deps-upgrade` maintain the digest.
 - Keep workflow permissions minimal and explicit.
 - Keep workflow concurrency explicit for long-running or PR-triggered jobs.
 - Keep `.github/labeler.yml` aligned with the current repository structure.

@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
@@ -73,7 +73,7 @@ jobs:
 
   ansible_lint:
     name: ansible-lint
-    uses: tenhishadow/github_actions_templates/.github/workflows/taskfile.uv.yaml@39bafe28cfa188344b842194b575ecef42e2059d # main
+    uses: tenhishadow/github_actions_templates/.github/workflows/taskfile.uv.yaml@39bafe28cfa188344b842194b575ecef42e2059d # renovate: branch=main
     with:
       os: ubuntu-latest
       task_target: lint
@@ -88,7 +88,7 @@ jobs:
         os:
           - ubuntu-latest
           - macos-latest
-    uses: tenhishadow/github_actions_templates/.github/workflows/taskfile.uv.yaml@39bafe28cfa188344b842194b575ecef42e2059d # main
+    uses: tenhishadow/github_actions_templates/.github/workflows/taskfile.uv.yaml@39bafe28cfa188344b842194b575ecef42e2059d # renovate: branch=main
     with:
       os: ${{ matrix.os }}
       task_target: default
@@ -114,12 +114,14 @@ jobs:
           neovim
           nodejs-lts-krypton
           npm
+          openssh
           pre-commit
           stylua
+          tree-sitter-cli
           uv
 
       - name: Checkout repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
@@ -147,6 +149,11 @@ jobs:
       - name: Validate repository contract
         run: go-task verify:fast
 
+      - name: Run Neovim smoke tests
+        env:
+          NVIM_TS_INSTALL: required
+        run: go-task test:nvim
+
   workstation_convergence:
     name: workstation-convergence (archlinux)
     needs: python_contracts
@@ -163,7 +170,7 @@ jobs:
           git
 
       - name: Checkout repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 

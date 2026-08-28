@@ -30,5 +30,5 @@ This is the default user-level dotfiles role used by `playbook_install.yml`.
 ## Done Criteria
 
 - The default `go-task` flow remains sudo-free.
-- Managed files are linked from the repository payload.
+- Mapping entries are linked; copy-once baselines remain regular local files.
 - No secrets, generated state, or local runtime state were added.

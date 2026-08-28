@@ -30,21 +30,49 @@
     },
     {
       "customType": "regex",
-      "description": "Update the RENOVATE_VERSION variable in Taskfile.yml.",
+      "description": "Update the pinned pinact release used by deps-upgrade.",
       "managerFilePatterns": ["/^Taskfile\\.yml$/"],
-      "matchStrings": ["RENOVATE_VERSION: \"(?<currentValue>\\d+\\.\\d+\\.\\d+)\""],
-      "depNameTemplate": "renovate",
-      "datasourceTemplate": "npm"
+      "matchStrings": ["PINACT_VERSION: \"(?<currentValue>v\\d+\\.\\d+\\.\\d+)\""],
+      "depNameTemplate": "suzuki-shunsuke/pinact",
+      "datasourceTemplate": "github-releases",
+      "versioningTemplate": "semver"
+    },
+    {
+      "customType": "regex",
+      "description": "Refresh the taskfile.uv reusable workflow pin from its tracked branch.",
+      "managerFilePatterns": ["/^\\.github/workflows/[^/]+\\.ya?ml$/"],
+      "matchStrings": [
+        "uses:\\s+tenhishadow/github_actions_templates/\\.github/workflows/taskfile\\.uv\\.yaml@(?<currentDigest>[a-f0-9]{40})\\s+#\\s+renovate:\\s+branch=(?<currentValue>[A-Za-z0-9._/-]+)"
+      ],
+      "depNameTemplate": "tenhishadow/github_actions_templates",
+      "packageNameTemplate": "https://github.com/tenhishadow/github_actions_templates.git",
+      "datasourceTemplate": "git-refs",
+      "versioningTemplate": "exact"
     }
   ],
   "packageRules": [
     {
-      "matchManagers": ["npm", "pep621"],
       "matchFileNames": [".test/**"],
       "enabled": false
     },
     {
+      "matchManagers": ["custom.regex"],
+      "matchDepNames": ["suzuki-shunsuke/pinact"],
+      "allowedVersions": "/^v4\\./"
+    },
+    {
       "matchManagers": ["github-actions"],
+      "groupName": "github actions",
+      "addLabels": ["ci"]
+    },
+    {
+      "matchManagers": ["github-actions"],
+      "matchDepNames": ["tenhishadow/github_actions_templates"],
+      "enabled": false
+    },
+    {
+      "matchManagers": ["custom.regex"],
+      "matchDepNames": ["tenhishadow/github_actions_templates"],
       "groupName": "github actions",
       "addLabels": ["ci"]
     },

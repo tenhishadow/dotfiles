@@ -133,6 +133,7 @@
     - system_chrony_binary_path
     - system_chrony_config_path
     - system_chrony_drift_path
+    - system_systemd_system_unit_dir
     - system_aur_build_root
     - system_aur_helper_binary_path
     - system_aur_helper_build_dir

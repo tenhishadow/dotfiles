@@ -93,9 +93,9 @@ dotfiles_mapping:
   - name: kitty_gruvbox_light_soft
     payload: .config/kitty/gruvbox_light_soft.conf
     dest: "{{ dotfiles_config_dir }}/kitty/gruvbox_light_soft.conf"
-  - name: htoprc
-    payload: .config/htop/htoprc
-    dest: "{{ dotfiles_config_dir }}/htop/htoprc"
+  - name: kde_keyboard
+    payload: .config/kxkbrc
+    dest: "{{ dotfiles_config_dir }}/kxkbrc"
   - name: k9s_config
     payload: .config/k9s/config.yaml
     dest: "{{ dotfiles_config_dir }}/k9s/config.yaml"
@@ -132,9 +132,6 @@ dotfiles_mapping:
   - name: pylintrc
     payload: .pylintrc
     dest: "{{ dotfiles_home }}/.pylintrc"
-  - name: mplayer
-    payload: .mplayer/config
-    dest: "{{ dotfiles_home }}/.mplayer/config"
   - name: starship
     payload: .config/starship.toml
     dest: "{{ dotfiles_config_dir }}/starship.toml"
@@ -168,6 +165,9 @@ dotfiles_mapping:
   - name: agent_skill_ponytail_license
     payload: .agents/skills/ponytail/LICENSE
     dest: "{{ dotfiles_home }}/.agents/skills/ponytail/LICENSE"
+  - name: agent_skill_ponytail_openai
+    payload: .agents/skills/ponytail/agents/openai.yaml
+    dest: "{{ dotfiles_home }}/.agents/skills/ponytail/agents/openai.yaml"
   - name: codex_context7_launcher
     payload: .local/bin/codex-context7-mcp
     dest: "{{ dotfiles_home }}/.local/bin/codex-context7-mcp"
@@ -195,6 +195,18 @@ dotfiles_mapping:
   - name: codex_cli_lock
     payload: .local/share/codex-cli/locked/package-lock.json
     dest: "{{ dotfiles_home }}/.local/share/codex-cli/locked/package-lock.json"
+
+dotfiles_baseline_files:
+  # htop rewrites its configuration; seed it without linking mutable state.
+  - name: htoprc
+    payload: .config/htop/htoprc
+    dest: "{{ dotfiles_config_dir }}/htop/htoprc"
+    mode: "0600"
+  # MPlayer hardware choices stay local and survive later applies.
+  - name: mplayer
+    payload: .mplayer/config
+    dest: "{{ dotfiles_home }}/.mplayer/config"
+    mode: "0600"
 
 dotfiles_cleanup_paths:
   - "{{ dotfiles_config_dir }}/nvim/init.vim"

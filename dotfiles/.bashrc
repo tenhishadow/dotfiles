@@ -294,39 +294,20 @@ export VISUAL="${EDITOR}"
 GPG_TTY=$(tty)
 export GPG_TTY
 
-export LESS_TERMCAP_mb=$(
-  tput bold
-  tput setaf 2
-) # green
-export LESS_TERMCAP_md=$(
-  tput bold
-  tput setaf 6
-) # cyan
-export LESS_TERMCAP_me=$(tput sgr0)
-export LESS_TERMCAP_so=$(
-  tput bold
-  tput setaf 3
-  tput setab 4
-) # yellow on blue
-export LESS_TERMCAP_se=$(
-  tput rmso
-  tput sgr0
-)
-export LESS_TERMCAP_us=$(
-  tput smul
-  tput bold
-  tput setaf 7
-) # white
-export LESS_TERMCAP_ue=$(
-  tput rmul
-  tput sgr0
-)
-export LESS_TERMCAP_mr=$(tput rev)
-export LESS_TERMCAP_mh=$(tput dim)
-export LESS_TERMCAP_ZN=$(tput ssubm)
-export LESS_TERMCAP_ZV=$(tput rsubm)
-export LESS_TERMCAP_ZO=$(tput ssupm)
-export LESS_TERMCAP_ZW=$(tput rsupm)
+# Avoid spawning tput repeatedly during every interactive shell startup.
+export LESS_TERMCAP_mb=$'\e[1;32m'     # bold green
+export LESS_TERMCAP_md=$'\e[1;36m'     # bold cyan
+export LESS_TERMCAP_me=$'\e[0m'
+export LESS_TERMCAP_so=$'\e[1;33;44m'  # bold yellow on blue
+export LESS_TERMCAP_se=$'\e[0m'
+export LESS_TERMCAP_us=$'\e[4;1;37m'   # underlined bold white
+export LESS_TERMCAP_ue=$'\e[0m'
+export LESS_TERMCAP_mr=$'\e[7m'
+export LESS_TERMCAP_mh=$'\e[2m'
+export LESS_TERMCAP_ZN=''
+export LESS_TERMCAP_ZV=''
+export LESS_TERMCAP_ZO=''
+export LESS_TERMCAP_ZW=''
 export GROFF_NO_SGR=1 # For Konsole and Gnome-terminal
 # shellcheck disable=SC2016
 export LESS='-R --use-color -Dd+r$Du+b$'
@@ -371,30 +352,19 @@ PATH=$GOPATH/bin:$PATH
 
 ###
 # completions
+# Load the distro completion framework once. It lazy-loads packaged command
+# completions instead of running each command's generator during shell startup.
+# shellcheck disable=SC1091
+[[ -r /usr/share/bash-completion/bash_completion ]] &&
+  source /usr/share/bash-completion/bash_completion
 ## complete hashicorp-tools
 for hashicorp_tool in consul terraform vault packer; do
   [[ -x $(type -P ${hashicorp_tool}) ]] &&
     complete -C "$(type -P ${hashicorp_tool})" ${hashicorp_tool}
 done
-## complete github cli
-[[ -x $(type -P gh) ]] &&
-  eval "$(gh completion -s bash)"
 # complete awscli
 [[ -x "$(type -P aws_completer)" ]] &&
   complete -C "$(type -P aws_completer)" aws
-# complete kubectl
-# shellcheck disable=SC1090
-[[ -x "$(type -P kubectl 2>/dev/null)" ]] &&
-  source <(kubectl completion bash)
-# complete docker
-# shellcheck disable=SC1090
-[[ -x "$(type -P docker)" ]] &&
-  source /usr/share/bash-completion/bash_completion &&
-  source <(docker completion bash)
-# complete helm
-# shellcheck disable=SC1090
-[[ -x "$(type -P helm)" ]] &&
-  source <(helm completion bash 2>/dev/null)
 # GVM is the Go Version Manager
 [[ -s "${HOME}/.gvm/scripts/gvm" ]] && source "${HOME}/.gvm/scripts/gvm"
 # complete fzf
@@ -406,12 +376,26 @@ done
 if test -n "$KITTY_INSTALLATION_DIR" -a -e "$KITTY_INSTALLATION_DIR/shell-integration/bash/kitty.bash"; then source "$KITTY_INSTALLATION_DIR/shell-integration/bash/kitty.bash"; fi
 # END_KITTY_SHELL_INTEGRATION
 
-# shellcheck disable=SC1090
-[[ -x "$(type -P checkov)" ]] &&
+_dotfiles_load_checkov_completion() {
+  # shellcheck disable=SC1090
   source <(register-python-argcomplete checkov)
-## go-task
-[[ -x $(type -P go-task) ]] &&
+  _python_argcomplete "$@"
+}
+
+[[ -x "$(type -P checkov)" && -x "$(type -P register-python-argcomplete)" ]] &&
+  complete -o nospace -o default -o bashdefault \
+    -F _dotfiles_load_checkov_completion checkov
+
+_dotfiles_load_go_task_completion() {
+  # The generated script reads TASK_EXE while eval evaluates its output.
+  # shellcheck disable=SC2034
+  local TASK_EXE=go-task
   eval "$(go-task --completion bash)"
+  _task "$@"
+}
+
+[[ -x $(type -P go-task) && $(type -t _init_completion) == function ]] &&
+  complete -F _dotfiles_load_go_task_completion go-task
 
 [[ -x "${HOME}/.bashrc.d/.env" ]] &&
   source "${HOME}/.bashrc.d/.env"

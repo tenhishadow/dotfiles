@@ -5,8 +5,8 @@ applyTo: ".github/**/*.yml,.github/**/*.yaml,.github/**/*.md,renovate.json,Taskf
 # GitHub Automation Review Instructions
 
 - Keep workflow permissions minimal and explicit.
-- Require full commit SHAs with version comments for every `uses:` reference;
-  keep those digests Renovate-managed.
+- Require full commit SHAs with version comments for every `uses:` reference.
+  Keep those digests managed by Renovate and `go-task deps-upgrade`.
 - Keep long-running or PR-triggered workflows covered by concurrency.
 - Keep workflow behavior aligned with `Taskfile.yml`.
 - Keep `go-task verify:fast` as the no-Docker repository contract and
@@ -24,11 +24,12 @@ applyTo: ".github/**/*.yml,.github/**/*.yaml,.github/**/*.md,renovate.json,Taskf
   Renovate or documented as manually updated.
 - Keep Renovate scoped to real repository dependency surfaces. `.test/`
   fixtures must stay ignored because they are detector and smoke-test inputs.
-- Keep dependency refresh tasks explicit: `go-task deps-upgrade` should update
-  local lock/config surfaces such as `uv.lock`, pre-commit revs, Ansible Galaxy
-  installed collections, and Neovim `lazy-lock.json`; GitHub Actions version
-  bumps should stay Renovate-managed, with `go-task deps-report:github-actions`
-  available for local extraction/dry-run checks.
+- Keep `go-task deps-upgrade` as the explicit local aggregate for Python,
+  Ansible Galaxy, pre-commit, managed npm, Neovim, GitHub Actions, reusable
+  workflows, and Taskfile tool pins. It may change dependency files only; it
+  must not commit, push, or treat `.test/` fixtures as dependency surfaces.
+- Keep `go-task deps-report:github-actions` as the read-only Renovate extraction
+  report; local Renovate mode must not be presented as a worktree updater.
 - Keep `.github/labeler.yml` aligned with current repository paths, including
   AI instructions, provider adapters, and `.agents/skills/`.
 - Keep labeler path labels present in GitHub and avoid a changed-file label

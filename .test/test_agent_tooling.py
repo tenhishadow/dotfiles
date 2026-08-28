@@ -9,6 +9,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 CODEX_DIR = ROOT / "dotfiles/.codex"
+PONYTAIL_DIR = ROOT / "dotfiles/.agents/skills/ponytail"
 PACKAGE_DIRS = (
     ROOT / "dotfiles/.local/share/codex-cli/locked",
     ROOT / "dotfiles/.local/share/codex-mcp/context7",
@@ -123,6 +124,17 @@ class AgentToolingContractTest(unittest.TestCase):
         for path in json_paths:
             with self.subTest(path=path.relative_to(ROOT)):
                 self.assertIsInstance(_read_json(path), dict)
+
+    def test_ponytail_is_explicit_only_and_does_not_limit_validation(self) -> None:
+        skill = (PONYTAIL_DIR / "SKILL.md").read_text(encoding="utf-8")
+        openai_config = (PONYTAIL_DIR / "agents/openai.yaml").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertIn('local_policy: "opt-in-lite"', skill)
+        self.assertIn("does not cap the number or size of tests", skill)
+        self.assertIn("allow_implicit_invocation: false", openai_config)
+        self.assertIn("$ponytail", openai_config)
 
     def test_package_locks_match_manifests_and_have_integrity(self) -> None:
         for directory in PACKAGE_DIRS:

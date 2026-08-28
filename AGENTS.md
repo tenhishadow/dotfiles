@@ -46,17 +46,11 @@ description; this section is the agent-facing file-location map.
 
 ## Hard Rules
 
-- Preserve the default user-level dotfiles workflow.
-- Do not make default `go-task` require sudo.
-- Do not add `become: true` to `playbook_install.yml`.
-- `playbook_install.yml` may include `roles/dotfiles` only. Do not add
-  `roles/system` or `roles/browser_policies` to `playbook_install.yml`.
-- Keep privileged and system-wide behavior behind explicit opt-in
-  playbooks/tasks.
-- Preserve the documented execution boundary: default `go-task` must not be
-  described as applying privileged system or browser policy configuration.
-- Do not describe `go-task all` as the default workflow; it is an explicit
-  privileged opt-in aggregate.
+- Keep the default `go-task` path user-level, local, sudo-free, and limited to
+  `playbook_install.yml` with `roles/dotfiles` only; do not add `become: true`
+  or the system and browser policy roles to that playbook.
+- Treat `go-task all` and system or browser policy playbooks and tasks as
+  explicit privileged opt-ins, never as the default workflow.
 - Do not present personal workstation security values as a generic hardening
   benchmark.
 - Prefer service drop-ins over editing upstream main config files where
@@ -117,8 +111,8 @@ description; this section is the agent-facing file-location map.
 
 ## AI Review Rules
 
-- Treat the default `go-task` path as the highest-risk contract: it must stay
-  user-level, local, sudo-free, and limited to `playbook_install.yml`.
+- Treat the default-workflow boundary in Hard Rules as the highest-risk
+  contract.
 - Prefer focused corrections over broad rewrites and compare behavioral changes
   with the repository's opt-in, validation, and rollback contracts.
 - Flag missing documentation, AGENTS, labeler, Renovate, or validation updates
@@ -215,7 +209,6 @@ reference; the rules below map change types to those commands.
 
 - Applicable local `AGENTS.md` rules were followed.
 - Runtime behavior changed only when required by the task.
-- The default user-level dotfiles flow remains intact and sudo-free.
-- Privileged behavior remains explicit and opt-in.
+- The Hard Rules and execution-layer boundaries remain intact.
 - Relevant validation commands were run or blockers were stated.
 - No secrets or machine-local runtime state were added.

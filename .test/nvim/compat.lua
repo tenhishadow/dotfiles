@@ -6,6 +6,12 @@ local function add_error(msg)
   table.insert(errors, msg)
 end
 
+local expected_home = vim.fn.fnamemodify(vim.fn.getcwd() .. "/.test/nvim/.home", ":p")
+local actual_home = vim.fn.fnamemodify(vim.env.HOME or "", ":p")
+if actual_home ~= expected_home then
+  add_error("Neovim compatibility test HOME is not isolated: " .. actual_home)
+end
+
 local function safe_require(name)
   local ok = pcall(require, name)
   if not ok then

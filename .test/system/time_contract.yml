@@ -1,0 +1,158 @@
+---
+- name: Container Time Test | Verify preventative service masking
+  hosts: this_host
+  gather_facts: true
+  vars_files:
+    - ../../roles/system/defaults/main.yml
+    - ../../roles/system/vars/archlinux.yml
+  vars:
+    system_time_conflicting_services:
+      - dotfiles-absent-ntpd.service
+    system_time_contract_config_path: /tmp/dotfiles-chrony.conf
+    system_time_contract_negative_tests: true
+    system_time_contract_foreign_link: >-
+      /etc/systemd/system/dotfiles-foreign-link.service
+    system_time_contract_foreign_link_target: >-
+      /tmp/dotfiles-foreign-time-unit.service
+    system_time_contract_foreign_unit: >-
+      /etc/systemd/system/dotfiles-foreign-unit.service
+  tasks:
+    - name: Container Time Test | Gather service facts
+      ansible.builtin.service_facts:
+
+    - name: Container Time Test | Run conflicting service tasks
+      ansible.builtin.include_role:
+        name: system
+        tasks_from: time-conflicts
+
+    - name: Container Time Test | Inspect preventative mask
+      ansible.builtin.stat:
+        path: /etc/systemd/system/dotfiles-absent-ntpd.service
+        follow: false
+      register: system_time_contract_mask
+
+    - name: Container Time Test | Verify preventative mask
+      ansible.builtin.assert:
+        that:
+          - system_time_contract_mask.stat.islnk | default(false)
+          - system_time_contract_mask.stat.lnk_source == '/dev/null'
+        fail_msg: >-
+          The time conflict task did not mask a service that was absent before
+          the role ran.
+        quiet: true
+
+    - name: Container Time Test | Create unmanaged unit override
+      ansible.builtin.copy:
+        content: "foreign-unit-preserved\n"
+        dest: "{{ system_time_contract_foreign_unit }}"
+        owner: root
+        group: root
+        mode: "0644"
+      when: system_time_contract_negative_tests | bool
+
+    - name: Container Time Test | Exercise unmanaged unit rejection
+      when: system_time_contract_negative_tests | bool
+      block:
+        - name: Container Time Test | Reset unit rejection result
+          ansible.builtin.set_fact:
+            system_time_contract_unit_rejected: false
+
+        - name: Container Time Test | Run tasks against unmanaged unit
+          ansible.builtin.include_role:
+            name: system
+            tasks_from: time-conflicts
+          vars:
+            system_time_conflicting_services:
+              - dotfiles-foreign-unit.service
+      rescue:
+        - name: Container Time Test | Record unit rejection
+          ansible.builtin.set_fact:
+            system_time_contract_unit_rejected: true
+
+    - name: Container Time Test | Inspect preserved unit override
+      ansible.builtin.stat:
+        path: "{{ system_time_contract_foreign_unit }}"
+        follow: false
+        checksum_algorithm: sha256
+      register: system_time_contract_foreign_unit_state
+      when: system_time_contract_negative_tests | bool
+
+    - name: Container Time Test | Verify unmanaged unit rejection
+      ansible.builtin.assert:
+        that:
+          - system_time_contract_unit_rejected | bool
+          - system_time_contract_foreign_unit_state.stat.isreg | default(false)
+          - >-
+            system_time_contract_foreign_unit_state.stat.checksum
+            == '0d333c425b086e523e0d1bdd86de3c89d28b8fe3248ecfe223330b0bc6d995b0'
+        fail_msg: >-
+          The time conflict task did not reject and preserve an unmanaged unit
+          override.
+        quiet: true
+      when: system_time_contract_negative_tests | bool
+
+    - name: Container Time Test | Create foreign link target
+      ansible.builtin.copy:
+        content: "foreign-link-target\n"
+        dest: "{{ system_time_contract_foreign_link_target }}"
+        owner: root
+        group: root
+        mode: "0644"
+      when: system_time_contract_negative_tests | bool
+
+    - name: Container Time Test | Create unmanaged unit symlink
+      ansible.builtin.file:
+        src: "{{ system_time_contract_foreign_link_target }}"
+        dest: "{{ system_time_contract_foreign_link }}"
+        state: link
+        force: false
+      when: system_time_contract_negative_tests | bool
+
+    - name: Container Time Test | Exercise unmanaged symlink rejection
+      when: system_time_contract_negative_tests | bool
+      block:
+        - name: Container Time Test | Reset symlink rejection result
+          ansible.builtin.set_fact:
+            system_time_contract_symlink_rejected: false
+
+        - name: Container Time Test | Run tasks against unmanaged symlink
+          ansible.builtin.include_role:
+            name: system
+            tasks_from: time-conflicts
+          vars:
+            system_time_conflicting_services:
+              - dotfiles-foreign-link.service
+      rescue:
+        - name: Container Time Test | Record symlink rejection
+          ansible.builtin.set_fact:
+            system_time_contract_symlink_rejected: true
+
+    - name: Container Time Test | Inspect preserved unit symlink
+      ansible.builtin.stat:
+        path: "{{ system_time_contract_foreign_link }}"
+        follow: false
+      register: system_time_contract_foreign_link_state
+      when: system_time_contract_negative_tests | bool
+
+    - name: Container Time Test | Verify unmanaged symlink rejection
+      ansible.builtin.assert:
+        that:
+          - system_time_contract_symlink_rejected | bool
+          - system_time_contract_foreign_link_state.stat.islnk | default(false)
+          - >-
+            system_time_contract_foreign_link_state.stat.lnk_source
+            == system_time_contract_foreign_link_target
+        fail_msg: >-
+          The time conflict task did not reject and preserve an unmanaged unit
+          symlink.
+        quiet: true
+      when: system_time_contract_negative_tests | bool
+
+    - name: Container Time Test | Render validated Chrony configuration
+      ansible.builtin.template:
+        src: ../../roles/system/templates/chrony.conf.j2
+        dest: "{{ system_time_contract_config_path }}"
+        owner: root
+        group: root
+        mode: "0600"
+        validate: "{{ system_chrony_binary_path }} -p -f %s"

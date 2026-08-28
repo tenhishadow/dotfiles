@@ -16,7 +16,8 @@ browser policy changes remain explicit opt-ins. The former
 - Arch Linux and `sudo` for the opt-in system and policy layers
 - Docker for full local validation
 - Node.js 24.x (24.11.0 or newer) and npm for repository validation; Node.js
-  and npm for the managed Codex/MCP runtimes
+  20.18.1 or newer and npm for the managed Codex/MCP runtimes
+- Go and Neovim for the complete local dependency-upgrade workflow
 
 On Arch Linux:
 
@@ -38,8 +39,8 @@ go-task
 ```
 
 `go-task` runs `playbook_install.yml` only. It validates mappings, links
-payloads from `dotfiles/` into `$HOME`, and removes only the explicit legacy
-paths declared in `inventory/host_vars/this_host/dotfiles.yml`.
+payloads from `dotfiles/` into `$HOME`, and removes only explicitly listed
+legacy symlinks that resolve into the repository payload.
 
 Before using this repository on another account or fork, review that inventory
 file. Before any privileged apply, inspect the read-only reports:
@@ -74,7 +75,7 @@ remain discoverable with `go-task --list-all`.
 | `go-task all` | Apply user dotfiles, system configuration, and policies in order. |
 | `go-task dotfiles:check` | Dry-run the user-level playbook with diff output. |
 | `go-task dotfiles:plan` | Report current mapping destinations and cleanup paths. |
-| `go-task doctor` | Report local tool and runtime availability without reading credentials. |
+| `go-task doctor` | Report resolved tool paths and versions; fail when mandatory local or Codex runtime components are unavailable. |
 | `go-task system:check` | Dry-run the opt-in Arch workstation playbook. |
 | `go-task system` | Apply the opt-in Arch workstation playbook. |
 | `go-task system:list` | List system playbook tasks. |
@@ -85,6 +86,7 @@ remain discoverable with `go-task --list-all`.
 | `go-task test:system` | Validate package targets and convergence of all layers in a disposable Arch container. |
 | `go-task test:python` | Run repository Python contract and regression tests. |
 | `go-task test:agent-tooling` | Validate managed Codex configs, dependency locks, and hook behavior. |
+| `go-task deps-upgrade` | Update every managed dependency pin and lock locally without committing or pushing. |
 | `go-task verify:fast` | Run static repository checks without Docker or managed-host writes. |
 | `go-task verify` | Run the full local validation aggregate, including Docker-backed checks. |
 | `go-task lint` | Run `ansible-lint`. |
@@ -100,6 +102,10 @@ remain discoverable with `go-task --list-all`.
 | `go-task codex:install` | Install lockfile-resolved Codex, Context7, and Playwright packages. |
 | `go-task codex:mcp:install` | Install only the lockfile-resolved MCP packages. |
 | `go-task pacdiff` | List pending pacman `.pacnew` and `.pacsave` files. |
+
+For GitHub API access, `go-task deps-upgrade` uses `PINACT_GITHUB_TOKEN`, then
+`GITHUB_TOKEN`, then an authenticated `gh` CLI. It never stores credentials,
+creates commits, or pushes.
 
 ## Neovim Formatting
 
@@ -130,8 +136,10 @@ in `.agents/skills/`: `validate-dotfiles-change` routes a diff to the smallest
 useful test, `write-markdown` applies the shared documentation contract, and
 the two dotfiles-test skills write or review repository validation code.
 
-The managed user payload places Ponytail 4.9.0 in `~/.agents/skills/`, the
-cross-agent user skill location. Codex profiles, hooks, launchers, manifests,
+The managed user payload places a locally adapted, explicit-only Ponytail skill
+based on version 4.9.0 in `~/.agents/skills/`, the cross-agent user skill
+location. It defaults to lite and Codex cannot invoke it implicitly. Codex
+profiles, hooks, launchers, manifests,
 and lockfiles are linked from `dotfiles/`; writable authentication, trust,
 history, databases, credentials, and `~/.codex/config.toml` remain local.
 `go-task codex:install` uses `npm ci`; agent startup never downloads packages.
@@ -198,8 +206,10 @@ Arch convergence harness on pull requests, pushes, and a weekly fresh-image
 schedule. A fast Python contract check runs the locked Ruff/Pylint contract and
 reports named test results before the expensive convergence job. Super-Linter
 checks changed pull-request files, while local `go-task verify` retains the
-full-tree scan. Renovate owns supported
-dependency updates and the Taskfile rejects incompatible local Node.js versions
-before running its pinned Renovate release. Repository instructions, skills,
-labels, and documentation are validated as code; no MCP server or AI account
-state is committed.
+full-tree scan. Renovate opens PRs for supported dependency surfaces;
+`go-task deps-upgrade` updates every locally managed surface, including Neovim
+and coupled repository tool pins, directly in the worktree for review.
+The Taskfile rejects incompatible local Node.js versions before running its
+pinned Renovate release. Repository instructions, skills, labels, and
+documentation are validated as code; no MCP server or AI account state is
+committed.

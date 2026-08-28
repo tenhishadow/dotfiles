@@ -2,6 +2,9 @@
 
 if vim.filetype and vim.filetype.add then
   vim.filetype.add({
+    extension = {
+      wiki = "vimwiki",
+    },
     pattern = {
       [".*%.hcl"] = "hcl",
       [".*%.tf"] = "terraform",
@@ -239,6 +242,10 @@ set_filetype({
   "*.tfstate",
   "*.tfstate.backup",
 }, "json")
+
+set_filetype({
+  "*.wiki",
+}, "vimwiki")
 
 set_filetype({
   "*.rsc",

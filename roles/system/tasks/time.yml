@@ -102,20 +102,11 @@
   when:
     - system_can_manage_chrony | bool
 
-- name: Time | Disable conflicting services
-  become: true
-  ansible.builtin.systemd_service:
-    name: "{{ system_time_conflicting_service }}"
-    state: stopped
-    enabled: false
-    masked: true
-  loop: "{{ system_time_conflicting_services }}"
-  loop_control:
-    loop_var: system_time_conflicting_service
-    label: "{{ system_time_conflicting_service }}"
+- name: Time | Run conflicting service tasks
+  ansible.builtin.include_tasks:
+    file: time-conflicts.yml
   when:
     - system_time_backend != 'none'
-    - system_time_conflicting_service in (ansible_facts.services | default({}))
 
 - name: Time | Unmask selected service
   become: true

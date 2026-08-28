@@ -16,6 +16,7 @@ return {
   },
   {
     "vimwiki/vimwiki",
+    cmd = { "VimwikiDiaryIndex", "VimwikiIndex", "VimwikiTabIndex" },
     ft = { "vimwiki" },
   },
   { "nvim-lua/plenary.nvim", lazy = true },
