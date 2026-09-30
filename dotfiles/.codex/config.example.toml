@@ -23,9 +23,6 @@ destructive_enabled = false
 open_world_enabled = false
 default_tools_approval_mode = "prompt"
 
-# An explicit empty plugin-MCP allowlist fail-closes bundled servers.
-[plugins]
-
 [mcp_servers.context7]
 command = "codex-context7-mcp"
 enabled = true
@@ -37,7 +34,7 @@ tool_timeout_sec = 120
 [mcp_servers.deepwiki]
 url = "https://mcp.deepwiki.com/mcp"
 enabled = false
-enabled_tools = ["read_wiki_structure", "read_wiki_contents", "ask_question"]
+enabled_tools = ["read_wiki_structure", "read_wiki_contents", "ask_wiki_question"]
 default_tools_approval_mode = "approve"
 tool_timeout_sec = 120
 

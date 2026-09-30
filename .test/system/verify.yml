@@ -12,6 +12,11 @@
     dotfiles_ssh_config_dir: "{{ dotfiles_ssh_dir }}/config.d"
     container_test_repo_root: "{{ playbook_dir | dirname | dirname }}"
     container_test_dotfiles_location: "{{ container_test_repo_root }}/dotfiles"
+    container_test_preserved_cleanup_path: "{{ dotfiles_home }}/.nvim"
+    container_test_preserved_cleanup_target: /tmp/dotfiles-user-owned-nvim
+    container_test_removed_cleanup_path: "{{ dotfiles_config_dir }}/nvim/init.vim"
+    container_test_legacy_ponytail_root: >-
+      {{ dotfiles_home }}/.agents/skills/ponytail
     container_test_system_files:
       - /etc/locale.gen
       - /etc/locale.conf
@@ -21,6 +26,8 @@
       - /etc/security/limits.d/10-dotfiles.conf
       - /etc/pacman.conf
       - /etc/xdg/reflector/reflector.conf
+      - /etc/tuned/ppd.conf
+      - /etc/tuned/profiles/workstation-performance/tuned.conf
     container_test_system_content:
       - path: /etc/locale.conf
         pattern: '(?m)^LANG="en_US\.UTF-8"$'
@@ -30,6 +37,10 @@
         pattern: "(?m)^ParallelDownloads = 20$"
       - path: /etc/xdg/reflector/reflector.conf
         pattern: '(?m)^--save /etc/pacman\.d/mirrorlist$'
+      - path: /etc/tuned/ppd.conf
+        pattern: "(?m)^performance=workstation-performance$"
+      - path: /etc/tuned/profiles/workstation-performance/tuned.conf
+        pattern: "(?ms)^include=balanced$.*^energy_performance_preference=performance$"
     container_test_skipped_paths:
       - /etc/docker/daemon.json
       - /etc/modprobe.d/99-dotfiles-overlay.conf
@@ -38,6 +49,7 @@
       - /etc/sysctl.d/999-ansible.conf
       - /etc/systemd/journald.conf.d/10-dotfiles.conf
       - /etc/systemd/timesyncd.conf.d/10-dotfiles.conf
+      - /etc/chrony.conf
       - /root/.config/systemd/user/ssh-agent.service
     container_test_policy_specs:
       - path: /etc/brave/policies/managed/10-dotfiles-managed.json
@@ -61,6 +73,21 @@
         key: TelemetryLevel
         value: "off"
   tasks:
+    - name: Dotfiles Test | Inspect migrated Ponytail directory
+      ansible.builtin.stat:
+        path: "{{ container_test_legacy_ponytail_root }}"
+        follow: false
+      register: container_test_legacy_ponytail_stat
+
+    - name: Dotfiles Test | Verify migrated Ponytail directory
+      ansible.builtin.assert:
+        that:
+          - container_test_legacy_ponytail_stat.stat.isdir | default(false)
+          - not (container_test_legacy_ponytail_stat.stat.islnk | default(false))
+        fail_msg: >-
+          The legacy Ponytail root was not migrated to a regular directory.
+        quiet: true
+
     - name: Dotfiles Test | Inspect managed links
       ansible.builtin.stat:
         path: "{{ container_test_dotfiles_mapping.dest }}"
@@ -70,7 +97,6 @@
         loop_var: container_test_dotfiles_mapping
         label: "{{ container_test_dotfiles_mapping.dest }}"
       register: container_test_dotfiles_stats
-      changed_when: false
 
     - name: Dotfiles Test | Verify managed links
       ansible.builtin.assert:
@@ -89,6 +115,33 @@
         loop_var: container_test_dotfiles_result
         label: "{{ container_test_dotfiles_result.container_test_dotfiles_mapping.dest }}"
 
+    - name: Dotfiles Test | Inspect baseline files
+      ansible.builtin.stat:
+        path: "{{ container_test_baseline_file.dest }}"
+        follow: false
+      loop: "{{ dotfiles_baseline_files }}"
+      loop_control:
+        loop_var: container_test_baseline_file
+        label: "{{ container_test_baseline_file.dest }}"
+      register: container_test_baseline_stats
+
+    - name: Dotfiles Test | Verify baseline files
+      ansible.builtin.assert:
+        that:
+          - container_test_baseline_result.stat.isreg | default(false)
+          - >-
+            container_test_baseline_result.stat.mode
+            == container_test_baseline_result.container_test_baseline_file.mode
+            | default('0600')
+        fail_msg: >-
+          Invalid baseline file:
+          {{ container_test_baseline_result.container_test_baseline_file.dest }}
+        quiet: true
+      loop: "{{ container_test_baseline_stats.results }}"
+      loop_control:
+        loop_var: container_test_baseline_result
+        label: "{{ container_test_baseline_result.container_test_baseline_file.dest }}"
+
     - name: Dotfiles Test | Inspect cleanup paths
       ansible.builtin.stat:
         path: "{{ container_test_cleanup_path }}"
@@ -98,20 +151,54 @@
         loop_var: container_test_cleanup_path
         label: "{{ container_test_cleanup_path }}"
       register: container_test_cleanup_stats
-      changed_when: false
 
-    - name: Dotfiles Test | Verify cleanup paths absent
+    - name: Dotfiles Test | Verify repository cleanup links absent
       ansible.builtin.assert:
         that:
-          - not (container_test_cleanup_result.stat.exists | default(false))
+          - >-
+            not (container_test_cleanup_result.stat.islnk | default(false))
+            or container_test_cleanup_result.stat.lnk_source is not regex(
+              '^' ~ (container_test_dotfiles_location | regex_escape) ~ '(/|$)'
+            )
         fail_msg: >-
-          Legacy path remains:
+          Repository-linked legacy path remains:
           {{ container_test_cleanup_result.container_test_cleanup_path }}
         quiet: true
       loop: "{{ container_test_cleanup_stats.results }}"
       loop_control:
         loop_var: container_test_cleanup_result
         label: "{{ container_test_cleanup_result.container_test_cleanup_path }}"
+
+    - name: Dotfiles Test | Inspect cleanup boundary fixtures
+      ansible.builtin.stat:
+        path: "{{ container_test_cleanup_fixture.path }}"
+        follow: false
+      loop:
+        - name: preserved
+          path: "{{ container_test_preserved_cleanup_path }}"
+        - name: removed
+          path: "{{ container_test_removed_cleanup_path }}"
+      loop_control:
+        loop_var: container_test_cleanup_fixture
+        label: "{{ container_test_cleanup_fixture.name }}"
+      register: container_test_cleanup_fixture_stats
+
+    - name: Dotfiles Test | Verify cleanup boundary
+      ansible.builtin.assert:
+        that:
+          - container_test_cleanup_fixture_stats.results[0].stat.islnk | default(false)
+          - >-
+            container_test_cleanup_fixture_stats.results[0].stat.lnk_source
+            == container_test_preserved_cleanup_target
+          - >-
+            not (
+              container_test_cleanup_fixture_stats.results[1].stat.exists
+              | default(false)
+            )
+        fail_msg: >-
+          Cleanup must preserve user-owned symlinks and remove only links into
+          the repository payload.
+        quiet: true
 
     - name: System Test | Inspect managed files
       ansible.builtin.stat:
@@ -122,7 +209,6 @@
         loop_var: container_test_system_path
         label: "{{ container_test_system_path }}"
       register: container_test_system_stats
-      changed_when: false
 
     - name: System Test | Verify managed files
       ansible.builtin.assert:
@@ -148,7 +234,6 @@
         loop_var: container_test_content_spec
         label: "{{ container_test_content_spec.path }}"
       register: container_test_system_content_results
-      changed_when: false
 
     - name: System Test | Verify managed content
       ansible.builtin.assert:
@@ -195,7 +280,6 @@
         loop_var: container_test_skipped_path
         label: "{{ container_test_skipped_path }}"
       register: container_test_skipped_stats
-      changed_when: false
 
     - name: Container Test | Verify guarded paths absent
       ansible.builtin.assert:
@@ -219,7 +303,6 @@
         loop_var: container_test_policy_spec
         label: "{{ container_test_policy_spec.path }}"
       register: container_test_policy_stats
-      changed_when: false
 
     - name: Browser Policies Test | Verify policy files
       ansible.builtin.assert:
@@ -245,7 +328,6 @@
         loop_var: container_test_policy_spec
         label: "{{ container_test_policy_spec.path }}"
       register: container_test_policy_contents
-      changed_when: false
 
     - name: Browser Policies Test | Verify policy content
       ansible.builtin.assert:

@@ -182,6 +182,7 @@ system_packages:
   - openjdk-doc
   - openjdk-src
   - yarn
+  - "{{ system_nodejs_package }}"
   - npm
   - starship
   - ttf-nerd-fonts-symbols
@@ -226,7 +227,7 @@ system_packages:
   - kustomize # Template-free customization of Kubernetes YAML manifests
   - popeye
   - stern
-  - talhelper # A tool to help create Talos clusters in your GitOps repository
+  # - talhelper # AUR; no longer available in the official repositories.
   - talosctl # CLI for Talos - A modern OS for Kubernetes
   # : }}}
 

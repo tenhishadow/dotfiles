@@ -1,8 +1,11 @@
 ---
-- name: Contract Tests | Verify rejected role inputs
+- name: Contract Tests | Verify role contracts
   hosts: this_host
   become: false
   gather_facts: true
+  vars_files:
+    - ../roles/system/vars/archlinux.yml
+    - ../roles/system/vars/archlinux-packages.yml
   tasks:
     - name: Contract Tests | Set cleanup rejection result
       ansible.builtin.set_fact:
@@ -68,6 +71,44 @@
         fail_msg: "dotfiles validation accepted overlapping destinations."
         quiet: true
 
+    - name: Contract Tests | Set mixed destination rejection result
+      ansible.builtin.set_fact:
+        contract_tests_mixed_destination_rejected: false
+
+    - name: Contract Tests | Run mixed destination validation
+      block:
+        - name: Contract Tests | Include dotfiles validation tasks
+          ansible.builtin.include_role:
+            name: dotfiles
+            tasks_from: validate
+          vars:
+            dotfiles_mapping:
+              - name: parent
+                payload: .bashrc
+                dest: "{{ dotfiles_home }}/.contract-parent"
+            dotfiles_baseline_files:
+              - name: child
+                payload: .config/htop/htoprc
+                dest: "{{ dotfiles_home }}/.contract-parent/child"
+            dotfiles_cleanup_paths: []
+      rescue:
+        - name: Contract Tests | Set mixed destination rejection result
+          ansible.builtin.set_fact:
+            contract_tests_mixed_destination_rejected: >-
+              {{
+                'Overlapping dotfiles destination:'
+                in (ansible_failed_result | string)
+              }}
+
+    - name: Contract Tests | Verify mixed destination rejection
+      ansible.builtin.assert:
+        that:
+          - contract_tests_mixed_destination_rejected | bool
+        fail_msg: >-
+          dotfiles validation accepted overlapping mapping and baseline
+          destinations.
+        quiet: true
+
     - name: Contract Tests | Set policy rejection result
       ansible.builtin.set_fact:
         contract_tests_policy_rejected: false
@@ -98,3 +139,59 @@
           - contract_tests_policy_rejected | bool
         fail_msg: "browser policy validation accepted a non-basename filename."
         quiet: true
+
+    - name: Contract Tests | Run time backend cases
+      ansible.builtin.include_tasks: system/time_backend_contract.yml
+      loop:
+        - name: virtual machine
+          virtual_machine: true
+          expected:
+            backend: chrony
+            guards: [true, false]
+            services: [chronyd.service, chrony-wait.service]
+            conflicts:
+              - systemd-timesyncd.service
+              - ntpd.service
+              - systemd-time-wait-sync.service
+        - name: physical host
+          virtual_machine: false
+          expected:
+            backend: timesyncd
+            guards: [false, true]
+            services:
+              [systemd-timesyncd.service, systemd-time-wait-sync.service]
+            conflicts: [chronyd.service, ntpd.service, chrony-wait.service]
+        - name: guarded host
+          virtual_machine: true
+          manageable: false
+          expected: &disabled_time
+            backend: none
+            guards: [false, false]
+            services: ["", ""]
+            conflicts: []
+        - name: disabled virtual machine backend
+          virtual_machine: true
+          chrony_enabled: false
+          expected: *disabled_time
+      loop_control:
+        loop_var: contract_tests_time_case
+        label: "{{ contract_tests_time_case.name }}"
+
+    - name: Contract Tests | Run invalid Chrony tuning cases
+      ansible.builtin.include_tasks: system/chrony_validation_contract.yml
+      loop:
+        - name: fractional pool source count
+          values:
+            pool_max_sources: 1.5
+        - name: fractional makestep limit
+          values:
+            makestep_limit: 1.5
+        - name: boolean makestep threshold
+          values:
+            makestep_threshold: true
+        - name: boolean maximum update skew
+          values:
+            max_update_skew: true
+      loop_control:
+        loop_var: contract_tests_chrony_case
+        label: "{{ contract_tests_chrony_case.name }}"

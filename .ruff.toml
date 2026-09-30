@@ -1,6 +1,10 @@
-line-length = 88
+line-length = 80
 target-version = "py314"
+src = [".test", ".github/scripts"]
 
 [lint]
-ignore = ["E203"]
-select = ["E4", "E7", "E9", "F", "I", "UP", "B", "SIM", "RUF"]
+ignore = ["D1"]
+select = ["E4", "E7", "E9", "F", "I", "UP", "B", "SIM", "RUF", "D", "PT"]
+
+[lint.pydocstyle]
+convention = "google"

@@ -22,7 +22,9 @@ def check_recap(path: Path) -> list[str]:
     except (OSError, json.JSONDecodeError) as error:
         return [f"cannot read Ansible JSON: {error}"]
 
-    if not isinstance(result, dict) or not isinstance(result.get("stats"), dict):
+    if not isinstance(result, dict) or not isinstance(
+        result.get("stats"), dict
+    ):
         return ["Ansible JSON is missing the stats mapping"]
     if not result["stats"]:
         return ["Ansible JSON contains no host stats"]
@@ -38,7 +40,9 @@ def check_recap(path: Path) -> list[str]:
             if recap.get(counter, 0) != 0
         }
         if nonzero:
-            details = ", ".join(f"{key}={value}" for key, value in nonzero.items())
+            details = ", ".join(
+                f"{key}={value}" for key, value in nonzero.items()
+            )
             violations.append(f"{host}: {details}")
     return violations
 

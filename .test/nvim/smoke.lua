@@ -8,8 +8,21 @@ end
 
 local errors = {}
 
+if string.lower(vim.env.NVIM_TS_INSTALL or "auto") == "required" then
+  local marker = vim.fn.stdpath("state") .. "/treesitter_install_ok"
+  if vim.fn.filereadable(marker) ~= 1 then
+    table.insert(errors, "Required Tree-sitter install marker is missing")
+  end
+end
+
 local function add_error(msg)
   table.insert(errors, msg)
+end
+
+local expected_home = vim.fn.fnamemodify(vim.fn.getcwd() .. "/.test/nvim/.home", ":p")
+local actual_home = vim.fn.fnamemodify(vim.env.HOME or "", ":p")
+if actual_home ~= expected_home then
+  add_error("Neovim test HOME is not isolated: " .. actual_home)
 end
 
 local function safe_require(name)
@@ -292,19 +305,61 @@ local function run_format(bufnr, test)
   for _, f in ipairs(formatters) do
     if f.available then
       has_available = true
-      break
+      local config = conform.get_formatter_config(f.name, bufnr)
+      if config and not config.stdin then
+        -- A killed formatter must not leave scratch files beside tracked fixtures.
+        conform.formatters[f.name] = vim.tbl_extend("force", config, {
+          inherit = false,
+          tmpfile_format = vim.fn.stdpath("cache") .. "/conform/.conform.$RANDOM.$FILENAME",
+        })
+      end
     end
   end
   if not has_available then
     log("Format: skip " .. test.name .. " (no available formatter)")
     return
   end
-  local ok, err = pcall(vim.cmd, "Format")
+  local completed = false
+  local ok, err = pcall(conform.format, { bufnr = bufnr, async = false, quiet = true }, function(format_error)
+    completed = true
+    if format_error then
+      add_error("Formatter failed for " .. test.name .. ": " .. format_error)
+    end
+  end)
   if not ok then
     add_error("Formatter failed for " .. test.name .. ": " .. tostring(err))
+  elseif not completed then
+    add_error("Formatter did not complete for " .. test.name)
   else
     vim.bo[bufnr].modified = false
   end
+end
+
+local function run_format_scope_test()
+  if not has_any({ "markdownlint-cli2" }) then
+    return
+  end
+  local root = vim.fn.tempname()
+  vim.fn.mkdir(root, "p")
+  vim.fn.writefile({ 'globs: ["**/*.md"]' }, root .. "/.markdownlint-cli2.yaml")
+  vim.fn.writefile({ "#Selected" }, root .. "/selected.md")
+  vim.fn.writefile({ "#Untouched" }, root .. "/unrelated.md")
+  local cwd = vim.fn.getcwd()
+  vim.cmd("lcd " .. vim.fn.fnameescape(root))
+  local bufnr = open_file(root .. "/selected.md")
+  -- Vimwiki can own Markdown buffers; select the actual Markdown formatter here.
+  vim.bo[bufnr].filetype = "markdown"
+  run_format(bufnr, { name = "Markdown file scope" })
+  if vim.api.nvim_buf_get_lines(bufnr, 0, 1, false)[1] ~= "# Selected" then
+    add_error("Markdown formatter did not fix the selected buffer")
+  end
+  if vim.fn.readfile(root .. "/unrelated.md")[1] ~= "#Untouched" then
+    add_error("Markdown formatter modified an unrelated file through configured globs")
+  end
+  vim.bo[bufnr].modified = false
+  pcall(vim.api.nvim_buf_delete, bufnr, { force = true })
+  vim.cmd("lcd " .. vim.fn.fnameescape(cwd))
+  vim.fn.delete(root, "rf")
 end
 
 local function run_lint(bufnr, test)
@@ -372,6 +427,64 @@ local function run_treesitter(bufnr, test)
   end
 end
 
+local function run_vimwiki_command_check()
+  local ok_lazy_config, lazy_config = pcall(require, "lazy.core.config")
+  if not ok_lazy_config then
+    add_error("Lazy config unavailable for Vimwiki command check")
+    return
+  end
+
+  local plugin = lazy_config.plugins.vimwiki
+  if not plugin then
+    add_error("Vimwiki plugin metadata unavailable")
+    return
+  end
+  if plugin._ and plugin._.loaded then
+    add_error("Vimwiki loaded before its command trigger")
+  end
+  if vim.fn.exists(":VimwikiIndex") == 0 then
+    add_error("VimwikiIndex lazy command is not registered before plugin load")
+  end
+
+  local wiki_root = vim.fn.tempname()
+  if vim.fn.mkdir(wiki_root, "p") == 0 then
+    add_error("Failed to create Vimwiki command fixture")
+    return
+  end
+
+  vim.g.vimwiki_global_ext = 0
+  vim.g.vimwiki_list = {
+    {
+      path = wiki_root .. "/",
+      syntax = "default",
+      ext = ".wiki",
+    },
+  }
+
+  local ok_command, command_error = pcall(vim.cmd, "VimwikiIndex")
+  if not ok_command then
+    add_error("VimwikiIndex command failed: " .. tostring(command_error))
+  else
+    if not (plugin._ and plugin._.loaded) then
+      add_error("VimwikiIndex did not load the Vimwiki plugin")
+    end
+
+    local expected_path = vim.fn.fnamemodify(wiki_root .. "/index.wiki", ":p")
+    local actual_path = vim.fn.fnamemodify(vim.api.nvim_buf_get_name(0), ":p")
+    if actual_path ~= expected_path then
+      add_error("VimwikiIndex opened unexpected path: " .. actual_path)
+    end
+    if vim.bo.filetype ~= "vimwiki" then
+      add_error("VimwikiIndex opened buffer with filetype: " .. vim.bo.filetype)
+    end
+  end
+
+  local bufnr = vim.api.nvim_get_current_buf()
+  vim.bo[bufnr].modified = false
+  pcall(vim.api.nvim_buf_delete, bufnr, { force = true })
+  vim.fn.delete(wiki_root, "rf")
+end
+
 local function run_plugin_checks()
   local ok_lazy, lazy = pcall(require, "lazy")
   if not ok_lazy then
@@ -388,7 +501,6 @@ local function run_plugin_checks()
     { plugin = "which-key.nvim", cmds = { "WhichKey" } },
     { plugin = "undotree", cmds = { "UndotreeToggle" } },
     { plugin = "fzf.vim", cmds = { "Files", "Rg", "Buffers" } },
-    { plugin = "vimwiki", cmds = { "VimwikiIndex" } },
     { plugin = "conform.nvim", cmds = { "ConformInfo", "Format" } },
     { plugin = "nvim-lint", cmds = { "DotfilesLintManual" } },
     { plugin = "mason.nvim", cmds = mason_mode ~= "off" and { "Mason" } or {} },
@@ -700,9 +812,11 @@ end
 
 run_mason_utils_tests()
 run_executable_utils_tests()
+run_vimwiki_command_check()
 run_plugin_checks()
 run_tool_inventory_checks()
 run_save_behavior_checks()
+run_format_scope_test()
 
 local tests = {
   {

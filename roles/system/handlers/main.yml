@@ -39,12 +39,30 @@
 
 - name: Timesyncd | Restart service
   become: true
-  ansible.builtin.service:
-    name: "{{ system_ntp_service }}"
+  ansible.builtin.systemd_service:
+    name: "{{ system_timesyncd_service_name }}"
     state: restarted
     enabled: true
+    masked: false
   when:
     - system_can_manage_timesyncd | default(false) | bool
+
+- name: Chrony | Restart service
+  become: true
+  ansible.builtin.systemd_service:
+    name: "{{ system_chrony_service_name }}"
+    state: restarted
+    enabled: true
+    masked: false
+  when:
+    - system_can_manage_chrony | default(false) | bool
+
+- name: Time | Reload systemd
+  become: true
+  ansible.builtin.systemd_service:
+    daemon_reload: true
+  when:
+    - system_can_manage_systemd | default(false) | bool
 
 - name: Console | Restart vconsole setup
   become: true
@@ -53,6 +71,26 @@
     state: restarted
   when:
     - system_can_manage_systemd | default(false) | bool
+
+- name: TuneD | Restart service
+  become: true
+  ansible.builtin.systemd_service:
+    name: tuned.service
+    state: restarted
+  when:
+    - system_tuned_enabled | default(false) | bool
+    - system_can_manage_systemd | default(false) | bool
+    - not (system_is_virtual_machine | default(false) | bool)
+
+- name: TuneD PPD | Restart service
+  become: true
+  ansible.builtin.systemd_service:
+    name: tuned-ppd.service
+    state: restarted
+  when:
+    - system_tuned_enabled | default(false) | bool
+    - system_can_manage_systemd | default(false) | bool
+    - not (system_is_virtual_machine | default(false) | bool)
 
 - name: User systemd | Restart ssh-agent
   ansible.builtin.systemd_service:

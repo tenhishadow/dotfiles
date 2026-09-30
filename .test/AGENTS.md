@@ -2,43 +2,37 @@
 
 Applies to `.test/`.
 
+The root `AGENTS.md` owns repository-wide rules and validation selection.
+
 This directory contains canonical smoke-test fixtures and generated local test
 workspaces.
 
-## Canonical Files
+## Canonical Surfaces
 
-- `.test/nvim/smoke.lua`
-- `.test/nvim/compat.lua`
-- `.test/nvim/treesitter_install.lua`
-- `.test/nvim/keymap_docs.lua`
-- `.test/nvim/mason_tools.lua`
-- `.test/nvim/*` language sample fixtures
-- `.test/vint_runner.py`
-- `.test/test_agent_tooling.py`
-- `.test/test_portable_hook.py`
-- `.test/test_check_ansible_semantics.py`
-- `.test/assert_ansible_convergence.py`
-- `.test/test_assert_ansible_convergence.py`
-- `.test/role_contracts.yml`
-- `.test/system/exec.sh`
-- `.test/system/local.env.example`
-- `.test/system/verify.yml`
-- `.test/workstation_report.py`
+- `.test/test_*.py` contains pytest regression and contract tests.
+- `.test/conftest.py` contains fixtures shared by multiple test modules.
+- `.test/nvim/` contains smoke runners and minimal language fixtures.
+- `.test/role_contracts.yml` validates Ansible inputs and backend selection.
+- `.test/system/` owns container-only apply, state, and convergence checks.
+- `.test/check_*.py` and `.test/gen_agents_map.py` validate repository contracts
+  and generated documentation.
 
 `.test/vint_runner.py` runs vim-vint with a minimal `pkg_resources`
 compatibility shim so the project environment does not need `setuptools`.
 
-The `test_*.py` suite uses standard-library `unittest` for reusable repository
-contracts. `test_agent_tooling.py` validates Codex configuration and npm locks;
+The pytest configuration lives in `pyproject.toml`; run the same suite through
+`go-task test:python` locally and in CI. Pass selectors after `--` for a focused
+run. `test_agent_tooling.py` validates Codex configuration and npm locks;
 `test_portable_hook.py` exercises the hook through its JSON interface.
 
 `.test/workstation_report.py` provides read-only local reports for adoption,
 dotfiles destination review, system paths, and policy file ownership.
 
 `.test/system/exec.sh` is the Arch Linux package-target and convergence harness
-used by `go-task test:system` and `go-task verify`. It applies all three layers,
-runs the observable-state assertions in `.test/system/verify.yml`, and requires
-zero changes or hidden failures on each second playbook run.
+used by `go-task test:system` and `go-task verify`. It validates preventative
+time-service masking and Chrony syntax, applies all three layers, runs the
+observable-state assertions in `.test/system/verify.yml`, and requires zero
+changes or hidden failures on each second playbook run.
 
 ## Generated Files
 
@@ -49,6 +43,7 @@ source of truth:
 - `.test/nvim/.data`
 - `.test/nvim/.state`
 - `.test/nvim/.cache`
+- `.test/nvim/.home`
 - `.test/system/local.env` (optional private test mirrors)
 
 ## Editing Rules
@@ -56,35 +51,35 @@ source of truth:
 - Keep fixtures minimal and deterministic.
 - Keep Neovim smoke fixture directories aligned with the `name` values in
   `.test/nvim/smoke.lua`.
-- Keep generated workspaces out of git.
 - Keep private mirror and package-index URLs in `.test/system/local.env` only.
 - Keep `.test/` excluded from Renovate because dependency-like files here are
   fixtures, not repository dependency surfaces.
 - Keep Neovim test language lists sourced from the canonical config when
   possible, especially `config.languages`.
-- Keep Tree-sitter parser installation optional in the test sandbox and skip
-  cleanly when required external tools are missing.
-- Keep shell scripts robust with safe flags where practical.
-- Keep Python tests discoverable as `test_*.py`. Prefer local helpers and
-  `subTest` data tables over base classes or a fixture framework.
-- Keep tests deterministic, network-free, secret-free, and bounded.
-- Keep comments, sample text, and documentation in English.
+- Keep Tree-sitter parser installation optional for ordinary local smoke tests.
+  CI must use required mode and fail when tools, parsers, or the success marker
+  are missing.
+- Keep Python tests discoverable as `test_*.py`, using plain test functions and
+  `assert`. Use `pytest.mark.parametrize` for independent cases, and `tmp_path`,
+  `monkeypatch`, and capture fixtures for isolated state. Keep specialized
+  helpers local; promote a fixture to `conftest.py` only when modules share it.
+- Follow the validation ADR for test value, removal criteria, and style. Do not
+  replace native Ansible validation with a Python copy of its Jinja expressions.
+- Keep Python contracts deterministic, network-free, secret-free, and bounded.
+  Networked package compatibility and container integration checks must state
+  their prerequisites and run inside the intended disposable environment.
+- Never run `.test/system/exec.sh` or its privileged playbooks directly on a
+  workstation. Preserve their early container guards.
+- Fake service facts and fake `systemctl` prove task logic only; report actual
+  VM or hardware evidence separately, with remaining gaps in the validation ADR.
 
 ## Validation
 
-```bash
-go-task test:nvim
-go-task test:nvim:compat
-go-task test:nvim:mason-tools
-go-task docs:nvim-keymaps:check
-go-task test:agent-tooling
-go-task test:python
-go-task test:contracts
-go-task test:system
-go-task doctor
-```
-
-Run the test that matches the changed fixture area.
+Use the focused task for the changed fixture area and the root validation
+matrix. Documentation-only edits need documentation checks. Python changes
+require `go-task test:python` and `go-task lint:python`;
+container apply and convergence changes require `go-task test:system` when
+Docker is available. See the README command catalog for entry points.
 
 ## Done Criteria
 

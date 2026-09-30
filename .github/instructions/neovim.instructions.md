@@ -4,49 +4,24 @@ applyTo: "dotfiles/.config/nvim/**/*,.test/nvim/**/*"
 
 # Neovim Review Instructions
 
-- Preserve a structured lazy.nvim layout: `init.lua` loads core config,
-  `lua/config/lazy.lua` owns bootstrap/setup, and `lua/plugins/` owns plugin
-  specs.
-- Keep `lazy-lock.json` deterministic. Cold `Lazy restore` must not rewrite
-  it, and the bootstrap must honor the pinned `lazy.nvim` commit.
-- Do not reintroduce a copied `kickstart.nvim` plugin tree. Keep plugin specs
-  grouped by domain under `lua/plugins/`.
-- Prefer `opts` over custom `config` when lazy.nvim can call
-  `require(MAIN).setup(opts)` itself.
-- Keep shared language/tool data in `lua/config/languages.lua` instead of
-  duplicating lists across LSP, Mason, formatters, linters, Tree-sitter, or
-  tests.
-- Keep user-facing keymaps in `lua/config/keymaps_spec.lua`. Runtime config
-  and generated docs should consume that inventory instead of duplicating
-  descriptions in plugin specs.
-- When keymaps change, require `docs/nvim-keymaps.md` to be regenerated with
-  the current leader key written plainly.
-- Keep first-buffer filetype detection in `lua/config/filetypes.lua` for
-  filetype-lazy plugins; do not depend only on plugin-owned `ftdetect` files.
-- Gate plugins by upstream Neovim requirements. Core config must not fail on
-  old Debian Neovim; the LSP plugin layer must use the upstream-supported
-  Neovim 0.11.3+ `vim.lsp.config` path and stay disabled on older Neovim.
-- Keep Tree-sitter parser installation explicit. Do not enable parser
-  auto-install at startup; tests should skip parser installation when
-  `tree-sitter`, a C compiler, or `curl` is unavailable.
-- Keep Mason opt-in through `NVIM_USE_MASON`. Default startup and background
-  restore jobs must not install external tools.
-- Keep Mason install lists limited to package names that exist in the Mason
-  registry. External tools should stay in health/manual command inventories
-  unless Mason provides a package for them.
-- Keep automatic linting lightweight, file-local, and save-triggered only.
-  Project-wide validators and security scanners should be manual commands.
-- Keep save-time behavior non-mutating. Do not enable format-on-save,
-  format-after-save, or whitespace stripping on save; formatters are manual.
-- Use canonical `conform.nvim` formatter names and `nvim-lint` linter names in
-  `lua/config/languages.lua`; require `go-task test:nvim` for inventory drift
-  checks.
-- Keep blink.cmp on the stable v1 line and avoid binary/Rust requirements by
-  default unless explicitly requested.
-- Avoid duplicate plugin families for the same job, for example multiple
-  indent-guide plugins.
-- Validate Neovim changes with `go-task test:nvim` and preserve the lockfile
-  diff check in that task. For startup-sensitive changes, also run
-  `go-task test:nvim:profile`.
-- Validate Mason tool inventory changes with `go-task test:nvim:mason-tools`.
-- Validate keymap documentation with `go-task docs:nvim-keymaps:check`.
+The canonical editor contract lives in `dotfiles/.config/nvim/AGENTS.md`.
+Use `.test/AGENTS.md` for fixtures and the root Code Review Rules for findings.
+
+- Trace a cold install and the first buffer through bootstrap, filetype
+  detection, and lazy loading. Check lockfile preservation and compatibility
+  gates against the plugin revisions actually selected.
+- Trace language, formatter, linter, and keymap changes back to their canonical
+  inventories. Check generated documentation and unknown-tool detection
+  instead of maintaining another list in review instructions.
+- Inspect save-triggered side effects separately from manual commands.
+  Buffer formatters must not expand project globs, and asynchronous failures
+  must reach their callbacks. Project scanners remain explicit operations.
+- Check missing-tool behavior: ordinary local runs may skip optional parsers;
+  required CI mode must fail on missing tools, parsers, or a success marker.
+  Startup must not silently install external tooling.
+- Check that tests override inherited HOME and XDG variables and operate on a
+  copied config. Dependency refresh may copy back only the intended lockfile.
+- Select smoke, startup, core-compatibility, Mason, and generated-keymap checks
+  from the local `AGENTS.md` according to the behavior changed. A core-only
+  simulation does not prove an older Neovim binary works; documentation-only
+  changes need documentation checks.

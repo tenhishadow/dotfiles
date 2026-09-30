@@ -1,48 +1,30 @@
 ---
-applyTo: "playbook_*.yml,inventory/**/*.yml,roles/**/*.yml,requirements.yml,ansible.cfg"
+applyTo: "playbook_*.yml,inventory/**/*.yml,roles/**/*.yml,roles/**/*.j2,.test/**/*.yml,requirements.yml,ansible.cfg"
 ---
 
 # Ansible Review Instructions
 
-Repo-wide naming, variable, and English-only rules live in the root `AGENTS.md`
-and are enforced by `ansible-lint`, `go-task lint:ansible-semantics` (the
-`<Domain> | <Verb> <object>` format and exact `notify`/handler matching), and
-`go-task lint:english`. Do not restate them; review the path-scoped points
-below.
+Use the root `AGENTS.md` Code Review Rules, `roles/AGENTS.md`, and the nearest
+role or inventory contract. Focus on behavior the mechanical checks cannot prove.
 
-- Use `loop_control.loop_var` for non-trivial loops instead of generic `item`.
-- Keep role input validation in `tasks/validate.yml` when a role exposes a
-  variable contract.
-- Preserve split host vars under `inventory/host_vars/this_host/`.
-- Preserve the default dotfiles contract: `playbook_install.yml` stays local,
-  user-level, `become: false`, and includes only `roles/dotfiles`.
-- Keep `roles/dotfiles` user-level and sudo-free.
-- Use `go-task dotfiles:check` for user-level dotfiles dry-runs.
-- Keep `roles/system` as the opt-in layer consolidated from the former
-  `ans-workstation` automation; do not route it through default `go-task`.
-- Keep AUR helper/package management in `roles/system`, tagged `aur`, and
-  guarded from check-mode, CI, and container execution.
-- Dotfiles mapping entries must use `name`, relative `payload`, and absolute
-  `dest`.
-- User cron jobs that redirect to managed state logs must create the state
-  directory before shell redirection opens the log file.
-- Do not map generated XDG desktop state such as `user-dirs.dirs`; let
-  `xdg-user-dirs-update` own that local file.
-- Keep system and browser, Thunderbird, and VS Code policy automation opt-in
-  through their dedicated playbooks.
-- Use only documented enterprise policy keys for managed policy dictionaries.
-- Prefer FQCN modules and idempotent modules over `command` or `shell`.
-- Require explicit owner, group, and mode for managed files under `/etc`.
-- Keep package lists, path lists, policy targets, mappings, and cleanup lists
-  declarative in inventory, defaults, or vars.
-- Preserve upstream option key casing inside settings maps such as
-  `system_sshd_settings`, `system_journald_settings`,
-  `system_sysctl_settings`, and browser policy dictionaries.
-- Prefer supported drop-ins under `/etc/*/*.d/` over direct upstream main-file
-  edits.
-- Manage PAM limits through `/etc/security/limits.d/` and kernel module options
-  through `/etc/modprobe.d/` snippets.
-- Keep role-owned sysctl defaults in `system_sysctl_default_settings`; use
-  `system_sysctl_settings` for host-specific additions and overrides.
-- Require syntax and narrow behavior validation for touched playbooks or
-  roles.
+- Trace tag-scoped execution: required variables, guards, and validation must
+  still run when only one feature is selected.
+- Check check-mode handling when a package, binary, directory, or service does
+  not exist yet; a dry run must not make host changes or silently claim apply
+  behavior was tested.
+- For time changes, compare VM, physical-host, container, CI, and disabled
+  backends. VMs require Chrony; inspect service conflicts, validator ordering,
+  native waiter migration, and rollback against `roles/system/README.md`.
+- Reject cleanup that can remove foreign regular files or links. Trace source
+  ownership and destination validation through the dotfiles role.
+- Distinguish linked payloads from seeded baselines: runtime writers must not
+  write through a repository symlink, and existing baseline files must survive.
+- Check cron redirection order, dependency disappearance, and removal of the
+  managed entry when disabled.
+- Verify Ansible handlers only run after real configuration changes and that
+  service guards remain valid when handlers execute.
+- Review feature-disable and policy-removal behavior separately; skipping a
+  feature is not proof that old files or services were removed.
+- Select native contract or observable-state checks that demonstrate the
+  changed behavior; document any host or VM validation gap. Do not require
+  new tests that merely mirror task structure.

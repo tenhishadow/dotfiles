@@ -1,30 +1,24 @@
-# Copilot Review Deltas
+# Copilot Code Review
 
-The root and nearest `AGENTS.md` files are canonical. Use this file only for
-review checks that automation cannot prove.
+Use the root `AGENTS.md` Code Review Rules and the instructions for changed
+paths. Read `CONTRIBUTING.md` only for contribution or release changes, and
+load relevant skills on demand. Repository contracts belong to those canonical
+sources; this file controls Copilot's review presentation.
 
-- Flag any change that makes default `go-task` privileged, routes
-  `roles/system` or `roles/browser_policies` through `playbook_install.yml`, or
-  describes `go-task all` as the default.
-- Flag committed secrets, credentials, profiles, histories, caches,
-  kubeconfigs, AI/MCP account state, generated workspaces, or copied
-  machine-local configuration.
-- Flag undocumented AI-client, privacy, or policy keys and broadened cleanup or
-  removal paths.
-- For Ansible, focus on idempotence, unsafe shell or command behavior, missing
-  ownership or modes under `/etc`, missing role-input validation, and
-  privileged behavior without CI, container, and VM guards.
-- Flag direct edits to upstream main configuration when a supported drop-in or
-  snippet path exists.
-- Flag docs that present personal workstation settings as a generic hardening
-  benchmark or claim supported environments without matching evidence.
-- For Neovim, flag save-time mutation, lockfile drift, first-buffer filetype
-  regressions, duplicated language or tool inventories, and keymap changes
-  missing their specification and generated manual update.
-- For GitHub automation, flag broadened permissions, missing concurrency,
-  unpinned or Renovate-unmanaged dependencies, and changes that merge
-  Super-Linter into `go-task lint`.
-- Require documentation or ADR updates when architecture, managed paths,
-  validation, rollback, or runtime behavior changes.
-- Recommend the narrowest validation from the root `AGENTS.md`; use
-  `go-task verify` for broad cross-layer changes.
+- Start with the diff and directly affected callers. Expand the search when a
+  concrete dependency or risk requires it, not to produce a repository audit.
+- Keep findings concise and attach each to the smallest useful changed range.
+  Group duplicate symptoms of one cause; do not repeat passed checks or narrate
+  exploration. If no actionable issue remains, say so briefly.
+- Offer a minimal GitHub suggestion when the surrounding code proves the fix.
+  For an uncertain or multi-file fix, describe the required behavior and check
+  instead of inventing a patch. Suggestions remain subject to owner review.
+- Include one brief test-adequacy assessment in every PR review: which changed
+  contract is covered, and any material gap or reason no new test is needed.
+  Use the validation ADR's maintenance criteria; do not request tests merely
+  to increase counts or repeat checks already enforced by lint.
+- Respect explicit owner decisions in `dotfiles/AGENTS.md`, including SSH
+  policy. Do not turn intentional preferences into unsolicited hardening work.
+- Request only checks needed for the changed behavior. Never apply host
+  configuration or start a cloud-agent fix, another review, or an external tool
+  session merely to complete a review.

@@ -1,5 +1,7 @@
 rules:
-  # Workflows do not execute untrusted user-provided template values; current
-  # expressions are limited to trusted repository and GitHub event metadata.
-  template-injection:
-    disable: true
+  self-repository:
+    # GitHub supports $/ references, but stable actionlint 1.7.12 rejects them.
+    # Keep workspace-relative references until the stable validator supports $/.
+    ignore:
+      - ansible.yml
+      - pr-title.yml

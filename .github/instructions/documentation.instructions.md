@@ -1,44 +1,33 @@
 ---
-applyTo: "**/*.md,**/AGENTS.md,.github/copilot-instructions.md,.github/instructions/*.instructions.md"
+applyTo: "**/*.md"
 ---
 
 # Documentation Review Instructions
 
-Repository documentation stays English (enforced by `go-task lint:english`).
-Repo-wide AI instruction rules are single-source in the root `AGENTS.md`;
-`.github/copilot-instructions.md` is the condensed Copilot surface, and
-`.github/instructions/*.instructions.md` carry path-specific rules. Edit the
-canonical rule, not a copy. See the `AGENTS.md` "Documentation And Instruction
-Sync" section.
+Follow the root `AGENTS.md` documentation-sync contract and Code Review Rules.
+Use `.agents/skills/write-markdown/SKILL.md` when editing documentation.
 
-- Update `README.md` when commands, entry points, repository layout,
-  validation paths, or runtime behavior change.
-- Update role README files when role variables, managed paths, task flow,
-  validation, or rollback behavior changes.
-- Update the nearest `AGENTS.md` when local editing rules, ownership
-  boundaries, validation commands, or done criteria change.
-- Preserve the default contract in docs: `go-task` applies user-level
-  dotfiles only and must not require sudo.
-- Document the former `tenhishadow/ans-workstation` consolidation factually
-  where repository history or architecture is relevant.
-- Do not imply privileged system or browser, Thunderbird, or VS Code policy
-  configuration is part of default `go-task`.
-- Do not present personal workstation security settings as a generic hardening
-  benchmark.
-- Document privacy settings as personal workstation defaults and identify
-  intentionally unmanaged account, credential, profile, and runtime state.
-- Keep generated manuals current. For Neovim keymaps, regenerate
-  `docs/nvim-keymaps.md` with `go-task docs:nvim-keymaps` and verify it with
-  `go-task docs:nvim-keymaps:check`.
-- Run `go-task lint:markdown` and fix the source. Do not add file ignores or
-  inline rule disables to bypass documentation failures.
-- Keep documented variable names aligned with the role contracts:
-  `dotfiles_*`, `system_*`, and `browser_policies_*`.
-- Document system role feature flags, managed paths, and drop-in/snippet paths
-  when privileged runtime behavior changes.
-- Document user-level cron behavior when managed commands create or write
-  state files.
-- Update architecture, adoption, security, and migration/history docs when
-  system-layer behavior or consolidation wording changes.
-- Mention `go-task verify` for broad documentation, automation, inventory, or
-  role changes.
+- Trace each changed claim to its owning code, task, or primary source. Update
+  the canonical document that becomes inaccurate; do not demand unrelated
+  README, ADR, or historical-report edits for every implementation change.
+- Keep instructions scoped to decisions the agent needs in that directory.
+  Remove obsolete requirements after verifying current behavior rather than
+  preserving them as universal prohibitions.
+- Flag validation instructions that run an apply command against the user's
+  home or workstation. Distinguish local edits, dry runs, container apply,
+  and separately authorized host changes.
+- Follow the root privacy rule for investigations and identifying observations.
+  Keep public decision history about reusable repository behavior; preserve
+  private diagnostic evidence outside the checkout.
+- Check generated manuals against their generator; Neovim keymaps follow
+  `dotfiles/.config/nvim/AGENTS.md`.
+- Check new untracked Markdown as well as tracked documents. Validate relative
+  links and distinguish generated-output checks from behavioral proof.
+- For changed runtime contracts, cover feature-disable behavior, ownership of
+  managed paths, validation limits, and rollback where relevant.
+- Keep skills scoped to real workflows, with accurate activation descriptions
+  and observable completion criteria. Edit canonical `.agents/skills/`
+  content; provider adapters and symlinks must not duplicate it.
+- Select Markdown, reference, and applicable generated-document checks for
+  documentation-only changes. Do not require host apply, runtime suites, or
+  Docker merely because prose lives under a role or automation directory.

@@ -1,216 +1,269 @@
 #!/usr/bin/env python3
-"""Small, deterministic Codex lifecycle guardrails."""
+"""Block a narrow set of unmistakably destructive simple commands.
+
+This dependency-free hook is a convenience guardrail, not a shell parser or a
+security boundary. It inspects one simple command only. Shell expansions,
+redirections, compound commands, and other complex syntax are passed through.
+"""
 
 from __future__ import annotations
 
 import json
+import os
+import posixpath
 import re
 import shlex
 import sys
-from pathlib import Path
 
-SECRET_ASSIGNMENT = re.compile(
-    r"(?i)\b(?:api[_-]?(?:key|token)|access[_-]?token|auth[_-]?token|token|"
-    r"password|passwd|secret)"
-    r"\b\s*(?:=|:)\s*([^\s;&|]+)"
-)
-SECRET_FLAG = re.compile(
-    r"(?i)--(?:api[_-]?(?:key|token)|access[_-]?token|auth[_-]?token|token|"
-    r"password|secret)"
-    r"(?:=|\s+)\s*([^\s;&|]+)"
-)
-BEARER = re.compile(r"(?i)\bauthorization\s*:\s*bearer\s+([^\s'\"]+)")
-URL_CREDENTIALS = re.compile(r"(?i)\bhttps?://[^\s/:]+:[^\s/@]+@")
-SENSITIVE_PATH_REFERENCE = re.compile(
-    r"(?:\$(?:KUBECONFIG\b|\{KUBECONFIG\b|"
-    r"GRAFANA_SERVICE_ACCOUNT_TOKEN_FILE\b|"
-    r"\{GRAFANA_SERVICE_ACCOUNT_TOKEN_FILE\b)|"
-    r"(?<![A-Za-z0-9_])(?:KUBECONFIG|"
-    r"GRAFANA_SERVICE_ACCOUNT_TOKEN_FILE)\s*=|--kubeconfig(?:=|\s))"
-)
-SHELL_WORD = re.compile(r"""[^\s;&|<>"']+""")
-SAFE_VALUE_PREFIXES = (
-    "$",
-    "${",
-    "<",
-    "your_",
-    "redacted",
-    "example",
-    "dummy",
-    "test",
-    "changeme",
-)
-
-
-def _literal_secret(value: str) -> bool:
-    candidate = value.strip("'\"").lower()
-    return len(candidate) >= 8 and not candidate.startswith(SAFE_VALUE_PREFIXES)
+UNSUPPORTED_SHELL = re.compile(r"[\n\r;&|<>(){}$`\\*?\[\]#~]")
+ASSIGNMENT = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*=")
+BROAD_RM_TARGETS = {
+    ".",
+    "..",
+    "/",
+    "//",
+    "/boot",
+    "/etc",
+    "/home",
+    "/opt",
+    "/root",
+    "/srv",
+    "/usr",
+    "/var",
+}
+SUDO_FLAGS = {"-E", "-H", "-K", "-S", "-b", "-k", "-n", "--non-interactive"}
+SUDO_OPTIONS_WITH_VALUES = {
+    "-C",
+    "-D",
+    "-g",
+    "-h",
+    "-p",
+    "-R",
+    "-T",
+    "-u",
+    "--chdir",
+    "--group",
+    "--host",
+    "--user",
+}
 
 
-def _dangerous_rm(command: str) -> bool:
-    pattern = re.compile(r"(?:^|[;&|]\s*)(?:sudo\s+)?rm\s+([^;&|\n]+)")
-    for match in pattern.finditer(command):
-        try:
-            words = shlex.split(match.group(1))
-        except ValueError:
-            continue
-        recursive = False
-        force = False
-        targets: list[str] = []
-        parse_options = True
-        for word in words:
-            if parse_options and word == "--":
-                parse_options = False
-            elif parse_options and word.startswith("--"):
-                recursive |= word == "--recursive"
-                force |= word == "--force"
-            elif parse_options and word.startswith("-"):
-                recursive |= "r" in word.lower()
-                force |= "f" in word.lower()
+def _simple_words(command: str) -> list[str] | None:
+    """Return argv for one expansion-free simple command."""
+    if not command.strip() or UNSUPPORTED_SHELL.search(command):
+        return None
+    try:
+        words = shlex.split(command, comments=False, posix=True)
+    except ValueError:
+        return None
+    return words or None
+
+
+def _skip_explicit_options(
+    words: list[str], index: int, flags: set[str], values: set[str]
+) -> int | None:
+    """Skip only explicitly supported, unclustered wrapper options."""
+    while index < len(words):
+        word = words[index]
+        if word == "--":
+            return index + 1
+        option, separator, _value = word.partition("=")
+        if word in flags:
+            index += 1
+        elif option in values:
+            if separator:
+                index += 1
+            elif index + 1 < len(words):
+                index += 2
             else:
-                targets.append(word)
-        if not (recursive and force):
-            continue
-        home = str(Path.home())
-        broad = {
-            "/",
-            "/*",
-            "/.*",
-            ".",
-            "..",
-            "./*",
-            "../*",
-            "~",
-            "~/",
-            "~/*",
-            "$HOME",
-            "$HOME/",
-            "$HOME/*",
-            "${HOME}",
-            "${HOME}/",
-            "${HOME}/*",
-            home,
-            f"{home}/",
-            f"{home}/*",
-        }
-        if any(target in broad for target in targets):
-            return True
-    return False
+                return None
+        elif word.startswith("-"):
+            return None
+        else:
+            break
+    return index
 
 
-def _dangerous_git(command: str) -> bool:
-    if re.search(r"\bgit(?:\s+-C\s+\S+)?\s+reset\s+--hard\b", command):
-        return True
-    for match in re.finditer(r"\bgit(?:\s+-C\s+\S+)?\s+clean\s+([^;&|\n]+)", command):
-        try:
-            words = shlex.split(match.group(1))
-        except ValueError:
-            continue
-        flags = "".join(word[1:] for word in words if word.startswith("-"))
-        if "f" in flags and ("d" in flags or "x" in flags):
-            return True
-    return False
-
-
-def _contains_literal_secret(command: str) -> bool:
-    if URL_CREDENTIALS.search(command):
-        return True
-    for pattern in (SECRET_ASSIGNMENT, SECRET_FLAG, BEARER):
-        if any(_literal_secret(match.group(1)) for match in pattern.finditer(command)):
-            return True
-    return False
-
-
-def _contains_sensitive_path(command: str) -> bool:
-    if SENSITIVE_PATH_REFERENCE.search(command):
-        return True
-    for word in SHELL_WORD.findall(command):
-        segments = [segment.strip("()[]{},:") for segment in word.split("/")]
-        candidates = [segment.rsplit("=", 1)[-1] for segment in segments]
-        if ".ssh" in candidates:
-            remainder = candidates[candidates.index(".ssh") + 1 :]
-            public_config = remainder == ["config"] or (
-                remainder and remainder[0] == "config.d" and ".." not in remainder
+def _unwrap(words: list[str]) -> list[str] | None:
+    """Remove a small set of common wrappers with explicit option syntax."""
+    index = 0
+    while index < len(words):
+        executable = os.path.basename(words[index])
+        if executable == "command":
+            index += 1
+            if index < len(words) and words[index] in {"-v", "-V"}:
+                return None
+            index = _skip_explicit_options(words, index, {"-p"}, set())
+        elif executable == "sudo":
+            index = _skip_explicit_options(
+                words, index + 1, SUDO_FLAGS, SUDO_OPTIONS_WITH_VALUES
             )
-            public_key = (
-                remainder and remainder[-1].endswith(".pub") and ".." not in remainder
-            )
-            if not (public_config or public_key):
-                return True
-            continue
-        if ".gnupg" in candidates:
-            remainder = candidates[candidates.index(".gnupg") + 1 :]
-            if "private-keys-v1.d" in remainder:
-                return True
-        for candidate in candidates:
-            if candidate == ".kube":
-                return True
-            if candidate.endswith(".env.example"):
-                continue
-            if (
-                candidate == ".env"
-                or candidate.startswith(".env.")
-                or candidate.endswith(".env")
-            ):
-                return True
-    return False
+        elif executable == "env":
+            index = _skip_explicit_options(words, index + 1, {"-i"}, {"-u"})
+            if index is not None:
+                while index < len(words) and ASSIGNMENT.match(words[index]):
+                    index += 1
+        else:
+            return words[index:]
+        if index is None:
+            return None
+    return None
 
 
-def _bounded_output(command: str) -> bool:
-    return bool(
-        re.search(
-            r"(?:\|\s*(?:head|tail)\b|\|\s*sed\s+-n\b|"
-            r"\|\s*rg\b[^|;&\n]*\s(?:-m|--max-count)\b|"
-            r"(?:^|\s)(?:>|>>)\s*\S+)",
-            command,
+def _broad_rm_targets() -> set[str]:
+    """Return literal broad targets for this hook invocation."""
+    targets = set(BROAD_RM_TARGETS)
+    home = posixpath.normpath(os.path.expanduser("~"))
+    try:
+        cwd = posixpath.normpath(os.getcwd())
+    except OSError:
+        cwd = ""
+    for root in (home, cwd):
+        if root and root != ".":
+            targets.add(root)
+    if home and home != ".":
+        targets.update(
+            posixpath.join(home, child)
+            for child in (".cache", ".config", ".gnupg", ".local", ".ssh")
         )
-    )
+    return targets
 
 
-def _unbounded_logs(command: str) -> bool:
-    bounded_pipe = _bounded_output(command)
-    if re.search(r"--tail(?:=|\s+)-1(?:\s|$)", command) and not bounded_pipe:
-        return True
-    checks = (
-        (
-            re.compile(r"\bkubectl\b[^;&|\n]*\blogs\b"),
-            re.compile(r"--(?:tail|since|since-time|limit-bytes)(?:=|\s)"),
-        ),
-        (
-            re.compile(r"\b(?:docker|podman)\s+logs\b"),
-            re.compile(r"--(?:tail|since|until)(?:=|\s)"),
-        ),
-        (
-            re.compile(r"\bjournalctl\b"),
-            re.compile(
-                r"(?:^|\s)(?:-n\s*\d+|--lines(?:=|\s)|--since(?:=|\s)|--until(?:=|\s))"
-            ),
-        ),
-    )
-    for command_pattern, bound_pattern in checks:
-        if not command_pattern.search(command):
+def _rm_is_broad(arguments: list[str]) -> bool:
+    recursive = False
+    targets: list[str] = []
+    options_done = False
+    for argument in arguments:
+        if not options_done and argument == "--":
+            options_done = True
+        elif not options_done and argument == "--recursive":
+            recursive = True
+        elif not options_done and argument.startswith("--"):
             continue
-        follows = bool(re.search(r"(?:^|\s)(?:-f|--follow)(?:\s|$)", command))
-        if follows and not bounded_pipe:
+        elif not options_done and argument.startswith("-"):
+            recursive = recursive or "r" in argument[1:] or "R" in argument[1:]
+        elif argument:
+            targets.append(posixpath.normpath(argument))
+    return recursive and any(
+        target in _broad_rm_targets() for target in targets
+    )
+
+
+def _git_arguments(words: list[str]) -> list[str] | None:
+    """Return argv after a small supported set of Git global options."""
+    flags = {"--no-pager"}
+    values = {"-C", "-c", "--git-dir", "--work-tree"}
+    index = _skip_explicit_options(words, 1, flags, values)
+    return None if index is None else words[index:]
+
+
+def _git_clean_is_destructive(options: list[str]) -> bool:
+    forced = False
+    dry_run = False
+    for option in options:
+        if option == "--":
+            break
+        if option == "--force":
+            forced = True
+        elif option == "--dry-run":
+            dry_run = True
+        elif option.startswith("--"):
+            if option not in {"--directories", "--ignored", "--quiet"}:
+                return False
+        elif option.startswith("-"):
+            flags = option[1:]
+            if not flags or not set(flags) <= set("dfinqxX"):
+                return False
+            forced = forced or "f" in flags
+            dry_run = dry_run or "n" in flags
+    return forced and not dry_run
+
+
+def _git_checkout_is_destructive(options: list[str]) -> bool:
+    operands: list[str] = []
+    path_mode = False
+    for index, option in enumerate(options):
+        if option == "--":
+            return index + 1 < len(options)
+        if option in {"--force", "-f"}:
             return True
-        if not bounded_pipe and not bound_pattern.search(command):
+        if option in {"--ours", "--theirs"}:
+            path_mode = True
+        elif option == "--quiet" or (
+            option.startswith("-") and set(option[1:]) <= {"f", "q"}
+        ):
+            if "f" in option[1:]:
+                return True
+        elif option.startswith("-"):
+            return False
+        else:
+            operands.append(option)
+    explicit_relative = any(
+        operand in {".", ".."} or operand.startswith(("./", "../"))
+        for operand in operands
+    )
+    return (
+        explicit_relative or len(operands) > 1 or (path_mode and bool(operands))
+    )
+
+
+def _git_restore_is_destructive(options: list[str]) -> bool:
+    staged = False
+    worktree = False
+    paths: list[str] = []
+    for index, option in enumerate(options):
+        if option == "--":
+            paths.extend(options[index + 1 :])
+            break
+        if option == "--pathspec-from-file" or option.startswith(
+            "--pathspec-from-file="
+        ):
             return True
-    return False
+        if option in {"--staged", "-S"}:
+            staged = True
+        elif option in {"--worktree", "-W"}:
+            worktree = True
+        elif option == "-SW":
+            staged = worktree = True
+        elif option.startswith("-"):
+            return False
+        else:
+            paths.append(option)
+    return bool(paths) and (worktree or not staged)
+
+
+def _git_is_destructive(words: list[str]) -> bool:
+    arguments = _git_arguments(words)
+    if not arguments:
+        return False
+    subcommand, *options = arguments
+    if subcommand == "reset":
+        return "--hard" in options
+    if subcommand == "switch":
+        force_options = {"--discard-changes", "--force", "-f"}
+        return any(option in force_options for option in options)
+    checks = {
+        "clean": _git_clean_is_destructive,
+        "checkout": _git_checkout_is_destructive,
+        "restore": _git_restore_is_destructive,
+    }
+    check = checks.get(subcommand)
+    return bool(check and check(options))
 
 
 def policy_reason(command: str) -> str | None:
-    """Return a generic denial reason without echoing sensitive input."""
-    if _dangerous_rm(command) or _dangerous_git(command):
-        return "Broad destructive command blocked by the portable Codex policy."
-    if _contains_literal_secret(command):
-        return (
-            "Credential-shaped literal blocked; use a protected file or "
-            "environment reference."
-        )
-    if _contains_sensitive_path(command):
-        return "Sensitive local path blocked by the portable Codex policy."
-    if _unbounded_logs(command):
-        return "Unbounded log command blocked; add a line, time, or output limit."
+    """Return a denial reason for a supported destructive simple command."""
+    command_words = _simple_words(command)
+    if command_words is None:
+        return None
+    words = _unwrap(command_words)
+    if not words:
+        return None
+    executable = os.path.basename(words[0])
+    if executable == "rm" and _rm_is_broad(words[1:]):
+        return "Broad recursive removal blocked by the portable Codex guard."
+    if executable == "git" and _git_is_destructive(words):
+        return "Destructive Git command blocked by the portable Codex guard."
     return None
 
 
@@ -233,13 +286,15 @@ def main() -> None:
         return
     if not isinstance(event, dict):
         return
-    event_name = event.get("hook_event_name")
-    if event_name != "PreToolUse" or event.get("tool_name") != "Bash":
+    if (
+        event.get("hook_event_name") != "PreToolUse"
+        or event.get("tool_name") != "Bash"
+    ):
         return
     tool_input = event.get("tool_input")
     if not isinstance(tool_input, dict):
         return
-    command = tool_input.get("command", tool_input.get("cmd"))
+    command = tool_input.get("command")
     if not isinstance(command, str):
         return
     reason = policy_reason(command)

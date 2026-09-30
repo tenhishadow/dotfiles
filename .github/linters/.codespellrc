@@ -1,2 +1,4 @@
 [codespell]
-ignore-words-list = astroid
+ignore-words-list = astroid,hda
+# Generated dependency integrity hashes are not prose.
+skip = */package-lock.json

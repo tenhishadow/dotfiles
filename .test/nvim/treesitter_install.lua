@@ -77,8 +77,14 @@ if task and task.wait then
   else
     vim.fn.writefile({ "failed" }, marker_failed)
     pcall(vim.fn.delete, marker_ok)
+    if install_mode == "required" then
+      error("Tree-sitter parser installation failed or timed out")
+    end
   end
 else
   vim.fn.writefile({ "failed" }, marker_failed)
   pcall(vim.fn.delete, marker_ok)
+  if install_mode == "required" then
+    error("Tree-sitter parser installation did not return a waitable task")
+  end
 end

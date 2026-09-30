@@ -1,0 +1,706 @@
+#!/usr/bin/env python3
+"""Refresh repository dependency pins and normalize native updater output."""
+
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import re
+import stat
+import subprocess
+import sys
+import tempfile
+import urllib.error
+import urllib.parse
+import urllib.request
+from collections.abc import Callable, Mapping, Sequence
+from concurrent.futures import ThreadPoolExecutor
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any
+
+HTTP_TIMEOUT_SECONDS = 30
+SHORT_COMMAND_TIMEOUT_SECONDS = 30
+PACKAGE_COMMAND_TIMEOUT_SECONDS = 600
+GALAXY_VERSION_MAX_PAGES = 10
+NPM_REGISTRY = "https://registry.npmjs.org/"
+USER_AGENT = "dotfiles-dependency-updater"
+NPM_MANIFEST_ROOTS = (
+    Path(".github/tools"),
+    Path("dotfiles/.local/share/codex-cli"),
+    Path("dotfiles/.local/share/codex-mcp"),
+)
+GITHUB_RELEASES = {
+    "pinact": "suzuki-shunsuke/pinact",
+    "super-linter": "super-linter/super-linter",
+}
+
+_PACKAGE_NAME_RE = re.compile(
+    r"^(?:@[a-z0-9][a-z0-9._~-]*/)?[a-z0-9][a-z0-9._~-]*$",
+    re.IGNORECASE,
+)
+_SEMVER_RE = re.compile(r"^(?:v)?(?P<version>\d+\.\d+\.\d+)$")
+_COLLECTION_NAME_RE = re.compile(
+    r"^[ \t]*-[ \t]+name:[ \t]+(?P<name>[A-Za-z0-9_]+\.[A-Za-z0-9_]+)"
+    r"[ \t]*(?:#.*)?$"
+)
+_COLLECTION_VERSION_RE = re.compile(
+    r"^(?P<prefix>[ \t]*version:[ \t]*)"
+    r"(?P<quote>['\"]?)(?P<version>[^'\"# \t]+)(?P=quote)"
+    r"(?P<suffix>[ \t]*(?:#.*)?)$"
+)
+_COLLECTION_SOURCE_RE = re.compile(
+    r"^[ \t]*source:[ \t]*(?P<source>\S+)[ \t]*(?:#.*)?$"
+)
+_TOOL_VERSION_RE = re.compile(
+    r"(?P<prefix>^[ \t]*# renovate: datasource=github-releases "
+    r"depName=(?P<repository>[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+)[ \t]*\n"
+    r"[ \t]+version:[ \t]*[\"']?)(?P<version>v?\d+\.\d+\.\d+)"
+    r"(?P<suffix>[\"']?[ \t]*$)",
+    re.MULTILINE,
+)
+
+
+class DependencyUpdateError(ValueError):
+    """Raised when an update cannot be applied without ambiguity."""
+
+
+@dataclass(frozen=True)
+class CollectionRequirement:
+    """An Ansible Galaxy collection declared in requirements.yml."""
+
+    name: str
+    source: str
+
+
+@dataclass(frozen=True)
+class RepositoryPins:
+    """Resolved versions stored directly in Taskfile.yml."""
+
+    renovate: str
+    renovate_node_minimum: str
+    pinact: str
+    super_linter: str
+
+
+def replace_taskfile_scalar(text: str, name: str, value: str) -> str:
+    """Replace one quoted top-level Taskfile variable, rejecting ambiguity."""
+    if not re.fullmatch(r"[A-Z][A-Z0-9_]*", name):
+        raise DependencyUpdateError(f"invalid Taskfile variable name: {name!r}")
+    pattern = re.compile(
+        rf'^(?P<prefix>[ ]{{2}}{re.escape(name)}:[ \t]*")[^"\r\n]+'
+        r'(?P<suffix>"[ \t]*)$',
+        re.MULTILINE,
+    )
+    matches = list(pattern.finditer(text))
+    if len(matches) != 1:
+        raise DependencyUpdateError(
+            f"expected exactly one {name} assignment, found {len(matches)}"
+        )
+    return pattern.sub(
+        lambda match: f"{match.group('prefix')}{value}{match.group('suffix')}",
+        text,
+    )
+
+
+def parse_node_engine_minimum(engine: str) -> str:
+    """Return the minimum version from Renovate's supported caret constraint."""
+    match = re.fullmatch(r"\^(\d+\.\d+\.\d+)", engine.strip())
+    if not match:
+        raise DependencyUpdateError(
+            f"unsupported Renovate Node.js engine constraint: {engine!r}"
+        )
+    return match.group(1)
+
+
+def resolve_github_token(
+    environ: Mapping[str, str], gh_token_loader: Callable[[], str]
+) -> str:
+    """Resolve a GitHub token without printing or persisting its value."""
+    for name in ("PINACT_GITHUB_TOKEN", "GITHUB_TOKEN"):
+        token = environ.get(name, "").strip()
+        if token:
+            return token
+    try:
+        token = gh_token_loader().strip()
+    except (OSError, subprocess.SubprocessError) as error:
+        raise DependencyUpdateError(
+            "GitHub authentication is required; export PINACT_GITHUB_TOKEN or "
+            "GITHUB_TOKEN, or authenticate the gh CLI"
+        ) from error
+    if not token:
+        raise DependencyUpdateError(
+            "GitHub authentication is required; export PINACT_GITHUB_TOKEN or "
+            "GITHUB_TOKEN, or authenticate the gh CLI"
+        )
+    return token
+
+
+def _line_body_and_ending(line: str) -> tuple[str, str]:
+    body = line.rstrip("\r\n")
+    return body, line[len(body) :]
+
+
+def _collection_requirements(text: str) -> tuple[CollectionRequirement, ...]:
+    requirements: list[CollectionRequirement] = []
+    current_name: str | None = None
+    current_source = "https://galaxy.ansible.com"
+
+    def finish_current() -> None:
+        if current_name is None:
+            return
+        requirements.append(CollectionRequirement(current_name, current_source))
+
+    for line in text.splitlines():
+        name_match = _COLLECTION_NAME_RE.fullmatch(line)
+        if name_match:
+            finish_current()
+            current_name = name_match.group("name")
+            current_source = "https://galaxy.ansible.com"
+            continue
+        source_match = _COLLECTION_SOURCE_RE.fullmatch(line)
+        if source_match and current_name is not None:
+            current_source = source_match.group("source")
+    finish_current()
+
+    names = [requirement.name for requirement in requirements]
+    duplicates = sorted({name for name in names if names.count(name) > 1})
+    if duplicates:
+        raise DependencyUpdateError(
+            "duplicate Ansible collection requirements: "
+            + ", ".join(duplicates)
+        )
+    if not requirements:
+        raise DependencyUpdateError("no Ansible collection requirements found")
+    unsupported = [
+        requirement
+        for requirement in requirements
+        if requirement.source.rstrip("/") != "https://galaxy.ansible.com"
+    ]
+    if unsupported:
+        rendered = ", ".join(
+            f"{requirement.name} ({requirement.source})"
+            for requirement in unsupported
+        )
+        raise DependencyUpdateError(
+            f"unsupported Ansible collection source: {rendered}"
+        )
+    return tuple(requirements)
+
+
+def update_ansible_requirements(text: str, versions: Mapping[str, str]) -> str:
+    """Update collection versions while preserving the existing YAML layout."""
+    if not versions:
+        raise DependencyUpdateError(
+            "no Ansible collection updates were supplied"
+        )
+    for name, version in versions.items():
+        if not _COLLECTION_NAME_RE.fullmatch(f"- name: {name}"):
+            raise DependencyUpdateError(
+                f"invalid Ansible collection name: {name!r}"
+            )
+        if not re.fullmatch(r"\d+\.\d+\.\d+", version):
+            raise DependencyUpdateError(
+                f"invalid stable version for Ansible collection {name}: "
+                f"{version!r}"
+            )
+
+    current_name: str | None = None
+    replacements = dict.fromkeys(versions, 0)
+    output: list[str] = []
+    for line in text.splitlines(keepends=True):
+        body, ending = _line_body_and_ending(line)
+        name_match = _COLLECTION_NAME_RE.fullmatch(body)
+        if name_match:
+            current_name = name_match.group("name")
+            output.append(line)
+            continue
+        version_match = _COLLECTION_VERSION_RE.fullmatch(body)
+        if version_match and current_name in versions:
+            replacements[current_name] += 1
+            output.append(
+                version_match.group("prefix")
+                + version_match.group("quote")
+                + versions[current_name]
+                + version_match.group("quote")
+                + version_match.group("suffix")
+                + ending
+            )
+            continue
+        output.append(line)
+
+    invalid_counts = {
+        name: count for name, count in replacements.items() if count != 1
+    }
+    if invalid_counts:
+        details = ", ".join(
+            f"{name}={count}" for name, count in sorted(invalid_counts.items())
+        )
+        raise DependencyUpdateError(
+            "expected exactly one version for each Ansible collection: "
+            f"{details}"
+        )
+    return "".join(output)
+
+
+def direct_npm_dependencies(manifest: object) -> tuple[str, ...]:
+    """Return direct npm package names from supported dependency sections."""
+    if not isinstance(manifest, dict):
+        raise DependencyUpdateError("npm manifest root must be an object")
+    dependencies: list[str] = []
+    for section in ("dependencies", "devDependencies", "optionalDependencies"):
+        values = manifest.get(section, {})
+        if not isinstance(values, dict):
+            raise DependencyUpdateError(
+                f"npm manifest {section} must be an object"
+            )
+        for package in values:
+            if not isinstance(package, str) or not _PACKAGE_NAME_RE.fullmatch(
+                package
+            ):
+                raise DependencyUpdateError(
+                    f"invalid npm package name: {package!r}"
+                )
+            if package in dependencies:
+                raise DependencyUpdateError(
+                    "npm package appears in multiple dependency sections: "
+                    f"{package}"
+                )
+            dependencies.append(package)
+    if not dependencies:
+        raise DependencyUpdateError("npm manifest has no direct dependencies")
+    return tuple(sorted(dependencies))
+
+
+def build_npm_update_command(
+    directory: Path | str,
+    dependencies: Sequence[str],
+    *,
+    save_flag: str | None = None,
+) -> tuple[str, ...]:
+    """Build an npm lock-only update command without lifecycle scripts."""
+    if not dependencies:
+        raise DependencyUpdateError(
+            "cannot build an npm update with no packages"
+        )
+    for package in dependencies:
+        if not _PACKAGE_NAME_RE.fullmatch(package):
+            raise DependencyUpdateError(
+                f"invalid npm package name: {package!r}"
+            )
+    command = [
+        "npm",
+        "install",
+        "--package-lock-only",
+        "--ignore-scripts",
+        "--no-audit",
+        "--no-fund",
+        "--save-exact",
+        f"--registry={NPM_REGISTRY}",
+    ]
+    if save_flag is not None:
+        command.append(save_flag)
+    command.extend(("--prefix", str(directory)))
+    command.extend(f"{package}@latest" for package in dependencies)
+    return tuple(command)
+
+
+def _gh_auth_token() -> str:
+    result = subprocess.run(
+        ("gh", "auth", "token", "--hostname", "github.com"),
+        check=True,
+        capture_output=True,
+        text=True,
+        timeout=SHORT_COMMAND_TIMEOUT_SECONDS,
+    )
+    return result.stdout
+
+
+def _fetch_json(url: str, *, github_token: str | None = None) -> Any:
+    headers = {
+        "Accept": "application/vnd.github+json, application/json",
+        "User-Agent": USER_AGENT,
+    }
+    if github_token and urllib.parse.urlparse(url).hostname == "api.github.com":
+        headers["Authorization"] = f"Bearer {github_token}"
+        headers["X-GitHub-Api-Version"] = "2022-11-28"
+    request = urllib.request.Request(url, headers=headers)
+    try:
+        with urllib.request.urlopen(
+            request, timeout=HTTP_TIMEOUT_SECONDS
+        ) as response:
+            return json.load(response)
+    except (OSError, ValueError, urllib.error.URLError) as error:
+        raise DependencyUpdateError(
+            f"failed to fetch {url}: {error}"
+        ) from error
+
+
+def validate_github_authentication(
+    environ: Mapping[str, str], gh_token_loader: Callable[[], str]
+) -> str:
+    """Validate GitHub authentication before repository writes."""
+    token = resolve_github_token(environ, gh_token_loader)
+    payload = _fetch_json(
+        "https://api.github.com/rate_limit",
+        github_token=token,
+    )
+    if not isinstance(payload, dict):
+        raise DependencyUpdateError("invalid GitHub rate-limit response")
+    resources = payload.get("resources")
+    core = resources.get("core") if isinstance(resources, dict) else None
+    remaining = core.get("remaining") if isinstance(core, dict) else None
+    if isinstance(remaining, bool) or not isinstance(remaining, int):
+        raise DependencyUpdateError(
+            "GitHub rate-limit response has no core quota"
+        )
+    if remaining <= 0:
+        raise DependencyUpdateError("GitHub API core rate limit is exhausted")
+    return token
+
+
+def _latest_collection_version(name: str) -> str:
+    namespace, collection = name.split(".", maxsplit=1)
+    url = (
+        "https://galaxy.ansible.com/api/v3/plugin/ansible/content/published/"
+        f"collections/index/{namespace}/{collection}/versions/"
+        "?limit=100"
+    )
+    stable_versions: list[tuple[tuple[int, int, int], str]] = []
+    for _page in range(GALAXY_VERSION_MAX_PAGES):
+        payload = _fetch_json(url)
+        if not isinstance(payload, dict) or not isinstance(
+            payload.get("data"), list
+        ):
+            raise DependencyUpdateError(f"invalid Galaxy response for {name}")
+        for entry in payload["data"]:
+            if not isinstance(entry, dict):
+                continue
+            version = entry.get("version")
+            if not isinstance(version, str):
+                continue
+            match = re.fullmatch(r"(\d+)\.(\d+)\.(\d+)", version)
+            if match:
+                stable_versions.append(
+                    (tuple(map(int, match.groups())), version)
+                )
+
+        links = payload.get("links", {})
+        if not isinstance(links, dict):
+            raise DependencyUpdateError(f"invalid Galaxy pagination for {name}")
+        next_link = links.get("next")
+        if next_link is None:
+            break
+        if not isinstance(next_link, str):
+            raise DependencyUpdateError(f"invalid Galaxy pagination for {name}")
+        url = urllib.parse.urljoin(url, next_link)
+        parsed_url = urllib.parse.urlparse(url)
+        if (
+            parsed_url.scheme != "https"
+            or parsed_url.netloc != "galaxy.ansible.com"
+        ):
+            raise DependencyUpdateError(
+                f"invalid Galaxy pagination URL for {name}"
+            )
+    else:
+        raise DependencyUpdateError(
+            f"Galaxy version history for {name} exceeds "
+            f"{GALAXY_VERSION_MAX_PAGES} pages"
+        )
+    if not stable_versions:
+        raise DependencyUpdateError(
+            f"Galaxy returned no stable versions for {name}"
+        )
+    return max(stable_versions)[1]
+
+
+def _latest_github_release(
+    repository: str,
+    github_token: str,
+) -> str:
+    url = f"https://api.github.com/repos/{repository}/releases/latest"
+    payload = _fetch_json(url, github_token=github_token)
+    tag = payload.get("tag_name") if isinstance(payload, dict) else None
+    if not isinstance(tag, str) or _SEMVER_RE.fullmatch(tag) is None:
+        raise DependencyUpdateError(f"invalid latest release for {repository}")
+    return tag
+
+
+def _resolve_repository_pins(github_token: str) -> RepositoryPins:
+    urls: dict[str, Callable[[], Any]] = {
+        "renovate": lambda: _fetch_json(f"{NPM_REGISTRY}renovate/latest"),
+        "pinact": lambda: _latest_github_release(
+            GITHUB_RELEASES["pinact"], github_token
+        ),
+        "super-linter": lambda: _latest_github_release(
+            GITHUB_RELEASES["super-linter"], github_token
+        ),
+    }
+    with ThreadPoolExecutor(max_workers=len(urls)) as executor:
+        futures = {
+            name: executor.submit(resolver) for name, resolver in urls.items()
+        }
+        resolved = {name: future.result() for name, future in futures.items()}
+
+    renovate_payload = resolved["renovate"]
+    if not isinstance(renovate_payload, dict):
+        raise DependencyUpdateError("invalid npm response for Renovate")
+    renovate_version = renovate_payload.get("version")
+    engines = renovate_payload.get("engines")
+    if not isinstance(renovate_version, str) or not re.fullmatch(
+        r"\d+\.\d+\.\d+", renovate_version
+    ):
+        raise DependencyUpdateError("npm returned an invalid Renovate version")
+    if not isinstance(engines, dict) or not isinstance(
+        engines.get("node"), str
+    ):
+        raise DependencyUpdateError("npm returned no Renovate Node.js engine")
+
+    pinact = resolved["pinact"]
+    super_linter = resolved["super-linter"]
+    if not isinstance(pinact, str) or not pinact.startswith("v5."):
+        raise DependencyUpdateError(
+            "pinact major changed; update its Go module path manually: "
+            f"{pinact!r}"
+        )
+    if not isinstance(super_linter, str):
+        raise DependencyUpdateError("invalid Super-Linter release")
+    return RepositoryPins(
+        renovate=renovate_version,
+        renovate_node_minimum=parse_node_engine_minimum(engines["node"]),
+        pinact=pinact,
+        super_linter=f"slim-{super_linter}",
+    )
+
+
+def _write_if_changed(path: Path, old: str, new: str) -> None:
+    """Replace one changed file atomically without changing its mode."""
+    if new == old:
+        print(f"up to date: {path}")
+        return
+
+    descriptor, temporary_name = tempfile.mkstemp(
+        dir=path.parent,
+        prefix=f".{path.name}.",
+        text=True,
+    )
+    temporary_path = Path(temporary_name)
+    try:
+        with os.fdopen(descriptor, "w", encoding="utf-8", newline="") as stream:
+            stream.write(new)
+            stream.flush()
+            os.fsync(stream.fileno())
+        temporary_path.chmod(stat.S_IMODE(path.stat().st_mode))
+        os.replace(temporary_path, path)
+    finally:
+        temporary_path.unlink(missing_ok=True)
+    print(f"updated: {path}")
+
+
+def update_ansible(root: Path) -> None:
+    """Resolve exact Galaxy pins and install the updated requirements."""
+    path = root / "requirements.yml"
+    original = path.read_text(encoding="utf-8")
+    requirements = _collection_requirements(original)
+    with ThreadPoolExecutor(max_workers=len(requirements)) as executor:
+        futures = {
+            requirement.name: executor.submit(
+                _latest_collection_version, requirement.name
+            )
+            for requirement in requirements
+        }
+        versions = {name: future.result() for name, future in futures.items()}
+    updated = update_ansible_requirements(original, versions)
+    _write_if_changed(path, original, updated)
+
+
+def _replace_repository_pins(text: str, pins: RepositoryPins) -> str:
+    updated = text
+    for name, value in (
+        ("RENOVATE_VERSION", pins.renovate),
+        ("RENOVATE_NODE_MIN_VERSION", pins.renovate_node_minimum),
+        ("PINACT_VERSION", pins.pinact),
+        ("SUPERLINTER_IMAGE_TAG", pins.super_linter),
+    ):
+        updated = replace_taskfile_scalar(updated, name, value)
+    return updated
+
+
+def update_repository_pins(root: Path) -> None:
+    """Resolve coupled Taskfile pins and annotated CI tools before writing."""
+    taskfile_path = root / "Taskfile.yml"
+    taskfile_original = taskfile_path.read_text(encoding="utf-8")
+    paths = sorted(
+        [
+            *(root / ".github/workflows").glob("*.y*ml"),
+            *(root / ".github/actions").rglob("action.y*ml"),
+        ]
+    )
+    originals = {path: path.read_text(encoding="utf-8") for path in paths}
+    repositories = {
+        match.group("repository")
+        for original in originals.values()
+        for match in _TOOL_VERSION_RE.finditer(original)
+    }
+    github_token = validate_github_authentication(os.environ, _gh_auth_token)
+    taskfile_updated = _replace_repository_pins(
+        taskfile_original, _resolve_repository_pins(github_token)
+    )
+    versions = {
+        repository: _latest_github_release(repository, github_token)
+        for repository in sorted(repositories)
+    }
+
+    def replace(match: re.Match[str]) -> str:
+        version = versions[match.group("repository")].removeprefix("v")
+        if match.group("version").startswith("v"):
+            version = "v" + version
+        return match.group("prefix") + version + match.group("suffix")
+
+    _write_if_changed(taskfile_path, taskfile_original, taskfile_updated)
+    for path, original in originals.items():
+        updated = _TOOL_VERSION_RE.sub(replace, original)
+        if updated != original:
+            _write_if_changed(path, original, updated)
+
+
+def _managed_npm_manifests(root: Path) -> tuple[Path, ...]:
+    manifests: list[Path] = []
+    for relative_root in NPM_MANIFEST_ROOTS:
+        base = root / relative_root
+        for path in base.rglob("package.json"):
+            if "node_modules" in path.relative_to(base).parts:
+                continue
+            if not path.with_name("package-lock.json").is_file():
+                raise DependencyUpdateError(
+                    f"npm manifest has no package lock: {path}"
+                )
+            manifests.append(path)
+    if not manifests:
+        raise DependencyUpdateError("no managed npm manifests found")
+    return tuple(sorted(manifests))
+
+
+def _npm_dependency_sections(
+    manifest: object,
+) -> tuple[tuple[str, tuple[str, ...]], ...]:
+    direct_npm_dependencies(manifest)
+    if not isinstance(manifest, dict):
+        raise DependencyUpdateError("npm manifest root must be an object")
+    sections: list[tuple[str, tuple[str, ...]]] = []
+    for section in ("dependencies", "devDependencies", "optionalDependencies"):
+        values = manifest.get(section, {})
+        if values:
+            sections.append((section, tuple(sorted(values))))
+    return tuple(sections)
+
+
+def update_npm(root: Path) -> None:
+    """Update direct packages and refresh their transitive dependency locks."""
+    save_flags = {
+        "dependencies": None,
+        "devDependencies": "--save-dev",
+        "optionalDependencies": "--save-optional",
+    }
+    for manifest_path in _managed_npm_manifests(root):
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        sections = _npm_dependency_sections(manifest)
+        if not sections:
+            raise DependencyUpdateError(
+                "managed npm manifest has no direct dependencies: "
+                f"{manifest_path}"
+            )
+        for section, dependencies in sections:
+            command = build_npm_update_command(
+                manifest_path.parent,
+                dependencies,
+                save_flag=save_flags[section],
+            )
+            subprocess.run(
+                command,
+                check=True,
+                cwd=root,
+                timeout=PACKAGE_COMMAND_TIMEOUT_SECONDS,
+            )
+        subprocess.run(
+            (
+                "npm",
+                "update",
+                "--package-lock-only",
+                "--ignore-scripts",
+                "--no-audit",
+                "--no-fund",
+                f"--registry={NPM_REGISTRY}",
+                "--prefix",
+                str(manifest_path.parent),
+            ),
+            check=True,
+            cwd=root,
+            timeout=PACKAGE_COMMAND_TIMEOUT_SECONDS,
+        )
+
+
+def update_pre_commit(root: Path) -> None:
+    """Refresh frozen hooks and preserve the repository's YAML comment style."""
+    subprocess.run(
+        (sys.executable, "-m", "pre_commit", "autoupdate", "--freeze"),
+        check=True,
+        cwd=root,
+        timeout=PACKAGE_COMMAND_TIMEOUT_SECONDS,
+    )
+    path = root / ".pre-commit-config.yaml"
+    original = path.read_text(encoding="utf-8")
+    # Native frozen comments use two spaces; Prettier requires one.
+    formatted = re.sub(
+        r"(?m)^([ \t]*rev:[ \t]+[0-9a-f]{40}) {2}(# frozen: [^\r\n]+)$",
+        r"\1 \2",
+        original,
+    )
+    _write_if_changed(path, original, formatted)
+
+
+def _parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--root",
+        type=Path,
+        default=Path(__file__).resolve().parents[2],
+        help="repository root (defaults to the script checkout)",
+    )
+    parser.add_argument(
+        "surface",
+        choices=("check", "ansible", "npm", "pre-commit", "repository"),
+        help="dependency surface to update",
+    )
+    return parser
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    """Run one dependency updater surface."""
+    args = _parser().parse_args(argv)
+    root = args.root.resolve()
+    try:
+        if args.surface == "check":
+            validate_github_authentication(os.environ, _gh_auth_token)
+        elif args.surface == "ansible":
+            update_ansible(root)
+        elif args.surface == "npm":
+            update_npm(root)
+        elif args.surface == "pre-commit":
+            update_pre_commit(root)
+        else:
+            update_repository_pins(root)
+    except (
+        DependencyUpdateError,
+        json.JSONDecodeError,
+        OSError,
+        subprocess.SubprocessError,
+    ) as error:
+        print(f"dependency update failed: {error}", file=sys.stderr)
+        return 1
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

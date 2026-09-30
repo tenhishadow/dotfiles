@@ -25,6 +25,12 @@ return {
       formatters_by_ft = languages.formatters_by_ft,
       default_format_opts = { timeout_ms = 3000, lsp_format = "never" },
       formatters = {
+        ["markdownlint-cli2"] = {
+          args = function(_, ctx)
+            -- Manual formatting must not expand repository-wide lint globs.
+            return { "--no-globs", "--fix", ":" .. ctx.filename }
+          end,
+        },
         biome = {
           require_cwd = true,
         },

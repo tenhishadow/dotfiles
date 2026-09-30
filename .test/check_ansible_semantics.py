@@ -125,11 +125,13 @@ def check_names(root: Path, files: list[Path]) -> list[str]:
                 continue  # ansible-lint owns "name missing"
             if not isinstance(name, str) or not NAME_RE.match(name):
                 problems.append(
-                    f"{rel}: {kind} name not '<Domain> | <Verb> <object>': {name!r}"
+                    f"{rel}: {kind} name not '<Domain> | <Verb> <object>': "
+                    f"{name!r}"
                 )
             elif name.count(SEPARATOR) != 1:
                 problems.append(
-                    f"{rel}: {kind} name needs exactly one ' | ' separator: {name!r}"
+                    f"{rel}: {kind} name needs exactly one ' | ' separator: "
+                    f"{name!r}"
                 )
     return problems
 
@@ -146,7 +148,9 @@ def check_notify(root: Path, files: list[Path]) -> list[str]:
         scope = handlers.get(role, set())
         for value in collect_notifies(path):
             if value not in scope:
-                problems.append(f"{rel}: notify '{value}' has no matching handler name")
+                problems.append(
+                    f"{rel}: notify '{value}' has no matching handler name"
+                )
     return problems
 
 

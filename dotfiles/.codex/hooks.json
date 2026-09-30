@@ -1,9 +1,9 @@
 {
-  "description": "Portable, deterministic Codex guardrails.",
+  "description": "Narrow, deterministic Codex destructive-command guard.",
   "hooks": {
     "PreToolUse": [
       {
-        "matcher": "^Bash$",
+        "matcher": "Bash",
         "hooks": [
           {
             "type": "command",

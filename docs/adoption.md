@@ -29,7 +29,8 @@ go-task
 That command applies only the user-level dotfiles workflow. It runs
 `playbook_install.yml`, links managed files from `dotfiles/` into `$HOME`, and
 does not apply system-wide configuration. It can still replace managed
-destinations with symlinks and remove explicit legacy user paths.
+destinations with symlinks and remove listed legacy symlinks only when they
+resolve into the repository payload.
 
 Do not blindly run these privileged apply commands:
 
@@ -65,9 +66,29 @@ Review these host values before privileged use:
 - `inventory/host_vars/this_host/browser_policies.yml`
 - `roles/system/defaults/main.yml` AUR helper defaults
 
+Also review time-daemon selection before applying the system layer. With the
+default backend flags, virtual machines use Chrony and permit corrections
+larger than one second to step at any update so suspended guests can recover
+promptly; physical hosts use `systemd-timesyncd`. Disabling the backend for the
+detected host class selects no fallback daemon. Confirm that VM clock stepping
+is acceptable for the workloads on the target host.
+
+Containers and CI skip both timezone changes and time-daemon management. The
+[time synchronization contract](../roles/system/README.md#time-synchronization)
+includes read-only verification for a real VM after an authorized apply.
+
 The local host values are personal workstation choices. They are not a generic
 security baseline and should not be copied to servers, shared systems, or other
 workstations without review.
+
+Before enabling `system_tuned_enabled`, review the hardware-specific profile
+policy and existing power managers;
+the [system role](../roles/system/README.md#plasma-power-profiles) documents
+the scoped apply, service guards, and rollback.
+
+This host also enables `system_fstrim_enabled`. Confirm discard support and
+the desired encrypted-storage policy before adopting
+[periodic TRIM](../roles/system/README.md#periodic-trim).
 
 Review `docs/privacy-policy-surfaces.md` before adopting the managed privacy
 dotfiles and browser, Thunderbird, or VS Code policies. The repository does not

@@ -1,28 +1,17 @@
 # Summary
 
-- TBD
-
-## Scope
-
-- [ ] User-level dotfiles
-- [ ] Opt-in system or policy layer
-- [ ] Tests or repository automation
-- [ ] Documentation or agent instructions
+<!-- Describe the problem and resulting behavior. Link an issue or prerequisite
+PR when relevant. Use a Conventional Commit PR title; see CONTRIBUTING.md. -->
 
 ## Validation
 
-- [ ] `git diff --check`
-- [ ] `go-task verify:fast`
-- [ ] `go-task verify`
-- [ ] Narrow checks or reason not applicable:
+<!-- Explain why the selected tests are sufficient for the changed contract,
+including why new tests are needed or unnecessary. For removals, identify the
+replacement coverage or retired behavior. Record actual commands/results and
+blockers; distinguish container/simulated evidence from live VM or hardware. -->
 
-## Safety
+## Risks And Recovery
 
-- [ ] Default `go-task` remains user-level and sudo-free
-- [ ] Privileged behavior remains explicit and opt-in
-- [ ] No secrets, private state, caches, profiles, or generated workspaces are committed
-- [ ] Documentation and rollback guidance match changed behavior
-
-## Notes
-
-- TBD
+<!-- Keep this section only when there are meaningful adoption, compatibility,
+privilege, migration, or rollback considerations. For a breaking change, use !
+in the PR title and describe the operator's migration steps here. -->

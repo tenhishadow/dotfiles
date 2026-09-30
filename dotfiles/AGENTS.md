@@ -2,8 +2,9 @@
 
 Applies to `dotfiles/`.
 
-This directory is the canonical user-level payload linked into `$HOME` by
-`playbook_install.yml`.
+This directory is the canonical user-level payload linked or seeded into
+`$HOME` by `playbook_install.yml`. The root `AGENTS.md` owns repository-wide
+security, language, and execution-scope rules.
 
 ## Edit Here When
 
@@ -14,45 +15,45 @@ This directory is the canonical user-level payload linked into `$HOME` by
 
 ## Do Not Put Here
 
-- Secrets, tokens, cookies, histories, session state, local databases, caches,
-  kubeconfigs, cloud credentials, AI account state, or MCP credentials.
-- Browser profiles, mail profiles, SSH private keys, GPG private keys,
-  private registry credentials, or machine-local credentials.
-- Generated output that can be recreated locally.
+- Generated test copies, caches, and application runtime state.
 - Generated XDG desktop state such as `.config/user-dirs.dirs`; let
   `xdg-user-dirs-update` own the local file.
 - System-wide `/etc` configuration; use an opt-in playbook or role instead.
 
 ## Mapping Rules
 
-- New managed payload files usually require a matching entry in
-  `../inventory/host_vars/this_host/dotfiles.yml`.
-- If a file is not in `dotfiles_mapping`, the default playbook will not link
-  it.
-- Mapping entries use `name`, repository-relative `payload`, and absolute
-  `dest`; `roles/dotfiles` computes the source path.
+- Add a mapping in `inventory/host_vars/this_host/dotfiles.yml` for each new
+  destination. Files inside an already linked directory need no separate
+  entry.
+- Use `dotfiles_mapping` for symlinks and `dotfiles_baseline_files` for
+  copy-once configurations rewritten by applications. Existing baselines
+  remain local regular files; a runtime writer must not alter repository
+  content through a symlink.
+- Mapping entries use `name`, `payload` relative to `dotfiles_location`, and
+  absolute `dest`; `roles/dotfiles` computes the source path.
 - Parent directories for mapping destinations are created automatically. Use
   `dotfiles_directories` only for extra directories not implied by mappings.
-- Keep payload text, comments, and user-facing messages in English.
-- Manage only documented config keys for privacy and policy dotfiles; do not
-  guess settings for AI clients, package managers, or developer tools.
+- Skills under `dotfiles/.agents/skills/` are managed user-level payloads for
+  other repositories. Repository workflows belong in root `.agents/skills/`.
+
+## Owner Decisions
+
+- `dotfiles/.ssh/config` contains explicitly chosen owner policy. Preserve its
+  settings unless the owner explicitly requests an SSH configuration change.
+  Do not revise them during hardening, modernization, cleanup, or AI review,
+  and do not weaken their contract tests to substitute an agent's preferences.
+  The config is the canonical source for these values; the native SSH tests
+  enforce the selected defaults and host-specific override precedence.
 
 ## Validation
 
-- Run `go-task` for user-level payload or mapping changes.
-- Run `go-task lint` for changes that also touch inventory or playbooks.
-- Run `go-task verify` when payload changes are part of broader role,
-  inventory, automation, or documentation work.
-- Run `uv run yamllint .` or `go-task yamllint` for YAML changes.
-- Run `go-task vint` for Vimscript payloads or Vint configuration changes.
-- For Neovim config under `.config/nvim/`, also follow the local
-  `AGENTS.md` and run `go-task test:nvim`. Run
-  `go-task test:nvim:profile` for startup-sensitive Neovim changes.
-- Run `go-task docs:nvim-keymaps:check` for user-facing Neovim keymap
-  changes and keep `docs/nvim-keymaps.md` current.
+Use the root validation matrix for the changed payload type. Run
+`go-task dotfiles:check` when runtime payload or destination behavior changes;
+documentation-only edits need documentation checks. Neovim-specific checks
+live in `dotfiles/.config/nvim/AGENTS.md`.
 
 ## Done Criteria
 
-- Payload remains declarative and safe to symlink into `$HOME`.
+- Payload uses the appropriate symlink or copy-once ownership contract.
 - Required inventory mapping changes were made.
 - No runtime state, secrets, or generated artifacts were added.

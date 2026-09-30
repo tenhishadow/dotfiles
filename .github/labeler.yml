@@ -1,9 +1,5 @@
 ---
-# Broad maintenance PRs can legitimately touch docs, automation, roles,
-# dependencies, and AI instructions together. If this limit is exceeded,
-# actions/labeler skips all changed-file labels.
-changed-files-labels-limit: 50
-max-files-changed: 300
+# Apply every matching area; arbitrary file/label limits silently skip broad PRs.
 
 ai-instructions:
   - changed-files:
@@ -16,8 +12,6 @@ ai-instructions:
           - ".claude/**/*"
           - ".github/copilot-instructions.md"
           - ".github/instructions/**/*"
-          - ".cursor/**/*"
-          - ".windsurf/**/*"
           - "dotfiles/.agents/**/*"
           - "dotfiles/.codex/**/*"
           - "dotfiles/.gemini/settings.json"
@@ -35,6 +29,7 @@ automation:
   - changed-files:
       - any-glob-to-any-file:
           - ".github/**/*"
+          - ".commitlintrc.yaml"
           - ".pre-commit-config.yaml"
           - ".release-please-manifest.json"
           - ".zizmor.yml"
@@ -47,12 +42,20 @@ browser-policies:
       - any-glob-to-any-file:
           - "playbook_browser_policies.yml"
           - "roles/browser_policies/**/*"
+          - "inventory/host_vars/this_host/browser_policies.yml"
 
 ci:
   - changed-files:
       - any-glob-to-any-file:
           - ".github/workflows/**/*"
+          - ".github/actions/**/*"
+          - ".github/tools/**/*"
           - ".github/linters/**/*"
+          - ".github/super-linter.env"
+          - ".pre-commit-config.yaml"
+          - ".markdownlint-cli2.yaml"
+          - "dotfiles/.yamllint"
+          - "Taskfile.yml"
           - ".ruff.toml"
           - ".zizmor.yml"
 
@@ -60,6 +63,8 @@ dependencies:
   - changed-files:
       - any-glob-to-any-file:
           - ".pre-commit-config.yaml"
+          - ".github/tools/**/package*.json"
+          - "dotfiles/.config/nvim/lazy-lock.json"
           - "dotfiles/.local/share/codex-cli/**/package*.json"
           - "dotfiles/.local/share/codex-mcp/**/package*.json"
           - "pyproject.toml"
@@ -71,8 +76,6 @@ documentation:
   - changed-files:
       - any-glob-to-any-file:
           - "**/*.md"
-          - "AGENTS.md"
-          - "**/AGENTS.md"
           - "docs/**/*"
 
 dotfiles:
@@ -98,6 +101,8 @@ nvim:
       - any-glob-to-any-file:
           - "dotfiles/.config/nvim/**/*"
           - ".test/nvim/**/*"
+          - ".test/test_update_nvim.py"
+          - ".github/scripts/update_nvim.lua"
           - "docs/nvim-keymaps.md"
 
 security:
@@ -114,13 +119,15 @@ security:
           - "dotfiles/.terraformrc"
           - "dotfiles/.yarnrc"
           - "inventory/host_vars/this_host/security.yml"
+          - "inventory/host_vars/this_host/browser_policies.yml"
           - "roles/browser_policies/**/*"
           - "roles/system/defaults/main.yml"
           - "roles/system/tasks/sys-limits.yml"
           - "roles/system/tasks/sys-sshd.yml"
           - "roles/system/tasks/sys-sysctl.yml"
           - "roles/system/templates/limits-dropin.conf.j2"
-          - "roles/system/templates/sshd-dropin.conf.j2"
+          - "roles/system/templates/dropin-sshd.conf.j2"
+          - "roles/system/templates/sysctl-dropin.conf.j2"
 
 shell:
   - changed-files:
@@ -134,6 +141,8 @@ system:
       - any-glob-to-any-file:
           - "playbook_system.yml"
           - "roles/system/**/*"
+          - "inventory/host_vars/this_host/system.yml"
+          - "inventory/host_vars/this_host/security.yml"
 
 tests:
   - changed-files:

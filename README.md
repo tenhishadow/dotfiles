@@ -16,7 +16,8 @@ browser policy changes remain explicit opt-ins. The former
 - Arch Linux and `sudo` for the opt-in system and policy layers
 - Docker for full local validation
 - Node.js 24.x (24.11.0 or newer) and npm for repository validation; Node.js
-  and npm for the managed Codex/MCP runtimes
+  20.18.1 or newer and npm for the managed Codex/MCP runtimes
+- Go and Neovim for the complete local dependency-upgrade workflow
 
 On Arch Linux:
 
@@ -38,8 +39,8 @@ go-task
 ```
 
 `go-task` runs `playbook_install.yml` only. It validates mappings, links
-payloads from `dotfiles/` into `$HOME`, and removes only the explicit legacy
-paths declared in `inventory/host_vars/this_host/dotfiles.yml`.
+payloads from `dotfiles/` into `$HOME`, and removes only explicitly listed
+legacy symlinks that resolve into the repository payload.
 
 Before using this repository on another account or fork, review that inventory
 file. Before any privileged apply, inspect the read-only reports:
@@ -65,8 +66,8 @@ and safety model is in [`docs/architecture.md`](docs/architecture.md).
 
 ## Common Tasks
 
-This table is the canonical operator command reference. Internal helper tasks
-remain discoverable with `go-task --list-all`.
+This table is the canonical operator command reference. Other public tasks
+remain discoverable with `go-task --list`; internal helpers stay hidden.
 
 | Command | Purpose |
 | ------- | ------- |
@@ -74,7 +75,7 @@ remain discoverable with `go-task --list-all`.
 | `go-task all` | Apply user dotfiles, system configuration, and policies in order. |
 | `go-task dotfiles:check` | Dry-run the user-level playbook with diff output. |
 | `go-task dotfiles:plan` | Report current mapping destinations and cleanup paths. |
-| `go-task doctor` | Report local tool and runtime availability without reading credentials. |
+| `go-task doctor` | Report resolved tool paths and versions; fail when mandatory local or Codex runtime components are unavailable. |
 | `go-task system:check` | Dry-run the opt-in Arch workstation playbook. |
 | `go-task system` | Apply the opt-in Arch workstation playbook. |
 | `go-task system:list` | List system playbook tasks. |
@@ -83,13 +84,15 @@ remain discoverable with `go-task --list-all`.
 | `go-task browser-policies` | Apply system policy files. |
 | `go-task browser-policies:report` | Report expected policy paths and installed applications. |
 | `go-task test:system` | Validate package targets and convergence of all layers in a disposable Arch container. |
-| `go-task test:python` | Run repository Python contract and regression tests. |
+| `go-task test:python` | Run pytest through the locked environment; pass selectors after `--`. |
 | `go-task test:agent-tooling` | Validate managed Codex configs, dependency locks, and hook behavior. |
+| `go-task deps-upgrade` | Update every managed dependency pin and lock locally without committing or pushing. |
+| `go-task ci:static` | Run the shared cheap CI gate without Neovim, Docker, or host writes. |
 | `go-task verify:fast` | Run static repository checks without Docker or managed-host writes. |
 | `go-task verify` | Run the full local validation aggregate, including Docker-backed checks. |
 | `go-task lint` | Run `ansible-lint`. |
-| `go-task lint:markdown` | Lint every tracked Markdown file with the shared repository rules. |
-| `go-task lint:python` | Lint and format-check repository Python with Ruff and Pylint. |
+| `go-task lint:markdown` | Lint tracked and untracked, nonignored Markdown with the shared repository rules. |
+| `go-task lint:python` | Run the shared Ruff, formatting, and Pylint pre-commit hooks. |
 | `go-task yamllint` | Lint YAML through the locked Python environment. |
 | `go-task vint` | Lint Vimscript with Neovim syntax enabled. |
 | `go-task test:nvim` | Run the isolated Neovim smoke test. |
@@ -100,6 +103,10 @@ remain discoverable with `go-task --list-all`.
 | `go-task codex:install` | Install lockfile-resolved Codex, Context7, and Playwright packages. |
 | `go-task codex:mcp:install` | Install only the lockfile-resolved MCP packages. |
 | `go-task pacdiff` | List pending pacman `.pacnew` and `.pacsave` files. |
+
+For GitHub API access, `go-task deps-upgrade` uses `PINACT_GITHUB_TOKEN`, then
+`GITHUB_TOKEN`, then an authenticated `gh` CLI. It never stores credentials,
+creates commits, or pushes.
 
 ## Neovim Formatting
 
@@ -113,42 +120,77 @@ formatter resolution; formatting never runs on save or falls back to LSP.
 | `dotfiles/` | Canonical user payload linked into `$HOME`. |
 | `inventory/host_vars/this_host/` | Dotfiles mappings, system values, security values, and policy overrides. |
 | `roles/dotfiles/` | Default user-level role. |
-| `roles/system/` | Opt-in Arch workstation role. |
+| `roles/system/` | Opt-in Arch workstation role, including TuneD integration for Plasma profiles and periodic TRIM. |
 | `roles/browser_policies/` | Opt-in policy role. |
 | `.test/` | Static checks, isolated fixtures, and the Arch convergence harness. |
-| `.agents/skills/` | Repository workflows shared by Codex and GitHub Copilot. |
+| `.agents/skills/` | Canonical repository workflows for Codex and other agents. |
+| `.claude/skills/` | Claude Code discovery links to the canonical repository skills. |
 | `AGENTS.md` | Canonical repository instructions for AI agents. |
 | `CLAUDE.md` / `GEMINI.md` | Native provider adapters importing `AGENTS.md`. |
 | `docs/` | Architecture, ADRs, security, privacy, adoption, and migration notes. |
 
 ## AI Tooling
 
-Always-on repository rules live once in `AGENTS.md`; nearest nested
-`AGENTS.md` files add path-local deltas. Claude Code and Gemini CLI import the
-same contract through their native root files. Task-specific workflows belong
-in `.agents/skills/`: `validate-dotfiles-change` routes a diff to the smallest
-useful test, `write-markdown` applies the shared documentation contract, and
-the two dotfiles-test skills write or review repository validation code.
+Repository rules live in the root `AGENTS.md` and applicable ancestor files;
+nested rules add scope-specific guidance. Skills load task-specific workflows
+on demand, keeping the always-on instructions focused.
 
-The managed user payload places Ponytail 4.9.0 in `~/.agents/skills/`, the
-cross-agent user skill location. Codex profiles, hooks, launchers, manifests,
+| Client | Repository instructions | Skill discovery |
+| ------ | ----------------------- | --------------- |
+| Codex | Startup `AGENTS.md` chain; consult the root map for deeper paths | `.agents/skills/` |
+| Claude Code | `CLAUDE.md` imports `AGENTS.md`; consult the root map for scoped rules | `.claude/skills/` links to the canonical skills |
+| Gemini CLI | `GEMINI.md` imports `AGENTS.md`; consult the root map for scoped rules | Native `.agents/skills/` alias |
+| GitHub Copilot | `AGENTS.md` and concise `.github/` review instructions | `.agents/skills/` |
+
+Codex builds its [instruction chain](https://learn.chatgpt.com/docs/agent-configuration/agents-md)
+from the repository root to the working directory at startup; the root map
+identifies deeper instructions to read before editing those paths.
+Claude Code v2.1.277+ can read `AGENTS.md` natively when no ancestor `CLAUDE.md`
+or `CLAUDE.local.md`
+takes precedence. The small import adapter remains supported and preserves
+compatibility with sessions that do not enable native discovery. It imports
+the root contract, not every nested file. See the upstream
+[instruction-loading rules](https://code.claude.com/docs/en/memory#agentsmd).
+
+`validate-dotfiles-change` selects checks for the affected contract;
+`write-markdown` maintains documentation; the two dotfiles-test skills write
+or review validation code. `prepare-dotfiles-pr` handles reviewed commits and
+PR preparation within the user's publication scope.
+`go-task docs:instructions:check` checks recognized
+references, native imports, and Claude skill links. It includes the managed
+user skills and excludes generated Neovim workspaces.
+
+The managed user payload places a locally adapted, explicit-only Ponytail skill
+in `~/.agents/skills/`, the cross-agent user skill
+location. It defaults to lite and Codex cannot invoke it implicitly. Codex
+profiles, hooks, launchers, manifests,
 and lockfiles are linked from `dotfiles/`; writable authentication, trust,
 history, databases, credentials, and `~/.codex/config.toml` remain local.
 `go-task codex:install` uses `npm ci`; agent startup never downloads packages.
 `go-task test:agent-tooling` checks managed configs, exact npm lock agreement,
 integrity hashes, and the hook's real JSON interface. `go-task test:python`
-runs the complete standard-library regression suite.
+runs the complete pytest regression suite.
 
 Context7 and the official OpenAI documentation server are sufficient for this
 repository's public documentation work. Playwright, Grafana, and GitHub writes
 remain disabled unless a dedicated profile enables them. See
-[`docs/privacy-policy-surfaces.md`](docs/privacy-policy-surfaces.md) and the
-historical [Codex decision chain](docs/decision-chain-2026-08-13-codex-tooling.md).
+[`docs/privacy-policy-surfaces.md`](docs/privacy-policy-surfaces.md).
+
+The formats and discovery paths follow the
+[Agent Skills specification](https://agentskills.io/specification) and upstream
+[Codex](https://learn.chatgpt.com/docs/build-skills),
+[Claude Code](https://code.claude.com/docs/en/skills),
+[Gemini CLI](https://geminicli.com/docs/cli/using-agent-skills/) and
+[Copilot](https://docs.github.com/en/copilot/concepts/agents/about-agent-skills)
+skill documentation, checked on 2026-09-30. The vendored Ponytail skill records
+its upstream version and commit in its own metadata.
 
 ## Validation
 
-Use the narrowest command that observes the changed behavior. Broad changes
-finish with:
+Use the narrowest command that observes the changed behavior. Run spelling and
+format hooks before expensive integration jobs. Contract tests must also work
+from a clean checkout without ignored runtime installations; a warm local
+workspace cannot substitute for CI setup. Broad changes finish with:
 
 ```bash
 go-task verify
@@ -160,7 +202,14 @@ layers in a disposable Arch container, and Super-Linter. The convergence test
 requires a successful first apply, post-install assertions, and a second apply
 with zero changes. Check mode remains a preview, not an idempotency proof.
 
-The decision and framework escalation criteria are recorded in
+Python tests use pytest functions and fixtures; the same locked runner and
+pre-commit hooks run locally and in CI. For a focused run, for example:
+
+```bash
+go-task test:python -- .test/test_ssh_config.py -q
+```
+
+Test value, removal criteria, Python style, and layer boundaries are recorded in
 [`docs/adr/0001-validation-strategy.md`](docs/adr/0001-validation-strategy.md).
 
 For repeated container runs, copy `.test/system/local.env.example` to
@@ -193,13 +242,17 @@ public sources. Select another env file for a one-off run with
 - [`roles/system/README.md`](roles/system/README.md): system variables, paths, validation, and rollback
 - [`roles/browser_policies/README.md`](roles/browser_policies/README.md): policy targets, validation, and rollback
 
-GitHub Actions runs the user-level path on Linux and macOS and runs the full
-Arch convergence harness on pull requests, pushes, and a weekly fresh-image
-schedule. A fast Python contract check runs the locked Ruff/Pylint contract and
-reports named test results before the expensive convergence job. Super-Linter
-checks changed pull-request files, while local `go-task verify` retains the
-full-tree scan. Renovate owns supported
-dependency updates and the Taskfile rejects incompatible local Node.js versions
-before running its pinned Renovate release. Repository instructions, skills,
-labels, and documentation are validated as code; no MCP server or AI account
-state is committed.
+GitHub Actions gates expensive checks behind the static validation job. It
+selects Neovim, container convergence, and Linux/macOS user installation checks
+from the changed paths; scheduled checks also detect rolling Arch breakage.
+Super-Linter covers complementary formats after the static gate. Local
+`go-task verify` retains full validation without applying the workstation.
+
+One weekly workflow opens or refreshes a consolidated dependency PR, including
+Python and npm locks, Neovim plugins, hooks, Actions, and repository tools.
+Renovate's competing PR producer is disabled. `go-task deps-upgrade` performs
+the same refresh locally without committing or pushing. See
+[Dependency Updates](docs/dependency-updates.md) for coverage, compatibility
+boundaries, and the GitHub App setup needed to publish automated PRs.
+[Contributing](CONTRIBUTING.md) defines branches, PR titles, squash merges,
+labels, and release behavior for people and AI agents.

@@ -2,5 +2,5 @@
   "threshold": 0,
   "reporters": ["consoleFull"],
   "absolute": true,
-  "ignore": ["**/.ansible/**", "**/.collections/**", "**/.git/**", "**/.task/**", "**/.test/**", "**/.venv/**", "**/__pycache__/**", "**/node_modules/**"]
+  "ignore": ["**/.ansible/**", "**/.collections/**", "**/.git/**", "**/.task/**", "**/.test/**", "**/.venv/**", "**/__pycache__/**", "**/node_modules/**", "**/package-lock.json"]
 }

@@ -2,5 +2,3 @@
 config:
   extends: ".github/linters/.markdown-lint.yml"
 gitignore: true
-globs:
-  - "**/*.md"

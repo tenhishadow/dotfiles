@@ -1,0 +1,196 @@
+name: Weekly dependencies
+
+on:
+  schedule:
+    - cron: "23 4 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: weekly-dependencies
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  # Only tracked dependency files cross into the job holding publication credentials.
+  DEPENDENCY_PATHS: |
+    .github/actions/**/action.yml
+    .github/actions/**/action.yaml
+    .github/workflows/*.yml
+    .github/workflows/*.yaml
+    .github/tools/**/package.json
+    .github/tools/**/package-lock.json
+    .pre-commit-config.yaml
+    Taskfile.yml
+    pyproject.toml
+    requirements.yml
+    uv.lock
+    dotfiles/.config/nvim/lazy-lock.json
+    dotfiles/.local/share/codex-cli/locked/package.json
+    dotfiles/.local/share/codex-cli/locked/package-lock.json
+    dotfiles/.local/share/codex-mcp/*/package.json
+    dotfiles/.local/share/codex-mcp/*/package-lock.json
+
+jobs:
+  refresh:
+    if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    container:
+      image: archlinux:multilib-devel
+    outputs:
+      changed: ${{ steps.patch.outputs.changed }}
+    steps:
+      - name: Install dependency refresh tools
+        run: >-
+          pacman --disable-sandbox -Syu
+          --noconfirm
+          --needed
+          --noprogressbar
+          git
+          go
+          go-task
+          neovim
+          nodejs-lts-krypton
+          npm
+          openssh
+          python
+          uv
+
+      - name: Checkout the triggering revision
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Refresh all managed dependencies
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          go-task deps-upgrade
+
+      - name: Export dependency changes
+        id: patch
+        run: |
+          mapfile -t dependency_paths < <(printf '%s' "$DEPENDENCY_PATHS")
+          git diff --binary --no-renames HEAD -- "${dependency_paths[@]}" > "$RUNNER_TEMP/dependencies.patch"
+          if [[ -s "$RUNNER_TEMP/dependencies.patch" ]]; then
+            echo 'changed=true' >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Upload the dependency patch
+        if: steps.patch.outputs.changed == 'true'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: weekly-dependency-patch
+          path: ${{ runner.temp }}/dependencies.patch
+          if-no-files-found: error
+          retention-days: 1
+
+  publish:
+    needs: refresh
+    if: needs.refresh.outputs.changed == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout the same triggering revision
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Download this run's dependency patch
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: weekly-dependency-patch
+          path: ${{ runner.temp }}/dependency-artifact
+
+      # Never run refreshed packages or repository code in this credential-bearing job.
+      - name: Validate and apply dependency paths
+        id: apply
+        shell: python
+        run: |
+          import os
+          import re
+          import subprocess
+          from pathlib import Path
+
+          def normalize_ci_pins(text):
+              text = re.sub(
+                  r"^([ \t]*(?:-[ \t]+)?uses:[ \t]+[A-Za-z0-9_.-]+/[A-Za-z0-9_./-]+@)"
+                  r"[0-9a-f]{40}([ \t]+#[ \t]+)v\d+(?:\.\d+){0,2}([ \t]*)$",
+                  lambda match: match[1] + "0" * 40 + match[2] + "v0.0.0" + match[3],
+                  text, flags=re.MULTILINE
+              )
+              return re.sub(
+                  r"(^[ \t]*# renovate: datasource=github-releases "
+                  r"depName=[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+[ \t]*\n"
+                  r"[ \t]+version:[ \t]*[\"']?)v?\d+\.\d+\.\d+([\"']?[ \t]*$)",
+                  r"\g<1>0.0.0\2", text, flags=re.MULTILINE
+              )
+
+          patch = Path(os.environ["RUNNER_TEMP"]) / "dependency-artifact/dependencies.patch"
+          patterns = os.environ["DEPENDENCY_PATHS"].splitlines()
+          allowed = set(subprocess.check_output(
+              ["git", "ls-files", "-z", "--", *patterns], timeout=30
+          ).split(b"\0"))
+          records = subprocess.check_output(
+              ["git", "apply", "--numstat", "-z", str(patch)], timeout=30
+          ).split(b"\0")
+          paths = [record.split(b"\t", 2)[-1] for record in records if record]
+          if not paths or any(not path or path not in allowed for path in paths):
+              raise SystemExit("Patch contains files outside tracked dependency paths")
+          ci_originals = {
+              os.fsdecode(path): subprocess.check_output(
+                  ["git", "show", ":" + os.fsdecode(path)], timeout=30
+              ).decode("utf-8")
+              for path in paths
+              if path.startswith((b".github/workflows/", b".github/actions/"))
+          }
+          subprocess.run(["git", "apply", "--index", str(patch)], check=True, timeout=30)
+          entries = subprocess.check_output(
+              ["git", "ls-files", "--stage", "-z", "--", *map(os.fsdecode, paths)], timeout=30
+          ).split(b"\0")
+          entries = [entry for entry in entries if entry]
+          if len(entries) != len(paths) or any(not entry.startswith(b"100644 ") for entry in entries):
+              raise SystemExit("Dependency files must remain regular, non-executable tracked files")
+          for path, original in ci_originals.items():
+              updated = Path(path).read_bytes().decode("utf-8")
+              if normalize_ci_pins(original) != normalize_ci_pins(updated):
+                  raise SystemExit("CI changes must only update existing action and annotated tool pins: " + path)
+
+      - name: Create a repository-scoped publication token
+        id: app-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ vars.DEPENDENCIES_APP_CLIENT_ID }}
+          private-key: ${{ secrets.DEPENDENCIES_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ github.event.repository.name }}
+          permission-contents: write
+          permission-pull-requests: write
+          permission-workflows: write
+
+      - name: Create or update the single weekly PR
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+          base: ${{ github.event.repository.default_branch }}
+          branch: chore/weekly-dependencies
+          add-paths: ${{ env.DEPENDENCY_PATHS }}
+          commit-message: "chore(deps): update weekly dependencies"
+          title: "chore(deps): update weekly dependencies"
+          labels: dependencies
+          body: |
+            Refresh all managed dependencies through `go-task deps-upgrade`.
+
+            Includes Python and npm locks, Ansible collections, pre-commit hooks,
+            Neovim plugins, GitHub Actions, and repository tool pins.
+
+            Review the complete diff and required PR checks before merging.

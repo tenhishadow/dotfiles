@@ -1,4 +1,4 @@
-name: ansible
+name: CI
 
 permissions:
   contents: read
@@ -8,8 +8,9 @@ on:
     branches:
       - master
   pull_request:
+  workflow_dispatch:
   schedule:
-    # Weekly run against fresh Arch to catch rolling-release upstream breakage.
+    # Validate rolling Arch dependencies even when repository files do not change.
     - cron: "0 6 * * 1"
 
 concurrency:
@@ -17,140 +18,177 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  python_contracts:
-    name: python-contracts
+  static:
+    name: static-checks
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      nvim: ${{ steps.changes.outputs.nvim }}
+      system: ${{ steps.changes.outputs.system }}
+      user: ${{ steps.changes.outputs.user }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
-      - name: Set up Python
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+      - name: Validate the PR title before repository checks
+        if: github.event_name == 'pull_request'
+        uses: ./.github/actions/pr-title
+
+      - name: Select affected integration checks
+        if: github.event_name == 'pull_request' || github.event_name == 'push'
+        id: changes
+        uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
         with:
-          python-version: "3.14"
+          base: ${{ github.event.repository.default_branch }}
+          predicate-quantifier: some-with-excludes
+          filters: |
+            shared: &shared
+              - '.github/workflows/ansible.yml'
+              - '.github/actions/**'
+              - 'Taskfile.yml'
+              - 'ansible.cfg'
+              - 'pyproject.toml'
+              - 'uv.lock'
+              - 'requirements.yml'
+            nvim:
+              - *shared
+              - 'dotfiles/.config/nvim/**'
+              - '.test/nvim/**'
+              - '.github/scripts/**/*.lua'
+              - '.test/test_update_nvim.py'
+              - 'docs/nvim-keymaps.md'
+              - '.stylua.toml'
+              - '!**/AGENTS.md'
+            system:
+              - *shared
+              - 'roles/**'
+              - 'inventory/**'
+              - 'playbook_*.yml'
+              - 'dotfiles/**'
+              - '.test/system/**'
+              - '.test/assert_ansible_convergence.py'
+              - '!**/*.md'
+            user:
+              - *shared
+              - 'roles/dotfiles/**'
+              - 'inventory/hosts.yml'
+              - 'inventory/host_vars/this_host/dotfiles.yml'
+              - 'playbook_install.yml'
+              - 'dotfiles/**'
+              - '!**/*.md'
+            renovate:
+              - 'renovate.json'
+              - 'Taskfile.yml'
+              - '.github/workflows/ansible.yml'
+              - '.github/actions/**'
 
-      - name: Install uv
-        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+      - name: Set up validation tools
+        uses: ./.github/actions/setup
+
+      - name: Restore pre-commit environments
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
-          enable-cache: true
-          cache-dependency-glob: uv.lock
+          path: ~/.cache/pre-commit
+          key: pre-commit-${{ runner.os }}-py3.14-${{ hashFiles('.pre-commit-config.yaml') }}
 
-      - name: Install Task
-        uses: arduino/setup-task@c0bc642852239c2689f73f4ea6459c29405f3c52 # v3.0.0
+      - name: Run static checks once
+        run: task ci:static
+
+      - name: Set up Node.js for Renovate validation
+        # The PR title action already prepared Node.js for pull requests.
+        if: github.event_name != 'pull_request' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || steps.changes.outputs.renovate == 'true')
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          version: 3.x
-          repo-token: ${{ github.token }}
+          node-version: "24"
+          package-manager-cache: false
 
-      - name: Run Python validation
-        id: python_tests
-        run: |
-          set -o pipefail
-          {
-            uv sync --locked --no-build --no-install-project --no-dev
-            export UV_NO_SYNC=true
-            task lint:python
-            task test:python
-          } 2>&1 | tee "${RUNNER_TEMP}/python-contracts.log"
+      - name: Validate Renovate configuration
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || steps.changes.outputs.renovate == 'true'
+        run: task renovate
 
-      - name: Summarize Python contract tests
-        if: always()
-        env:
-          TEST_OUTCOME: ${{ steps.python_tests.outcome }}
-        run: |
-          {
-            printf '## Python contract tests\n\n'
-            printf "Result: \`%s\`\n\n" "${TEST_OUTCOME}"
-            printf '```text\n'
-            if [ -f "${RUNNER_TEMP}/python-contracts.log" ]; then
-              tail -n 100 "${RUNNER_TEMP}/python-contracts.log"
-            else
-              printf '%s\n' 'The test command did not produce a log.'
-            fi
-            printf '```\n'
-          } >> "${GITHUB_STEP_SUMMARY}"
-
-  ansible_lint:
-    name: ansible-lint
-    uses: tenhishadow/github_actions_templates/.github/workflows/taskfile.uv.yaml@39bafe28cfa188344b842194b575ecef42e2059d # main
-    with:
-      os: ubuntu-latest
-      task_target: lint
+  super_linter:
+    name: github-super-linter
+    needs: static
+    uses: ./.github/workflows/github-super-linter.yml
 
   ansible_exec:
     name: ansible-exec (${{ matrix.os }})
-    # The weekly schedule targets the Arch container; skip the cross-OS apply
-    # matrix to keep scheduled runs lean.
-    if: github.event_name != 'schedule'
+    needs: [static, super_linter]
+    if: github.event_name != 'schedule' && (github.event_name == 'workflow_dispatch' || needs.static.outputs.user == 'true')
     strategy:
+      fail-fast: true
       matrix:
         os:
           - ubuntu-latest
           - macos-latest
-    uses: tenhishadow/github_actions_templates/.github/workflows/taskfile.uv.yaml@39bafe28cfa188344b842194b575ecef42e2059d # main
-    with:
-      os: ${{ matrix.os }}
-      task_target: default
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
-  repository_contract:
-    name: repository-contract (archlinux)
-    if: github.event_name != 'schedule'
+      - name: Set up validation tools
+        uses: ./.github/actions/setup
+
+      - name: Apply user-level dotfiles on the disposable runner
+        run: task default
+
+  nvim:
+    name: neovim (archlinux)
+    needs: [static, super_linter]
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || needs.static.outputs.nvim == 'true'
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     container:
       image: archlinux:multilib-devel
-    env:
-      UV_PROJECT_ENVIRONMENT: /tmp/dotfiles-contract-venv
     steps:
-      - name: Install validation tools
+      - name: Install Neovim validation tools
         run: >-
           pacman --disable-sandbox -Syu
           --noconfirm
           --needed
           --noprogressbar
-          actionlint
           git
-          go-task
           neovim
           nodejs-lts-krypton
           npm
-          pre-commit
+          openssh
+          python
           stylua
-          uv
+          tree-sitter-cli
 
       - name: Checkout repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
-      - name: Trust checkout directory
-        run: git config --global --add safe.directory "${GITHUB_WORKSPACE}"
+      - name: Set up locked validation tools
+        uses: ./.github/actions/setup
 
-      - name: Resolve validation runtime
-        id: runtime
-        run: >-
-          printf 'python=%s\n'
-          "$(python -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')"
-          >> "${GITHUB_OUTPUT}"
+      - name: Check Lua formatting and keymap documentation
+        run: task stylua docs:nvim-keymaps:check
 
-      - name: Restore validation caches
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: |
-            /github/home/.cache/pre-commit
-            /github/home/.cache/uv
-            /github/home/.npm/_cacache
-          key: repository-contract-${{ runner.os }}-archlinux-py${{ steps.runtime.outputs.python }}-${{ hashFiles('.pre-commit-config.yaml', 'uv.lock', 'Taskfile.yml') }}
-          restore-keys: |
-            repository-contract-${{ runner.os }}-archlinux-py${{ steps.runtime.outputs.python }}-
+      - name: Test Neovim dependency upgrade failure handling
+        run: task test:python -- .test/test_update_nvim.py
 
-      - name: Validate repository contract
-        run: go-task verify:fast
+      - name: Run Neovim smoke and compatibility tests
+        env:
+          NVIM_TS_INSTALL: required
+        run: task test:nvim:all
 
   workstation_convergence:
     name: workstation-convergence (archlinux)
-    needs: python_contracts
+    needs: [static, super_linter]
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || needs.static.outputs.system == 'true'
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     container:
       image: archlinux:multilib-devel
     steps:
@@ -163,9 +201,51 @@ jobs:
           git
 
       - name: Checkout repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
       - name: Verify workstation convergence
         run: ./.test/system/exec.sh
+
+  ci:
+    name: ci
+    if: always()
+    needs: [static, super_linter, ansible_exec, nvim, workstation_convergence]
+    runs-on: ubuntu-latest
+    timeout-minutes: 1
+    steps:
+      - name: Require successful checks or deliberate skips
+        env:
+          RESULTS: ${{ toJSON(needs) }}
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          import sys
+
+          results = json.loads(os.environ['RESULTS'])
+          for name, job in results.items():
+              print(f"{name}: {job['result']}")
+          failed = [name for name, job in results.items()
+                    if job['result'] not in {'success', 'skipped'}]
+          required = ('static', 'super_linter')
+          if any(results[name]['result'] != 'success' for name in required) or failed:
+              sys.exit('CI checks did not complete successfully.')
+          PY
+
+  copilot_review:
+    needs: ci
+    if: >-
+      !cancelled() && needs.ci.result == 'success' &&
+      vars.COPILOT_REVIEW_ENABLED == 'true' &&
+      github.event_name == 'pull_request'
+    permissions:
+      actions: read
+      pull-requests: read
+    # The reusable workflow owns eligibility checks before allocating a runner.
+    uses: ./.github/workflows/copilot-review.yml
+    with:
+      validated-head: ${{ github.event.pull_request.head.sha }}
+    secrets:
+      COPILOT_REVIEW_TOKEN: ${{ secrets.COPILOT_REVIEW_TOKEN }}

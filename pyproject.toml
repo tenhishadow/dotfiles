@@ -5,7 +5,9 @@ version = "2.4.1"
 dependencies = [
     "ansible",
     "ansible-lint",
+    "pre-commit",
     "pylint",
+    "pytest",
     "pyyaml",
     "ruff",
     "yamllint",
@@ -14,6 +16,12 @@ dependencies = [
 
 [tool.uv]
 package = false
+
+[tool.pytest.ini_options]
+testpaths = [".test"]
+pythonpath = [".test", ".github/scripts"]
+addopts = "-ra --strict-config --strict-markers --import-mode=importlib"
+norecursedirs = ["nvim", "system"]
 
 [[tool.uv.index]]
 name = "pypi"

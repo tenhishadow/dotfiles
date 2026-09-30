@@ -1,0 +1,11 @@
+# {{ ansible_managed }}
+[main]
+summary=Prefer interactive workstation performance
+include=balanced
+
+[cpu]
+governor={{ system_tuned_performance_governor }}
+energy_performance_preference={{ system_tuned_performance_energy_preference }}
+
+[acpi]
+platform_profile={{ system_tuned_performance_platform_profile }}

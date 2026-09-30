@@ -3,13 +3,15 @@
 The instruction layer (agent instructions, skills, README, role manuals, and
 docs) names go-task targets, roles, playbooks, and repository paths. When a
 target is renamed or a file is removed, those references silently rot. This
-check parses the docs and asserts that every reference resolves:
+check parses recognized references and asserts that they resolve:
 
   * ``go-task <name>`` -> a real task key in Taskfile.yml (bare ``go-task`` is
     the default task).
   * repository paths anchored at a known top-level entry (roles/, inventory/,
-    docs/, dotfiles/, .github/, .test/, playbook_*.yml, and tracked root files)
-    -> the path (or its glob) exists.
+    docs/, dotfiles/, .agents/, .claude/, .github/, .test/, playbook_*.yml)
+    -> the path (or its glob) exists, unless the exact path is explicitly
+    listed as optional runtime state in the root .gitignore.
+  * native provider imports and Claude skill links -> canonical sources exist.
 
 System paths (/etc/...), URLs (brave://...), and home paths (~/...) are not
 repository references and are ignored. Run with plain Python:
@@ -22,13 +24,17 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
+from gen_agents_map import EXCLUDED_DIRS, repo_root
+
 # Files that make up the instruction / documentation layer.
 DOC_GLOBS = (
     "**/AGENTS.md",
     "CLAUDE.md",
     "GEMINI.md",
     "README.md",
+    "CONTRIBUTING.md",
     ".agents/skills/*/SKILL.md",
+    "dotfiles/.agents/skills/*/SKILL.md",
     ".github/copilot-instructions.md",
     ".github/instructions/*.instructions.md",
     "docs/**/*.md",
@@ -47,9 +53,6 @@ ANCHORS = (
     ".test/",
 )
 
-# Vendored / generated trees that are not part of the instruction layer.
-EXCLUDED_DIRS = (".venv", ".git", ".collections", ".ansible", ".task", "node_modules")
-
 # Match go-task only at a command boundary (line start or inside backticks) so
 # package lists like "pacman ... git go-task uv" are not read as invocations.
 GO_TASK_RE = re.compile(
@@ -57,13 +60,9 @@ GO_TASK_RE = re.compile(
     re.MULTILINE,
 )
 # Backtick- or link-quoted tokens that look like repository paths.
-TOKEN_RE = re.compile(r"[`(]([A-Za-z0-9][A-Za-z0-9._/*-]+)[`)]")
+TOKEN_RE = re.compile(r"[`(]([A-Za-z0-9.][A-Za-z0-9._/*-]+)[`)]")
 PLAYBOOK_RE = re.compile(r"\bplaybook_[a-z_]+\.yml\b")
-
-
-def repo_root() -> Path:
-    """Return the repository root (parent of the .test directory)."""
-    return Path(__file__).resolve().parent.parent
+IMPORT_RE = re.compile(r"^@([A-Za-z0-9_./-]+\.md)\s*$", re.MULTILINE)
 
 
 def taskfile_task_names(root: Path) -> set[str]:
@@ -92,7 +91,12 @@ def doc_files(root: Path) -> list[Path]:
     found: set[Path] = set()
     for pattern in DOC_GLOBS:
         for path in root.glob(pattern):
-            if path.is_file() and not any(part in EXCLUDED_DIRS for part in path.parts):
+            relative = path.relative_to(root)
+            if (
+                path.is_file()
+                and not any(part in EXCLUDED_DIRS for part in relative.parts)
+                and not relative.is_relative_to(".test/nvim")
+            ):
                 found.add(path)
     return sorted(found)
 
@@ -103,6 +107,18 @@ def path_exists(root: Path, ref: str) -> bool:
     if "*" in ref:
         return any(root.glob(ref))
     return (root / ref).exists()
+
+
+def optional_runtime_paths(root: Path) -> set[str]:
+    """Reuse literal root ignore entries without exempting globs or subtrees."""
+    ignore = root / ".gitignore"
+    if not ignore.is_file():
+        return set()
+    return {
+        line.rstrip("/")
+        for line in ignore.read_text(encoding="utf-8").splitlines()
+        if line.startswith(ANCHORS) and not any(char in line for char in "*?[]")
+    }
 
 
 def check_go_tasks(text: str, tasks: set[str]) -> list[str]:
@@ -116,13 +132,41 @@ def check_go_tasks(text: str, tasks: set[str]) -> list[str]:
 
 
 def check_paths(root: Path, text: str) -> list[str]:
-    """Return repository path references that do not resolve."""
+    """Return missing source references, allowing explicitly optional paths."""
     problems = []
+    optional = optional_runtime_paths(root)
     candidates = set(PLAYBOOK_RE.findall(text))
-    candidates.update(tok for tok in TOKEN_RE.findall(text) if tok.startswith(ANCHORS))
+    candidates.update(
+        tok for tok in TOKEN_RE.findall(text) if tok.startswith(ANCHORS)
+    )
     for ref in candidates:
-        if not path_exists(root, ref):
-            problems.append(f"missing repository path referenced in docs: {ref}")
+        if ref.rstrip("/") not in optional and not path_exists(root, ref):
+            problems.append(
+                f"missing repository path referenced in docs: {ref}"
+            )
+    return problems
+
+
+def check_provider_adapters(root: Path) -> list[str]:
+    """Check native imports and Claude discovery links to canonical skills."""
+    problems = []
+    for name in ("CLAUDE.md", "GEMINI.md"):
+        adapter = root / name
+        if adapter.is_file():
+            for ref in IMPORT_RE.findall(adapter.read_text(encoding="utf-8")):
+                if not (adapter.parent / ref).is_file():
+                    problems.append(
+                        f"{name}: missing instruction import: {ref}"
+                    )
+
+    for manifest in sorted((root / ".agents/skills").glob("*/SKILL.md")):
+        skill = manifest.parent
+        alias = root / ".claude/skills" / skill.name
+        if not alias.is_symlink() or alias.resolve() != skill.resolve():
+            problems.append(
+                f".claude/skills/{skill.name}: expected a symlink to "
+                f".agents/skills/{skill.name}"
+            )
     return problems
 
 
@@ -130,7 +174,7 @@ def main() -> int:
     """Validate references across the instruction/documentation layer."""
     root = repo_root()
     tasks = taskfile_task_names(root)
-    problems: list[str] = []
+    problems = check_provider_adapters(root)
     files = 0
     for path in doc_files(root):
         files += 1
@@ -144,7 +188,10 @@ def main() -> int:
         for problem in sorted(set(problems)):
             print(f"  {problem}")
         return 1
-    print(f"instruction references resolve: {files} docs, {len(tasks)} known tasks")
+    print(
+        f"instruction references resolve: {files} docs, "
+        f"{len(tasks)} known tasks"
+    )
     return 0
 
 

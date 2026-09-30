@@ -1,14 +1,8 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["config:recommended", ":dependencyDashboard", "helpers:pinGitHubActionDigests"],
+  "extends": ["config:recommended", "helpers:pinGitHubActionDigests"],
   "enabledManagers": ["ansible-galaxy", "github-actions", "npm", "pep621", "pre-commit", "custom.regex"],
-  "labels": ["dependencies"],
-  "semanticCommits": "enabled",
-  "semanticCommitType": "deps",
-  "semanticCommitScope": null,
-  "lockFileMaintenance": {
-    "enabled": true
-  },
+  "ignorePaths": [".test/**"],
   "ansible-galaxy": {
     "enabled": true
   },
@@ -30,46 +24,31 @@
     },
     {
       "customType": "regex",
-      "description": "Update the RENOVATE_VERSION variable in Taskfile.yml.",
+      "description": "Update the pinned pinact release used by deps-upgrade.",
       "managerFilePatterns": ["/^Taskfile\\.yml$/"],
-      "matchStrings": ["RENOVATE_VERSION: \"(?<currentValue>\\d+\\.\\d+\\.\\d+)\""],
-      "depNameTemplate": "renovate",
-      "datasourceTemplate": "npm"
+      "matchStrings": ["PINACT_VERSION: \"(?<currentValue>v\\d+\\.\\d+\\.\\d+)\""],
+      "depNameTemplate": "suzuki-shunsuke/pinact",
+      "datasourceTemplate": "github-releases",
+      "versioningTemplate": "semver"
+    },
+    {
+      "customType": "regex",
+      "description": "Report exact CI bootstrap versions maintained by the weekly updater.",
+      "managerFilePatterns": ["/^\\.github/(actions|workflows)/.+\\.ya?ml$/"],
+      "matchStrings": ["# renovate: datasource=(?<datasource>github-releases) depName=(?<depName>[^\\s]+)\\s+version: \"?(?<currentValue>v?\\d+\\.\\d+\\.\\d+)"],
+      "versioningTemplate": "semver"
     }
   ],
+  "enabled": false,
   "packageRules": [
     {
-      "matchManagers": ["npm", "pep621"],
-      "matchFileNames": [".test/**"],
-      "enabled": false
-    },
-    {
-      "matchManagers": ["github-actions"],
-      "groupName": "github actions",
-      "addLabels": ["ci"]
-    },
-    {
-      "matchManagers": ["pre-commit"],
-      "groupName": "pre-commit hooks"
-    },
-    {
       "matchManagers": ["ansible-galaxy"],
-      "groupName": "ansible collections",
-      "addLabels": ["ansible"]
+      "registryUrls": ["https://galaxy.ansible.com/api/"]
     },
     {
-      "matchManagers": ["pep621"],
-      "groupName": "python toolchain"
-    },
-    {
-      "matchManagers": ["npm"],
-      "matchFileNames": ["dotfiles/.local/share/codex-*/**"],
-      "groupName": "Codex CLI and MCP packages"
-    },
-    {
-      "matchDepNames": ["ghcr.io/super-linter/super-linter", "super-linter/super-linter"],
-      "groupName": "super-linter",
-      "addLabels": ["ci"]
+      "matchManagers": ["custom.regex"],
+      "matchDepNames": ["suzuki-shunsuke/pinact"],
+      "allowedVersions": "/^v5\\./"
     }
   ]
 }

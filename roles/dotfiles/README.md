@@ -19,6 +19,8 @@ Core defaults:
 | `dotfiles_owner` / `dotfiles_group` | Owner and group for created user directories. |
 | `dotfiles_directory_mode` | Mode for automatically created user directories. |
 | `dotfiles_mapping` | Managed symlink declarations. |
+| `dotfiles_legacy_directory_links` | Exact repository-owned directory links migrated before file linking. |
+| `dotfiles_baseline_files` | Copy-once files that applications or hosts may mutate. |
 | `dotfiles_directories` | Extra directories not implied by mapping destinations. |
 | `dotfiles_cleanup_paths` | Narrow legacy paths removed by the role. |
 | `dotfiles_nvim_restore_cron_enabled` | Explicit opt-in for the Neovim restore cron job. |
@@ -37,10 +39,22 @@ dotfiles_mapping:
 
 `payload` is always relative to `dotfiles_location`; the role computes `src`
 at apply time. Parent directories for mapping destinations are derived from
-`dest` and created automatically. Use `dotfiles_directories` only for extra
-directories that are not implied by a mapping destination.
+`dest` and created automatically. `dotfiles_baseline_files` uses the same item
+shape plus an optional `mode`; it copies missing files without overwriting local
+changes. A legacy symlink is migrated only when it points to that baseline's
+repository payload. Use `dotfiles_directories` only for extra directories that
+are not implied by a managed destination.
 
-Use `dotfiles_cleanup_paths` for narrow, explicit legacy path removals.
+`dotfiles_legacy_directory_links` supports narrow migrations from an old
+directory link to individual managed files. The role removes the old link only
+when its normalized target is the declared repository payload. It leaves normal
+directories untouched and rejects links to any other target.
+
+Use `dotfiles_cleanup_paths` for narrow, explicit legacy symlink removals. The
+role removes only symlinks whose normalized targets are beneath
+`dotfiles_location`; it preserves user-owned symlinks, regular files, and
+directories so applying this host inventory on another account cannot erase
+unrelated local data.
 Public role variables use the `dotfiles_` prefix; loop variables and registered
 facts are also role-prefixed to keep validation output clear.
 
@@ -51,15 +65,16 @@ the workstation package manifest, including Gemini CLI, K9s, Git Delta,
 Terraform CLI, bat, ripgrep, btop, direnv, npm, Yarn, and pip.
 
 Codex ships a secret-free base-configuration example, task-focused profiles,
-a deterministic command-safety hook, and the pinned Ponytail skill. The example
+a deterministic command-safety hook, and an opt-in Ponytail skill. The example
 MCP surface is limited to Context7 and the official OpenAI documentation server.
 The live `~/.codex/config.toml` is deliberately not linked because Codex writes
 project and hook trust state into it; bootstrap a new host from
 `dotfiles/.codex/config.example.toml`, then keep its live config local and
 owner-only. Grafana and Playwright are disabled unless their dedicated profile
 is selected; GitHub writes require the explicit, non-destructive
-`github-write` profile. Ponytail is linked to `~/.agents/skills/ponytail`, the
-cross-agent user skill location.
+`github-write` profile. Ponytail's three portable files are linked below the
+cross-agent `~/.agents/skills/ponytail` directory. Its local policy defaults to
+lite and prevents implicit Codex invocation.
 The `codex` launcher prefers the exact dependency graph installed from the
 checked-in npm lock, falls back to an existing system Codex, and applies an
 owner-only umask before startup so newly created histories and databases do not
@@ -76,9 +91,9 @@ runtime profiles.
 Codex authentication, conversation and memory state, hook trust state, MCP
 credentials, and the Grafana URL and service-account token file are deliberately
 local. The hook does not read workspace files or inject extra model context.
-It blocks direct Bash references to local `.env`, Kubernetes config, GnuPG
-private keys, the Grafana token-file variable, and non-public SSH paths while
-allowing managed SSH and GnuPG config and public `.pub` keys.
+It blocks only unmistakably broad recursive removals and destructive Git
+worktree operations at the top command level. It is an accidental-damage guard,
+not a shell security boundary or a substitute for secret-handling rules.
 Review new or changed hooks with `/hooks` before trusting them.
 
 K9s is configured with `readOnly: true`, so the managed default is intentionally
@@ -102,20 +117,24 @@ background restores.
 The role keeps the default install path deterministic:
 
 1. Validate role variables and mapping entries.
-2. Verify every mapped payload exists under `dotfiles_location`.
-3. Create extra and mapping-derived parent directories.
-4. Link managed payloads into `dotfiles_home`.
-5. Remove explicit legacy cleanup paths.
-6. Detect cron and Neovim restore capabilities.
-7. Reconcile the Neovim cron entry and remove legacy cron entries whenever
+2. Verify every linked and baseline payload exists under `dotfiles_location`.
+3. Remove only declared repository-owned legacy directory links.
+4. Create extra and managed-file parent directories, then link payloads.
+5. Migrate repository-linked baselines, then seed missing baseline files.
+6. Remove explicit legacy cleanup symlinks.
+7. Detect cron and Neovim restore capabilities.
+8. Reconcile the Neovim cron entry and remove legacy cron entries whenever
    `crontab` is available.
-8. Remove the legacy PAM environment file.
+9. Remove the legacy PAM environment file.
 
 ## Validation
 
 ```bash
-go-task
+go-task dotfiles:check
 go-task lint
 go-task verify
 git diff --check
 ```
+
+These checks preserve the developer's managed home state. The container phase
+of `go-task verify` applies the role only to its disposable test account.

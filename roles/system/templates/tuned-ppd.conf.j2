@@ -1,0 +1,13 @@
+# {{ ansible_managed }}
+[main]
+default=balanced
+battery_detection=true
+sysfs_acpi_monitor=true
+
+[profiles]
+power-saver=powersave
+balanced=balanced
+performance=workstation-performance
+
+[battery]
+balanced=balanced-battery
