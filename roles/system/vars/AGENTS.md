@@ -2,6 +2,8 @@
 
 Applies to `roles/system/vars/`.
 
+The root and parent `AGENTS.md` files own shared role and validation rules.
+
 - `archlinux.yml` contains Arch-specific role variables.
 - `archlinux-packages.yml` is the Arch Linux package manifest used by the
   `pkg` tagged package install task.
@@ -10,6 +12,8 @@ Applies to `roles/system/vars/`.
 
 - Verify package names against current Arch Linux repositories before
   finalizing package changes.
+- Package availability is an online compatibility check against rolling Arch
+  metadata. A passing query does not prove installation or service behavior.
 - Prefer official repository packages.
 - Do not add AUR-only packages unless AUR support is explicitly implemented.
 - Keep AUR helper build dependency variables separate from
@@ -19,15 +23,13 @@ Applies to `roles/system/vars/`.
   requested.
 - Preserve custom fold markers and keep them balanced.
 - Keep Kubernetes-related packages in the `kubernetes` fold category.
-- Keep comments and category names in English.
-- Do not store secrets in vars files.
 
 ## Validation
 
-- Run `go-task lint`.
-- Run `uv run yamllint .` or `go-task yamllint`.
-- Run `go-task test:system` to validate package names against a fresh Arch
-  Linux container before the smoke and idempotency pass.
+Use the root matrix for variable changes. For package manifest changes, run
+`go-task test:system` when Docker is available: it validates names against a
+fresh Arch container before the smoke and idempotency pass. Documentation-only
+edits need documentation checks.
 
 ## Done Criteria
 

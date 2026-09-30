@@ -20,7 +20,7 @@ Validation has five layers:
 | Layer | Mechanism | Contract |
 | ----- | --------- | -------- |
 | Static | Existing lint, documentation, instruction, and managed-path checks | Source and repository contracts are structurally valid. |
-| Python logic | Standard-library `unittest` discovered by `go-task test:python` | Reusable validators, security-hook I/O, and regression cases accept valid inputs and reject known-bad inputs. |
+| Logic and CLI contracts | Standard-library `unittest` discovered by `go-task test:python` | Reusable validators, security-hook I/O, and real Taskfile/command boundaries accept valid inputs and reject known-bad inputs. |
 | Input | `ansible.builtin.assert` in each role plus `.test/role_contracts.yml` | Public variables are valid before mutation; destructive path and filename boundaries reject known-bad inputs. |
 | Observable state | `.test/system/verify.yml` in a disposable Arch container | Managed links, files, ownership, modes, selected content, policy JSON, and container guards match the applied configuration. |
 | Convergence | `ansible.posix.json` plus `.test/assert_ansible_convergence.py` | A second run of each playbook reports zero changes, failures, ignored failures, rescued failures, and unreachable hosts. |
@@ -29,6 +29,12 @@ Validation has five layers:
 package and AUR installation skipped. It then verifies observable state and
 runs the dotfiles, system, and browser-policy playbooks separately for the
 machine-readable convergence check.
+
+Before that aggregate, focused container contracts validate Chrony syntax,
+safe conflict-unit masking, and Node.js provider replacement. The native role
+contract also checks time-backend selection for VMs, physical hosts, disabled
+features, and guarded environments. These tests do not run a real VM clock or
+prove NTP synchronization after suspend.
 
 The harness exits before package installation or Ansible execution unless
 `systemd-detect-virt` confirms that it is running inside a container.
@@ -50,17 +56,29 @@ not prove the resulting state.
 
 ## Framework Choice
 
-Python's standard-library `unittest` covers reusable validation logic with
-multiple input cases. Data tables use `subTest`; command and hook boundaries
-use bounded subprocesses. No additional Python test dependency, fixture layer,
-or base test hierarchy is used.
+Python's standard-library `unittest` covers reusable validation logic and
+repository CLI contracts. Data tables use `subTest`; command and hook boundaries
+use bounded subprocesses in temporary workspaces. No additional Python test
+dependency, fixture layer, or base test hierarchy is used.
 
-GitHub Actions runs the same Ruff, Pylint, and test discovery contracts as an
-early named check and writes the verbose result to the job summary. Pylint runs
-there with the locked project imports instead of inside Super-Linter; Mypy is
-not added without a demonstrated type-checking need. Only the expensive
-convergence job waits for that check; independent lint and cross-platform jobs
-remain parallel.
+GitHub Actions runs `go-task ci:static` as the first validation gate: whitespace,
+instruction references, Python lint and regression tests, pre-commit hooks,
+Ansible semantics and lint, and native role contracts. Ruff and Pylint use the
+locked project environment. The same task is part of `go-task verify:fast`, so
+CI does not maintain a second implementation of those checks.
+
+The expensive checks wait for that gate. Path filters select Neovim, disposable
+Arch convergence, and Linux/macOS user installation checks. Scheduled runs
+cover rolling Arch dependencies even without repository changes. A final `ci`
+job fails on upstream failure or cancellation while accepting deliberate path
+skips. PR titles have a separate cheap `pr-title` check, including title edits.
+
+Pre-commit owns Markdown, YAML, shell, workflow syntax and security checks;
+Ruff owns Python formatting. Super-Linter supplies complementary checks and
+reads the same `.github/super-linter.env` locally and in CI. It does not repeat
+those canonical checks or lint intermediate branch commits: the conventional
+PR title becomes the squash commit. Mypy is not added without a demonstrated
+type-checking need.
 
 The following frameworks are rejected for the current scope:
 
@@ -83,16 +101,17 @@ The unprivileged container deliberately does not validate:
 - hardware-specific laptop behavior.
 
 Package target availability and container-safe rendering are still checked.
-The remaining behavior is covered by explicit host check/apply commands and
-manual review appropriate to a personal workstation repository.
+The remaining behavior requires separately authorized host or VM check/apply
+verification; unavailable Docker never authorizes using the workstation as a
+replacement test target.
 
 ## Escalation Criteria
 
 Add the smallest missing layer only after a demonstrated coverage gap:
 
 - add a native Ansible assertion when a new observable invariant is introduced;
-- add standard-library `unittest` when reusable Python logic has multiple input
-  cases that the command-level checks cannot exercise clearly;
+- add standard-library `unittest` when repository logic or a CLI contract needs
+  input cases or isolated subprocess behavior that existing checks do not cover;
 - add Testinfra when the same remote-state assertions must run across multiple
   independently managed hosts;
 - add Molecule or a VM runner when two or more maintained lifecycle scenarios

@@ -130,8 +130,11 @@ The role keeps the default install path deterministic:
 ## Validation
 
 ```bash
-go-task
+go-task dotfiles:check
 go-task lint
 go-task verify
 git diff --check
 ```
+
+These checks preserve the developer's managed home state. The container phase
+of `go-task verify` applies the role only to its disposable test account.

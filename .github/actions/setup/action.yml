@@ -1,0 +1,28 @@
+name: Set up locked validation tools
+description: Install cached Python dependencies and Task for hosted runners.
+
+runs:
+  using: composite
+  steps:
+    - name: Set up uv and Python
+      uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+      with:
+        # renovate: datasource=github-releases depName=astral-sh/uv
+        version: "0.12.21"
+        python-version: "3.14"
+        enable-cache: true
+        cache-dependency-glob: uv.lock
+        cache-python: true
+
+    - name: Install Task
+      uses: arduino/setup-task@c0bc642852239c2689f73f4ea6459c29405f3c52 # v3.0.0
+      with:
+        # renovate: datasource=github-releases depName=go-task/task
+        version: "3.53.1"
+        repo-token: ${{ github.token }}
+
+    - name: Install locked Python environment
+      shell: bash
+      run: |
+        uv sync --locked --no-build --no-install-project --no-dev --managed-python
+        printf '%s\n' 'UV_NO_SYNC=true' >> "${GITHUB_ENV}"

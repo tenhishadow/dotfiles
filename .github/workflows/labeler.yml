@@ -3,18 +3,23 @@ name: "labeler"
 
 permissions:
   contents: read
-  pull-requests: write
 
 on:
-  pull_request:
+  # Metadata only: never check out or execute code from a pull request here.
+  pull_request_target:
+    types: [opened, synchronize, reopened]
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
 jobs:
   labeler:
+    permissions:
+      contents: read
+      pull-requests: write
     runs-on: ubuntu-latest
+    timeout-minutes: 5
 
     steps:
       - name: Apply labels

@@ -16,8 +16,9 @@ name: release
 jobs:
   release-please:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
-      - name: Create release PR
+      - name: Manage release PR and publish merged release
         uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
         with:
           token: ${{ secrets.RELEASE_TOKEN }}

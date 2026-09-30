@@ -27,6 +27,7 @@ GALAXY_VERSION_MAX_PAGES = 10
 NPM_REGISTRY = "https://registry.npmjs.org/"
 USER_AGENT = "tenhishadow-dotfiles-dependency-updater"
 NPM_MANIFEST_ROOTS = (
+    Path(".github/tools"),
     Path("dotfiles/.local/share/codex-cli"),
     Path("dotfiles/.local/share/codex-mcp"),
 )
@@ -52,13 +53,11 @@ _COLLECTION_VERSION_RE = re.compile(
 _COLLECTION_SOURCE_RE = re.compile(
     r"^[ \t]*source:[ \t]*(?P<source>\S+)[ \t]*(?:#.*)?$"
 )
-_REUSABLE_WORKFLOW_RE = re.compile(
-    r"^(?P<prefix>[ \t]*uses:[ \t]+)"
-    r"(?P<repository>[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+)/"
-    r"(?P<workflow>[^@ \t\r\n]+)@"
-    r"(?P<sha>[a-f0-9]{40})"
-    r"(?P<suffix>[ \t]+#[ \t]+renovate:[ \t]+branch="
-    r"(?P<branch>[A-Za-z0-9._/-]+)[ \t]*)$",
+_TOOL_VERSION_RE = re.compile(
+    r"(?P<prefix>^[ \t]*# renovate: datasource=github-releases "
+    r"depName=(?P<repository>[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+)[ \t]*\n"
+    r"[ \t]+version:[ \t]*[\"']?)(?P<version>v?\d+\.\d+\.\d+)"
+    r"(?P<suffix>[\"']?[ \t]*$)",
     re.MULTILINE,
 )
 
@@ -237,32 +236,6 @@ def update_ansible_requirements(text: str, versions: Mapping[str, str]) -> str:
             f"expected exactly one version for each Ansible collection: {details}"
         )
     return "".join(output)
-
-
-def replace_reusable_workflow_sha(
-    text: str, repository: str, branch: str, sha: str
-) -> str:
-    """Replace one branch-tracked reusable workflow SHA."""
-
-    if not re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+", repository):
-        raise DependencyUpdateError(f"invalid GitHub repository: {repository!r}")
-    if not re.fullmatch(r"[A-Za-z0-9._/-]+", branch):
-        raise DependencyUpdateError(f"invalid Git branch: {branch!r}")
-    if not re.fullmatch(r"[a-f0-9]{40}", sha):
-        raise DependencyUpdateError(f"invalid Git commit SHA: {sha!r}")
-
-    matches = [
-        match
-        for match in _REUSABLE_WORKFLOW_RE.finditer(text)
-        if match.group("repository") == repository and match.group("branch") == branch
-    ]
-    if len(matches) != 1:
-        raise DependencyUpdateError(
-            "expected exactly one reusable workflow reference for "
-            f"{repository}@{branch}, found {len(matches)}"
-        )
-    match = matches[0]
-    return text[: match.start("sha")] + sha + text[match.end("sha") :]
 
 
 def direct_npm_dependencies(manifest: object) -> tuple[str, ...]:
@@ -451,7 +424,7 @@ def _resolve_repository_pins(github_token: str) -> RepositoryPins:
 
     pinact = resolved["pinact"]
     super_linter = resolved["super-linter"]
-    if not isinstance(pinact, str) or not pinact.startswith("v4."):
+    if not isinstance(pinact, str) or not pinact.startswith("v5."):
         raise DependencyUpdateError(
             f"pinact major changed; update its Go module path manually: {pinact!r}"
         )
@@ -463,33 +436,6 @@ def _resolve_repository_pins(github_token: str) -> RepositoryPins:
         pinact=pinact,
         super_linter=f"slim-{super_linter}",
     )
-
-
-def _resolve_git_branch(repository: str, branch: str) -> str:
-    remote = f"https://github.com/{repository}.git"
-    result = subprocess.run(
-        ("git", "ls-remote", remote, f"refs/heads/{branch}"),
-        check=True,
-        capture_output=True,
-        text=True,
-        timeout=SHORT_COMMAND_TIMEOUT_SECONDS,
-    )
-    lines = [line for line in result.stdout.splitlines() if line.strip()]
-    if len(lines) != 1:
-        raise DependencyUpdateError(
-            f"expected one remote ref for {repository}@{branch}, found {len(lines)}"
-        )
-    fields = lines[0].split()
-    if len(fields) != 2 or fields[1] != f"refs/heads/{branch}":
-        raise DependencyUpdateError(
-            f"unexpected remote ref response for {repository}@{branch}"
-        )
-    sha = fields[0]
-    if not re.fullmatch(r"[a-f0-9]{40}", sha):
-        raise DependencyUpdateError(
-            f"invalid remote SHA for {repository}@{branch}: {sha!r}"
-        )
-    return sha
 
 
 def _write_if_changed(path: Path, old: str, new: str) -> None:
@@ -535,40 +481,6 @@ def update_ansible(root: Path) -> None:
     _write_if_changed(path, original, updated)
 
 
-def _tracked_reusable_workflows(
-    workflow_texts: Mapping[Path, str],
-) -> set[tuple[str, str]]:
-    refs: set[tuple[str, str]] = set()
-    for text in workflow_texts.values():
-        for match in _REUSABLE_WORKFLOW_RE.finditer(text):
-            refs.add((match.group("repository"), match.group("branch")))
-    return refs
-
-
-def _update_workflow_refs(
-    text: str, resolved_refs: Mapping[tuple[str, str], str]
-) -> str:
-    def replace(match: re.Match[str]) -> str:
-        sha = resolved_refs[(match.group("repository"), match.group("branch"))]
-        return (
-            f"{match.group('prefix')}{match.group('repository')}/"
-            f"{match.group('workflow')}@{sha}{match.group('suffix')}"
-        )
-
-    return _REUSABLE_WORKFLOW_RE.sub(replace, text)
-
-
-def _resolve_workflow_refs(
-    workflow_texts: Mapping[Path, str],
-) -> dict[tuple[str, str], str]:
-    refs = _tracked_reusable_workflows(workflow_texts)
-    if not refs:
-        return {}
-    with ThreadPoolExecutor(max_workers=len(refs)) as executor:
-        futures = {ref: executor.submit(_resolve_git_branch, *ref) for ref in refs}
-        return {ref: future.result() for ref, future in futures.items()}
-
-
 def _replace_repository_pins(text: str, pins: RepositoryPins) -> str:
     updated = text
     for name, value in (
@@ -582,24 +494,42 @@ def _replace_repository_pins(text: str, pins: RepositoryPins) -> str:
 
 
 def update_repository_pins(root: Path) -> None:
-    """Update Taskfile tool versions and branch-tracked reusable workflows."""
+    """Resolve coupled Taskfile pins and annotated CI tools before writing."""
 
     taskfile_path = root / "Taskfile.yml"
     taskfile_original = taskfile_path.read_text(encoding="utf-8")
-    workflows = tuple(sorted((root / ".github/workflows").glob("*.y*ml")))
-    workflow_originals = {path: path.read_text(encoding="utf-8") for path in workflows}
-
+    paths = sorted(
+        [
+            *(root / ".github/workflows").glob("*.y*ml"),
+            *(root / ".github/actions").rglob("action.y*ml"),
+        ]
+    )
+    originals = {path: path.read_text(encoding="utf-8") for path in paths}
+    repositories = {
+        match.group("repository")
+        for original in originals.values()
+        for match in _TOOL_VERSION_RE.finditer(original)
+    }
     github_token = validate_github_authentication(os.environ, _gh_auth_token)
     taskfile_updated = _replace_repository_pins(
         taskfile_original, _resolve_repository_pins(github_token)
     )
-    resolved_refs = _resolve_workflow_refs(workflow_originals)
+    versions = {
+        repository: _latest_github_release(repository, github_token)
+        for repository in sorted(repositories)
+    }
+
+    def replace(match: re.Match[str]) -> str:
+        version = versions[match.group("repository")].removeprefix("v")
+        if match.group("version").startswith("v"):
+            version = "v" + version
+        return match.group("prefix") + version + match.group("suffix")
 
     _write_if_changed(taskfile_path, taskfile_original, taskfile_updated)
-    for path, original in workflow_originals.items():
-        _write_if_changed(
-            path, original, _update_workflow_refs(original, resolved_refs)
-        )
+    for path, original in originals.items():
+        updated = _TOOL_VERSION_RE.sub(replace, original)
+        if updated != original:
+            _write_if_changed(path, original, updated)
 
 
 def _managed_npm_manifests(root: Path) -> tuple[Path, ...]:
@@ -632,7 +562,7 @@ def _npm_dependency_sections(
 
 
 def update_npm(root: Path) -> None:
-    """Update every direct dependency in managed npm package locks."""
+    """Update direct packages and refresh their transitive dependency locks."""
 
     save_flags = {
         "dependencies": None,
@@ -658,6 +588,22 @@ def update_npm(root: Path) -> None:
                 cwd=root,
                 timeout=PACKAGE_COMMAND_TIMEOUT_SECONDS,
             )
+        subprocess.run(
+            (
+                "npm",
+                "update",
+                "--package-lock-only",
+                "--ignore-scripts",
+                "--no-audit",
+                "--no-fund",
+                f"--registry={NPM_REGISTRY}",
+                "--prefix",
+                str(manifest_path.parent),
+            ),
+            check=True,
+            cwd=root,
+            timeout=PACKAGE_COMMAND_TIMEOUT_SECONDS,
+        )
 
 
 def _parser() -> argparse.ArgumentParser:

@@ -25,12 +25,21 @@ Host-specific values live under `inventory/host_vars/this_host/` and stay split
 by ownership: dotfiles mappings, system settings, security-sensitive
 workstation settings, and browser policy overrides.
 
+Optional TuneD integration belongs to the system layer. It connects Plasma's
+profile selector to TuneD through the packaged `tuned-ppd` bridge; host inventory
+owns the hardware policy. See [the system role](../roles/system/README.md#plasma-power-profiles)
+for managed paths and the scoped `tuned` tag.
+
+Periodic TRIM is another explicit system-layer opt-in. The `fstrim` tag manages
+the existing timer; filesystem, encryption, and initramfs configuration remain
+outside that operation. See [the system role](../roles/system/README.md#periodic-trim).
+
 ## Environment Contract
 
 | Environment | User dotfiles | System role | Policy role | Evidence |
 | ----------- | ------------- | ----------- | ----------- | -------- |
 | Arch bare metal or laptop | Supported | Supported; physical-only tasks are explicit and timesyncd is the time backend | Supported | Local check/apply paths and role validation |
-| Arch virtual machine | Supported | Supported; hardware tasks are skipped and Chrony is the time backend | Supported | Backend contract assertions plus check/apply verification on a real guest |
+| Arch virtual machine | Supported | Supported; hardware tasks are skipped and Chrony is the time backend | Supported | Backend contract assertions; service activation and resume recovery require a real guest |
 | Arch container | Supported for integration tests | Container-safe subset only; systemd, Docker daemon, SSHD, sysctl, AUR, and hardware branches are skipped | Supported | `go-task test:system` first apply, assertions, and zero-change second apply |
 | Ubuntu or macOS | User layer only | Unsupported | Unsupported | Default-playbook CI matrix |
 
@@ -46,20 +55,23 @@ machines and `systemd-timesyncd` on physical hosts. It unmasks the selected
 service and stops and masks other known NTP daemons. A disabled applicable
 backend, containers, and CI select no daemon. The native role contract proves
 selection logic; only a real host can prove service activation and clock
-synchronization.
+synchronization. Containers share their host's clock, and the role skips
+timezone changes in containers and CI as well.
 
 ## AI Tool Contract
 
 | Concern | Canonical surface | Adapters |
 | ------- | ----------------- | -------- |
-| Always-on repository rules | Root and nearest `AGENTS.md` | `CLAUDE.md`, `GEMINI.md`, condensed Copilot review deltas |
-| Task-specific workflow | `.agents/skills/*/SKILL.md` | Native discovery in Codex and GitHub Copilot; other agents still follow the referenced ADR and Taskfile |
+| Always-on repository rules | Root and applicable ancestor `AGENTS.md` files | `CLAUDE.md`, `GEMINI.md`, concise Copilot review instructions |
+| Task-specific workflow | `.agents/skills/*/SKILL.md` | Native Codex, Gemini CLI, and Copilot discovery; Claude Code uses relative `.claude/skills/` links |
 | Deterministic local guard | Managed Codex hook | Runs only for its declared tool event; it does not inject files or credentials into model context |
 | External knowledge or actions | Explicit MCP/app profile | Disabled unless the workflow needs it; credentials and writable state stay local |
 | Observable correctness | `go-task` targets and Ansible assertions | The same commands run locally, in containers, CI, and agent environments with the required tools |
 
 Instructions define durable constraints; skills route repeatable work; hooks
 enforce a small deterministic event policy; MCP servers connect external data.
+Instruction text is guidance, not a security boundary; client permissions,
+tool configuration, and tested guards control actual capabilities.
 Keeping those responsibilities separate avoids prompt duplication and makes
 the repository usable from Codex local/cloud, GitHub Copilot, Claude Code, and
 Gemini CLI without copying the engineering contract.

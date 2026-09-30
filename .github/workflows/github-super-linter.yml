@@ -1,21 +1,15 @@
----
-name: "github-super-linter"
+name: github-super-linter
 
 permissions:
   contents: read
-  statuses: write
 
 on:
-  pull_request:
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  workflow_call:
 
 jobs:
   github-super-linter:
     runs-on: ubuntu-latest
-
+    timeout-minutes: 10
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -23,29 +17,14 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Scan codebase
+      - name: Load shared linter configuration
+        run: sed '/^[[:space:]]*#/d; /^[[:space:]]*$/d' .github/super-linter.env >> "${GITHUB_ENV}"
+
+      - name: Run complementary linters
         uses: super-linter/super-linter/slim@4ce20838b8ab83717e78138c5b3a1407148e0918 # v8.7.0
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ github.token }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
           ENABLE_GITHUB_ACTIONS_STEP_SUMMARY: true
-          ENABLE_GITHUB_PULL_REQUEST_SUMMARY_COMMENT: false
-          ENFORCE_COMMITLINT_CONFIGURATION_CHECK: true
           FAIL_ON_INVALID_GITHUB_ACTIONS_EVENT_CONFIGURATION: true
-          VALIDATE_ALL_CODEBASE: false
-          VALIDATE_BIOME_FORMAT: false
-          VALIDATE_EDITORCONFIG: false
-          VALIDATE_GITHUB_ACTIONS_ZIZMOR: false
-          VALIDATE_LUA: false
-          # markdownlint owns repository Markdown style. Prettier would only
-          # rewrite release-please output without adding structural checks.
-          VALIDATE_MARKDOWN_PRETTIER: false
-          VALIDATE_NATURAL_LANGUAGE: false
-          # Ruff is the canonical Python formatter for this repository.
-          VALIDATE_PYTHON_BLACK: false
-          # Project-aware Pylint runs in the early Python validation job.
-          # Mypy is not part of this repository's selected Python toolchain.
-          VALIDATE_PYTHON_MYPY: false
-          VALIDATE_PYTHON_PYLINT: false
-          VALIDATE_SHELL_SHFMT: false
-          VALIDATE_TRIVY: false
-          FILTER_REGEX_EXCLUDE: (^|/)(\.ansible/|\.collections/|\.task/|\.test/nvim/|\.venv/)
+          VALIDATE_ALL_CODEBASE: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}

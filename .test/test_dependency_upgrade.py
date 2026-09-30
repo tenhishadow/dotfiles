@@ -233,25 +233,28 @@ class GitHubAuthenticationTest(unittest.TestCase):
 class GitHubReleaseTest(unittest.TestCase):
     """Read the latest release and surface unsupported pinact majors."""
 
-    def test_repository_pin_resolution_rejects_new_pinact_major(self) -> None:
+    def test_repository_pin_resolution_enforces_supported_pinact_major(self) -> None:
         renovate = {"version": "44.50.1", "engines": {"node": "^24.11.0"}}
 
         def fetch_json(url: str, **_kwargs: str) -> object:
             if url.endswith("/renovate/latest"):
                 return renovate
-            tag = "v5.0.0" if "/pinact/" in url else "v8.7.0"
+            tag = pinact_tag if "/pinact/" in url else "v8.7.0"
             return {"tag_name": tag}
 
-        with (
-            mock.patch.object(
-                update_dependencies, "_fetch_json", side_effect=fetch_json
-            ) as fetch,
-            self.assertRaisesRegex(ValueError, "pinact major changed"),
-        ):
-            vars(update_dependencies)["_resolve_repository_pins"]("secret")
-
-        urls = [call.args[0] for call in fetch.call_args_list]
-        self.assertTrue(any(url.endswith("/pinact/releases/latest") for url in urls))
+        for pinact_tag in ("v5.0.0", "v6.0.0"):
+            with (
+                self.subTest(pinact_tag=pinact_tag),
+                mock.patch.object(
+                    update_dependencies, "_fetch_json", side_effect=fetch_json
+                ),
+            ):
+                resolve = vars(update_dependencies)["_resolve_repository_pins"]
+                if pinact_tag == "v5.0.0":
+                    self.assertEqual(pinact_tag, resolve("secret").pinact)
+                else:
+                    with self.assertRaisesRegex(ValueError, "pinact major changed"):
+                        resolve("secret")
 
 
 class AnsibleRequirementsUpdateTest(unittest.TestCase):
@@ -357,58 +360,6 @@ class GalaxyVersionResolutionTest(unittest.TestCase):
         )
 
 
-class ReusableWorkflowUpdateTest(unittest.TestCase):
-    """Replace a reusable workflow branch digest only when it is unambiguous."""
-
-    REPOSITORY = "tenhishadow/github_actions_templates"
-    OLD_SHA = "1" * 40
-    NEW_SHA = "a" * 40
-
-    def _reference(self) -> str:
-        return (
-            "    uses: "
-            f"{self.REPOSITORY}/.github/workflows/taskfile.uv.yaml@{self.OLD_SHA}"
-            " # renovate: branch=main\n"
-        )
-
-    def test_replaces_one_sha_and_preserves_branch_comment(self) -> None:
-        content = "jobs:\n  reusable:\n" + self._reference()
-
-        self.assertEqual(
-            content.replace(self.OLD_SHA, self.NEW_SHA),
-            update_dependencies.replace_reusable_workflow_sha(
-                content,
-                self.REPOSITORY,
-                "main",
-                self.NEW_SHA,
-            ),
-        )
-
-    def test_rejects_missing_or_duplicate_reference(self) -> None:
-        cases = {
-            "missing": "jobs: {}\n",
-            "duplicate": self._reference() + self._reference(),
-        }
-
-        for name, content in cases.items():
-            with self.subTest(name=name), self.assertRaises(ValueError):
-                update_dependencies.replace_reusable_workflow_sha(
-                    content,
-                    self.REPOSITORY,
-                    "main",
-                    self.NEW_SHA,
-                )
-
-    def test_rejects_a_non_sha_replacement(self) -> None:
-        with self.assertRaises(ValueError):
-            update_dependencies.replace_reusable_workflow_sha(
-                self._reference(),
-                self.REPOSITORY,
-                "main",
-                "main",
-            )
-
-
 class NpmDependencyCommandTest(unittest.TestCase):
     """Build one deterministic lock-only npm update command per manifest."""
 
@@ -482,7 +433,7 @@ class NpmDependencyCommandTest(unittest.TestCase):
         self.assertIn("dependency update failed:", stderr.getvalue())
         self.assertNotIn("Traceback", stderr.getvalue())
 
-    def test_npm_update_has_a_bounded_subprocess(self) -> None:
+    def test_npm_update_refreshes_transitive_locks_after_direct_packages(self) -> None:
         self._write_package(
             update_dependencies.NPM_MANIFEST_ROOTS[0],
             '{"dependencies":{"example":"1.0.0"}}\n',
@@ -490,110 +441,86 @@ class NpmDependencyCommandTest(unittest.TestCase):
         with mock.patch.object(update_dependencies.subprocess, "run") as run:
             update_dependencies.update_npm(self.root)
 
-        self.assertEqual(
-            update_dependencies.PACKAGE_COMMAND_TIMEOUT_SECONDS,
-            run.call_args.kwargs["timeout"],
-        )
+        self.assertEqual(("npm", "install"), run.call_args_list[0].args[0][:2])
+        self.assertIn("example@latest", run.call_args_list[0].args[0])
+        self.assertEqual(("npm", "update"), run.call_args_list[1].args[0][:2])
+        for call in run.call_args_list:
+            self.assertIn("--package-lock-only", call.args[0])
+            self.assertIn("--ignore-scripts", call.args[0])
+            self.assertEqual(
+                update_dependencies.PACKAGE_COMMAND_TIMEOUT_SECONDS,
+                call.kwargs["timeout"],
+            )
 
 
 class RepositoryUpdateIntegrationTest(unittest.TestCase):
-    """Exercise the repository updater without network or external commands."""
-
-    OLD_SHA = "1" * 40
-    NEW_SHA = "a" * 40
-    REPOSITORY = "tenhishadow/github_actions_templates"
+    """Exercise coupled pins and annotated CI versions without network access."""
 
     def setUp(self) -> None:
         self.root = Path(tempfile.mkdtemp())
         self.addCleanup(shutil.rmtree, self.root)
-        self.taskfile, self.workflow = self._create_root(self.root)
-
-    def _create_root(self, root: Path) -> tuple[Path, Path]:
-        taskfile = root / "Taskfile.yml"
-        taskfile.write_text(
-            "vars:\n"
-            '  RENOVATE_VERSION: "44.48.3"\n'
+        self.taskfile = self.root / "Taskfile.yml"
+        self.taskfile.write_text(
+            'vars:\n  RENOVATE_VERSION: "44.48.3"\n'
             '  RENOVATE_NODE_MIN_VERSION: "22.13.0"\n'
-            '  PINACT_VERSION: "v4.1.0"\n'
+            '  PINACT_VERSION: "v5.0.0"\n'
             '  SUPERLINTER_IMAGE_TAG: "slim-v8.6.0"\n',
             encoding="utf-8",
         )
-        workflow = root / ".github/workflows/verify.yml"
-        workflow.parent.mkdir(parents=True)
-        reusable_workflow = (
-            f"{self.REPOSITORY}/.github/workflows/taskfile.uv.yaml@{self.OLD_SHA}"
-            " # renovate: branch=main\n"
-        )
-        workflow.write_text(
-            "jobs:\n"
-            "  verify:\n"
-            f"    # uses: {reusable_workflow}"
-            f"    description: uses: {reusable_workflow}"
-            f"    uses: {reusable_workflow}",
+        self.action = self.root / ".github/actions/setup/action.yml"
+        self.action.parent.mkdir(parents=True)
+        self.action.write_text(
+            "steps:\n  - with:\n"
+            "      # renovate: datasource=github-releases depName=astral-sh/uv\n"
+            '      version: "0.12.0"\n'
+            '  - with:\n      version: "3.14"\n',
             encoding="utf-8",
         )
-        return taskfile, workflow
-
-    def _pins(self) -> object:
-        return update_dependencies.RepositoryPins(
-            renovate="44.50.1",
-            renovate_node_minimum="24.11.0",
-            pinact="v4.1.1",
-            super_linter="slim-v8.7.0",
-        )
-
-    def _common_patches(self) -> tuple[object, object]:
-        return (
-            mock.patch.object(
-                update_dependencies,
-                "validate_github_authentication",
-                return_value="secret",
-            ),
-            mock.patch.object(
-                update_dependencies,
+        for name, value in (
+            ("validate_github_authentication", "secret"),
+            (
                 "_resolve_repository_pins",
-                return_value=self._pins(),
-            ),
-        )
-
-    def test_second_run_is_byte_identical(self) -> None:
-        auth, pins = self._common_patches()
-        with (
-            auth,
-            pins,
-            mock.patch.object(
-                update_dependencies,
-                "_resolve_git_branch",
-                return_value=self.NEW_SHA,
+                update_dependencies.RepositoryPins(
+                    renovate="44.50.1",
+                    renovate_node_minimum="24.11.0",
+                    pinact="v5.0.0",
+                    super_linter="slim-v8.7.0",
+                ),
             ),
         ):
-            update_dependencies.update_repository_pins(self.root)
-            first = (self.taskfile.read_bytes(), self.workflow.read_bytes())
-            update_dependencies.update_repository_pins(self.root)
-            second = (self.taskfile.read_bytes(), self.workflow.read_bytes())
+            patcher = mock.patch.object(update_dependencies, name, return_value=value)
+            patcher.start()
+            self.addCleanup(patcher.stop)
 
+    def test_second_run_is_byte_identical_and_unannotated_versions_stay(self) -> None:
+        with mock.patch.object(
+            update_dependencies, "_latest_github_release", return_value="0.12.21"
+        ) as release:
+            update_dependencies.update_repository_pins(self.root)
+            first = (self.taskfile.read_bytes(), self.action.read_bytes())
+            update_dependencies.update_repository_pins(self.root)
+            second = (self.taskfile.read_bytes(), self.action.read_bytes())
         self.assertEqual(first, second)
         self.assertIn(b'RENOVATE_VERSION: "44.50.1"', first[0])
-        self.assertEqual(2, first[1].count(self.OLD_SHA.encode()))
-        self.assertEqual(1, first[1].count(self.NEW_SHA.encode()))
+        self.assertIn(b'version: "0.12.21"', first[1])
+        self.assertIn(b'version: "3.14"', first[1])
+        self.assertEqual(
+            [mock.call("astral-sh/uv", "secret")] * 2, release.call_args_list
+        )
 
     def test_resolution_failure_does_not_write(self) -> None:
-        original = (self.taskfile.read_bytes(), self.workflow.read_bytes())
-        auth, pins = self._common_patches()
+        original = (self.taskfile.read_bytes(), self.action.read_bytes())
         with (
-            auth,
-            pins,
             mock.patch.object(
                 update_dependencies,
-                "_resolve_git_branch",
+                "_latest_github_release",
                 side_effect=ValueError("resolution failed"),
             ),
             self.assertRaisesRegex(ValueError, "resolution failed"),
         ):
             update_dependencies.update_repository_pins(self.root)
-
         self.assertEqual(
-            original, (self.taskfile.read_bytes(), self.workflow.read_bytes())
+            original, (self.taskfile.read_bytes(), self.action.read_bytes())
         )
 
 
@@ -774,53 +701,6 @@ class DependencyUpgradeOrchestrationTest(unittest.TestCase):
         self.assertIn("deps: [deps-python]", verify)
         self.assertIn("uv run pre-commit --version", verify)
 
-    def test_local_super_linter_leaves_commit_validation_to_ci(self) -> None:
-        workflow = (ROOT / ".github/workflows/github-super-linter.yml").read_text(
-            encoding="utf-8"
-        )
-
-        self.assertIn("-e VALIDATE_GIT_COMMITLINT=false", self.taskfile)
-        self.assertNotIn(
-            "-e ENFORCE_COMMITLINT_CONFIGURATION_CHECK=true", self.taskfile
-        )
-        self.assertIn("ENFORCE_COMMITLINT_CONFIGURATION_CHECK: true", workflow)
-        self.assertNotIn("VALIDATE_GIT_COMMITLINT: false", workflow)
-
-    def test_super_linter_uses_ruff_as_the_only_python_formatter(self) -> None:
-        workflow = (ROOT / ".github/workflows/github-super-linter.yml").read_text(
-            encoding="utf-8"
-        )
-
-        self.assertIn("-e VALIDATE_PYTHON_BLACK=false", self.taskfile)
-        self.assertIn("VALIDATE_PYTHON_BLACK: false", workflow)
-        self.assertNotIn("VALIDATE_PYTHON_RUFF_FORMAT: false", self.taskfile)
-        self.assertNotIn("VALIDATE_PYTHON_RUFF_FORMAT: false", workflow)
-
-    def test_system_role_and_ci_share_the_node_runtime_package(self) -> None:
-        system_vars = (ROOT / "roles/system/vars/archlinux.yml").read_text(
-            encoding="utf-8"
-        )
-        package_match = re.search(
-            r"^system_nodejs_package: (?P<package>[a-z0-9@._+-]+)$",
-            system_vars,
-            re.MULTILINE,
-        )
-        self.assertIsNotNone(package_match)
-        assert package_match is not None
-        package = package_match.group("package")
-
-        package_manifest = (
-            ROOT / "roles/system/vars/archlinux-packages.yml"
-        ).read_text(encoding="utf-8")
-        system_tasks = (ROOT / "roles/system/tasks/main.yml").read_text(
-            encoding="utf-8"
-        )
-        workflow = (ROOT / ".github/workflows/ansible.yml").read_text(encoding="utf-8")
-
-        self.assertIn('  - "{{ system_nodejs_package }}"', package_manifest)
-        self.assertIn("- system_nodejs_package in system_packages", system_tasks)
-        self.assertRegex(workflow, rf"(?m)^\s+{re.escape(package)}$")
-
     def test_neovim_upgrade_uses_an_isolated_workspace(self) -> None:
         task = _task_block(self.taskfile, "deps-upgrade:nvim")
 
@@ -831,14 +711,17 @@ class DependencyUpgradeOrchestrationTest(unittest.TestCase):
             "XDG_DATA_HOME=",
             "XDG_STATE_HOME=",
             "XDG_CACHE_HOME=",
-            "NVIM_USE_MASON=off",
+            "NVIM_USE_MASON=auto",
+            "NVIM_APPNAME=nvim",
+            "NVIM_DOTFILES_DISABLE_PLUGINS=0",
+            ".github/scripts/update_nvim.lua",
             "timeout 300s nvim --headless",
             "dotfiles/.config/nvim/lazy-lock.json",
         ):
             with self.subTest(required=required):
                 self.assertIn(required, task)
 
-    def test_github_actions_upgrade_uses_pinned_pinact_with_exclusion(self) -> None:
+    def test_github_actions_upgrade_uses_pinned_pinact(self) -> None:
         task = _task_block(self.taskfile, "deps-upgrade:github-actions")
 
         for required in (
@@ -849,7 +732,6 @@ class DependencyUpgradeOrchestrationTest(unittest.TestCase):
             "pinact@{{.PINACT_VERSION}}",
             "--update",
             "--verify-comment",
-            "--exclude '^tenhishadow/github_actions_templates/'",
         ):
             with self.subTest(required=required):
                 self.assertIn(required, task)
@@ -894,74 +776,38 @@ class DependencyUpgradeOrchestrationTest(unittest.TestCase):
             rules[0]["registryUrls"],
         )
 
-    def test_renovate_custom_managers_match_every_declared_surface(self) -> None:
-        paths = [
-            ROOT / "Taskfile.yml",
-            *sorted((ROOT / ".github/workflows").glob("*.yml")),
-            *sorted((ROOT / ".github/workflows").glob("*.yaml")),
-        ]
-        expected_matches = {
-            "ghcr.io/super-linter/super-linter": 1,
-            "suzuki-shunsuke/pinact": 1,
-            "tenhishadow/github_actions_templates": 2,
-        }
-        actual_matches: dict[str, int] = {}
-
-        for manager in self.renovate["customManagers"]:
-            file_patterns = [
-                re.compile(pattern.removeprefix("/").removesuffix("/"))
-                for pattern in manager["managerFilePatterns"]
-            ]
-            match_patterns = [
-                re.compile(
-                    re.sub(r"\(\?<([A-Za-z][A-Za-z0-9_]*)>", r"(?P<\1>", pattern)
-                )
-                for pattern in manager["matchStrings"]
-            ]
-            count = 0
-            for path in paths:
-                relative_path = path.relative_to(ROOT).as_posix()
-                if not any(pattern.search(relative_path) for pattern in file_patterns):
-                    continue
-                content = path.read_text(encoding="utf-8")
-                count += sum(
-                    len(tuple(pattern.finditer(content))) for pattern in match_patterns
-                )
-            dependency = manager["depNameTemplate"]
-            self.assertNotIn(
-                dependency,
-                actual_matches,
-                f"duplicate custom manager for {dependency}",
-            )
-            actual_matches[dependency] = count
-
-        self.assertEqual(expected_matches, actual_matches)
+    def test_renovate_prs_are_disabled_and_local_reports_opt_in(self) -> None:
+        self.assertIs(self.renovate["enabled"], False)
+        self.assertIn(
+            "--enabled=true", _task_block(self.taskfile, "deps-report:github-actions")
+        )
 
 
 class GitHubActionsPinInventoryTest(unittest.TestCase):
     """Keep every remote workflow dependency reviewable and immutable."""
 
     USES_PATTERN = re.compile(
-        r"^\s*uses:\s*(?P<target>[^\s@]+)@(?P<ref>[^\s#]+)"
+        r"^\s*(?:-\s*)?uses:\s*(?P<target>[^\s@]+)@(?P<ref>[^\s#]+)"
         r"(?:\s+#\s*(?P<comment>.+))?$"
     )
     SHA_PATTERN = re.compile(r"[0-9a-f]{40}")
     VERSION_COMMENT_PATTERN = re.compile(r"v\d+(?:\.\d+){0,2}")
-    BRANCH_COMMENT_PATTERN = re.compile(r"renovate:\s*branch=[^\s]+")
 
     def test_remote_actions_have_full_sha_and_update_comment(self) -> None:
         problems: list[str] = []
         remote_uses = 0
-        workflows_directory = ROOT / ".github/workflows"
         workflow_paths = sorted(
-            (*workflows_directory.glob("*.yml"), *workflows_directory.glob("*.yaml"))
+            [
+                *(ROOT / ".github/workflows").glob("*.y*ml"),
+                *(ROOT / ".github/actions").rglob("action.y*ml"),
+            ]
         )
 
         for path in workflow_paths:
             for line_number, line in enumerate(
                 path.read_text(encoding="utf-8").splitlines(), start=1
             ):
-                if re.match(r"^\s*uses:", line) is None or re.search(
+                if re.match(r"^\s*(?:-\s*)?uses:", line) is None or re.search(
                     r"uses:\s*\./", line
                 ):
                     continue
@@ -973,14 +819,8 @@ class GitHubActionsPinInventoryTest(unittest.TestCase):
                     continue
                 if self.SHA_PATTERN.fullmatch(match.group("ref")) is None:
                     problems.append(f"{location}: ref is not a full lowercase SHA")
-                target = match.group("target")
                 comment = match.group("comment") or ""
-                expected_comment = (
-                    self.BRANCH_COMMENT_PATTERN
-                    if "/.github/workflows/" in target
-                    else self.VERSION_COMMENT_PATTERN
-                )
-                if expected_comment.fullmatch(comment) is None:
+                if self.VERSION_COMMENT_PATTERN.fullmatch(comment) is None:
                     problems.append(f"{location}: update comment is missing or invalid")
 
         self.assertGreater(remote_uses, 0, "no remote GitHub Actions references found")

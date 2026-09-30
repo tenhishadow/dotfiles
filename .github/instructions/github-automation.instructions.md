@@ -1,46 +1,41 @@
 ---
-applyTo: ".github/**/*.yml,.github/**/*.yaml,.github/**/*.md,renovate.json,Taskfile.yml"
+applyTo: ".github/**/*.yml,.github/**/*.yaml,.github/scripts/**,.pre-commit-config.yaml,renovate.json,Taskfile.yml"
 ---
 
 # GitHub Automation Review Instructions
 
-- Keep workflow permissions minimal and explicit.
-- Require full commit SHAs with version comments for every `uses:` reference.
-  Keep those digests managed by Renovate and `go-task deps-upgrade`.
-- Keep long-running or PR-triggered workflows covered by concurrency.
-- Keep workflow behavior aligned with `Taskfile.yml`.
-- Keep `go-task verify:fast` as the no-Docker repository contract and
-  `go-task verify` as the local aggregate that adds isolated Neovim checks,
-  Arch convergence, and Super-Linter without applying the local workstation.
-- Keep `go-task all` as an explicit apply target; it must not replace default
-  `go-task` or `go-task verify`.
-- Keep the Arch convergence CI job aligned with `go-task test:system`: apply
-  `go-task all -- --skip-tags pkg,aur`, assert observable state, and require
-  zero-change second playbook runs.
-- Do not reintroduce Super-Linter into `go-task lint`; it belongs to
-  `go-task superlinter` and the aggregate `go-task verify` path.
-- Ensure new versioned GitHub Actions, reusable workflows, Docker images,
-  pre-commit hooks, Ansible collections, and future CI includes are detected by
-  Renovate or documented as manually updated.
-- Keep Renovate scoped to real repository dependency surfaces. `.test/`
-  fixtures must stay ignored because they are detector and smoke-test inputs.
-- Keep `go-task deps-upgrade` as the explicit local aggregate for Python,
-  Ansible Galaxy, pre-commit, managed npm, Neovim, GitHub Actions, reusable
-  workflows, and Taskfile tool pins. It may change dependency files only; it
-  must not commit, push, or treat `.test/` fixtures as dependency surfaces.
-- Keep `go-task deps-report:github-actions` as the read-only Renovate extraction
-  report; local Renovate mode must not be presented as a worktree updater.
-- Keep `.github/labeler.yml` aligned with current repository paths, including
-  AI instructions, provider adapters, and `.agents/skills/`.
-- Keep labeler path labels present in GitHub and avoid a changed-file label
-  limit that makes broad maintenance PRs skip all labels.
-- Keep `docs/github-labels.md` aligned with labeler rules and issue-template
-  labels.
-- Keep issue forms and the PR template aligned with supported workflows and
-  validation commands.
-- Keep Copilot instructions concise, review-focused, and non-duplicative:
-  repo-wide rules are canonical in the root `AGENTS.md`,
-  `.github/copilot-instructions.md` condenses them, and path-specific rules
-  live in `.github/instructions/*.instructions.md`.
-- Keep documentation-specific review rules in
-  `.github/instructions/documentation.instructions.md`.
+Follow `.github/AGENTS.md` for automation ownership and the root `AGENTS.md`
+Taskfile conventions. Review runtime ordering, environment boundaries, and
+failure propagation as well as YAML structure.
+
+Use `CONTRIBUTING.md` for commit/PR and release contracts, and
+`docs/github-labels.md` for the required-label catalog.
+
+- Trace untrusted PR input into shell commands, credentials, write permissions,
+  and artifact handling. Review cancellation and concurrency against the job's
+  actual side effects rather than requiring the same policy everywhere.
+- Metadata-only `pull_request_target` jobs must not check out or execute PR
+  code. Title validation must receive the title as data, not shell syntax,
+  and rerun after title edits.
+- Check that PR-title syntax, weekly update messages, squash settings, and Release
+  Please agree. A PR-body breaking-change footer is lost when the squash body
+  is blank; the PR title needs `!` in that workflow.
+- Check that changed dependency references remain pinned where required and
+  covered by the shared local updater. Distinguish external action digests,
+  version comments, and local action paths; Renovate
+  extraction is an audit surface, not a parallel PR producer.
+- Follow task dependencies and failure propagation: ordered work belongs in
+  `cmds`, independent prerequisites may use `deps`, and a failed subprocess
+  must fail the owning task even behind a pipe or shell substitution.
+- Check locked validation separately from dependency upgrades. Refreshes must
+  leave reviewable dependency-file changes; Renovate extraction reports do
+  not themselves update the worktree, and `.test/` fixtures are not upgrade
+  inputs.
+- Trace the three-layer apply and second-run assertions in the Arch harness.
+  Package availability, package migration, backend simulation, convergence,
+  and real VM synchronization are distinct kinds of evidence.
+- Inspect inherited HOME/XDG values, quoted mount paths, temporary workspaces,
+  and cleanup. Validation must preserve the user's working configuration.
+- For changed routing, labels, or templates, update the corresponding command
+  or ownership contract only where it becomes inaccurate. Markdown-only
+  instruction changes do not require runtime or container suites.

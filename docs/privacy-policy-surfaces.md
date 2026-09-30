@@ -8,7 +8,7 @@ settings here are personal defaults, not a generic security benchmark.
 | Tool or area | Surface | Managed path |
 | ------------ | ------- | ------------ |
 | Gemini CLI | User settings and environment variables | `~/.gemini/settings.json`, `.bashrc`, `environment.d` |
-| AI agents | Shared instructions and validation workflow | `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `.agents/skills/` |
+| AI agents | Shared instructions and validation workflow | `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `.agents/skills/`, `.claude/skills/` discovery links |
 | Codex | Portable profiles, hook, launchers, lockfiles, and a bootstrap example | `~/.codex/*.config.toml`, `~/.codex/hooks.json`, `~/.codex/hooks/`, `~/.agents/skills/ponytail/`, `dotfiles/.codex/config.example.toml` |
 | Chromium/Brave | Enterprise policy | `/etc/chromium/policies/managed/10-dotfiles-managed.json`, `/etc/brave/policies/managed/10-dotfiles-managed.json` |
 | Firefox | Enterprise policy | `/etc/firefox/policies/policies.json` |
@@ -37,9 +37,10 @@ statistics, telemetry, detailed telemetry traces, prompt logging, and external
 collector use. The shell environment also sets documented Gemini telemetry
 variables to disabled values. The committed key names were checked against the
 installed `@google/gemini-cli 0.41.2` bundled reference docs during PR #141 on
-2026-05-17. Re-check these settings when upgrading Gemini CLI. The online
-Gemini CLI docs also document the user settings file, usage statistics opt-out,
-and telemetry environment variables.
+2026-05-17. The 2026-09-30 review revalidated every managed key against the
+released `0.50.0` settings schema and installed bundled reference docs, including
+the four telemetry environment variables. Re-check these settings when upgrading
+Gemini CLI.
 
 This repository does not manage Gemini API keys, OAuth state, Google Cloud
 credentials, local conversation history, MCP server credentials, extension
@@ -56,8 +57,13 @@ tool-output budget, filesystem access, and MCP surface for exploration,
 validation, deep review, live Grafana reads, browser UI work, and GitHub writes.
 The GitHub-write profile allows approved writes but disables destructive and
 open-world app capabilities.
-The Grafana launcher is read-only, excludes proxied tools, and caps Loki output;
-its URL and token-file path come from local environment variables.
+Profiles overlay the local base config; settings and additional MCP servers not
+named in a profile remain inherited. A user-config `[plugins]` table contains
+per-plugin overrides, so an empty table does not disable plugin-provided MCP
+servers. Enforced plugin server allowlists belong to managed requirements,
+which this user-level payload does not install.
+The Grafana server configuration is read-only, excludes proxied tools, and caps
+Loki output; its URL and token-file path come from local environment variables.
 Context7 and Playwright launch through local wrappers backed by checked-in npm
 lockfiles. `go-task codex:mcp:install` installs those exact graphs with lifecycle
 scripts disabled; no `npx -y` download occurs during a Codex session.
@@ -70,10 +76,23 @@ The managed Codex hook blocks unmistakably broad recursive removals and
 destructive Git worktree operations at the top command level. It deliberately
 does not inspect quoted text for credential-shaped values or pretend to be a
 complete shell security boundary. The hook does not read or inject a workspace
-brief. Codex requires explicit trust for new or changed user hooks. Ponytail is
-locally adapted from version 4.9.0 and commit
-`2ed6c52c9d7e5e56942508591085fd45dea277d3` under its MIT license. The managed
-cross-agent copy defaults to lite, and Codex may invoke it only explicitly.
+brief. Codex requires explicit trust for new or changed user hooks. This shell
+hook applies to local orchestration; cloud orchestration does not run local
+command hooks, even when tools execute locally. Hook errors or timeouts do not
+guarantee that a command is blocked. Ponytail is locally adapted under its MIT
+license; its upstream version and commit are
+recorded in `dotfiles/.agents/skills/ponytail/SKILL.md`. The managed cross-agent
+copy defaults to lite, and Codex may invoke it only explicitly.
+
+The 2026-09-30 compatibility review checked the portable example and six profiles
+against the Codex `0.159.2` release schema and native configuration loader in an
+isolated home. The bundled model catalog supports the configured models and
+reasoning levels; account-specific model and connector access still depends on
+the signed-in account. The hook input and denial output match that release's
+`PreToolUse` schema. Read-only `tools/list` discovery checked the allowlists
+against all five configured MCP servers. DeepWiki advertised
+`ask_wiki_question`, replacing the stale `ask_question` entry; it remains
+disabled by default. Tool discovery does not verify authenticated backend access.
 
 K9s is intentionally read-only by default through `readOnly: true`. This is an
 operational guard, not just a privacy setting, and it does not manage
@@ -137,8 +156,8 @@ tools are introduced later.
 Official references used for these surfaces include:
 
 - Gemini CLI configuration and telemetry:
-  <https://google-gemini.github.io/gemini-cli/docs/get-started/configuration.html>
-  and <https://google-gemini.github.io/gemini-cli/docs/cli/telemetry.html>
+  <https://geminicli.com/docs/reference/configuration/>
+  and <https://geminicli.com/docs/cli/telemetry/>
 - Thunderbird policy templates:
   <https://thunderbird.github.io/policy-templates/templates/esr140/>
 - Terraform CLI configuration:

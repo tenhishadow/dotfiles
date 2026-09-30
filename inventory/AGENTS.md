@@ -5,6 +5,8 @@ Applies to `inventory/` and `inventory/host_vars/`.
 This area defines local host data for the dotfiles, system, and browser policy
 playbooks.
 
+The root `AGENTS.md` owns role naming, security, and execution-scope rules.
+
 ## Source Of Truth
 
 - `hosts.yml` defines the local `this_host` inventory target.
@@ -14,8 +16,8 @@ playbooks.
 - `host_vars/this_host/system.yml` owns non-security system role values.
 - `host_vars/this_host/security.yml` owns SSHD, sysctl, and limits
   security-sensitive workstation values.
-- New payload files under `../dotfiles/` must be added to
-  `dotfiles_mapping` before the default playbook can link them.
+- New destinations require a `dotfiles_mapping` or `dotfiles_baseline_files`
+  entry; files inside an already mapped directory inherit its symlink.
 - System role values are used only by `playbook_system.yml`.
 - Browser, Thunderbird, and VS Code policy values are used only by
   `playbook_browser_policies.yml`.
@@ -27,25 +29,20 @@ playbooks.
 - Keep paths, modes, owners, and groups explicit.
 - Keep cleanup entries narrow, intentional, and reviewable.
 - Keep variables declarative; avoid embedding procedural logic in inventory.
-- Keep host variables role-prefixed: `dotfiles_*`, `system_*`, or
-  `browser_policies_*`.
-- Preserve upstream option names inside settings maps such as
-  `system_sshd_settings`, `system_journald_settings`,
-  `system_sysctl_settings`, and browser policy dictionaries.
 - Keep `dotfiles_mapping` entries in `name`, `payload`, `dest` form.
 - Keep dotfiles `payload` values relative to `dotfiles_location`.
-- Do not put secrets or machine-local runtime state in host vars.
+- Use copy-once baselines for application-rewritten configurations so the
+  application cannot write runtime state through a repository symlink.
 - Do not add generated XDG desktop state such as `user-dirs.dirs` to
   `dotfiles_mapping`; `xdg-user-dirs-update` owns that local file.
-- Do not add broad globs or destructive cleanup patterns.
-- Do not make the default dotfiles playbook privileged through inventory.
-- Keep comments and variable descriptions in English.
 
 ## Validation
 
-- Run `go-task lint` for inventory changes.
+- Use the root matrix for changed inventory behavior; documentation-only edits
+  need documentation checks.
+- Run `go-task lint` for inventory data changes.
 - Run `uv run yamllint .` or `go-task yamllint` for YAML changes.
-- Run `go-task` for mapping or cleanup changes that affect the default
+- Run `go-task dotfiles:check` for mapping or cleanup changes that affect the default
   user-level install flow.
 - Run `go-task system:check` for system role variable changes.
 - Run `go-task browser-policies:check` for browser policy variable changes.
