@@ -94,6 +94,7 @@ class ValidationWorkflowTest(unittest.TestCase):
             "VALIDATE_MARKDOWN",
             "VALIDATE_PYTHON_RUFF",
             "VALIDATE_PYTHON_RUFF_FORMAT",
+            "VALIDATE_SPELL_CODESPELL",
             "VALIDATE_YAML",
         ):
             with self.subTest(setting=key):
@@ -106,6 +107,13 @@ class ValidationWorkflowTest(unittest.TestCase):
         self.assertIn(
             "--env-file .github/super-linter.env", (ROOT / "Taskfile.yml").read_text()
         )
+        spelling = next(
+            hook
+            for repo in _yaml(".pre-commit-config.yaml")["repos"]
+            for hook in repo["hooks"]
+            if hook["id"] == "codespell"
+        )
+        self.assertEqual(["--config", ".github/linters/.codespellrc"], spelling["args"])
 
     def test_title_edits_do_not_rerun_integration_and_use_locked_conventional_rules(
         self,

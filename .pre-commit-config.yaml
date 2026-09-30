@@ -16,6 +16,11 @@ repos:
       - id: check-case-conflict
       - id: check-executables-have-shebangs
       - id: detect-private-key
+  - repo: https://github.com/codespell-project/codespell
+    rev: v2.4.3
+    hooks:
+      - id: codespell
+        args: ["--config", ".github/linters/.codespellrc"]
   - repo: https://github.com/adrienverge/yamllint
     rev: v1.38.0
     hooks:

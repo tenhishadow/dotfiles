@@ -73,8 +73,8 @@ cover rolling Arch dependencies even without repository changes. A final `ci`
 job fails on upstream failure or cancellation while accepting deliberate path
 skips. PR titles have a separate cheap `pr-title` check, including title edits.
 
-Pre-commit owns Markdown, YAML, shell, workflow syntax and security checks;
-Ruff owns Python formatting. Super-Linter supplies complementary checks and
+Pre-commit owns spelling, Markdown, YAML, shell, workflow syntax, and security
+checks. Ruff owns Python formatting. Super-Linter supplies complementary checks and
 reads the same `.github/super-linter.env` locally and in CI. It does not repeat
 those canonical checks or lint intermediate branch commits: the conventional
 PR title becomes the squash commit. Mypy is not added without a demonstrated
