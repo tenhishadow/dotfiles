@@ -4,9 +4,8 @@ applyTo: "playbook_*.yml,inventory/**/*.yml,roles/**/*.yml,roles/**/*.j2,.test/*
 
 # Ansible Review Instructions
 
-Use the root `AGENTS.md`, `roles/AGENTS.md`, and the nearest role or inventory
-instructions for the contract. Naming, role prefixes, and English are checked
-mechanically; focus review on behavior the checks cannot prove.
+Use the root `AGENTS.md` Code Review Rules, `roles/AGENTS.md`, and the nearest
+role or inventory contract. Focus on behavior the mechanical checks cannot prove.
 
 - Trace tag-scoped execution: required variables, guards, and validation must
   still run when only one feature is selected.

@@ -2,6 +2,7 @@ name: PR title
 
 permissions:
   contents: read
+  pull-requests: read
 
 on:
   pull_request:
@@ -22,21 +23,5 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Set up Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
-        with:
-          node-version: "24"
-          cache: npm
-          cache-dependency-path: .github/tools/commitlint/package-lock.json
-
-      - name: Install locked commitlint dependencies
-        working-directory: .github/tools/commitlint
-        run: npm ci --ignore-scripts --no-audit --no-fund
-
-      - name: Validate the squash commit title
-        env:
-          PR_TITLE: ${{ github.event.pull_request.title }}
-        run: |
-          export NODE_PATH="${GITHUB_WORKSPACE}/.github/tools/commitlint/node_modules"
-          printf '%s\n' "${PR_TITLE}" |
-            .github/tools/commitlint/node_modules/.bin/commitlint --config .commitlintrc.yaml --strict
+      - name: Validate the current squash commit title
+        uses: ./.github/actions/pr-title

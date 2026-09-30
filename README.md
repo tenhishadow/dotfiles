@@ -137,12 +137,16 @@ on demand, keeping the always-on instructions focused.
 
 | Client | Repository instructions | Skill discovery |
 | ------ | ----------------------- | --------------- |
-| Codex | Root and scoped `AGENTS.md` | `.agents/skills/` |
+| Codex | Startup `AGENTS.md` chain; consult the root map for deeper paths | `.agents/skills/` |
 | Claude Code | `CLAUDE.md` imports `AGENTS.md`; consult the root map for scoped rules | `.claude/skills/` links to the canonical skills |
 | Gemini CLI | `GEMINI.md` imports `AGENTS.md`; consult the root map for scoped rules | Native `.agents/skills/` alias |
 | GitHub Copilot | `AGENTS.md` and concise `.github/` review instructions | `.agents/skills/` |
 
-Current Claude Code can read `AGENTS.md` natively when no project `CLAUDE.md`
+Codex builds its [instruction chain](https://learn.chatgpt.com/docs/agent-configuration/agents-md)
+from the repository root to the working directory at startup; the root map
+identifies deeper instructions to read before editing those paths.
+Claude Code v2.1.277+ can read `AGENTS.md` natively when no ancestor `CLAUDE.md`
+or `CLAUDE.local.md`
 takes precedence. The small import adapter remains supported and preserves
 compatibility with sessions that do not enable native discovery. It imports
 the root contract, not every nested file. See the upstream
@@ -150,7 +154,9 @@ the root contract, not every nested file. See the upstream
 
 `validate-dotfiles-change` selects checks for the affected contract;
 `write-markdown` maintains documentation; the two dotfiles-test skills write
-or review validation code. `go-task docs:instructions:check` checks recognized
+or review validation code. `prepare-dotfiles-pr` handles reviewed commits and
+PR preparation within the user's publication scope.
+`go-task docs:instructions:check` checks recognized
 references, native imports, and Claude skill links. It includes the managed
 user skills and excludes generated Neovim workspaces.
 
@@ -181,8 +187,10 @@ its upstream version and commit in its own metadata.
 
 ## Validation
 
-Use the narrowest command that observes the changed behavior. Broad changes
-finish with:
+Use the narrowest command that observes the changed behavior. Run spelling and
+format hooks before expensive integration jobs. Contract tests must also work
+from a clean checkout without ignored runtime installations; a warm local
+workspace cannot substitute for CI setup. Broad changes finish with:
 
 ```bash
 go-task verify

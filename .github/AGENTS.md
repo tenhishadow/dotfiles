@@ -43,8 +43,12 @@ handoff; `docs/github-labels.md` is the required-label catalog.
   release versions incidentally during maintenance.
 - Keep GitHub Copilot custom instructions concise, scoped, and aligned
   with the current repo structure. Repo-wide rules are canonical in the root
-  `AGENTS.md`; `.github/copilot-instructions.md` condenses them for review and
+  `AGENTS.md`; `.github/copilot-instructions.md` controls review presentation and
   `.github/instructions/*.instructions.md` carry path-specific rules.
+- Preserve the owner, source-repository, current-head, CI, and deduplication
+  gates in Copilot review automation. Keep it metadata-only with a read-only
+  Actions token and a separate owner-scoped review credential. Activation and
+  budget controls belong to `CONTRIBUTING.md`, not instruction text.
 - Follow the root instruction-sync contract for shared Ruff, Pylint, and
   Markdown configurations; local and CI checks must consume the same rules.
 - Keep `.github/linters/.yaml-lint.yml` linked to the canonical
@@ -62,13 +66,10 @@ handoff; `docs/github-labels.md` is the required-label catalog.
 - Keep AI-instruction changes discoverable by the `ai-instructions` labeler
   rule.
 
-GitHub.com code review supports repository, path-specific, and `AGENTS.md`
-instructions; IDE support varies by client. Consult the official
-[support matrix](https://docs.github.com/en/copilot/reference/custom-instructions-support)
-before changing discovery. As verified on 2026-09-30, review uses instructions
-and skills from the [PR head branch](https://docs.github.com/en/copilot/how-tos/configure-custom-instructions/add-repository-instructions#enabling-or-disabling-custom-instructions-for-copilot-code-review).
-GitHub [removed the former character cutoff](https://github.blog/changelog/2026-06-12-copilot-code-review-new-configurations-and-controls/);
-keep content concise for relevance, without inventing a provider limit.
+Consult GitHub's [instruction support matrix](https://docs.github.com/en/copilot/reference/custom-instructions-support)
+before changing discovery. Code review reads instructions and skills from the
+[PR head](https://docs.github.com/en/copilot/how-tos/use-copilot-agents/request-a-code-review/use-code-review#customizing-copilots-reviews-with-custom-instructions);
+keep them concise without inventing a provider character or token limit.
 
 ## Validation
 

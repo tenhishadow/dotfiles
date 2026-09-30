@@ -1,34 +1,20 @@
-# Copilot Repository Guidance
+# Copilot Code Review
 
-Read the root `AGENTS.md` and path-applicable nested `AGENTS.md` files before
-working. They own the repository contracts; the README `Common Tasks` table
-owns command discovery. Path-specific review guidance lives in
-`.github/instructions/`.
-For branches, commits, PRs, releases, and agent handoff, follow
-`CONTRIBUTING.md`; preserve the selected base and existing work.
+Use the root `AGENTS.md` Code Review Rules and the instructions for changed
+paths. Read `CONTRIBUTING.md` only for contribution or release changes, and
+load relevant skills on demand. Repository contracts belong to those canonical
+sources; this file controls Copilot's review presentation.
 
-Default `go-task` applies user dotfiles to the current home. It is not a test;
-`go-task all` additionally applies privileged layers. Follow the user's
-execution scope and use the root validation matrix instead of applying host
-configuration to validate repository edits. Documentation-only changes need
-documentation checks, not the full Docker aggregate.
-
-When reviewing:
-
-- Report actionable defects introduced or exposed by the change. Give the
-  location, triggering condition, and concrete impact; inspect callers and
-  guards before claiming a regression.
-- Prioritize unsafe destination replacement, scope or privilege escalation,
-  secret/runtime-state exposure, non-idempotent apply behavior, and tests that
-  write outside their disposable environment.
-- Check that the default workflow remains sudo-free and limited to
-  `playbook_install.yml`; system and browser-policy apply stay explicit.
-- Compare changed behavior with its canonical role or editor contract, then
-  check whether the relevant observable behavior is tested. Passing lint,
-  check mode, or simulated facts alone does not prove live VM or hardware
-  behavior.
-- Request documentation changes only where an existing contract becomes
-  inaccurate or a new operator decision needs explanation. Do not require
-  restating unchanged rules across every adapter or historical report.
-- Avoid speculative rewrites, style-only findings already covered by linters,
-  and invented validation results. State unresolved assumptions as such.
+- Start with the diff and directly affected callers. Expand the search when a
+  concrete dependency or risk requires it, not to produce a repository audit.
+- Keep findings concise and attach each to the smallest useful changed range.
+  Group duplicate symptoms of one cause; do not repeat passed checks or narrate
+  exploration. If no actionable issue remains, say so briefly.
+- Offer a minimal GitHub suggestion when the surrounding code proves the fix.
+  For an uncertain or multi-file fix, describe the required behavior and check
+  instead of inventing a patch. Suggestions remain subject to owner review.
+- Respect explicit owner decisions in `dotfiles/AGENTS.md`, including SSH
+  policy. Do not turn intentional preferences into unsolicited hardening work.
+- Request only checks needed for the changed behavior. Never apply host
+  configuration or start a cloud-agent fix, another review, or an external tool
+  session merely to complete a review.

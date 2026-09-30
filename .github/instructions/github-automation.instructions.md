@@ -5,8 +5,7 @@ applyTo: ".github/**/*.yml,.github/**/*.yaml,.github/scripts/**,.pre-commit-conf
 # GitHub Automation Review Instructions
 
 Follow `.github/AGENTS.md` for automation ownership and the root `AGENTS.md`
-Taskfile conventions. Review runtime ordering, environment boundaries, and
-failure propagation as well as YAML structure.
+Code Review Rules and Taskfile conventions.
 
 Use `CONTRIBUTING.md` for commit/PR and release contracts, and
 `docs/github-labels.md` for the required-label catalog.
@@ -24,9 +23,8 @@ Use `CONTRIBUTING.md` for commit/PR and release contracts, and
   covered by the shared local updater. Distinguish external action digests,
   version comments, and local action paths; Renovate
   extraction is an audit surface, not a parallel PR producer.
-- Follow task dependencies and failure propagation: ordered work belongs in
-  `cmds`, independent prerequisites may use `deps`, and a failed subprocess
-  must fail the owning task even behind a pipe or shell substitution.
+- Trace failed subprocesses through pipes, substitutions, task dependencies,
+  and workflow gates; an outer success status must not hide a failed check.
 - Check locked validation separately from dependency upgrades. Refreshes must
   leave reviewable dependency-file changes; Renovate extraction reports do
   not themselves update the worktree, and `.test/` fixtures are not upgrade
@@ -35,7 +33,8 @@ Use `CONTRIBUTING.md` for commit/PR and release contracts, and
   Package availability, package migration, backend simulation, convergence,
   and real VM synchronization are distinct kinds of evidence.
 - Inspect inherited HOME/XDG values, quoted mount paths, temporary workspaces,
-  and cleanup. Validation must preserve the user's working configuration.
+  and cleanup. Check fresh-checkout inputs and declared setup; ignored local
+  runtimes cannot be required by a static contract check.
 - For changed routing, labels, or templates, update the corresponding command
   or ownership contract only where it becomes inaccurate. Markdown-only
   instruction changes do not require runtime or container suites.

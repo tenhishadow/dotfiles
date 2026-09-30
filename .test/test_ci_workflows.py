@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import os
 import subprocess
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -28,20 +29,27 @@ class ValidationWorkflowTest(unittest.TestCase):
 
     def test_required_gate_covers_all_validation_jobs(self) -> None:
         gate = self.jobs["ci"]
-        self.assertEqual(set(self.jobs) - {"ci"}, set(gate["needs"]))
+        self.assertEqual(set(self.jobs) - {"ci", "copilot_review"}, set(gate["needs"]))
         self.assertEqual("always()", gate["if"])
         for name, job in self.jobs.items():
-            if name in {"ci", "static"}:
+            if name in {"ci", "static", "copilot_review"}:
                 continue
             with self.subTest(job=name):
-                self.assertEqual("static", job["needs"])
+                prerequisites = job["needs"]
+                if isinstance(prerequisites, str):
+                    prerequisites = [prerequisites]
+                expected = (
+                    {"static"} if name == "super_linter" else {"static", "super_linter"}
+                )
+                self.assertEqual(expected, set(prerequisites))
+                self.assertNotIn("always()", job.get("if", ""))
                 self.assertNotIn("continue-on-error", job)
         # Workflow-wide path filters leave required checks permanently pending.
         for event in ("pull_request", "push"):
             self.assertNotIn("paths", self.workflow["on"][event] or {})
             self.assertNotIn("paths-ignore", self.workflow["on"][event] or {})
 
-    def test_result_gate_rejects_failures_cancellations_and_missing_static(
+    def test_result_gate_rejects_failures_cancellations_and_missing_lint_gates(
         self,
     ) -> None:
         command = self.jobs["ci"]["steps"][0]["run"]
@@ -50,7 +58,8 @@ class ValidationWorkflowTest(unittest.TestCase):
         for job in self.jobs["ci"]["needs"]:
             for result in ("failure", "cancelled"):
                 cases.append((f"{job} {result}", job, result, False))
-        cases.append(("missing static", "static", "skipped", False))
+        for job in ("static", "super_linter"):
+            cases.append((f"missing {job}", job, "skipped", False))
 
         for name, changed_job, result, expected in cases:
             with self.subTest(case=name):
@@ -124,10 +133,28 @@ class ValidationWorkflowTest(unittest.TestCase):
             "edited", (self.workflow["on"]["pull_request"] or {}).get("types", [])
         )
         steps = title["jobs"]["pr-title"]["steps"]
-        check = next(step for step in steps if "PR_TITLE" in step.get("env", {}))
-        self.assertNotIn("${{", check["run"])
-        self.assertIn('"${PR_TITLE}"', check["run"])
-        self.assertIn("--config .commitlintrc.yaml", check["run"])
+        action = "./.github/actions/pr-title"
+        self.assertTrue(any(step.get("uses") == action for step in steps))
+        static_steps = self.jobs["static"]["steps"]
+        title_index = next(
+            index
+            for index, step in enumerate(static_steps)
+            if step.get("uses") == action
+        )
+        setup_index = next(
+            index
+            for index, step in enumerate(static_steps)
+            if step.get("uses") == "./.github/actions/setup"
+        )
+        self.assertLess(title_index, setup_index)
+        self.assertEqual(
+            "github.event_name == 'pull_request'", static_steps[title_index]["if"]
+        )
+        steps = _yaml(".github/actions/pr-title/action.yml")["runs"]["steps"]
+        for step in steps:
+            self.assertNotIn("continue-on-error", step)
+            self.assertNotIn("${{", step.get("run", ""))
+        self.assertIn("--config .commitlintrc.yaml", steps[-1]["run"])
         manifest = json.loads(
             (ROOT / ".github/tools/commitlint/package.json").read_text()
         )
@@ -138,6 +165,61 @@ class ValidationWorkflowTest(unittest.TestCase):
         self.assertTrue(
             any("npm ci --ignore-scripts" in step.get("run", "") for step in steps)
         )
+
+    def test_title_action_reads_current_metadata_without_evaluating_title_text(
+        self,
+    ) -> None:
+        steps = _yaml(".github/actions/pr-title/action.yml")["runs"]["steps"]
+        commands = [step["run"] for step in steps if "run" in step]
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            binaries = root / "bin"
+            binaries.mkdir()
+            gh = binaries / "gh"
+            gh.write_text(
+                "#!/usr/bin/env python3\n"
+                "import os, sys\n"
+                "assert sys.argv[1:] == ['api', 'repos/example/repository/pulls/42', "
+                "'--jq', '.title']\n"
+                "print(os.environ['CURRENT_TITLE'])\n",
+                encoding="utf-8",
+            )
+            gh.chmod(0o755)
+            validator = root / ".github/tools/commitlint/node_modules/.bin/commitlint"
+            validator.parent.mkdir(parents=True)
+            validator.write_text(
+                "#!/usr/bin/env python3\n"
+                "import sys\n"
+                "assert sys.argv[1:] == "
+                "['--config', '.commitlintrc.yaml', '--strict']\n"
+                "sys.stdout.write(sys.stdin.read())\n",
+                encoding="utf-8",
+            )
+            validator.chmod(0o755)
+            title = 'fix: preserve $(touch "$MARKER") and `touch "$MARKER"` literally'
+            environment = {
+                **os.environ,
+                "PATH": f"{binaries}{os.pathsep}{os.environ['PATH']}",
+                "GITHUB_REPOSITORY": "example/repository",
+                "GITHUB_WORKSPACE": str(root),
+                "RUNNER_TEMP": str(root),
+                "PR_NUMBER": "42",
+                "PR_TITLE": "stale title from the original workflow event",
+                "CURRENT_TITLE": title,
+                "MARKER": str(root / "unexpected-command"),
+            }
+            for command in (commands[0], commands[-1]):
+                result = subprocess.run(
+                    ["bash", "-euo", "pipefail", "-c", command],
+                    cwd=root,
+                    env=environment,
+                    check=True,
+                    capture_output=True,
+                    text=True,
+                    timeout=10,
+                )
+            self.assertEqual(title + "\n", result.stdout)
+            self.assertFalse((root / "unexpected-command").exists())
 
 
 if __name__ == "__main__":

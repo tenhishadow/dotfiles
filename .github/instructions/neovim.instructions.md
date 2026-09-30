@@ -5,8 +5,7 @@ applyTo: "dotfiles/.config/nvim/**/*,.test/nvim/**/*"
 # Neovim Review Instructions
 
 The canonical editor contract lives in `dotfiles/.config/nvim/AGENTS.md`.
-Use `.test/AGENTS.md` for fixture and test-runner rules. Review changes against
-those contracts rather than adding alternate configuration inventories.
+Use `.test/AGENTS.md` for fixtures and the root Code Review Rules for findings.
 
 - Trace a cold install and the first buffer through bootstrap, filetype
   detection, and lazy loading. Check lockfile preservation and compatibility

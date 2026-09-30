@@ -35,6 +35,10 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Validate the PR title before repository checks
+        if: github.event_name == 'pull_request'
+        uses: ./.github/actions/pr-title
+
       - name: Select affected integration checks
         if: github.event_name == 'pull_request' || github.event_name == 'push'
         id: changes
@@ -55,7 +59,7 @@ jobs:
               - *shared
               - 'dotfiles/.config/nvim/**'
               - '.test/nvim/**'
-              - '.github/scripts/update_nvim.lua'
+              - '.github/scripts/**/*.lua'
               - '.test/test_update_nvim.py'
               - 'docs/nvim-keymaps.md'
               - '.stylua.toml'
@@ -96,7 +100,8 @@ jobs:
         run: task ci:static
 
       - name: Set up Node.js for Renovate validation
-        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || steps.changes.outputs.renovate == 'true'
+        # The PR title action already prepared Node.js for pull requests.
+        if: github.event_name != 'pull_request' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || steps.changes.outputs.renovate == 'true')
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: "24"
@@ -113,7 +118,7 @@ jobs:
 
   ansible_exec:
     name: ansible-exec (${{ matrix.os }})
-    needs: static
+    needs: [static, super_linter]
     if: github.event_name != 'schedule' && (github.event_name == 'workflow_dispatch' || needs.static.outputs.user == 'true')
     strategy:
       fail-fast: true
@@ -137,7 +142,7 @@ jobs:
 
   nvim:
     name: neovim (archlinux)
-    needs: static
+    needs: [static, super_linter]
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || needs.static.outputs.nvim == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -178,7 +183,7 @@ jobs:
 
   workstation_convergence:
     name: workstation-convergence (archlinux)
-    needs: static
+    needs: [static, super_linter]
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || needs.static.outputs.system == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -222,6 +227,23 @@ jobs:
               print(f"{name}: {job['result']}")
           failed = [name for name, job in results.items()
                     if job['result'] not in {'success', 'skipped'}]
-          if results['static']['result'] != 'success' or failed:
+          required = ('static', 'super_linter')
+          if any(results[name]['result'] != 'success' for name in required) or failed:
               sys.exit('CI checks did not complete successfully.')
           PY
+
+  copilot_review:
+    needs: ci
+    if: >-
+      !cancelled() && needs.ci.result == 'success' &&
+      vars.COPILOT_REVIEW_ENABLED == 'true' &&
+      github.event_name == 'pull_request'
+    permissions:
+      actions: read
+      pull-requests: read
+    # The reusable workflow owns eligibility checks before allocating a runner.
+    uses: ./.github/workflows/copilot-review.yml
+    with:
+      validated-head: ${{ github.event.pull_request.head.sha }}
+    secrets:
+      COPILOT_REVIEW_TOKEN: ${{ secrets.COPILOT_REVIEW_TOKEN }}

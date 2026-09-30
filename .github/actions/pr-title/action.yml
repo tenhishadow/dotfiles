@@ -1,0 +1,31 @@
+name: Validate the current PR title
+description: Check the current squash title with the locked Conventional Commit rules.
+
+runs:
+  using: composite
+  steps:
+    - name: Read the current PR title
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+        PR_NUMBER: ${{ github.event.pull_request.number }}
+      run: |
+        gh api "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}" --jq '.title' > "${RUNNER_TEMP}/pr-title.txt"
+
+    - name: Set up Node.js
+      uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+      with:
+        node-version: "24"
+        cache: npm
+        cache-dependency-path: .github/tools/commitlint/package-lock.json
+
+    - name: Install locked commitlint dependencies
+      shell: bash
+      working-directory: .github/tools/commitlint
+      run: npm ci --ignore-scripts --no-audit --no-fund
+
+    - name: Validate the squash commit title
+      shell: bash
+      run: |
+        export NODE_PATH="${GITHUB_WORKSPACE}/.github/tools/commitlint/node_modules"
+        .github/tools/commitlint/node_modules/.bin/commitlint --config .commitlintrc.yaml --strict < "${RUNNER_TEMP}/pr-title.txt"

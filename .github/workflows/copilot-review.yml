@@ -1,0 +1,110 @@
+name: Copilot review
+
+permissions: {}
+
+on:
+  workflow_call:
+    inputs:
+      validated-head:
+        description: PR head validated by the caller's successful ci job.
+        required: true
+        type: string
+    secrets:
+      COPILOT_REVIEW_TOKEN:
+        required: false
+  # A draft may have passed CI before its owner requests review.
+  pull_request:
+    types: [ready_for_review]
+
+concurrency:
+  group: copilot-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  request:
+    if: >-
+      vars.COPILOT_REVIEW_ENABLED == 'true' &&
+      github.event_name == 'pull_request' &&
+      github.actor == github.repository_owner &&
+      github.triggering_actor == github.repository_owner &&
+      github.event.pull_request.user.login == github.repository_owner &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    permissions:
+      actions: read
+      pull-requests: read
+    steps:
+      # Metadata only: never check out PR code or consume workflow artifacts.
+      - name: Request one owner-authorized review after successful CI
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          COPILOT_REVIEW_TOKEN: ${{ secrets.COPILOT_REVIEW_TOKEN }}
+          TRIGGERING_ACTOR: ${{ github.triggering_actor }}
+          VALIDATED_HEAD: ${{ inputs.validated-head }}
+        with:
+          retries: 0
+          script: |
+            const {owner, repo} = context.repo;
+            const fullName = `${owner}/${repo}`;
+            if (context.eventName !== 'pull_request' || context.actor !== owner ||
+                process.env.TRIGGERING_ACTOR !== owner) return;
+            const eventPr = context.payload.pull_request;
+            const pull_number = eventPr.number;
+            const eligible = pr =>
+              pr.state === 'open' && !pr.draft &&
+              pr.user?.login === owner &&
+              pr.base?.repo?.full_name === fullName &&
+              pr.head?.repo?.full_name === fullName && !pr.head.repo.fork;
+            const {data: pr} = await github.rest.pulls.get({owner, repo, pull_number});
+            if (!eligible(pr) || pr.head.sha !== eventPr.head.sha) return;
+
+            if (process.env.VALIDATED_HEAD) {
+              if (pr.head.sha !== process.env.VALIDATED_HEAD) return;
+            } else {
+              if (context.payload.action !== 'ready_for_review') return;
+              const {data: ci} = await github.rest.actions.listWorkflowRuns({
+                owner, repo, workflow_id: 'ansible.yml', event: 'pull_request',
+                head_sha: pr.head.sha, per_page: 1
+              });
+              const latest = ci.workflow_runs[0];
+              if (!latest || !['in_progress', 'completed'].includes(latest.status) ||
+                  ![null, 'success'].includes(latest.conclusion) ||
+                  latest.head_sha !== pr.head.sha ||
+                  latest.actor?.login !== owner || latest.triggering_actor?.login !== owner ||
+                  latest.head_repository?.full_name !== fullName) return;
+              // The optional review job can keep the parent workflow running.
+              const jobs = await github.paginate(github.rest.actions.listJobsForWorkflowRun, {
+                owner, repo, run_id: latest.id, filter: 'latest', per_page: 100
+              });
+              const gate = jobs.find(job => job.name === 'ci');
+              if (gate?.status !== 'completed' || gate.conclusion !== 'success') return;
+            }
+
+            const reviewer = 'copilot-pull-request-reviewer[bot]';
+            const {data: bot} = await github.rest.users.getByUsername({username: reviewer});
+            const {data: pending} = await github.rest.pulls.listRequestedReviewers({
+              owner, repo, pull_number
+            });
+            const reviews = await github.paginate(github.rest.pulls.listReviews, {
+              owner, repo, pull_number, per_page: 100
+            });
+            if (pending.users.some(user => user.id === bot.id) ||
+                reviews.some(review => review.user?.id === bot.id)) return;
+
+            if (!process.env.COPILOT_REVIEW_TOKEN) {
+              core.setFailed('Configure the owner-scoped COPILOT_REVIEW_TOKEN before enabling reviews.');
+              return;
+            }
+            const requester = getOctokit(process.env.COPILOT_REVIEW_TOKEN);
+            const {data: user} = await requester.rest.users.getAuthenticated();
+            if (user.login !== owner || user.type !== 'User') {
+              core.setFailed('The review token must belong to the repository owner.');
+              return;
+            }
+            const {data: current} = await github.rest.pulls.get({owner, repo, pull_number});
+            if (!eligible(current) || current.head.sha !== pr.head.sha) return;
+            await requester.rest.pulls.requestReviewers({
+              owner, repo, pull_number, reviewers: [reviewer]
+            });
+            core.info(`Requested the first Copilot review for PR #${pull_number}.`);

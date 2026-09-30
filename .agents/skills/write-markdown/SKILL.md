@@ -1,9 +1,8 @@
 ---
 name: write-markdown
 description: >-
-  Write or revise Markdown in this dotfiles repository, including operator
-  docs, ADRs, AGENTS instructions, provider adapters, templates, and skills.
-  Keep canonical sources, current behavior, and shared markdownlint rules aligned.
+  Write or revise repository Markdown, agent instructions, or skills. Keep
+  canonical contracts, provider discovery, and shared lint rules aligned.
 ---
 
 # Write Repository Markdown
@@ -17,8 +16,8 @@ validation.
 
 ## Workflow
 
-1. Read the root `AGENTS.md` and every applicable ancestor `AGENTS.md` for each
-   changed path, then `.github/instructions/documentation.instructions.md`.
+1. Identify the changed contract under the root instruction chain; use
+   `.github/instructions/documentation.instructions.md` for review criteria.
 2. Identify the canonical source. Edit generators instead of generated output,
    instruction owners instead of adapters, and canonical skills instead of
    their provider symlinks.
@@ -35,12 +34,12 @@ validation.
    invocation policy and keep shared workflows portable.
 6. Apply `.github/linters/.markdown-lint.yml`; fix content instead of adding
    ignores or rule disables. Use language-tagged fences and working links.
-7. Run `go-task lint:markdown`, `go-task docs:instructions:check`, and relevant
-   generated-document checks. Include untracked Markdown in validation and
-   check relative links that the instruction-reference checker does not parse.
+7. Run the `codespell` and `markdownlint-cli2` pre-commit hooks on changed files,
+   then `go-task docs:instructions:check` and relevant generated-document checks.
+   Include untracked Markdown and check relative links the checker does not
+   parse. Documentation-only edits do not need runtime suites.
 
 ## Completion
 
-Run `git diff --check`. Report the contract corrected, checks run, and blockers.
-Keep provider adapters and skills aligned without expanding a documentation
-task into a host apply or external publication.
+Report the contract corrected, checks run, and blockers. Keep useful conclusions
+in their canonical owner; diagnostic logs and session notes remain private.

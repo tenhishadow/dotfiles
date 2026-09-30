@@ -61,17 +61,30 @@ repository CLI contracts. Data tables use `subTest`; command and hook boundaries
 use bounded subprocesses in temporary workspaces. No additional Python test
 dependency, fixture layer, or base test hierarchy is used.
 
-GitHub Actions runs `go-task ci:static` as the first validation gate: whitespace,
+On pull requests, GitHub Actions first validates the current title through the
+shared local commitlint action. It then runs `go-task ci:static`: whitespace,
 instruction references, Python lint and regression tests, pre-commit hooks,
 Ansible semantics and lint, and native role contracts. Ruff and Pylint use the
 locked project environment. The same task is part of `go-task verify:fast`, so
 CI does not maintain a second implementation of those checks.
 
-The expensive checks wait for that gate. Path filters select Neovim, disposable
-Arch convergence, and Linux/macOS user installation checks. Scheduled runs
-cover rolling Arch dependencies even without repository changes. A final `ci`
-job fails on upstream failure or cancellation while accepting deliberate path
-skips. PR titles have a separate cheap `pr-title` check, including title edits.
+Complementary Super-Linter checks wait for the static gate. Integration checks
+wait for both lint stages, so a lint failure cannot start Arch convergence or
+Linux/macOS installation. This sequencing adds the Super-Linter duration to the
+successful critical path while avoiding integration minutes on lint failures.
+Path filters select Neovim, disposable Arch convergence, and Linux/macOS user
+installation checks. Scheduled runs cover rolling Arch dependencies even
+without repository changes; pushes to master retain post-merge verification.
+A final `ci` job fails on upstream failure or cancellation while accepting
+deliberate path skips.
+
+The separate required `pr-title` check also uses the shared action and handles
+title edits without rerunning integration. After correcting an initially invalid
+title, rerun the failed CI workflow. The action reads the current title from the
+GitHub API, so a rerun does not validate stale event text.
+
+Optional review automation runs after successful `ci` and is not one of its
+prerequisites. Review availability cannot create a cycle or replace validation.
 
 Pre-commit owns spelling, Markdown, YAML, shell, workflow syntax, and security
 checks. Ruff owns Python formatting. Super-Linter supplies complementary checks and

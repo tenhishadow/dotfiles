@@ -1,10 +1,8 @@
 ---
 name: prepare-dotfiles-pr
 description: >-
-  Prepare coherent Conventional Commits and a factual pull request for this
-  dotfiles repository. Use when organizing changes for commit, committing an
-  authorized scope, or preparing or publishing a PR. Publication follows the
-  current session's authorization.
+  Organize reviewed Conventional Commits and prepare or publish a repository
+  PR when requested. Preserve the user's branch, signing, and publication scope.
 ---
 
 # Prepare Dotfiles Commits And Pull Requests
@@ -36,15 +34,11 @@ an uncovered publication step; invoking this skill grants no extra permission.
    preserve changes outside the requested scope. Preserve published history
    unless the user explicitly authorizes a rewrite; never replace the index
    to manufacture clean groups.
-3. Select validation through the root matrix and reuse results while the
-   tested files and dependencies remain unchanged. Run the existing
-   `detect-secrets` and `detect-private-key` pre-commit hooks against candidate
-   files, and `go-task lint:english`. Check new files, symlink targets, lockfile
-   contents, and generated or machine-local state before staging. Apply the
-   root privacy rule to identifying observations and commit/PR metadata, not
-   just credentials; a clean secret scan does not make a host report safe to
-   publish.
-   Do not add suppressions merely to make publication pass.
+3. Select validation through the root matrix and reuse unchanged results. Run
+   the spelling, secret, and private-key hooks against candidate files, plus
+   `go-task lint:english`. Apply the root privacy rule to new files, symlink
+   targets, locks, and commit/PR metadata before staging. A passing secret scan
+   does not make a host report safe to publish.
 4. Stage only the chosen paths or hunks, then inspect the actual
    `git diff --cached` and `git diff --cached --check`. Confirm the staged
    content matches the proposed message and excludes unintended files. A clean
@@ -90,6 +84,11 @@ body to a temporary file and use `gh pr create` or `gh pr edit` with
 `--body-file`. Supply the intended head and base explicitly when creating a
 PR. Push or create/update the PR only when authorized; a local PR draft is a
 complete preparation result when publication is outside scope.
+
+After an authorized push, verify that the PR's current head is the intended
+commit, then inspect checks for that head and the intended base. A green local
+run or an older commit's check run does not prove the published change passed.
+Report pending or unavailable hosted checks instead of treating them as green.
 
 On an authentication or policy failure, stop the blocked publication action
 and report the exact blocker with the prepared artifacts. Do not retry with

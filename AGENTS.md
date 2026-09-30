@@ -32,8 +32,8 @@ description; this section is the agent-facing file-location map.
   within its scope. A nested file does not replace unrelated parent rules.
 - Providers load nested instructions differently. Consult the map below before
   editing a new area even when the client loaded the root file automatically.
-- Check local instructions before editing (`go-task docs:agents` regenerates
-  this list; `go-task docs:agents:check` fails if it is stale):
+- Check local instructions before editing; the generated map is checked by
+  `go-task docs:agents:check`:
   <!-- BEGIN GENERATED: nested-agents (go-task docs:agents) -->
   - `.github/AGENTS.md`
   - `.test/AGENTS.md`
@@ -141,14 +141,16 @@ description; this section is the agent-facing file-location map.
 - Give non-trivial loops an explicit `loop_control.loop_var`; keep role input
   validation in `tasks/validate.yml`.
 
-## AI Review Rules
+## Code Review Rules
 
-- Treat the default-workflow boundary in Hard Rules as the highest-risk
-  contract.
-- Prefer focused corrections over broad rewrites and compare behavioral changes
-  with the repository's opt-in, validation, and rollback contracts.
-- Flag missing documentation, AGENTS, labeler, Renovate, or validation updates
-  when repository layout, commands, automation, or runtime behavior changes.
+- Report actionable findings with a file/line, triggering case, and impact.
+  Distinguish demonstrated defects from untested concerns; do not duplicate
+  mechanical lint findings or infer a defect from a stylistic preference.
+- Prioritize default-workflow, privilege, and privacy boundaries. Follow declared
+  policy and regression tests; owner-selected SSH behavior is documented in
+  `dotfiles/AGENTS.md`, not inferred from a generic hardening preference.
+- Trace changed paths and commands through validation, labeler rules, and the
+  dependency updater. Update the owning contract when it becomes inaccurate.
 - Flag Neovim keymap changes that do not update
   `dotfiles/.config/nvim/lua/config/keymaps_spec.lua`,
   `docs/nvim-keymaps.md`, and the keymap documentation check.
@@ -158,10 +160,7 @@ description; this section is the agent-facing file-location map.
 This layer is single-source and self-checked. Edit the one canonical home for a
 rule; do not fan the same rule out into every file.
 
-- Repo-wide rules live in this root `AGENTS.md`. The agent ownership map (the
-  nested-`AGENTS.md` list above) is generated: run `go-task docs:agents` after
-  adding or removing a nested `AGENTS.md`, and `go-task docs:agents:check`
-  fails on a stale map.
+- Run `go-task docs:agents` after adding or removing a nested `AGENTS.md`.
 - The `go-task` command catalog lives in the README `Common Tasks` table.
   Reference commands by name elsewhere; never repeat the table.
 - Other instructions reference the owning rule and check instead of restating
@@ -181,6 +180,9 @@ rule; do not fan the same rule out into every file.
   relative to the skill directory. Load the relevant skill on demand, not every
   skill at startup. Do not copy generic engineering advice into skills or add
   provider metadata without a concrete discovery or invocation requirement.
+- Convert recurring failures into focused assertions or a correction to the
+  owning instruction. Do not accumulate session diaries, duplicate checklists,
+  or a new report for each repair.
 - Update role README files, and the architecture, adoption, security, and
   migration/history docs, when role contracts or system-layer behavior change.
 - Shared lint sources are `.github/linters/.markdown-lint.yml` and
@@ -207,6 +209,10 @@ The README `Common Tasks` table is the authoritative `go-task` command
 reference; select checks for the current change, not unrelated pre-existing
 diffs. Reuse completed results while the tested files and dependencies remain
 unchanged. Documentation alone does not require Docker or a workstation apply.
+Run cheap spelling and format checks before expensive integration jobs. Contract
+tests must work from tracked inputs in a clean checkout; ignored installations,
+caches, and private overrides cannot be implicit prerequisites. Runtime checks
+may require tools installed by their declared setup step.
 
 - Always run `git diff --check` before finishing non-trivial changes.
 - Run `go-task dotfiles:check` for user dotfiles, symlink mappings, cleanup,
@@ -237,11 +243,3 @@ unchanged. Documentation alone does not require Docker or a workstation apply.
   inventory, playbooks, roles, or repository automation change together.
   It adds isolated Neovim checks, Arch convergence, and Super-Linter, and
   requires a running Docker daemon without applying the local workstation.
-
-## Done Criteria
-
-- Applicable local `AGENTS.md` rules were followed.
-- Runtime behavior changed only when required by the task.
-- The Hard Rules and execution-layer boundaries remain intact.
-- Relevant validation commands were run or blockers were stated.
-- No secrets or machine-local runtime state were added.

@@ -70,15 +70,50 @@ and manual execution.
 
 The validation workflow exposes the stable required check `ci`; the separate
 `pr-title` check validates the squash title, including title-only edits. Select
-both in branch protection. The `ci` gate requires successful static checks and
-rejects failed or cancelled integration jobs; checks deliberately skipped by
-path selection do not block unrelated changes.
+both in branch protection. The `ci` gate requires successful static and
+complementary lint checks before integration jobs run; only integration checks
+deliberately skipped by path selection may be absent. PR title validation also
+runs first in the static job. After correcting a title that stopped CI, rerun
+the failed CI run; title-only edits rerun `pr-title`, not the expensive pipeline.
 
 The live `master` ruleset was updated and verified on 2026-09-30 to require
 `ci` and `pr-title` from GitHub Actions. It retains strict up-to-date checks,
 squash-only merges, and protection against branch deletion and force pushes.
 When required check names change, migrate the ruleset as a separately
 authorized GitHub settings change; local workflow edits do not update it.
+
+## Copilot Review
+
+`.github/workflows/copilot-review.yml` requests the initial automatic review
+for an open, ready PR authored and triggered by the repository owner, with its
+head in this repository. It runs after successful CI or when an already
+validated draft becomes ready. Forks, external actors, bots, stale commits,
+failed CI, and existing or pending Copilot reviews are excluded. The workflow
+reads metadata only; it never checks out PR code or imports artifacts.
+
+After the workflow reaches the default branch:
+
+1. Set repository secret `COPILOT_REVIEW_TOKEN` to an owner-created fine-grained
+   PAT scoped to this repository with **Pull requests: read and write** only.
+   The ordinary Actions token reads CI metadata; the separate owner token
+   requests the review. Do not reuse a broad release or local CLI token.
+2. In GitHub's [Copilot review settings](https://docs.github.com/en/copilot/how-tos/copilot-on-github/set-up-copilot/configure-code-review),
+   select **Lite** effort and enable custom instructions. Leave native
+   automatic reviews, draft reviews, and review-on-push disabled; those
+   independent triggers would bypass this workflow's author and fork filters.
+   Keep approving reviews and MCP tool access disabled for this review-only
+   setup. Suggested patches do not require cloud-agent fix sessions.
+3. Set repository variable `COPILOT_REVIEW_ENABLED` to `true`. Set it to `false`
+   to stop this workflow. Request any later re-review manually after reviewing
+   the changes; it consumes additional quota.
+
+Instruction brevity reduces unnecessary context, but it is not a spending
+limit. Review usage depends on the subscription and work performed; configure
+the account's [additional-usage budget](https://docs.github.com/en/billing/how-tos/set-up-budgets)
+to stop paid overages. No token ceiling or review-effort field is exposed by
+the [review-request API](https://docs.github.com/en/rest/pulls/review-requests#request-reviewers-for-a-pull-request).
+The workflow cannot override personal settings or prevent separately requested
+reviews. Copilot feedback supplements the required checks and owner review.
 
 ## Releases
 

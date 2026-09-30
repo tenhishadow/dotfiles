@@ -4,9 +4,8 @@ applyTo: "**/*.md"
 
 # Documentation Review Instructions
 
-Follow the root `AGENTS.md` documentation-sync contract and the
-`.agents/skills/write-markdown/SKILL.md` workflow. Review evidence and ownership
-rather than adding another copy of repository-wide rules.
+Follow the root `AGENTS.md` documentation-sync contract and Code Review Rules.
+Use `.agents/skills/write-markdown/SKILL.md` when editing documentation.
 
 - Trace each changed claim to its owning code, task, or primary source. Update
   the canonical document that becomes inaccurate; do not demand unrelated
@@ -20,9 +19,8 @@ rather than adding another copy of repository-wide rules.
 - Follow the root privacy rule for investigations and identifying observations.
   Keep public decision history about reusable repository behavior; preserve
   private diagnostic evidence outside the checkout.
-- Keep generated manuals current. For Neovim keymaps, regenerate
-  `docs/nvim-keymaps.md` with `go-task docs:nvim-keymaps` and verify it with
-  `go-task docs:nvim-keymaps:check`.
+- Check generated manuals against their generator; Neovim keymaps follow
+  `dotfiles/.config/nvim/AGENTS.md`.
 - Check new untracked Markdown as well as tracked documents. Validate relative
   links and distinguish generated-output checks from behavioral proof.
 - For changed runtime contracts, cover feature-disable behavior, ownership of

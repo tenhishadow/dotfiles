@@ -4,3 +4,4 @@ rules:
     # Keep workspace-relative references until the stable validator supports $/.
     ignore:
       - ansible.yml
+      - pr-title.yml

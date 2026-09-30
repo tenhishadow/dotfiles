@@ -1,10 +1,8 @@
 ---
 name: write-dotfiles-tests
 description: >-
-  Add or fix regression tests in this dotfiles repository when behavior changes
-  or a coverage gap is demonstrated. Covers Python and CLI contracts, Taskfile
-  runners, Ansible assertions, Neovim smoke checks, and container convergence.
-  Use review-dotfiles-tests for review without implementation.
+  Add or fix regression coverage for changed behavior or a demonstrated gap in
+  this repository. Use existing native checks and standard-library tests.
 ---
 
 # Write Dotfiles Tests
@@ -12,13 +10,13 @@ description: >-
 ## Scope
 
 Run commands from the repository root; paths below are relative to that root.
-Use the validation layers in `docs/adr/0001-validation-strategy.md`; ordinary
-reversible documentation or formatting changes do not need new tests.
+The root `AGENTS.md` selects checks; `.test/AGENTS.md` owns fixtures and runners.
+Use `docs/adr/0001-validation-strategy.md` when choosing a validation layer.
+Ordinary documentation or formatting changes do not need new tests.
 
 ## Workflow
 
-1. Read the root `AGENTS.md` and every applicable ancestor `AGENTS.md` for each
-   changed path, then read the changed behavior and its current callers.
+1. Trace the changed behavior and its current callers.
 2. Reproduce the missing behavior and choose the lowest existing validation
    layer that can observe it. Prefer native Ansible assertions, existing smoke
    checks, and generated-output comparisons before Python.
@@ -26,10 +24,10 @@ reversible documentation or formatting changes do not need new tests.
    CLI contracts that native checks cannot cover clearly. Exercise the real
    command boundary; replace external side effects with temporary fixtures or
    fake executables, not the behavior under test.
-4. Follow `.test/AGENTS.md` for discovery and fixture conventions. Include the
-   smallest negative case that would fail before the fix. Verify the broken
-   behavior in a temporary fixture or disposable checkout without overwriting
-   existing work.
+4. Include the smallest negative case that fails before the fix. Reproduce it
+   in a temporary fixture or disposable checkout. Supply test inputs explicitly:
+   optional ignored runtime installs may be absent, while malformed tracked
+   manifests must still fail validation.
 5. Keep Python contracts deterministic, network-free, secret-free, and
    independent of execution order. Use temporary fixtures and bounded
    subprocesses for CLI and hook I/O; avoid sleeps and real user state.
@@ -42,7 +40,5 @@ reversible documentation or formatting changes do not need new tests.
 
 ## Completion
 
-Show that the regression case fails for the broken behavior and passes with the
-fix. Run the focused test and the relevant checks from the root validation
-matrix, including `go-task test:python` and `go-task lint:python` for Python
-test changes. Finish with `git diff --check` and report coverage limits.
+Show that the regression case fails before the fix and passes after it. Run
+the focused test and root validation matrix checks; report coverage limits.
