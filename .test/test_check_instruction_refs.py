@@ -62,7 +62,7 @@ class InstructionReferencesTest(unittest.TestCase):
                 ),
             )
             for ref in (
-                ".test/nvim/.cahce",
+                ".test/nvim/.cache-missing",
                 ".test/nvim/smoke.lua",
                 ".test/system/local.env.example",
                 ".test/generated/missing.py",
