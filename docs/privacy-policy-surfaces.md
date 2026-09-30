@@ -35,12 +35,9 @@ Gemini CLI has an official user settings file at `~/.gemini/settings.json`.
 The managed file disables automatic updates, update notifications, usage
 statistics, telemetry, detailed telemetry traces, prompt logging, and external
 collector use. The shell environment also sets documented Gemini telemetry
-variables to disabled values. The committed key names were checked against the
-installed `@google/gemini-cli 0.41.2` bundled reference docs during PR #141 on
-2026-05-17. The 2026-09-30 review revalidated every managed key against the
-released `0.50.0` settings schema and installed bundled reference docs, including
-the four telemetry environment variables. Re-check these settings when upgrading
-Gemini CLI.
+variables to disabled values. The managed keys and four telemetry environment
+variables are compatible with the published Gemini CLI `0.50.0` settings schema
+and reference documentation. Re-check these settings when upgrading Gemini CLI.
 
 This repository does not manage Gemini API keys, OAuth state, Google Cloud
 credentials, local conversation history, MCP server credentials, extension
@@ -50,9 +47,9 @@ runtime state and must stay out of git.
 The portable Codex example defaults to workspace-only writes without sandbox
 network access and keeps apps disabled. Context7 and the official OpenAI
 documentation MCP server are the only MCP servers enabled in that example.
-The live `~/.codex/config.toml` remains an owner-only, host-local regular file
-because Codex stores project and hook trust state there and local Grafana
-configuration belongs there. Dedicated managed profiles narrow the model,
+Keep `~/.codex/config.toml` an owner-only, host-local regular file because Codex
+stores project and hook trust state there. Optional service endpoints and
+credentials belong in local configuration. Dedicated managed profiles narrow the model,
 tool-output budget, filesystem access, and MCP surface for exploration,
 validation, deep review, live Grafana reads, browser UI work, and GitHub writes.
 The GitHub-write profile allows approved writes but disables destructive and
@@ -84,15 +81,13 @@ license; its upstream version and commit are
 recorded in `dotfiles/.agents/skills/ponytail/SKILL.md`. The managed cross-agent
 copy defaults to lite, and Codex may invoke it only explicitly.
 
-The 2026-09-30 compatibility review checked the portable example and six profiles
-against the Codex `0.159.2` release schema and native configuration loader in an
-isolated home. The bundled model catalog supports the configured models and
+The portable example and profiles use the Codex `0.159.2` configuration schema.
+That release's bundled model catalog supports the configured models and
 reasoning levels; account-specific model and connector access still depends on
 the signed-in account. The hook input and denial output match that release's
-`PreToolUse` schema. Read-only `tools/list` discovery checked the allowlists
-against all five configured MCP servers. DeepWiki advertised
-`ask_wiki_question`, replacing the stale `ask_question` entry; it remains
-disabled by default. Tool discovery does not verify authenticated backend access.
+`PreToolUse` schema. MCP allowlists must match the configured servers' advertised
+tools. DeepWiki uses `ask_wiki_question` and remains disabled by default.
+Tool discovery does not verify authenticated backend access.
 
 K9s is intentionally read-only by default through `readOnly: true`. This is an
 operational guard, not just a privacy setting, and it does not manage
@@ -116,8 +111,8 @@ run explicit provider and Terraform update review when you want that signal.
 
 Thunderbird policy keys are checked against the official Thunderbird policy
 templates. The managed in-app notification keys are version-specific and require
-Thunderbird 139 or newer. This was checked during PR #141 on 2026-05-17;
-re-check the policy template when changing Thunderbird policy keys.
+Thunderbird 139 or newer. Re-check the policy template when changing Thunderbird
+policy keys.
 
 No managed Cursor, Windsurf, or other AI-client config was added because those
 clients are not currently represented in the package manifest or existing

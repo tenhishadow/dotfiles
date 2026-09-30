@@ -17,8 +17,9 @@ rather than adding another copy of repository-wide rules.
 - Flag validation instructions that run an apply command against the user's
   home or workstation. Distinguish local edits, dry runs, container apply,
   and separately authorized host changes.
-- Keep historical reports dated. Preserve their original evidence without
-  presenting old measurements or planned work as current verification.
+- Follow the root privacy rule for investigations and identifying observations.
+  Keep public decision history about reusable repository behavior; preserve
+  private diagnostic evidence outside the checkout.
 - Keep generated manuals current. For Neovim keymaps, regenerate
   `docs/nvim-keymaps.md` with `go-task docs:nvim-keymaps` and verify it with
   `go-task docs:nvim-keymaps:check`.

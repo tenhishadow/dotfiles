@@ -12,5 +12,6 @@
 .test/nvim/terragrunt/.terraform/*
 !.test/nvim/terragrunt/.terraform/.gitkeep
 .test/system/local.env
+docs/audits/
 __pycache__/
 *.pyc

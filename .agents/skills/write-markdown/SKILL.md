@@ -23,8 +23,9 @@ validation.
    instruction owners instead of adapters, and canonical skills instead of
    their provider symlinks.
 3. Check documented behavior against current code and actual test output. Keep
-   historical audits dated; a new source review cannot certify their host
-   observations or turn planned work into completed work.
+   public docs focused on repository contracts and reusable decisions. Follow
+   the root privacy rule for host-specific evidence; historical context does
+   not justify publishing private observations or unverified completion claims.
 4. Document decisions, constraints, ownership, validation, and rollback that an
    operator needs. Reference the README command catalog and existing contracts
    instead of copying them into new tables.

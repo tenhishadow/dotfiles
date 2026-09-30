@@ -215,8 +215,8 @@ Review and stop competing power managers before enabling this feature.
 The mapping uses `powersave`, `balanced`, and `workstation-performance`.
 Balanced selects `balanced-battery` on battery. Performance inherits `balanced`
 and changes only the CPU governor preference, EPP, and ACPI platform profile;
-it does not inherit `throughput-performance` server tuning. This host uses
-`system_tuned_performance_governor: powersave` for active Intel P-state.
+it does not inherit `throughput-performance` server tuning. For hosts using
+active Intel P-state, consider `system_tuned_performance_governor: powersave`.
 The other policy inputs are `system_tuned_performance_energy_preference` and
 `system_tuned_performance_platform_profile`, both `performance` by default.
 Review these hardware-dependent values when adopting another host.

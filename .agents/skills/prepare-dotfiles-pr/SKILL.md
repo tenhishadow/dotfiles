@@ -33,14 +33,18 @@ an uncovered publication step; invoking this skill grants no extra permission.
    and documentation together. One commit is reasonable for one coupled change;
    do not split by file type merely to increase commit count. Include existing
    dirty work when the user explicitly requests all current changes; otherwise
-   preserve changes outside the requested scope. Do not rewrite published
-   history or replace the index to manufacture clean groups.
+   preserve changes outside the requested scope. Preserve published history
+   unless the user explicitly authorizes a rewrite; never replace the index
+   to manufacture clean groups.
 3. Select validation through the root matrix and reuse results while the
    tested files and dependencies remain unchanged. Run the existing
    `detect-secrets` and `detect-private-key` pre-commit hooks against candidate
    files, and `go-task lint:english`. Check new files, symlink targets, lockfile
-   contents, and generated or machine-local state before staging. Do not add
-   suppressions merely to make publication pass.
+   contents, and generated or machine-local state before staging. Apply the
+   root privacy rule to identifying observations and commit/PR metadata, not
+   just credentials; a clean secret scan does not make a host report safe to
+   publish.
+   Do not add suppressions merely to make publication pass.
 4. Stage only the chosen paths or hunks, then inspect the actual
    `git diff --cached` and `git diff --cached --check`. Confirm the staged
    content matches the proposed message and excludes unintended files. A clean
@@ -90,6 +94,10 @@ complete preparation result when publication is outside scope.
 On an authentication or policy failure, stop the blocked publication action
 and report the exact blocker with the prepared artifacts. Do not retry with
 different identities or repeatedly request an already granted permission.
+If identifying data was already published, distinguish file removal from
+history cleanup. Prepare and review the sanitized result before requesting
+authorization to rewrite a published branch; never imply that a deletion
+commit or force-push also removes GitHub caches, PR refs, or existing clones.
 Report actual commit IDs, the PR URL or local draft location, validation
 results, remaining dirty files, and any unperformed publication or settings
 step. Do not claim a local draft was published or a check passed if it skipped.

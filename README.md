@@ -168,8 +168,7 @@ runs the complete standard-library regression suite.
 Context7 and the official OpenAI documentation server are sufficient for this
 repository's public documentation work. Playwright, Grafana, and GitHub writes
 remain disabled unless a dedicated profile enables them. See
-[`docs/privacy-policy-surfaces.md`](docs/privacy-policy-surfaces.md) and the
-historical [Codex decision chain](docs/decision-chain-2026-08-13-codex-tooling.md).
+[`docs/privacy-policy-surfaces.md`](docs/privacy-policy-surfaces.md).
 
 The formats and discovery paths follow the
 [Agent Skills specification](https://agentskills.io/specification) and upstream

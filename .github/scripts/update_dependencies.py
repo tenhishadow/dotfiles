@@ -25,7 +25,7 @@ SHORT_COMMAND_TIMEOUT_SECONDS = 30
 PACKAGE_COMMAND_TIMEOUT_SECONDS = 600
 GALAXY_VERSION_MAX_PAGES = 10
 NPM_REGISTRY = "https://registry.npmjs.org/"
-USER_AGENT = "tenhishadow-dotfiles-dependency-updater"
+USER_AGENT = "dotfiles-dependency-updater"
 NPM_MANIFEST_ROOTS = (
     Path(".github/tools"),
     Path("dotfiles/.local/share/codex-cli"),

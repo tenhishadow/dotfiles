@@ -64,6 +64,12 @@ description; this section is the agent-facing file-location map.
   state, local databases, caches, private keys, kubeconfigs, cloud
   credentials, AI account state, MCP credentials, generated test workspaces, or
   copied runtime configs.
+- Keep machine investigations, diagnostic captures, hardware inventories,
+  network topology, and personal activity timelines outside the repository in
+  an owner-only local location. Publish reusable configuration and general
+  findings instead of observations that identify a particular machine or user.
+  Secret scanners do not detect all identifying information; review docs,
+  configuration, commit metadata, and PR artifacts for those links as well.
 - Manage privacy and policy values only through documented upstream config or
   enterprise policy keys. Do not invent settings for AI clients, browsers,
   package managers, or developer tools.

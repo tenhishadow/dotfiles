@@ -81,8 +81,8 @@ The local host values are personal workstation choices. They are not a generic
 security baseline and should not be copied to servers, shared systems, or other
 workstations without review.
 
-This host enables `system_tuned_enabled` and an Intel P-state performance
-profile. Review that policy and existing power managers before adopting it;
+Before enabling `system_tuned_enabled`, review the hardware-specific profile
+policy and existing power managers;
 the [system role](../roles/system/README.md#plasma-power-profiles) documents
 the scoped apply, service guards, and rollback.
 
