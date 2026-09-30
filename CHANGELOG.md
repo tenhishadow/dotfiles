@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.4.2](https://github.com/tenhishadow/dotfiles/compare/v2.4.1...v2.4.2) (2026-09-30)
+
+
+### Bug Fixes
+
+* stabilize workstation provisioning and repository maintenance ([#196](https://github.com/tenhishadow/dotfiles/issues/196)) ([e63ec0b](https://github.com/tenhishadow/dotfiles/commit/e63ec0b23b8b3bde3038e26da767bca74c03c925))
+
 ## [2.4.1](https://github.com/tenhishadow/dotfiles/compare/v2.4.0...v2.4.1) (2026-08-27)
 
 
