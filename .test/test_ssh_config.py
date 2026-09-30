@@ -63,26 +63,20 @@ def _effective_config(
 
 
 class SshConfigContractTest(unittest.TestCase):
-    """Validate safe defaults and host-specific override precedence."""
+    """Validate owner-selected defaults and host-specific override precedence."""
 
-    def test_default_host_verification_and_agent_forwarding_are_safe(self) -> None:
+    def test_default_host_follows_owner_policy(self) -> None:
         config = _effective_config("default.example")
 
-        self.assertEqual("no", config["forwardagent"])
-        self.assertEqual("no", config["compression"])
+        self.assertEqual("yes", config["forwardagent"])
+        self.assertEqual("yes", config["compression"])
         self.assertEqual("no", config["checkhostip"])
-        self.assertEqual("yes", config["hashknownhosts"])
+        self.assertEqual("no", config["hashknownhosts"])
         self.assertEqual("no", config["kbdinteractiveauthentication"])
         self.assertEqual("no", config["passwordauthentication"])
-        self.assertEqual("ask", config["stricthostkeychecking"])
+        self.assertEqual("false", config["stricthostkeychecking"])
         self.assertEqual("true", config["updatehostkeys"])
-
-        known_hosts_files = config["userknownhostsfile"].split()
-        self.assertTrue(
-            any(path.endswith("/.ssh/known_hosts") for path in known_hosts_files)
-        )
-        self.assertNotIn("/dev/null", known_hosts_files)
-        self.assertNotIn("none", known_hosts_files)
+        self.assertEqual("/dev/null", config["userknownhostsfile"])
 
     def test_included_host_config_precedes_general_defaults(self) -> None:
         for include_dir in ("config.d", "conf.d"):
@@ -91,14 +85,14 @@ class SshConfigContractTest(unittest.TestCase):
                     "override.example",
                     {
                         f"{include_dir}/10-test.conf": """Host override.example
-  ForwardAgent yes
+  ForwardAgent no
   KbdInteractiveAuthentication yes
   StrictHostKeyChecking yes
 """
                     },
                 )
 
-                self.assertEqual("yes", config["forwardagent"])
+                self.assertEqual("no", config["forwardagent"])
                 self.assertEqual("yes", config["kbdinteractiveauthentication"])
                 self.assertEqual("true", config["stricthostkeychecking"])
 

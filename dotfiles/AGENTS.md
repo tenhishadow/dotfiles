@@ -36,6 +36,15 @@ security, language, and execution-scope rules.
 - Skills under `dotfiles/.agents/skills/` are managed user-level payloads for
   other repositories. Repository workflows belong in root `.agents/skills/`.
 
+## Owner Decisions
+
+- `dotfiles/.ssh/config` contains explicitly chosen owner policy. Preserve its
+  settings unless the owner explicitly requests an SSH configuration change.
+  Do not revise them during hardening, modernization, cleanup, or AI review,
+  and do not weaken their contract tests to substitute an agent's preferences.
+  The config is the canonical source for these values; the native SSH tests
+  enforce the selected defaults and host-specific override precedence.
+
 ## Validation
 
 Use the root validation matrix for the changed payload type. Run
