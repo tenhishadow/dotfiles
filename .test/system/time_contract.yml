@@ -20,6 +20,18 @@
     system_time_contract_foreign_unit: >-
       /etc/systemd/system/dotfiles-foreign-unit.service
   tasks:
+    - name: Container Time Test | Require container isolation
+      ansible.builtin.assert:
+        that:
+          - >-
+            'container' in (ansible_facts.virtualization_tech_guest | default([]))
+            or (
+              (ansible_facts.virtualization_type | default('') | lower)
+              in system_container_virtualization_types
+            )
+        fail_msg: "Time service mutation tests require a disposable container."
+        quiet: true
+
     - name: Container Time Test | Gather service facts
       ansible.builtin.service_facts:
 

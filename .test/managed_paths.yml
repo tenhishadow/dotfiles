@@ -54,6 +54,8 @@
                 system_timesyncd_dropin_path,
                 system_chrony_config_path,
                 system_sshd_dropin_path,
+                system_tuned_ppd_config_path,
+                system_tuned_performance_profile_path,
               ],
               'browser_policies': managed_paths_browser_policies,
             } | to_json

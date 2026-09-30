@@ -71,6 +71,8 @@
     state: link
     force: false
     follow: false
+    owner: "{{ system_config_owner }}"
+    group: "{{ system_config_group }}"
   loop: "{{ system_time_conflicting_service_masks.results }}"
   loop_control:
     loop_var: system_time_conflicting_service_mask

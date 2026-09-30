@@ -187,6 +187,18 @@
   ansible.builtin.include_tasks:
     file: "{{ ansible_facts.distribution | lower }}-tasks.yml"
 
+- name: Fstrim | Enable periodic TRIM
+  become: true
+  ansible.builtin.systemd_service:
+    name: "{{ system_fstrim_timer_name }}"
+    enabled: true
+    state: started
+  when:
+    - system_fstrim_enabled | bool
+    - system_can_manage_systemd | bool
+  tags:
+    - fstrim
+
 - name: System | Run Docker tasks
   ansible.builtin.include_tasks:
     file: docker.yml
@@ -203,6 +215,18 @@
     - not (system_is_container | bool)
     - not (system_is_virtual_machine | bool)
     - not (system_in_ci | bool)
+
+- name: System | Run TuneD tasks
+  ansible.builtin.include_tasks:
+    file: tuned.yml
+    apply:
+      tags:
+        - tuned
+  when:
+    - system_tuned_enabled | bool
+  tags:
+    - always
+    - tuned
 
 - name: System | Run user service tasks
   ansible.builtin.include_tasks:

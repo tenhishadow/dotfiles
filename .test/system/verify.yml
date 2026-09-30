@@ -26,6 +26,8 @@
       - /etc/security/limits.d/10-dotfiles.conf
       - /etc/pacman.conf
       - /etc/xdg/reflector/reflector.conf
+      - /etc/tuned/ppd.conf
+      - /etc/tuned/profiles/workstation-performance/tuned.conf
     container_test_system_content:
       - path: /etc/locale.conf
         pattern: '(?m)^LANG="en_US\.UTF-8"$'
@@ -35,6 +37,10 @@
         pattern: "(?m)^ParallelDownloads = 20$"
       - path: /etc/xdg/reflector/reflector.conf
         pattern: '(?m)^--save /etc/pacman\.d/mirrorlist$'
+      - path: /etc/tuned/ppd.conf
+        pattern: "(?m)^performance=workstation-performance$"
+      - path: /etc/tuned/profiles/workstation-performance/tuned.conf
+        pattern: "(?ms)^include=balanced$.*^energy_performance_preference=performance$"
     container_test_skipped_paths:
       - /etc/docker/daemon.json
       - /etc/modprobe.d/99-dotfiles-overlay.conf

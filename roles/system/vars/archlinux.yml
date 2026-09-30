@@ -1,5 +1,7 @@
 ---
 system_crontab_bin: /usr/bin/crontab
+system_tuned_ppd_package: tuned-ppd
+system_fstrim_timer_name: fstrim.timer
 system_cron_package: cronie
 system_cron_service_name: cronie
 system_chrony_package: chrony

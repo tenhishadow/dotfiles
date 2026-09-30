@@ -32,6 +32,7 @@
           'timesyncd': system_timesyncd_service_name,
         }.get(system_time_backend, '')
       }}
+    system_time_wait_service_name: "{{ system_time_wait_services.get(system_time_backend, '') }}"
   tags:
     - always
 
@@ -40,8 +41,9 @@
     system_time_conflicting_services: >-
       {{
         (
-          system_time_service_candidates
+          (system_time_service_candidates + (system_time_wait_services.values() | list))
           | reject('equalto', system_time_service_name)
+          | reject('equalto', system_time_wait_service_name)
           | list
         )
         if system_time_service_name | length > 0

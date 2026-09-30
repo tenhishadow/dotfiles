@@ -15,6 +15,8 @@
       - system_timesyncd_enabled is boolean
       - system_docker_enabled is boolean
       - system_laptop_enabled is boolean
+      - system_tuned_enabled is boolean
+      - system_fstrim_enabled is boolean
       - system_user_services_enabled is boolean
       - system_time_enabled is boolean
       - system_locale_enabled is boolean
@@ -37,6 +39,10 @@
       - system_chrony_service_name in system_time_service_candidates
       - system_timesyncd_service_name in system_time_service_candidates
       - system_chrony_service_name != system_timesyncd_service_name
+      - system_time_wait_services is mapping
+      - system_time_wait_services.keys() | sort == ['chrony', 'timesyncd']
+      - system_time_wait_services.values() | unique | length == 2
+      - system_time_wait_services.values() | intersect(system_time_service_candidates) | length == 0
       - system_ntp_servers is sequence
       - system_ntp_servers is not string
       - >-
@@ -104,6 +110,20 @@
   tags:
     - always
 
+- name: TuneD | Validate performance settings
+  ansible.builtin.assert:
+    that:
+      - system_tuned_performance_governor is string
+      - system_tuned_performance_governor is regex('^[a-z_]+(\|[a-z_]+)*$')
+      - system_tuned_performance_energy_preference is in ['default', 'performance', 'balance_performance', 'balance_power', 'power']
+      - system_tuned_performance_platform_profile is in ['low-power', 'cool', 'quiet', 'balanced', 'balanced-performance', 'performance']
+    fail_msg: "TuneD performance settings must be valid CPU and platform profile values."
+    quiet: true
+  when:
+    - system_tuned_enabled | bool
+  tags:
+    - always
+
 - name: System | Validate Chrony tuning variables
   ansible.builtin.assert:
     that:
@@ -133,6 +153,8 @@
     quiet: true
   loop:
     - system_locale_definition_dir
+    - system_tuned_ppd_config_path
+    - system_tuned_performance_profile_path
     - system_locale_gen_path
     - system_locale_conf_path
     - system_vconsole_path
@@ -188,6 +210,8 @@
     - system_cron_service_name
     - system_chrony_package
     - system_chrony_service_name
+    - system_tuned_ppd_package
+    - system_fstrim_timer_name
     - system_nodejs_package
     - system_docker_group
     - system_docker_service_name
@@ -217,7 +241,7 @@
     fail_msg: >-
       Invalid time service candidate: {{ system_time_service_candidate }}
     quiet: true
-  loop: "{{ system_time_service_candidates }}"
+  loop: "{{ system_time_service_candidates + (system_time_wait_services.values() | list) }}"
   loop_control:
     loop_var: system_time_service_candidate
     label: "{{ system_time_service_candidate }}"

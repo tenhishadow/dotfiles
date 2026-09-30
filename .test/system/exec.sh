@@ -114,6 +114,7 @@ package_targets = [
     role_vars["system_reflector_package"],
     role_vars["system_tzdata_package"],
     role_vars["system_chrony_package"],
+    role_vars["system_tuned_ppd_package"],
     *role_vars["system_packages"],
 ]
 

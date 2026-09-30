@@ -15,6 +15,7 @@
     name: "{{ system_timezone }}"
   when:
     - not (system_is_container | bool)
+    - not (system_in_ci | bool)
 
 - name: Chrony | Install package
   become: true
@@ -66,6 +67,55 @@
     quiet: true
   when:
     - system_time_backend != 'none'
+
+- name: Time | Inspect existing synchronization wait services
+  become: true
+  ansible.builtin.systemd_service:
+    name: "{{ system_time_wait_service }}"
+  loop: "{{ system_time_wait_services.values() | list }}"
+  loop_control:
+    loop_var: system_time_wait_service
+    label: "{{ system_time_wait_service }}"
+  register: system_time_wait_unit_results
+  when:
+    - system_time_backend != 'none'
+    - system_time_wait_service in (ansible_facts.services | default({}))
+
+- name: Time | Preserve synchronization wait policy
+  ansible.builtin.set_fact:
+    system_time_wait_required: >-
+      {{
+        (system_time_wait_units
+         | selectattr('UnitFileState', 'in', ['enabled', 'enabled-runtime'])
+         | list | length > 0)
+        or (system_time_wait_units
+            | selectattr('ActiveState', 'in', ['active', 'activating'])
+            | list | length > 0)
+      }}
+  vars:
+    system_time_wait_units: >-
+      {{
+        system_time_wait_unit_results.results
+        | selectattr('status', 'defined')
+        | map(attribute='status')
+        | list
+      }}
+  when:
+    - system_time_backend != 'none'
+
+- name: Time | Validate selected synchronization wait service
+  ansible.builtin.assert:
+    that:
+      - >-
+        ansible_check_mode
+        or system_time_wait_service_name in (ansible_facts.services | default({}))
+    fail_msg: >-
+      Existing synchronization wait policy requires {{ system_time_wait_service_name }},
+      but the selected backend's native wait service is unavailable.
+    quiet: true
+  when:
+    - system_time_backend != 'none'
+    - system_time_wait_required | bool
 
 - name: Chrony | Render configuration
   become: true
@@ -126,3 +176,23 @@
   when:
     - system_time_backend != 'none'
     - system_time_service_name in (ansible_facts.services | default({}))
+
+- name: Time | Unmask selected synchronization wait service
+  become: true
+  ansible.builtin.systemd_service:
+    name: "{{ system_time_wait_service_name }}"
+    masked: false
+  when:
+    - system_time_backend != 'none'
+    - system_time_wait_required | default(false) | bool
+    - system_time_wait_service_name in (ansible_facts.services | default({}))
+
+- name: Time | Enable selected synchronization wait service for boot
+  become: true
+  ansible.builtin.systemd_service:
+    name: "{{ system_time_wait_service_name }}"
+    enabled: true
+  when:
+    - system_time_backend != 'none'
+    - system_time_wait_required | default(false) | bool
+    - system_time_wait_service_name in (ansible_facts.services | default({}))

@@ -158,10 +158,12 @@
           - system_can_manage_chrony | bool
           - not (system_can_manage_timesyncd | bool)
           - system_time_service_name == 'chronyd.service'
+          - system_time_wait_service_name == 'chrony-wait.service'
           - >-
             system_time_conflicting_services
-            == ['systemd-timesyncd.service', 'ntpd.service']
+            == ['systemd-timesyncd.service', 'ntpd.service', 'systemd-time-wait-sync.service']
           - system_time_service_name not in system_time_conflicting_services
+          - system_time_wait_service_name not in system_time_conflicting_services
         fail_msg: "Virtual machines must select Chrony exclusively."
         quiet: true
 
@@ -183,10 +185,12 @@
           - not (system_can_manage_chrony | bool)
           - system_can_manage_timesyncd | bool
           - system_time_service_name == 'systemd-timesyncd.service'
+          - system_time_wait_service_name == 'systemd-time-wait-sync.service'
           - >-
             system_time_conflicting_services
-            == ['chronyd.service', 'ntpd.service']
+            == ['chronyd.service', 'ntpd.service', 'chrony-wait.service']
           - system_time_service_name not in system_time_conflicting_services
+          - system_time_wait_service_name not in system_time_conflicting_services
         fail_msg: "Physical hosts must select systemd-timesyncd exclusively."
         quiet: true
 
@@ -208,6 +212,7 @@
           - not (system_can_manage_chrony | bool)
           - not (system_can_manage_timesyncd | bool)
           - system_time_service_name | length == 0
+          - system_time_wait_service_name | length == 0
           - system_time_conflicting_services | length == 0
         fail_msg: "Guarded hosts must not select a time service."
         quiet: true
@@ -230,6 +235,7 @@
           - not (system_can_manage_chrony | bool)
           - not (system_can_manage_timesyncd | bool)
           - system_time_service_name | length == 0
+          - system_time_wait_service_name | length == 0
           - system_time_conflicting_services | length == 0
         fail_msg: >-
           A virtual machine with Chrony disabled must not fall back to another

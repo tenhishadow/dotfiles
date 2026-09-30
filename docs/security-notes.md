@@ -17,6 +17,7 @@ Review especially:
 - AI client telemetry and prompt logging settings
 - Sysctl tuning
 - Package installation in the opt-in system layer
+- TuneD's privileged desktop profile bridge and host-specific CPU policy
 - AUR helper source, PKGBUILD, and build behavior in the opt-in system layer
 - VM time synchronization and Chrony's configured permission to step a clock
   that differs by more than one second
@@ -24,6 +25,15 @@ Review especially:
 
 Do not treat these values as universally secure. Adapt them to the host, threat
 model, users, and operational requirements.
+
+The optional TuneD bridge uses the distribution's D-Bus and authorization
+policy without adding local permission overrides. It must be the sole owner
+of the desktop power-profile API; review competing power managers before
+enabling it. See [the system role](../roles/system/README.md#plasma-power-profiles).
+
+Periodic TRIM is opt-in through `system_fstrim_enabled`. On encrypted storage,
+discard propagation can reveal allocation patterns; enabling the timer does
+not change the existing encryption policy or boot arguments.
 
 Privacy-focused dotfiles can reduce background checks, notifications, telemetry,
 or audit submissions. For example, npm audit submission is disabled by default

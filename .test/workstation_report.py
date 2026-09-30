@@ -69,6 +69,8 @@ SYSTEM_MANAGED_PATHS = [
     "/etc/systemd/timesyncd.conf.d/10-dotfiles.conf",
     "/etc/chrony.conf",
     "/etc/ssh/sshd_config.d/20-dotfiles.conf",
+    "/etc/tuned/ppd.conf",
+    "/etc/tuned/profiles/workstation-performance/tuned.conf",
 ]
 BROWSER_POLICY_PATHS = [
     "/etc/brave/policies/managed/10-dotfiles-managed.json",

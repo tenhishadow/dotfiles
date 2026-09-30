@@ -1,0 +1,65 @@
+---
+- name: TuneD | Install profile bridge
+  become: true
+  ansible.builtin.package:
+    name: "{{ system_tuned_ppd_package }}"
+    state: present
+  when:
+    - system_packages_enabled | bool
+  tags:
+    - pkg
+
+- name: TuneD | Ensure profile directory
+  become: true
+  ansible.builtin.file:
+    path: "{{ system_tuned_directory }}"
+    state: directory
+    owner: "{{ system_config_owner }}"
+    group: "{{ system_config_group }}"
+    mode: "{{ system_config_dir_mode }}"
+  loop:
+    - "{{ system_tuned_ppd_config_path | dirname }}"
+    - "{{ system_tuned_performance_profile_path | dirname | dirname }}"
+    - "{{ system_tuned_performance_profile_path | dirname }}"
+  loop_control:
+    loop_var: system_tuned_directory
+
+- name: TuneD | Write workstation performance profile
+  become: true
+  ansible.builtin.template:
+    src: tuned-performance.conf.j2
+    dest: "{{ system_tuned_performance_profile_path }}"
+    owner: "{{ system_config_owner }}"
+    group: "{{ system_config_group }}"
+    mode: "{{ system_config_file_mode }}"
+    backup: true
+  notify:
+    - TuneD | Restart service
+    - TuneD PPD | Restart service
+
+- name: TuneD | Write desktop profile mapping
+  become: true
+  ansible.builtin.template:
+    src: tuned-ppd.conf.j2
+    dest: "{{ system_tuned_ppd_config_path }}"
+    owner: "{{ system_config_owner }}"
+    group: "{{ system_config_group }}"
+    mode: "{{ system_config_file_mode }}"
+    backup: true
+  notify:
+    - TuneD PPD | Restart service
+
+- name: TuneD | Enable profile services
+  become: true
+  ansible.builtin.systemd_service:
+    name: "{{ system_tuned_service }}"
+    enabled: true
+    state: started
+  loop:
+    - tuned.service
+    - tuned-ppd.service
+  loop_control:
+    loop_var: system_tuned_service
+  when:
+    - system_can_manage_systemd | bool
+    - not (system_is_virtual_machine | bool)

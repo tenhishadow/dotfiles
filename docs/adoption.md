@@ -73,9 +73,22 @@ promptly; physical hosts use `systemd-timesyncd`. Disabling the backend for the
 detected host class selects no fallback daemon. Confirm that VM clock stepping
 is acceptable for the workloads on the target host.
 
+Containers and CI skip both timezone changes and time-daemon management. The
+[time synchronization contract](../roles/system/README.md#time-synchronization)
+includes read-only verification for a real VM after an authorized apply.
+
 The local host values are personal workstation choices. They are not a generic
 security baseline and should not be copied to servers, shared systems, or other
 workstations without review.
+
+This host enables `system_tuned_enabled` and an Intel P-state performance
+profile. Review that policy and existing power managers before adopting it;
+the [system role](../roles/system/README.md#plasma-power-profiles) documents
+the scoped apply, service guards, and rollback.
+
+This host also enables `system_fstrim_enabled`. Confirm discard support and
+the desired encrypted-storage policy before adopting
+[periodic TRIM](../roles/system/README.md#periodic-trim).
 
 Review `docs/privacy-policy-surfaces.md` before adopting the managed privacy
 dotfiles and browser, Thunderbird, or VS Code policies. The repository does not

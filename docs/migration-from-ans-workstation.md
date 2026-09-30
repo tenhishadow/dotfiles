@@ -19,6 +19,15 @@ The default `go-task` command in this repository does not apply system-wide
 configuration. It runs `playbook_install.yml` and remains limited to the
 user-level dotfiles workflow.
 
+Subsequent system-layer additions include the optional TuneD bridge for
+Plasma profiles, controlled by `system_tuned_enabled`. Its configuration and
+service lifecycle live in the system role; see the
+[current ownership and rollback](../roles/system/README.md#plasma-power-profiles).
+
+The system role also owns opt-in periodic TRIM through `system_fstrim_enabled`;
+its scoped `fstrim` tag enables the existing upstream timer without migrating
+storage or boot configuration.
+
 The consolidated system role now owns time-backend selection. With the
 applicable backend enabled, virtual machines use a validated `/etc/chrony.conf`,
 while physical systemd hosts use the timesyncd drop-in. The selected unit is
