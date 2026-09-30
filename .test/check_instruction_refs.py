@@ -9,7 +9,8 @@ check parses recognized references and asserts that they resolve:
     the default task).
   * repository paths anchored at a known top-level entry (roles/, inventory/,
     docs/, dotfiles/, .agents/, .claude/, .github/, .test/, playbook_*.yml)
-    -> the path (or its glob) exists.
+    -> the path (or its glob) exists, unless the exact path is explicitly
+    listed as optional runtime state in the root .gitignore.
   * native provider imports and Claude skill links -> canonical sources exist.
 
 System paths (/etc/...), URLs (brave://...), and home paths (~/...) are not
@@ -114,6 +115,18 @@ def path_exists(root: Path, ref: str) -> bool:
     return (root / ref).exists()
 
 
+def optional_runtime_paths(root: Path) -> set[str]:
+    """Reuse literal root ignore entries without exempting globs or subtrees."""
+    ignore = root / ".gitignore"
+    if not ignore.is_file():
+        return set()
+    return {
+        line.rstrip("/")
+        for line in ignore.read_text(encoding="utf-8").splitlines()
+        if line.startswith(ANCHORS) and not any(char in line for char in "*?[]")
+    }
+
+
 def check_go_tasks(text: str, tasks: set[str]) -> list[str]:
     """Return go-task references that do not resolve to a real task."""
     problems = []
@@ -125,12 +138,13 @@ def check_go_tasks(text: str, tasks: set[str]) -> list[str]:
 
 
 def check_paths(root: Path, text: str) -> list[str]:
-    """Return repository path references that do not resolve."""
+    """Return missing source references, allowing explicitly optional paths."""
     problems = []
+    optional = optional_runtime_paths(root)
     candidates = set(PLAYBOOK_RE.findall(text))
     candidates.update(tok for tok in TOKEN_RE.findall(text) if tok.startswith(ANCHORS))
     for ref in candidates:
-        if not path_exists(root, ref):
+        if ref.rstrip("/") not in optional and not path_exists(root, ref):
             problems.append(f"missing repository path referenced in docs: {ref}")
     return problems
 

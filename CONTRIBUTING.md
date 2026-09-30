@@ -74,14 +74,11 @@ both in branch protection. The `ci` gate requires successful static checks and
 rejects failed or cancelled integration jobs; checks deliberately skipped by
 path selection do not block unrelated changes.
 
-The live `master` ruleset, inspected on 2026-09-30, still requires the previous
-checks: `github-super-linter`, `ansible-lint / run`, and
-`ansible-exec (ubuntu-latest) / run` plus
-`ansible-exec (macos-latest) / run`. After the new checks have run on a PR,
-replace those four requirements with `ci` and `pr-title` while preserving the
-other review and branch-protection settings. This is a separate authorized
-GitHub settings change; editing workflows locally cannot migrate the ruleset.
-Until it is migrated, the old missing checks can block merging.
+The live `master` ruleset was updated and verified on 2026-09-30 to require
+`ci` and `pr-title` from GitHub Actions. It retains strict up-to-date checks,
+squash-only merges, and protection against branch deletion and force pushes.
+When required check names change, migrate the ruleset as a separately
+authorized GitHub settings change; local workflow edits do not update it.
 
 ## Releases
 

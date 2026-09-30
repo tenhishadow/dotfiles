@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import shutil
+import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -43,6 +46,62 @@ class InstructionReferencesTest(unittest.TestCase):
                 "[upstream](https://example.com/missing.md)."
             )
             self.assertEqual([], check_instruction_refs.check_paths(root, text))
+
+    def test_optional_runtime_paths_do_not_hide_missing_sources(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            _write(
+                root,
+                ".gitignore",
+                ".test/nvim/.cache/\n.test/system/local.env\n.test/generated/*\n",
+            )
+            self.assertEqual(
+                [],
+                check_instruction_refs.check_paths(
+                    root, "`.test/nvim/.cache` `.test/system/local.env`"
+                ),
+            )
+            for ref in (
+                ".test/nvim/.cahce",
+                ".test/nvim/smoke.lua",
+                ".test/system/local.env.example",
+                ".test/generated/missing.py",
+                ".test/nvim/.cache/missing.md",
+            ):
+                with self.subTest(ref=ref):
+                    self.assertTrue(
+                        check_instruction_refs.check_paths(root, f"`{ref}`")
+                    )
+
+    def test_current_instructions_resolve_in_a_clean_source_export(self) -> None:
+        source = check_instruction_refs.repo_root()
+        files = subprocess.run(
+            ["git", "ls-files", "-z", "--cached", "--others", "--exclude-standard"],
+            cwd=source,
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=10,
+        ).stdout
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            for name in sorted(set(files.split("\0")) - {""}):
+                destination = root / name
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(source / name, destination, follow_symlinks=False)
+            self.assertFalse((root / ".test/nvim/.cache").exists())
+            self.assertFalse((root / ".test/system/local.env").exists())
+
+            result = subprocess.run(
+                [sys.executable, str(root / ".test/check_instruction_refs.py")],
+                cwd=root,
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=10,
+            )
+
+            self.assertEqual(0, result.returncode, result.stdout + result.stderr)
 
     def test_managed_skills_are_scanned_but_generated_workspaces_are_not(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
