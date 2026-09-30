@@ -305,19 +305,61 @@ local function run_format(bufnr, test)
   for _, f in ipairs(formatters) do
     if f.available then
       has_available = true
-      break
+      local config = conform.get_formatter_config(f.name, bufnr)
+      if config and not config.stdin then
+        -- A killed formatter must not leave scratch files beside tracked fixtures.
+        conform.formatters[f.name] = vim.tbl_extend("force", config, {
+          inherit = false,
+          tmpfile_format = vim.fn.stdpath("cache") .. "/conform/.conform.$RANDOM.$FILENAME",
+        })
+      end
     end
   end
   if not has_available then
     log("Format: skip " .. test.name .. " (no available formatter)")
     return
   end
-  local ok, err = pcall(vim.cmd, "Format")
+  local completed = false
+  local ok, err = pcall(conform.format, { bufnr = bufnr, async = false, quiet = true }, function(format_error)
+    completed = true
+    if format_error then
+      add_error("Formatter failed for " .. test.name .. ": " .. format_error)
+    end
+  end)
   if not ok then
     add_error("Formatter failed for " .. test.name .. ": " .. tostring(err))
+  elseif not completed then
+    add_error("Formatter did not complete for " .. test.name)
   else
     vim.bo[bufnr].modified = false
   end
+end
+
+local function run_format_scope_test()
+  if not has_any({ "markdownlint-cli2" }) then
+    return
+  end
+  local root = vim.fn.tempname()
+  vim.fn.mkdir(root, "p")
+  vim.fn.writefile({ 'globs: ["**/*.md"]' }, root .. "/.markdownlint-cli2.yaml")
+  vim.fn.writefile({ "#Selected" }, root .. "/selected.md")
+  vim.fn.writefile({ "#Untouched" }, root .. "/unrelated.md")
+  local cwd = vim.fn.getcwd()
+  vim.cmd("lcd " .. vim.fn.fnameescape(root))
+  local bufnr = open_file(root .. "/selected.md")
+  -- Vimwiki can own Markdown buffers; select the actual Markdown formatter here.
+  vim.bo[bufnr].filetype = "markdown"
+  run_format(bufnr, { name = "Markdown file scope" })
+  if vim.api.nvim_buf_get_lines(bufnr, 0, 1, false)[1] ~= "# Selected" then
+    add_error("Markdown formatter did not fix the selected buffer")
+  end
+  if vim.fn.readfile(root .. "/unrelated.md")[1] ~= "#Untouched" then
+    add_error("Markdown formatter modified an unrelated file through configured globs")
+  end
+  vim.bo[bufnr].modified = false
+  pcall(vim.api.nvim_buf_delete, bufnr, { force = true })
+  vim.cmd("lcd " .. vim.fn.fnameescape(cwd))
+  vim.fn.delete(root, "rf")
 end
 
 local function run_lint(bufnr, test)
@@ -774,6 +816,7 @@ run_vimwiki_command_check()
 run_plugin_checks()
 run_tool_inventory_checks()
 run_save_behavior_checks()
+run_format_scope_test()
 
 local tests = {
   {

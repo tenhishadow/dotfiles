@@ -3,7 +3,7 @@
 Applies only to `dotfiles/.config/nvim/`.
 
 This is the canonical Neovim config. Generated test copies under `.test/` are
-not source of truth.
+not source of truth. The root and `dotfiles/AGENTS.md` own shared rules.
 
 ## Structure
 
@@ -27,14 +27,12 @@ not source of truth.
 
 ## Editing Rules
 
-- Keep startup flow simple and predictable.
 - Keep the config structured like upstream lazy.nvim guidance: core settings in
   `lua/config/`, plugin specs in `lua/plugins/`, and `require("lazy").setup`
   called once from `lua/config/lazy.lua`.
 - Keep lazy.nvim bootstrap deterministic: when `lazy-lock.json` pins
   `lazy.nvim`, the bootstrap checkout must honor that exact commit.
-- Keep plugin definitions grouped by domain and avoid reintroducing copied
-  `kickstart.nvim` layout or comments.
+- Keep plugin definitions grouped by domain.
 - Prefer lazy.nvim `opts` over hand-written `config` when a plugin supports a
   standard `setup(opts)` call.
 - Add language/tool names once in `lua/config/languages.lua` when the same
@@ -50,12 +48,10 @@ not source of truth.
 - Gate plugins by minimum Neovim version when upstream requires it. The core
   config must not fail on old Debian Neovim; modern plugin/LSP features may be
   disabled there.
-- Keep the LSP plugin layer on the upstream-supported Neovim 0.11.3+
-  `vim.lsp.config` path. Older Neovim versions must keep loading the core
-  config without LSP plugins.
-- Keep `nvim-lspconfig` and Mason LSP integration gated to Neovim versions
-  supported by upstream (currently 0.11.3+). Older Neovim must still load the
-  core config without the plugin layer.
+- Keep `nvim-lspconfig` and Mason LSP integration on the Neovim 0.11.3+
+  `vim.lsp.config` path required by the current config. Recheck upstream
+  requirements when updating the lock; older Neovim must still load the core
+  config without the plugin layer.
 - Keep Kubernetes, Helm, GitOps, CI, Docker Compose, Terraform/OpenTofu, and
   policy-language filetype routing in `lua/config/filetypes.lua`; keep their
   tools and schema data in `lua/config/languages.lua`.
@@ -66,6 +62,8 @@ not source of truth.
 - Keep cold installs deterministic: `Lazy restore` must not update
   `lazy-lock.json`, Mason is opt-in via `NVIM_USE_MASON`, and blink.cmp must
   not require Rust or a prebuilt binary download by default.
+- Keep blink.cmp on its configured stable v1 line unless a major upgrade is
+  explicitly in scope.
 - Keep `lua/config/languages.lua` Mason lists limited to package names that
   exist in the Mason registry. External tools such as `kubeconform` and
   `kustomize` belong in health/manual command inventories unless Mason adds
@@ -76,23 +74,21 @@ not source of truth.
 - Keep save-time behavior non-mutating. Do not enable format-on-save,
   format-after-save, or whitespace stripping on save; formatters are for
   explicit manual use only.
+- Manual buffer formatting must operate only on that buffer. Disable formatter
+  project globs where needed, and preserve error callbacks so failures remain
+  observable instead of silently reporting success.
 - Use canonical `conform.nvim` formatter names and `nvim-lint` linter names in
   `lua/config/languages.lua`; `go-task test:nvim` must catch unknown formatter
   or linter inventory entries.
 - Keep LSP setup executable-aware and avoid noisy failures when optional
   external binaries are missing.
-- Keep comments, descriptions, and labels in English.
-- Do not edit generated `.test/nvim/.config/nvim` copies as canonical config.
 
 ## Validation
 
-```bash
-go-task test:nvim
-```
-
-This test uses isolated `.test/nvim` XDG paths and is the required smoke test
-for Neovim changes. It must also prove that a clean `Lazy! restore` does not
-modify `lazy-lock.json`.
+For runtime configuration or lockfile changes, run `go-task test:nvim`. It
+uses isolated `.test/nvim` HOME and XDG paths and must prove that a clean
+`Lazy! restore` does not modify `lazy-lock.json`. Documentation-only edits
+need the root matrix's documentation checks.
 
 Run `go-task test:nvim:profile` for startup-sensitive changes. It runs the
 smoke test first, then reports startup time and loaded plugin count.
@@ -100,6 +96,8 @@ smoke test first, then reports startup time and loaded plugin count.
 Run `go-task test:nvim:compat` for changes that affect startup, core config,
 filetype routing, health checks, or manual commands. It simulates the
 old-Neovim core-only path by disabling the plugin layer.
+This checks the fallback path on the installed binary; it does not prove
+compatibility with an older Neovim version unless that version is actually run.
 
 Run `go-task docs:nvim-keymaps:check` for keymap changes. It verifies that
 `docs/nvim-keymaps.md` matches `lua/config/keymaps_spec.lua`.
@@ -116,4 +114,4 @@ registry snapshot.
   reason documented in the plugin spec.
 - User-facing keymaps are documented in `docs/nvim-keymaps.md` with the
   current leader key written plainly.
-- `go-task test:nvim` passes or any blocker is stated precisely.
+- Applicable checks pass or any blocker is stated precisely.
