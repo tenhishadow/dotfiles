@@ -13,6 +13,10 @@ sources; this file controls Copilot's review presentation.
 - Offer a minimal GitHub suggestion when the surrounding code proves the fix.
   For an uncertain or multi-file fix, describe the required behavior and check
   instead of inventing a patch. Suggestions remain subject to owner review.
+- Include one brief test-adequacy assessment in every PR review: which changed
+  contract is covered, and any material gap or reason no new test is needed.
+  Use the validation ADR's maintenance criteria; do not request tests merely
+  to increase counts or repeat checks already enforced by lint.
 - Respect explicit owner decisions in `dotfiles/AGENTS.md`, including SSH
   policy. Do not turn intentional preferences into unsolicited hardening work.
 - Request only checks needed for the changed behavior. Never apply host

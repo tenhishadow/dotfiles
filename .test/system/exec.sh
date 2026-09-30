@@ -352,34 +352,38 @@ prepare_dotfiles_baseline_contract() {
 }
 
 check_dotfiles_baseline_check_mode() {
-  local baseline_path
-  local check_output
+  local check_output="${convergence_results_dir}/baseline-check.json"
   local expected_htop_target
-  local seed_output
 
   expected_htop_target="$(
     realpath --relative-to=/root/.config/htop \
       "${PWD}/dotfiles/.config/htop/htoprc"
   )"
-  if ! check_output="$(
-    uv run ansible-playbook playbook_install.yml --check --diff --tags configs 2>&1
-  )"; then
+  if ! ANSIBLE_JSON_INDENT=0 ANSIBLE_STDOUT_CALLBACK=ansible.posix.json \
+    uv run ansible-playbook playbook_install.yml --check --tags configs >"${check_output}"; then
     printf '%s\n' 'Baseline migration failed in check mode.' >&2
-    printf '%s\n' "${check_output}" >&2
+    cat "${check_output}" >&2
     exit 1
   fi
-  seed_output="$(
-    sed -n \
-      '/TASK \[dotfiles : Dotfiles | Seed baseline files\]/,/^TASK \[/p' \
-      <<<"${check_output}"
-  )"
-  for baseline_path in /root/.config/htop/htoprc /root/.mplayer/config; do
-    if ! grep -Fq "changed: [this_host] => (item=${baseline_path})" \
-      <<<"${seed_output}"; then
-      printf 'Check mode did not predict seeding %s.\n' "${baseline_path}" >&2
-      exit 1
-    fi
-  done
+  python3 - "${check_output}" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+result = json.loads(Path(sys.argv[1]).read_text())
+predicted = {
+    item[item["ansible_loop_var"]]["file"]["dest"]
+    for play in result["plays"]
+    for task in play["tasks"]
+    for host in task["hosts"].values()
+    if host.get("action") == "ansible.builtin.copy"
+    for item in host.get("results", [])
+    if item.get("changed")
+}
+expected = {"/root/.config/htop/htoprc", "/root/.mplayer/config"}
+if missing := expected - predicted:
+    sys.exit(f"Check mode did not predict seeding {sorted(missing)}")
+PY
   if [[ ! -L /root/.config/htop/htoprc \
       || "$(readlink -- /root/.config/htop/htoprc)" != "${expected_htop_target}" \
       || ! -L /root/.mplayer/config \
@@ -418,8 +422,8 @@ check_legacy_ponytail_link_contract
 check_foreign_baseline_symlink_rejection
 prepare_dotfiles_cleanup_contract
 prepare_dotfiles_baseline_contract
-check_dotfiles_baseline_check_mode
 convergence_results_dir="$(mktemp -d)"
+check_dotfiles_baseline_check_mode
 check_nodejs_package_migration
 
 if [[ -e /usr/lib/systemd/system/dotfiles-absent-ntpd.service || -L /etc/systemd/system/dotfiles-absent-ntpd.service ]]; then
@@ -435,7 +439,8 @@ uv run ansible-playbook .test/system/time_contract.yml
 rm -f -- /etc/chrony.conf
 
 printf '%s\n' 'Applying all repository layers in the Arch container...'
-go-task all -- --skip-tags pkg,aur
+# Exercise real container guards independently from the separate CI guard.
+CI=false go-task all -- --skip-tags pkg,aur
 
 printf '%s\n' 'Verifying observable post-install state...'
 uv run ansible-playbook .test/system/verify.yml
@@ -447,5 +452,26 @@ run_convergence_check \
   -e system_time_contract_negative_tests=false
 run_convergence_check dotfiles playbook_install.yml
 verify_dotfiles_baseline_preserved
-run_convergence_check system playbook_system.yml --skip-tags pkg,aur
+CI=false run_convergence_check system playbook_system.yml --skip-tags pkg,aur
+python3 - "${convergence_results_dir}/system.json" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+result = json.loads(Path(sys.argv[1]).read_text())
+facts = {}
+for play in result["plays"]:
+    for task in play["tasks"]:
+        for host in task["hosts"].values():
+            facts.update(host.get("ansible_facts", {}))
+expected = {
+    "system_in_ci": False,
+    "system_is_container": True,
+    "system_can_manage_systemd": False,
+    "system_time_backend": "none",
+}
+if any(facts.get(key) != value for key, value in expected.items()):
+    sys.exit("The real system role did not select container guards independently of CI")
+print("Verified real container guards with CI=false and time backend=none.")
+PY
 run_convergence_check browser-policies playbook_browser_policies.yml

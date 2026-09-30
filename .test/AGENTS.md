@@ -9,7 +9,8 @@ workspaces.
 
 ## Canonical Surfaces
 
-- `.test/test_*.py` contains standard-library regression and contract tests.
+- `.test/test_*.py` contains pytest regression and contract tests.
+- `.test/conftest.py` contains fixtures shared by multiple test modules.
 - `.test/nvim/` contains smoke runners and minimal language fixtures.
 - `.test/role_contracts.yml` validates Ansible inputs and backend selection.
 - `.test/system/` owns container-only apply, state, and convergence checks.
@@ -19,8 +20,9 @@ workspaces.
 `.test/vint_runner.py` runs vim-vint with a minimal `pkg_resources`
 compatibility shim so the project environment does not need `setuptools`.
 
-The `test_*.py` suite uses standard-library `unittest` for reusable repository
-contracts. `test_agent_tooling.py` validates Codex configuration and npm locks;
+The pytest configuration lives in `pyproject.toml`; run the same suite through
+`go-task test:python` locally and in CI. Pass selectors after `--` for a focused
+run. `test_agent_tooling.py` validates Codex configuration and npm locks;
 `test_portable_hook.py` exercises the hook through its JSON interface.
 
 `.test/workstation_report.py` provides read-only local reports for adoption,
@@ -57,8 +59,12 @@ source of truth:
 - Keep Tree-sitter parser installation optional for ordinary local smoke tests.
   CI must use required mode and fail when tools, parsers, or the success marker
   are missing.
-- Keep Python tests discoverable as `test_*.py`. Prefer local helpers and
-  `subTest` data tables over base classes or a fixture framework.
+- Keep Python tests discoverable as `test_*.py`, using plain test functions and
+  `assert`. Use `pytest.mark.parametrize` for independent cases, and `tmp_path`,
+  `monkeypatch`, and capture fixtures for isolated state. Keep specialized
+  helpers local; promote a fixture to `conftest.py` only when modules share it.
+- Follow the validation ADR for test value, removal criteria, and style. Do not
+  replace native Ansible validation with a Python copy of its Jinja expressions.
 - Keep Python contracts deterministic, network-free, secret-free, and bounded.
   Networked package compatibility and container integration checks must state
   their prerequisites and run inside the intended disposable environment.

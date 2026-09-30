@@ -19,13 +19,14 @@ review rules and `.test/AGENTS.md` fixture contracts.
 
 1. Trace the changed production behavior and test callers. Consult
    `docs/adr/0001-validation-strategy.md` when evaluating the validation layer.
-2. Check that every test observes a real contract and asserts outcomes rather
-   than implementation details. For a regression fix, verify that the case
-   fails with the broken behavior. Flag false-positive paths before style issues.
-3. Review duplication with context. Prefer a data table and `subTest` for the
-   same behavior across inputs; extract setup only when a shared helper makes
-   multiple tests clearer. Reject speculative base classes and generic fixture
-   frameworks.
+2. Apply the validation ADR's test-maintenance criteria: identify the failure
+   each case detects and whether lint or another behavioral test already owns
+   it. For regressions, verify failure with the broken behavior. Explain any
+   removed guard's replacement or retired contract; age alone is not a reason.
+3. Review pytest parametrization and fixture scope. Prefer built-in isolation
+   fixtures and helpers shared only where setup is actually the same. Flag
+   mocked behavior under test, brittle source-text assertions, and redundant
+   cases before adding new test machinery.
 4. Check isolation and clean-checkout behavior against `.test/AGENTS.md`.
    Required tracked data must fail clearly when malformed; optional installed
    runtime state must not silently change which contracts are exercised.

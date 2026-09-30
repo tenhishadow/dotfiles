@@ -78,7 +78,6 @@
         path: "{{ container_test_legacy_ponytail_root }}"
         follow: false
       register: container_test_legacy_ponytail_stat
-      changed_when: false
 
     - name: Dotfiles Test | Verify migrated Ponytail directory
       ansible.builtin.assert:
@@ -98,7 +97,6 @@
         loop_var: container_test_dotfiles_mapping
         label: "{{ container_test_dotfiles_mapping.dest }}"
       register: container_test_dotfiles_stats
-      changed_when: false
 
     - name: Dotfiles Test | Verify managed links
       ansible.builtin.assert:
@@ -126,13 +124,11 @@
         loop_var: container_test_baseline_file
         label: "{{ container_test_baseline_file.dest }}"
       register: container_test_baseline_stats
-      changed_when: false
 
     - name: Dotfiles Test | Verify baseline files
       ansible.builtin.assert:
         that:
           - container_test_baseline_result.stat.isreg | default(false)
-          - not (container_test_baseline_result.stat.islnk | default(false))
           - >-
             container_test_baseline_result.stat.mode
             == container_test_baseline_result.container_test_baseline_file.mode
@@ -155,7 +151,6 @@
         loop_var: container_test_cleanup_path
         label: "{{ container_test_cleanup_path }}"
       register: container_test_cleanup_stats
-      changed_when: false
 
     - name: Dotfiles Test | Verify repository cleanup links absent
       ansible.builtin.assert:
@@ -187,7 +182,6 @@
         loop_var: container_test_cleanup_fixture
         label: "{{ container_test_cleanup_fixture.name }}"
       register: container_test_cleanup_fixture_stats
-      changed_when: false
 
     - name: Dotfiles Test | Verify cleanup boundary
       ansible.builtin.assert:
@@ -215,7 +209,6 @@
         loop_var: container_test_system_path
         label: "{{ container_test_system_path }}"
       register: container_test_system_stats
-      changed_when: false
 
     - name: System Test | Verify managed files
       ansible.builtin.assert:
@@ -241,7 +234,6 @@
         loop_var: container_test_content_spec
         label: "{{ container_test_content_spec.path }}"
       register: container_test_system_content_results
-      changed_when: false
 
     - name: System Test | Verify managed content
       ansible.builtin.assert:
@@ -288,7 +280,6 @@
         loop_var: container_test_skipped_path
         label: "{{ container_test_skipped_path }}"
       register: container_test_skipped_stats
-      changed_when: false
 
     - name: Container Test | Verify guarded paths absent
       ansible.builtin.assert:
@@ -312,7 +303,6 @@
         loop_var: container_test_policy_spec
         label: "{{ container_test_policy_spec.path }}"
       register: container_test_policy_stats
-      changed_when: false
 
     - name: Browser Policies Test | Verify policy files
       ansible.builtin.assert:
@@ -338,7 +328,6 @@
         loop_var: container_test_policy_spec
         label: "{{ container_test_policy_spec.path }}"
       register: container_test_policy_contents
-      changed_when: false
 
     - name: Browser Policies Test | Verify policy content
       ansible.builtin.assert:

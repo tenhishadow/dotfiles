@@ -3,38 +3,12 @@
 from __future__ import annotations
 
 import os
-import shutil
 import subprocess
 import sys
-import tempfile
-import unittest
-from pathlib import Path
 
+import pytest
 import yaml
 
-ROOT = Path(__file__).resolve().parent.parent
-WORKFLOW = yaml.safe_load((ROOT / ".github/workflows/dependencies.yml").read_text())
-APPLY_SCRIPT = next(
-    step["run"]
-    for step in WORKFLOW["jobs"]["publish"]["steps"]
-    if step.get("id") == "apply"
-)
-DEPENDENCY_FILES = (
-    ".github/actions/setup/action.yml",
-    ".github/workflows/ansible.yml",
-    ".github/tools/commitlint/package.json",
-    ".github/tools/commitlint/package-lock.json",
-    ".pre-commit-config.yaml",
-    "Taskfile.yml",
-    "pyproject.toml",
-    "requirements.yml",
-    "uv.lock",
-    "dotfiles/.config/nvim/lazy-lock.json",
-    "dotfiles/.local/share/codex-cli/locked/package.json",
-    "dotfiles/.local/share/codex-cli/locked/package-lock.json",
-    "dotfiles/.local/share/codex-mcp/context7/package.json",
-    "dotfiles/.local/share/codex-mcp/context7/package-lock.json",
-)
 CI_FILES = {
     ".github/workflows/ansible.yml": (
         "name: Check\non: push\npermissions:\n  contents: read\n"
@@ -49,171 +23,203 @@ CI_FILES = {
         '        version: "1.2.3"\n'
     ),
 }
+DEPENDENCY_FILES = (
+    *CI_FILES,
+    ".github/tools/commitlint/package.json",
+    ".github/tools/commitlint/package-lock.json",
+    ".pre-commit-config.yaml",
+    "Taskfile.yml",
+    "pyproject.toml",
+    "requirements.yml",
+    "uv.lock",
+    "dotfiles/.config/nvim/lazy-lock.json",
+    "dotfiles/.local/share/codex-cli/locked/package.json",
+    "dotfiles/.local/share/codex-cli/locked/package-lock.json",
+    "dotfiles/.local/share/codex-mcp/context7/package.json",
+    "dotfiles/.local/share/codex-mcp/context7/package-lock.json",
+)
 
 
-class DependencyPatchTest(unittest.TestCase):
-    """Run the actual publisher script with patches from disposable Git indexes."""
+def _git(repository, *args):
+    return subprocess.check_output(
+        ["git", "-c", "core.autocrlf=false", *args],
+        cwd=repository,
+        stderr=subprocess.PIPE,
+        timeout=30,
+    )
 
-    def setUp(self) -> None:
-        workspace = Path(tempfile.mkdtemp(prefix="dependency-patch-test-"))
-        self.addCleanup(shutil.rmtree, workspace)
-        self.repository = workspace / "repository"
-        self.repository.mkdir()
-        self.runtime = workspace / "runtime"
-        self.artifact = self.runtime / "dependency-artifact/dependencies.patch"
-        self.artifact.parent.mkdir(parents=True)
-        self.git("init", "--quiet")
-        for name in (*DEPENDENCY_FILES, "README.md"):
-            path = self.repository / name
-            path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_text(CI_FILES.get(name, "original\n"), encoding="utf-8")
-        self.git("add", ".")
 
-    def git(self, *args: str) -> bytes:
-        """Run Git without relying on a real commit or the user's Git configuration."""
+@pytest.fixture(name="publisher")
+def _publisher(tmp_path, repo_root, monkeypatch):
+    workflow = yaml.safe_load(
+        (repo_root / ".github/workflows/dependencies.yml").read_text()
+    )
+    script = next(
+        step["run"]
+        for step in workflow["jobs"]["publish"]["steps"]
+        if step.get("id") == "apply"
+    )
+    repository = tmp_path / "repository"
+    repository.mkdir()
+    runtime = tmp_path / "runtime"
+    artifact = runtime / "dependency-artifact/dependencies.patch"
+    artifact.parent.mkdir(parents=True)
+    monkeypatch.setenv("GIT_CONFIG_GLOBAL", os.devnull)
+    monkeypatch.setenv("GIT_CONFIG_NOSYSTEM", "1")
+    monkeypatch.setenv("RUNNER_TEMP", str(runtime))
+    monkeypatch.setenv("DEPENDENCY_PATHS", workflow["env"]["DEPENDENCY_PATHS"])
+    _git(repository, "init", "--quiet")
+    for name in (*DEPENDENCY_FILES, "README.md"):
+        path = repository / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(CI_FILES.get(name, "original\n"), encoding="utf-8")
+    _git(repository, "add", ".")
+    return repository, artifact, script
 
-        return subprocess.check_output(
-            ["git", "-c", "core.autocrlf=false", *args],
-            cwd=self.repository,
-            env={**os.environ, "GIT_CONFIG_GLOBAL": os.devnull},
-            stderr=subprocess.PIPE,
-            timeout=30,
+
+def _export_patch(repository, artifact):
+    artifact.write_bytes(_git(repository, "diff", "--binary", "--no-renames"))
+    _git(repository, "checkout", "--", ".")
+
+
+def _apply_patch(repository, script):
+    return subprocess.run(
+        [sys.executable, "-c", script],
+        cwd=repository,
+        capture_output=True,
+        text=True,
+        check=False,
+        timeout=30,
+    )
+
+
+def test_non_ci_dependency_changes_are_applied_as_data(publisher):
+    repository, artifact, script = publisher
+    contents = "updated $(touch unexpected-execution)\n"
+    names = [name for name in DEPENDENCY_FILES if name not in CI_FILES]
+    for name in names:
+        (repository / name).write_text(contents, encoding="utf-8")
+    _export_patch(repository, artifact)
+
+    result = _apply_patch(repository, script)
+
+    assert result.returncode == 0, result.stderr
+    for name in names:
+        assert (repository / name).read_text() == contents, name
+    assert not (repository / "unexpected-execution").exists()
+
+
+def test_existing_action_and_annotated_bootstrap_pins_can_update(publisher):
+    repository, artifact, script = publisher
+    for name, original in CI_FILES.items():
+        (repository / name).write_text(
+            original.replace("1" * 40, "2" * 40).replace("1.2.3", "2.3.4"),
+            encoding="utf-8",
         )
+    _export_patch(repository, artifact)
 
-    def export_patch(self) -> None:
-        """Restore the checkout after capturing a potentially hostile patch."""
+    result = _apply_patch(repository, script)
 
-        self.artifact.write_bytes(self.git("diff", "--binary", "--no-renames"))
-        self.git("checkout", "--", ".")
-
-    def apply_patch(self) -> subprocess.CompletedProcess[str]:
-        """Execute the publisher's real inline Python, without credentials."""
-
-        return subprocess.run(
-            [sys.executable, "-c", APPLY_SCRIPT],
-            cwd=self.repository,
-            env={
-                **os.environ,
-                "GIT_CONFIG_GLOBAL": os.devnull,
-                "RUNNER_TEMP": str(self.runtime),
-                "DEPENDENCY_PATHS": WORKFLOW["env"]["DEPENDENCY_PATHS"],
-            },
-            capture_output=True,
-            text=True,
-            check=False,
-            timeout=30,
-        )
-
-    def test_applies_non_ci_dependency_surfaces_as_data(self) -> None:
-        contents = "updated $(touch unexpected-execution)\n"
-        names = [name for name in DEPENDENCY_FILES if name not in CI_FILES]
-        for name in names:
-            (self.repository / name).write_text(contents, encoding="utf-8")
-        self.export_patch()
-
-        result = self.apply_patch()
-
-        self.assertEqual(0, result.returncode, result.stderr)
-        for name in names:
-            with self.subTest(path=name):
-                self.assertEqual(contents, (self.repository / name).read_text())
-        self.assertFalse((self.repository / "unexpected-execution").exists())
-
-    def test_allows_existing_action_and_annotated_bootstrap_pin_updates(self) -> None:
-        for name, original in CI_FILES.items():
-            updated = original.replace("1" * 40, "2" * 40).replace("1.2.3", "2.3.4")
-            (self.repository / name).write_text(updated, encoding="utf-8")
-        self.export_patch()
-
-        result = self.apply_patch()
-
-        self.assertEqual(0, result.returncode, result.stderr)
-        for name in CI_FILES:
-            self.assertIn("2" * 40, (self.repository / name).read_text())
-
-    def test_rejects_ci_behavior_and_action_repository_changes(self) -> None:
-        cases = {
-            ".github/workflows/ansible.yml": (
-                ("on: push", "on: pull_request_target"),
-                ("contents: read", "contents: write"),
-                ("actions/checkout@", "attacker/checkout@"),
-                (
-                    "    steps:",
-                    "    env:\n      KEY: ${{ secrets.PRIVATE_KEY }}\n    steps:",
-                ),
-            ),
-            ".github/actions/setup/action.yml": (
-                ("depName=astral-sh/uv", "depName=attacker/uv"),
-                ('version: "1.2.3"', 'version: "${{ secrets.PRIVATE_KEY }}"'),
-            ),
-        }
-        for name, replacements in cases.items():
-            for old, new in replacements:
-                with self.subTest(path=name, replacement=new):
-                    path = self.repository / name
-                    path.write_text(CI_FILES[name].replace(old, new), encoding="utf-8")
-                    self.export_patch()
-
-                    result = self.apply_patch()
-
-                    self.assertNotEqual(0, result.returncode)
-                    self.assertIn("CI changes must only update", result.stderr)
-                    path.write_text(CI_FILES[name], encoding="utf-8")
-                    self.git("add", name)
-
-    def test_rejects_mixed_patch_before_any_file_is_applied(self) -> None:
-        for name in ("uv.lock", "README.md"):
-            (self.repository / name).write_text("unexpected\n", encoding="utf-8")
-        self.export_patch()
-
-        result = self.apply_patch()
-
-        self.assertNotEqual(0, result.returncode)
-        self.assertIn("outside tracked dependency paths", result.stderr)
-        self.assertEqual(b"", self.git("diff"))
-        self.assertEqual("original\n", (self.repository / "uv.lock").read_text())
-
-    def test_rejects_new_files_even_inside_dependency_directories(self) -> None:
-        path = self.repository / ".github/workflows/injected.yml"
-        path.write_text("unexpected\n", encoding="utf-8")
-        self.git("add", "--intent-to-add", str(path))
-        self.artifact.write_bytes(self.git("diff", "--binary", "--no-renames"))
-        self.git("rm", "--force", str(path))
-
-        result = self.apply_patch()
-
-        self.assertNotEqual(0, result.returncode)
-        self.assertFalse(path.exists())
-
-    def test_rejects_dependency_deletion(self) -> None:
-        (self.repository / "uv.lock").unlink()
-        self.export_patch()
-
-        result = self.apply_patch()
-
-        self.assertNotEqual(0, result.returncode)
-        self.assertIn("must remain regular", result.stderr)
-
-    def test_rejects_symlink_and_executable_modes(self) -> None:
-        path = self.repository / "uv.lock"
-        for mode in ("symlink", "executable"):
-            with self.subTest(mode=mode):
-                if mode == "symlink":
-                    path.unlink()
-                    path.symlink_to("README.md")
-                else:
-                    path.chmod(0o755)
-                self.export_patch()
-
-                result = self.apply_patch()
-
-                self.assertNotEqual(0, result.returncode)
-                self.assertIn("must remain regular", result.stderr)
-                # Reinitialize only this fixture's index before the next case.
-                path.unlink()
-                path.write_text("original\n", encoding="utf-8")
-                self.git("add", "uv.lock")
+    assert result.returncode == 0, result.stderr
+    for name in CI_FILES:
+        assert "2" * 40 in (repository / name).read_text()
 
 
-if __name__ == "__main__":
-    unittest.main()
+@pytest.mark.parametrize(
+    ("name", "old", "new"),
+    [
+        pytest.param(
+            ".github/workflows/ansible.yml",
+            "on: push",
+            "on: pull_request_target",
+            id="privileged-trigger",
+        ),
+        pytest.param(
+            ".github/workflows/ansible.yml",
+            "contents: read",
+            "contents: write",
+            id="write-permission",
+        ),
+        pytest.param(
+            ".github/workflows/ansible.yml",
+            "actions/checkout@",
+            "attacker/checkout@",
+            id="action-repository",
+        ),
+        pytest.param(
+            ".github/workflows/ansible.yml",
+            "    steps:",
+            "    env:\n      KEY: ${{ secrets.PRIVATE_KEY }}\n    steps:",
+            id="credential-exposure",
+        ),
+        pytest.param(
+            ".github/actions/setup/action.yml",
+            "depName=astral-sh/uv",
+            "depName=attacker/uv",
+            id="bootstrap-repository",
+        ),
+        pytest.param(
+            ".github/actions/setup/action.yml",
+            'version: "1.2.3"',
+            'version: "${{ secrets.PRIVATE_KEY }}"',
+            id="bootstrap-expression",
+        ),
+    ],
+)
+def test_ci_behavior_changes_are_rejected(publisher, name, old, new):
+    repository, artifact, script = publisher
+    (repository / name).write_text(
+        CI_FILES[name].replace(old, new), encoding="utf-8"
+    )
+    _export_patch(repository, artifact)
+
+    result = _apply_patch(repository, script)
+
+    assert result.returncode != 0
+    assert "CI changes must only update" in result.stderr
+
+
+def test_mixed_patch_is_rejected_before_any_file_is_applied(publisher):
+    repository, artifact, script = publisher
+    for name in ("uv.lock", "README.md"):
+        (repository / name).write_text("unexpected\n", encoding="utf-8")
+    _export_patch(repository, artifact)
+
+    result = _apply_patch(repository, script)
+
+    assert result.returncode != 0
+    assert "outside tracked dependency paths" in result.stderr
+    assert _git(repository, "diff") == b""
+    assert (repository / "uv.lock").read_text() == "original\n"
+
+
+def test_new_files_are_rejected_even_inside_dependency_directories(publisher):
+    repository, artifact, script = publisher
+    path = repository / ".github/workflows/injected.yml"
+    path.write_text("unexpected\n", encoding="utf-8")
+    _git(repository, "add", "--intent-to-add", str(path))
+    artifact.write_bytes(_git(repository, "diff", "--binary", "--no-renames"))
+    _git(repository, "rm", "--force", str(path))
+
+    result = _apply_patch(repository, script)
+
+    assert result.returncode != 0
+    assert not path.exists()
+
+
+@pytest.mark.parametrize("mode", ["deleted", "symlink", "executable"])
+def test_dependencies_must_remain_regular_nonexecutable_files(publisher, mode):
+    repository, artifact, script = publisher
+    path = repository / "uv.lock"
+    if mode == "executable":
+        path.chmod(0o755)
+    else:
+        path.unlink()
+        if mode == "symlink":
+            path.symlink_to("README.md")
+    _export_patch(repository, artifact)
+
+    result = _apply_patch(repository, script)
+
+    assert result.returncode != 0
+    assert "must remain regular" in result.stderr

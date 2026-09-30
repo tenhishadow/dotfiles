@@ -21,7 +21,7 @@ local dry run. Existing remote Renovate PRs are not closed by a local edit.
 | Ansible collections | Latest stable Galaxy releases in `requirements.yml`. |
 | npm packages | Exact direct versions and transitive locks for managed Codex/MCP packages and `.github/tools/`. Lifecycle scripts are disabled. |
 | Neovim plugins | Lazy updates every declared lock entry in a temporary HOME and XDG workspace. |
-| Pre-commit hooks | Native `pre-commit autoupdate`. |
+| Pre-commit hooks | Native `pre-commit autoupdate --freeze` records full commit SHAs and version comments; the updater normalizes frozen-comment spacing for Prettier. |
 | GitHub Actions | Pinact updates version comments and full commit SHAs in workflows and local composite actions. |
 | Repository tools | Renovate and its required Node minimum together, pinact, and the matching Super-Linter image tag. |
 | CI bootstrap tools | Exact versions marked with GitHub release annotations in `.github/` YAML. |

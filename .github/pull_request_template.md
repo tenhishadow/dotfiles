@@ -5,10 +5,10 @@ PR when relevant. Use a Conventional Commit PR title; see CONTRIBUTING.md. -->
 
 ## Validation
 
-<!-- Record commands actually run and their results, plus relevant blockers.
-Choose checks for the changed contract; documentation-only changes do not need
-the full runtime suite. Distinguish container/simulated tests from live VM or
-hardware evidence. -->
+<!-- Explain why the selected tests are sufficient for the changed contract,
+including why new tests are needed or unnecessary. For removals, identify the
+replacement coverage or retired behavior. Record actual commands/results and
+blockers; distinguish container/simulated evidence from live VM or hardware. -->
 
 ## Risks And Recovery
 

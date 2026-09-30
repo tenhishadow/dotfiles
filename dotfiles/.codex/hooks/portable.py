@@ -144,7 +144,9 @@ def _rm_is_broad(arguments: list[str]) -> bool:
             recursive = recursive or "r" in argument[1:] or "R" in argument[1:]
         elif argument:
             targets.append(posixpath.normpath(argument))
-    return recursive and any(target in _broad_rm_targets() for target in targets)
+    return recursive and any(
+        target in _broad_rm_targets() for target in targets
+    )
 
 
 def _git_arguments(words: list[str]) -> list[str] | None:
@@ -200,7 +202,9 @@ def _git_checkout_is_destructive(options: list[str]) -> bool:
         operand in {".", ".."} or operand.startswith(("./", "../"))
         for operand in operands
     )
-    return explicit_relative or len(operands) > 1 or (path_mode and bool(operands))
+    return (
+        explicit_relative or len(operands) > 1 or (path_mode and bool(operands))
+    )
 
 
 def _git_restore_is_destructive(options: list[str]) -> bool:
@@ -282,7 +286,10 @@ def main() -> None:
         return
     if not isinstance(event, dict):
         return
-    if event.get("hook_event_name") != "PreToolUse" or event.get("tool_name") != "Bash":
+    if (
+        event.get("hook_event_name") != "PreToolUse"
+        or event.get("tool_name") != "Bash"
+    ):
         return
     tool_input = event.get("tool_input")
     if not isinstance(tool_input, dict):

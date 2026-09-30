@@ -1,8 +1,9 @@
 [MAIN]
 py-version = 3.14
+init-hook = import sys; sys.path[:0] = [".test", ".github/scripts"]
 
 [BASIC]
 no-docstring-rgx = ^(?:_|test_)
 
 [FORMAT]
-max-line-length = 88
+max-line-length = 80

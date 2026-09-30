@@ -1,0 +1,27 @@
+---
+- name: Contract Tests | Derive time backend
+  ansible.builtin.include_role:
+    name: system
+    tasks_from: time-backend
+  vars:
+    system_time_enabled: true
+    system_chrony_enabled: "{{ contract_tests_time_case.chrony_enabled | default(true) }}"
+    system_timesyncd_enabled: true
+    system_can_manage_systemd: "{{ contract_tests_time_case.manageable | default(true) }}"
+    system_is_virtual_machine: "{{ contract_tests_time_case.virtual_machine }}"
+
+- name: Contract Tests | Verify time backend
+  ansible.builtin.assert:
+    that:
+      - system_time_backend == contract_tests_time_case.expected.backend
+      - >-
+        [system_can_manage_chrony, system_can_manage_timesyncd]
+        == contract_tests_time_case.expected.guards
+      - >-
+        [system_time_service_name, system_time_wait_service_name]
+        == contract_tests_time_case.expected.services
+      - >-
+        system_time_conflicting_services | sort
+        == contract_tests_time_case.expected.conflicts | sort
+    fail_msg: "Unexpected time backend for {{ contract_tests_time_case.name }}."
+    quiet: true

@@ -24,6 +24,8 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
+from gen_agents_map import EXCLUDED_DIRS, repo_root
+
 # Files that make up the instruction / documentation layer.
 DOC_GLOBS = (
     "**/AGENTS.md",
@@ -51,9 +53,6 @@ ANCHORS = (
     ".test/",
 )
 
-# Vendored / generated trees that are not part of the instruction layer.
-EXCLUDED_DIRS = (".venv", ".git", ".collections", ".ansible", ".task", "node_modules")
-
 # Match go-task only at a command boundary (line start or inside backticks) so
 # package lists like "pacman ... git go-task uv" are not read as invocations.
 GO_TASK_RE = re.compile(
@@ -64,11 +63,6 @@ GO_TASK_RE = re.compile(
 TOKEN_RE = re.compile(r"[`(]([A-Za-z0-9.][A-Za-z0-9._/*-]+)[`)]")
 PLAYBOOK_RE = re.compile(r"\bplaybook_[a-z_]+\.yml\b")
 IMPORT_RE = re.compile(r"^@([A-Za-z0-9_./-]+\.md)\s*$", re.MULTILINE)
-
-
-def repo_root() -> Path:
-    """Return the repository root (parent of the .test directory)."""
-    return Path(__file__).resolve().parent.parent
 
 
 def taskfile_task_names(root: Path) -> set[str]:
@@ -142,10 +136,14 @@ def check_paths(root: Path, text: str) -> list[str]:
     problems = []
     optional = optional_runtime_paths(root)
     candidates = set(PLAYBOOK_RE.findall(text))
-    candidates.update(tok for tok in TOKEN_RE.findall(text) if tok.startswith(ANCHORS))
+    candidates.update(
+        tok for tok in TOKEN_RE.findall(text) if tok.startswith(ANCHORS)
+    )
     for ref in candidates:
         if ref.rstrip("/") not in optional and not path_exists(root, ref):
-            problems.append(f"missing repository path referenced in docs: {ref}")
+            problems.append(
+                f"missing repository path referenced in docs: {ref}"
+            )
     return problems
 
 
@@ -157,7 +155,9 @@ def check_provider_adapters(root: Path) -> list[str]:
         if adapter.is_file():
             for ref in IMPORT_RE.findall(adapter.read_text(encoding="utf-8")):
                 if not (adapter.parent / ref).is_file():
-                    problems.append(f"{name}: missing instruction import: {ref}")
+                    problems.append(
+                        f"{name}: missing instruction import: {ref}"
+                    )
 
     for manifest in sorted((root / ".agents/skills").glob("*/SKILL.md")):
         skill = manifest.parent
@@ -188,7 +188,10 @@ def main() -> int:
         for problem in sorted(set(problems)):
             print(f"  {problem}")
         return 1
-    print(f"instruction references resolve: {files} docs, {len(tasks)} known tasks")
+    print(
+        f"instruction references resolve: {files} docs, "
+        f"{len(tasks)} known tasks"
+    )
     return 0
 
 

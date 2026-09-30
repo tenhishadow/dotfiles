@@ -84,7 +84,7 @@ remain discoverable with `go-task --list`; internal helpers stay hidden.
 | `go-task browser-policies` | Apply system policy files. |
 | `go-task browser-policies:report` | Report expected policy paths and installed applications. |
 | `go-task test:system` | Validate package targets and convergence of all layers in a disposable Arch container. |
-| `go-task test:python` | Run repository Python contract and regression tests. |
+| `go-task test:python` | Run pytest through the locked environment; pass selectors after `--`. |
 | `go-task test:agent-tooling` | Validate managed Codex configs, dependency locks, and hook behavior. |
 | `go-task deps-upgrade` | Update every managed dependency pin and lock locally without committing or pushing. |
 | `go-task ci:static` | Run the shared cheap CI gate without Neovim, Docker, or host writes. |
@@ -92,7 +92,7 @@ remain discoverable with `go-task --list`; internal helpers stay hidden.
 | `go-task verify` | Run the full local validation aggregate, including Docker-backed checks. |
 | `go-task lint` | Run `ansible-lint`. |
 | `go-task lint:markdown` | Lint tracked and untracked, nonignored Markdown with the shared repository rules. |
-| `go-task lint:python` | Lint and format-check repository Python with Ruff and Pylint. |
+| `go-task lint:python` | Run the shared Ruff, formatting, and Pylint pre-commit hooks. |
 | `go-task yamllint` | Lint YAML through the locked Python environment. |
 | `go-task vint` | Lint Vimscript with Neovim syntax enabled. |
 | `go-task test:nvim` | Run the isolated Neovim smoke test. |
@@ -169,7 +169,7 @@ history, databases, credentials, and `~/.codex/config.toml` remain local.
 `go-task codex:install` uses `npm ci`; agent startup never downloads packages.
 `go-task test:agent-tooling` checks managed configs, exact npm lock agreement,
 integrity hashes, and the hook's real JSON interface. `go-task test:python`
-runs the complete standard-library regression suite.
+runs the complete pytest regression suite.
 
 Context7 and the official OpenAI documentation server are sufficient for this
 repository's public documentation work. Playwright, Grafana, and GitHub writes
@@ -202,7 +202,14 @@ layers in a disposable Arch container, and Super-Linter. The convergence test
 requires a successful first apply, post-install assertions, and a second apply
 with zero changes. Check mode remains a preview, not an idempotency proof.
 
-The decision and framework escalation criteria are recorded in
+Python tests use pytest functions and fixtures; the same locked runner and
+pre-commit hooks run locally and in CI. For a focused run, for example:
+
+```bash
+go-task test:python -- .test/test_ssh_config.py -q
+```
+
+Test value, removal criteria, Python style, and layer boundaries are recorded in
 [`docs/adr/0001-validation-strategy.md`](docs/adr/0001-validation-strategy.md).
 
 For repeated container runs, copy `.test/system/local.env.example` to

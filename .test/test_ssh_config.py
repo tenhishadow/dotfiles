@@ -1,116 +1,106 @@
-"""Black-box regression tests for the managed OpenSSH client config."""
+"""Black-box regression tests for the owner's managed OpenSSH policy."""
 
-from __future__ import annotations
-
-import subprocess
-import tempfile
-import unittest
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent.parent
-SSH_CONFIG = ROOT / "dotfiles/.ssh/config"
+import pytest
+
 INCLUDE_GLOBS = ("config.d/*", "conf.d/*")
 
 
 def _effective_config(
-    host: str, include_files: dict[str, str] | None = None
+    run_command,
+    repo_root: Path,
+    tmp_path: Path,
+    host: str,
+    include_files: dict[str, str] | None = None,
 ) -> dict[str, str]:
-    with tempfile.TemporaryDirectory() as directory:
-        test_root = Path(directory)
-        config_lines = SSH_CONFIG.read_text(encoding="utf-8").splitlines()
-        for include_glob in INCLUDE_GLOBS:
-            directive = f"Include {include_glob}"
-            matches = [
-                index
-                for index, line in enumerate(config_lines)
-                if line.strip() == directive
-            ]
-            if len(matches) != 1:
-                raise AssertionError(f"expected exactly one {directive!r}")
-            config_lines[matches[0]] = f"Include {test_root / include_glob}"
-
-        relative_includes = [
-            line
-            for line in config_lines
-            if line.strip().startswith("Include ")
-            and any(not pattern.startswith("/") for pattern in line.split()[1:])
+    """Resolve the real SSH configuration without reading private includes."""
+    config_lines = (
+        (repo_root / "dotfiles/.ssh/config")
+        .read_text(encoding="utf-8")
+        .splitlines()
+    )
+    for include_glob in INCLUDE_GLOBS:
+        directive = f"Include {include_glob}"
+        matches = [
+            index
+            for index, line in enumerate(config_lines)
+            if line.strip() == directive
         ]
-        if relative_includes:
-            raise AssertionError(
-                f"test config contains relative includes: {relative_includes}"
-            )
-
-        config_path = test_root / "config"
-        config_path.write_text("\n".join(config_lines) + "\n", encoding="utf-8")
-
-        for relative_path, content in (include_files or {}).items():
-            include_path = test_root / relative_path
-            include_path.parent.mkdir(parents=True, exist_ok=True)
-            include_path.write_text(content, encoding="utf-8")
-
-        result = subprocess.run(
-            ["ssh", "-G", "-F", str(config_path), host],
-            check=True,
-            capture_output=True,
-            text=True,
-            timeout=10,
-        )
-        return {
-            key: value
-            for line in result.stdout.splitlines()
-            for key, value in [line.split(maxsplit=1)]
-        }
+        assert len(matches) == 1, f"expected exactly one {directive!r}"
+        config_lines[matches[0]] = f"Include {tmp_path / include_glob}"
+    relative_includes = [
+        line
+        for line in config_lines
+        if line.strip().startswith("Include ")
+        and any(not pattern.startswith("/") for pattern in line.split()[1:])
+    ]
+    assert not relative_includes, (
+        f"test config contains relative includes: {relative_includes}"
+    )
+    config_path = tmp_path / "config"
+    config_path.write_text("\n".join(config_lines) + "\n", encoding="utf-8")
+    for relative_path, content in (include_files or {}).items():
+        include_path = tmp_path / relative_path
+        include_path.parent.mkdir(parents=True, exist_ok=True)
+        include_path.write_text(content, encoding="utf-8")
+    result = run_command(
+        ["ssh", "-G", "-F", str(config_path), host], check=True
+    )
+    return dict(line.split(maxsplit=1) for line in result.stdout.splitlines())
 
 
-class SshConfigContractTest(unittest.TestCase):
-    """Validate owner-selected defaults and host-specific override precedence."""
+def test_default_host_follows_owner_policy(run_command, repo_root, tmp_path):
+    config = _effective_config(
+        run_command, repo_root, tmp_path, "default.example"
+    )
+    expected = {
+        "forwardagent": "yes",
+        "compression": "yes",
+        "checkhostip": "no",
+        "hashknownhosts": "no",
+        "kbdinteractiveauthentication": "no",
+        "passwordauthentication": "no",
+        "stricthostkeychecking": "false",
+        "updatehostkeys": "true",
+        "userknownhostsfile": "/dev/null",
+    }
+    assert {key: config[key] for key in expected} == expected
 
-    def test_default_host_follows_owner_policy(self) -> None:
-        config = _effective_config("default.example")
 
-        self.assertEqual("yes", config["forwardagent"])
-        self.assertEqual("yes", config["compression"])
-        self.assertEqual("no", config["checkhostip"])
-        self.assertEqual("no", config["hashknownhosts"])
-        self.assertEqual("no", config["kbdinteractiveauthentication"])
-        self.assertEqual("no", config["passwordauthentication"])
-        self.assertEqual("false", config["stricthostkeychecking"])
-        self.assertEqual("true", config["updatehostkeys"])
-        self.assertEqual("/dev/null", config["userknownhostsfile"])
-
-    def test_included_host_config_precedes_general_defaults(self) -> None:
-        for include_dir in ("config.d", "conf.d"):
-            with self.subTest(include_dir=include_dir):
-                config = _effective_config(
-                    "override.example",
-                    {
-                        f"{include_dir}/10-test.conf": """Host override.example
+@pytest.mark.parametrize("include_dir", ["config.d", "conf.d"])
+def test_included_host_config_precedes_general_defaults(
+    run_command, repo_root, tmp_path, include_dir
+):
+    config = _effective_config(
+        run_command,
+        repo_root,
+        tmp_path,
+        "override.example",
+        {
+            f"{include_dir}/10-test.conf": """Host override.example
   ForwardAgent no
   KbdInteractiveAuthentication yes
   StrictHostKeyChecking yes
-"""
-                    },
-                )
-
-                self.assertEqual("no", config["forwardagent"])
-                self.assertEqual("yes", config["kbdinteractiveauthentication"])
-                self.assertEqual("true", config["stricthostkeychecking"])
-
-    def test_all_include_directories_are_evaluated_at_top_level(self) -> None:
-        config = _effective_config(
-            "second.example",
-            {
-                "config.d/10-first.conf": """Host first.example
-  Port 2201
 """,
-                "conf.d/10-second.conf": """Host second.example
-  Port 2202
-""",
-            },
-        )
-
-        self.assertEqual("2202", config["port"])
+        },
+    )
+    assert config["forwardagent"] == "no"
+    assert config["kbdinteractiveauthentication"] == "yes"
+    assert config["stricthostkeychecking"] == "true"
 
 
-if __name__ == "__main__":
-    unittest.main()
+def test_all_include_directories_are_evaluated_at_top_level(
+    run_command, repo_root, tmp_path
+):
+    config = _effective_config(
+        run_command,
+        repo_root,
+        tmp_path,
+        "second.example",
+        {
+            "config.d/10-first.conf": "Host first.example\n  Port 2201\n",
+            "conf.d/10-second.conf": "Host second.example\n  Port 2202\n",
+        },
+    )
+    assert config["port"] == "2202"

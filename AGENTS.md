@@ -112,6 +112,9 @@ description; this section is the agent-facing file-location map.
 - Do not broaden cleanup/removal patterns without an explicit requirement.
 - Keep Python tool dependencies in `pyproject.toml` unpinned unless the user
   explicitly asks for a constraint. Let `uv.lock` carry resolved versions.
+- Follow the Python style and test-maintenance policy in
+  `docs/adr/0001-validation-strategy.md`; use the configured Ruff/Pylint hooks
+  and pytest runner instead of adding another formatter or test framework.
 
 ## Taskfile Conventions
 
@@ -151,6 +154,9 @@ description; this section is the agent-facing file-location map.
   `dotfiles/AGENTS.md`, not inferred from a generic hardening preference.
 - Trace changed paths and commands through validation, labeler rules, and the
   dependency updater. Update the owning contract when it becomes inaccurate.
+- Assess test necessity and sufficiency for each PR using the validation ADR.
+  Identify a missing behavioral case or justify that existing checks suffice;
+  test count and assertion count are not evidence of useful coverage.
 - Flag Neovim keymap changes that do not update
   `dotfiles/.config/nvim/lua/config/keymaps_spec.lua`,
   `docs/nvim-keymaps.md`, and the keymap documentation check.
@@ -185,10 +191,10 @@ rule; do not fan the same rule out into every file.
   or a new report for each repair.
 - Update role README files, and the architecture, adoption, security, and
   migration/history docs, when role contracts or system-layer behavior change.
-- Shared lint sources are `.github/linters/.markdown-lint.yml` and
-  `.github/linters/.python-lint`. Keep `.ruff.toml` synchronized with
-  `.github/linters/.ruff.toml`; Super-Linter does not own project-aware Pylint
-  or Mypy execution. Fix Markdown violations instead of suppressing rules.
+- Shared lint sources are `.github/linters/.markdown-lint.yml`,
+  `.github/linters/.python-lint`, and `.ruff.toml`; the Super-Linter Ruff adapter
+  extends the root configuration. Pre-commit owns Python lint and formatting;
+  Super-Linter does not repeat them. Fix violations instead of suppressing rules.
 - Keep versioned automation dependencies covered by `go-task deps-upgrade`
   and the single weekly maintenance PR. Document intentional rolling or
   manual surfaces in `docs/dependency-updates.md`; do not add a competing

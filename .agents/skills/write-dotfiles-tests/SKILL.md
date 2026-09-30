@@ -2,7 +2,7 @@
 name: write-dotfiles-tests
 description: >-
   Add or fix regression coverage for changed behavior or a demonstrated gap in
-  this repository. Use existing native checks and standard-library tests.
+  this repository. Use pytest and the necessary native integration checks.
 ---
 
 # Write Dotfiles Tests
@@ -17,13 +17,13 @@ Ordinary documentation or formatting changes do not need new tests.
 ## Workflow
 
 1. Trace the changed behavior and its current callers.
-2. Reproduce the missing behavior and choose the lowest existing validation
-   layer that can observe it. Prefer native Ansible assertions, existing smoke
-   checks, and generated-output comparisons before Python.
-3. Use the existing standard-library `unittest` suite for repository logic and
-   CLI contracts that native checks cannot cover clearly. Exercise the real
-   command boundary; replace external side effects with temporary fixtures or
-   fake executables, not the behavior under test.
+2. Apply the validation ADR's necessity criteria before adding or deleting a
+   case. Choose the existing layer that can observe the behavior; production
+   Ansible input guards are not disposable test scaffolding.
+3. Use pytest functions, parametrized cases, and existing fixtures for Python
+   logic and CLI contracts. Exercise the real command boundary; replace external
+   side effects, not the behavior under test. Keep helpers local until multiple
+   modules need them, and avoid copying implementation expressions into tests.
 4. Include the smallest negative case that fails before the fix. Reproduce it
    in a temporary fixture or disposable checkout. Supply test inputs explicitly:
    optional ignored runtime installs may be absent, while malformed tracked
@@ -41,4 +41,5 @@ Ordinary documentation or formatting changes do not need new tests.
 ## Completion
 
 Show that the regression case fails before the fix and passes after it. Run
-the focused test and root validation matrix checks; report coverage limits.
+the focused test and root validation matrix checks; report coverage limits and
+explain why the changed tests are necessary and sufficient in the PR.

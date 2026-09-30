@@ -49,7 +49,9 @@ def main() -> int:
         return 1
 
     total = sum(len(paths) for paths in GROUPS.values())
-    print(f"managed paths consistent: {total} paths match the Ansible variables")
+    print(
+        f"managed paths consistent: {total} paths match the Ansible variables"
+    )
     return 0
 
 

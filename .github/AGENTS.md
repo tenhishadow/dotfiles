@@ -50,7 +50,8 @@ handoff; `docs/github-labels.md` is the required-label catalog.
   Actions token and a separate owner-scoped review credential. Activation and
   budget controls belong to `CONTRIBUTING.md`, not instruction text.
 - Follow the root instruction-sync contract for shared Ruff, Pylint, and
-  Markdown configurations; local and CI checks must consume the same rules.
+  Markdown configurations. CI calls the same pre-commit hooks and pytest
+  configuration as local validation; keep dependency refresh out of PR checks.
 - Keep `.github/linters/.yaml-lint.yml` linked to the canonical
   `dotfiles/.yamllint` configuration.
 - Keep documentation-specific Copilot rules in

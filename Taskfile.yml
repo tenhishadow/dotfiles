@@ -161,9 +161,10 @@ tasks:
         timeout {{.DEPENDENCY_COMMAND_TIMEOUT}}
         uv run ansible-galaxy collection install -r requirements.yml --upgrade
   deps-upgrade:pre-commit:
-    desc: Refresh pre-commit hook revisions.
+    desc: Refresh pre-commit hooks to immutable revisions.
     cmd: >-
-      timeout {{.DEPENDENCY_COMMAND_TIMEOUT}} uv run pre-commit autoupdate
+      timeout {{.DEPENDENCY_COMMAND_TIMEOUT}}
+      uv run python .github/scripts/update_dependencies.py pre-commit
   deps-upgrade:npm:
     desc: Refresh managed Codex and MCP manifests and npm lockfiles.
     cmd: >-
@@ -266,12 +267,12 @@ tasks:
     desc: Run Ruff and Pylint on repository Python.
     deps: [deps-python]
     cmds:
-      - "uv run ruff check ."
-      - "uv run ruff format --check ."
-      - >-
-        git ls-files -z --cached --others --exclude-standard
-        -- '*.py' ':(exclude).test/nvim/**'
-        | xargs -0 uv run pylint --rcfile=.github/linters/.python-lint
+      - task: pre-commit
+        vars: { HOOK: ruff }
+      - task: pre-commit
+        vars: { HOOK: ruff-format }
+      - task: pre-commit
+        vars: { HOOK: pylint }
   yamllint:
     desc: Lint repository YAML through the locked Python environment.
     deps: [deps-python]
@@ -333,7 +334,7 @@ tasks:
     cmd: >-
       git ls-files -z --cached --others --exclude-standard
       | SKIP="${SKIP:+${SKIP},}"{{default "" .SKIP_HOOKS | shellQuote}}
-      xargs -0 uv run pre-commit run --files
+      xargs -0 uv run pre-commit run {{if .HOOK}}{{.HOOK | shellQuote}}{{end}} --files
   doctor:
     desc: Report local tools and runtime availability without applying changes.
     cmd: "python3 .test/workstation_report.py doctor"
@@ -380,13 +381,12 @@ tasks:
   test:agent-tooling:
     desc: Validate managed Codex configs, dependency locks, and hook behavior.
     deps: [deps-python]
-    cmds:
-      - "uv run python .test/test_agent_tooling.py -v"
-      - "uv run python .test/test_portable_hook.py -v"
+    cmd: >-
+      uv run pytest .test/test_agent_tooling.py .test/test_portable_hook.py {{.CLI_ARGS}}
   test:python:
     desc: Run repository Python contract and regression tests.
     deps: [deps-python]
-    cmd: "uv run python -m unittest discover -s .test -p 'test_*.py' -v"
+    cmd: "uv run pytest {{.CLI_ARGS}}"
   ci:static:
     desc: Run cheap shared checks without Neovim, Docker, or host writes.
     cmds:
@@ -394,11 +394,10 @@ tasks:
       - task: lint:english
       - task: docs:agents:check
       - task: docs:instructions:check
-      - task: lint:python
-      - task: test:python
       - task: pre-commit
         vars:
           SKIP_HOOKS: stylua
+      - task: test:python
       - task: lint:ansible-semantics
       - task: vint
       - task: managed-paths:check

@@ -117,7 +117,9 @@ def read_os_release() -> dict[str, str]:
     os_release = Path("/etc/os-release")
     if not os_release.is_file():
         return values
-    for line in os_release.read_text(encoding="utf-8", errors="replace").splitlines():
+    for line in os_release.read_text(
+        encoding="utf-8", errors="replace"
+    ).splitlines():
         if not line or line.startswith("#") or "=" not in line:
             continue
         key, value = line.split("=", 1)
@@ -140,7 +142,8 @@ def tool_version_status(
         first_line = ANSI_RE.sub("", output.splitlines()[0])
         return (
             False,
-            f"{command}: path={resolved_path}; version=unavailable ({first_line})",
+            f"{command}: path={resolved_path}; "
+            f"version=unavailable ({first_line})",
         )
     return False, f"{command}: path={resolved_path}; version=unavailable"
 
@@ -151,7 +154,9 @@ def tool_version_line(
     return tool_version_status(command, args)[1]
 
 
-def print_tool_group(tools: tuple[tuple[str, tuple[str, ...]], ...]) -> list[str]:
+def print_tool_group(
+    tools: tuple[tuple[str, tuple[str, ...]], ...],
+) -> list[str]:
     unavailable: list[str] = []
     for command, args in tools:
         available, line = tool_version_status(command, args)
@@ -175,7 +180,9 @@ def known_dotfiles_vars() -> dict[str, str]:
         "dotfiles_ssh_config_dir": str(ssh_dir / "config.d"),
         "dotfiles_nvim_state_dir": str(nvim_state),
         "dotfiles_nvim_restore_log_path": str(nvim_state / "lazy-restore.log"),
-        "dotfiles_nvim_restore_lock_path": str(nvim_state / "lazy-restore.lock"),
+        "dotfiles_nvim_restore_lock_path": str(
+            nvim_state / "lazy-restore.lock"
+        ),
     }
 
 
@@ -339,7 +346,9 @@ def print_doctor() -> list[str]:
 
     systemctl_path = shutil.which("systemctl")
     systemd_ok = Path("/run/systemd/system").is_dir()
-    systemd_state = "available" if systemctl_path and systemd_ok else "unavailable"
+    systemd_state = (
+        "available" if systemctl_path and systemd_ok else "unavailable"
+    )
     print(f"systemd runtime: {systemd_state}")
     return unavailable
 
@@ -371,7 +380,10 @@ def print_system_report() -> None:
         groups.add(primary_group)
     except KeyError:
         pass
-    print("docker group membership: " + ("present" if "docker" in groups else "absent"))
+    print(
+        "docker group membership: "
+        + ("present" if "docker" in groups else "absent")
+    )
     print("docker group grants root-equivalent access to the Docker daemon.")
 
     section("SSHD Include")
@@ -419,7 +431,12 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "report",
-        choices=("doctor", "dotfiles-plan", "system-report", "browser-policies-report"),
+        choices=(
+            "doctor",
+            "dotfiles-plan",
+            "system-report",
+            "browser-policies-report",
+        ),
     )
     args = parser.parse_args()
 
@@ -428,7 +445,8 @@ def main() -> int:
             unavailable = print_doctor()
             if unavailable:
                 print(
-                    "mandatory components unavailable: " + ", ".join(unavailable),
+                    "mandatory components unavailable: "
+                    + ", ".join(unavailable),
                     file=sys.stderr,
                 )
                 return 1

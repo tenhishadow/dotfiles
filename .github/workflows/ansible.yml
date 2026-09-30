@@ -156,7 +156,6 @@ jobs:
           --needed
           --noprogressbar
           git
-          go-task
           neovim
           nodejs-lts-krypton
           npm
@@ -170,16 +169,19 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Set up locked validation tools
+        uses: ./.github/actions/setup
+
       - name: Check Lua formatting and keymap documentation
-        run: go-task stylua docs:nvim-keymaps:check
+        run: task stylua docs:nvim-keymaps:check
 
       - name: Test Neovim dependency upgrade failure handling
-        run: python3 .test/test_update_nvim.py -v
+        run: task test:python -- .test/test_update_nvim.py
 
       - name: Run Neovim smoke and compatibility tests
         env:
           NVIM_TS_INSTALL: required
-        run: go-task test:nvim:all
+        run: task test:nvim:all
 
   workstation_convergence:
     name: workstation-convergence (archlinux)

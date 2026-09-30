@@ -23,7 +23,14 @@ BEGIN = "<!-- BEGIN GENERATED: nested-agents (go-task docs:agents) -->"
 END = "<!-- END GENERATED: nested-agents -->"
 
 # Vendored / generated trees whose AGENTS.md files are not ours.
-EXCLUDED_DIRS = (".venv", ".git", ".collections", ".ansible", ".task", "node_modules")
+EXCLUDED_DIRS = (
+    ".venv",
+    ".git",
+    ".collections",
+    ".ansible",
+    ".task",
+    "node_modules",
+)
 EXCLUDED_PREFIXES = (Path(".test/nvim"),)
 
 
@@ -54,7 +61,9 @@ def render(root: Path) -> str:
     """Return the root AGENTS.md with the generated block refreshed."""
     text = (root / "AGENTS.md").read_text(encoding="utf-8")
     if BEGIN not in text or END not in text:
-        raise SystemExit("AGENTS.md is missing the nested-agents generator markers")
+        raise SystemExit(
+            "AGENTS.md is missing the nested-agents generator markers"
+        )
     head, _, rest = text.partition(BEGIN)
     _, _, tail = rest.partition(END)
     listing = "\n".join(f"  - `{path}`" for path in nested_agents(root))

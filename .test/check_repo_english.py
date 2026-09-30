@@ -73,7 +73,8 @@ def main() -> int:
         if found is not None:
             _, char = found
             problems.append(
-                f"{rel}: non-English letter {char!r} (U+{ord(char):04X}) in file path"
+                f"{rel}: non-English letter {char!r} "
+                f"(U+{ord(char):04X}) in file path"
             )
         data = (
             str(path.readlink()).encode("utf-8")
@@ -97,7 +98,10 @@ def main() -> int:
             "ALLOWLIST if intentional)"
         )
         return 1
-    print("repository text is free of non-English letters (English-only guard passed)")
+    print(
+        "repository text is free of non-English letters "
+        "(English-only guard passed)"
+    )
     return 0
 
 

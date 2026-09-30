@@ -19,6 +19,14 @@
       /tmp/dotfiles-foreign-time-unit.service
     system_time_contract_foreign_unit: >-
       /etc/systemd/system/dotfiles-foreign-unit.service
+    system_time_contract_expected_lines:
+      - pool 0.example.invalid iburst maxsources 2
+      - pool 1.example.invalid iburst maxsources 2
+      - driftfile /tmp/dotfiles-chrony.drift
+      - makestep 0.75 -1
+      - maxupdateskew 75
+      - rtcsync
+      - leapsectz UTC
   tasks:
     - name: Container Time Test | Require container isolation
       ansible.builtin.assert:
@@ -253,69 +261,29 @@
         group: root
         mode: "0600"
         validate: "{{ system_chrony_binary_path }} -p -f %s"
+      # Task vars override the role defaults loaded by vars_files above.
+      vars:
+        system_ntp_servers: [0.example.invalid, 1.example.invalid]
+        system_chrony_pool_max_sources: 2
+        system_chrony_makestep_threshold: 0.75
+        system_chrony_makestep_limit: -1
+        system_chrony_max_update_skew: 75
+        system_chrony_drift_path: /tmp/dotfiles-chrony.drift
+        system_chrony_leap_timezone: UTC
 
     - name: Container Time Test | Read rendered Chrony configuration
       ansible.builtin.slurp:
         src: "{{ system_time_contract_config_path }}"
       register: system_time_contract_config_content
 
-    - name: Container Time Test | Decode rendered Chrony configuration
-      ansible.builtin.set_fact:
-        system_time_contract_config_lines: >-
-          {{
-            (system_time_contract_config_content.content | b64decode).splitlines()
-          }}
-
-    - name: Container Time Test | Verify Chrony pool entries
+    - name: Container Time Test | Verify rendered Chrony settings
       ansible.builtin.assert:
         that:
           - >-
             (
-              'pool ' ~ system_time_contract_pool
-              ~ ' iburst maxsources '
-              ~ (system_chrony_pool_max_sources | string)
-            ) in system_time_contract_config_lines
+              (system_time_contract_config_content.content | b64decode).splitlines()
+              | map('trim') | reject('match', '^(#|$)') | sort
+            ) == (system_time_contract_expected_lines | sort)
         fail_msg: >-
-          The rendered Chrony configuration is missing the expected pool entry
-          for {{ system_time_contract_pool }}.
-        quiet: true
-      loop: "{{ system_ntp_servers }}"
-      loop_control:
-        loop_var: system_time_contract_pool
-        label: "{{ system_time_contract_pool }}"
-
-    - name: Container Time Test | Verify Chrony tuning
-      ansible.builtin.assert:
-        that:
-          - >-
-            (
-              system_time_contract_config_lines
-              | select('match', '^pool ')
-              | list
-              | length
-            ) == (system_ntp_servers | length)
-          - >-
-            (
-              'driftfile ' ~ system_chrony_drift_path
-            ) in system_time_contract_config_lines
-          - >-
-            (
-              'makestep '
-              ~ (system_chrony_makestep_threshold | string)
-              ~ ' '
-              ~ (system_chrony_makestep_limit | string)
-            ) in system_time_contract_config_lines
-          - >-
-            (
-              'maxupdateskew '
-              ~ (system_chrony_max_update_skew | string)
-            ) in system_time_contract_config_lines
-          - "'rtcsync' in system_time_contract_config_lines"
-          - >-
-            (
-              'leapsectz ' ~ system_chrony_leap_timezone
-            ) in system_time_contract_config_lines
-        fail_msg: >-
-          The rendered Chrony configuration does not contain the complete
-          declarative tuning contract.
+          Chrony configuration did not preserve the supplied non-default settings.
         quiet: true
