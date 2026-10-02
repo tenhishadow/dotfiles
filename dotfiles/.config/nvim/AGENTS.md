@@ -9,6 +9,7 @@ not source of truth. The root and `dotfiles/AGENTS.md` own shared rules.
 
 - `init.lua` is the minimal entry point.
 - `lua/config/lazy.lua` bootstraps lazy.nvim and loads plugin specs.
+- `lua/config/restore.lua` owns scheduled restoration to canonical plugin pins.
 - `lua/config/` contains core editor behavior.
 - `lua/config/filetypes.lua` contains plugin-independent filetype detection
   used by filetype-lazy plugin specs.
@@ -59,9 +60,13 @@ not source of truth. The root and `dotfiles/AGENTS.md` own shared rules.
   at startup, keep parser install requirements in `lua/config/languages.lua`,
   and let ordinary local tests skip parser installation when required external
   tools are missing. CI uses required mode and must fail instead of skipping.
-- Keep cold installs deterministic: `Lazy restore` must not update
-  `lazy-lock.json`, Mason is opt-in via `NVIM_USE_MASON`, and blink.cmp must
-  not require Rust or a prebuilt binary download by default.
+- Keep scheduled restores in `lua/config/restore.lua`. Enable
+  `NVIM_DOTFILES_RESTORE=1` before plugin setup, consume canonical commits, and
+  give Lazy a temporary lock snapshot so cold installs cannot write through
+  the canonical lockfile symlink. Verify restored commits, fail on invalid or
+  missing pins and plugin errors, and do not run plugin cleanup.
+- Keep Mason opt-in via `NVIM_USE_MASON`; blink.cmp must not require Rust or a
+  prebuilt binary download by default.
 - Keep blink.cmp on its configured stable v1 line unless a major upgrade is
   explicitly in scope.
 - Keep `lua/config/languages.lua` Mason lists limited to package names that
@@ -86,9 +91,9 @@ not source of truth. The root and `dotfiles/AGENTS.md` own shared rules.
 ## Validation
 
 For runtime configuration or lockfile changes, run `go-task test:nvim`. It
-uses isolated `.test/nvim` HOME and XDG paths and must prove that a clean
-`Lazy! restore` does not modify `lazy-lock.json`. Documentation-only edits
-need the root matrix's documentation checks.
+uses isolated `.test/nvim` HOME and XDG paths. Scheduled restore checks must
+prove that cold installs and checkout drift preserve canonical pins and report
+failures. Documentation-only edits need the root matrix's documentation checks.
 
 Run `go-task test:nvim:profile` for startup-sensitive changes. It runs the
 smoke test first, then reports startup time and loaded plugin count.
