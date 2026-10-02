@@ -424,6 +424,8 @@ local function run_treesitter(bufnr, test)
     else
       log("Treesitter: skip " .. test.name .. " (parser failed: " .. lang .. ")")
     end
+  elseif not vim.treesitter.highlighter.active[bufnr] then
+    add_error("Treesitter highlighting is inactive for " .. test.name .. " (" .. lang .. ")")
   end
 end
 
@@ -810,6 +812,7 @@ local function run_executable_utils_tests()
   end
 end
 
+dofile(base_root .. "/treesitter_runtime.lua")(add_error)
 run_mason_utils_tests()
 run_executable_utils_tests()
 run_vimwiki_command_check()

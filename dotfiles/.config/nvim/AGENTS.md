@@ -60,6 +60,9 @@ not source of truth. The root and `dotfiles/AGENTS.md` own shared rules.
   at startup, keep parser install requirements in `lua/config/languages.lua`,
   and let ordinary local tests skip parser installation when required external
   tools are missing. CI uses required mode and must fail instead of skipping.
+  The pinned `main` API requires Neovim 0.12+, eager loading, and explicit native
+  highlighting and indentation. Preserve the 100 KiB limit and Python/YAML
+  indentation exceptions; missing optional parsers must stay quiet.
 - Keep scheduled restores in `lua/config/restore.lua`. Enable
   `NVIM_DOTFILES_RESTORE=1` before plugin setup, consume canonical commits, and
   give Lazy a temporary lock snapshot so cold installs cannot write through
@@ -91,9 +94,11 @@ not source of truth. The root and `dotfiles/AGENTS.md` own shared rules.
 ## Validation
 
 For runtime configuration or lockfile changes, run `go-task test:nvim`. It
-uses isolated `.test/nvim` HOME and XDG paths. Scheduled restore checks must
-prove that cold installs and checkout drift preserve canonical pins and report
-failures. Documentation-only edits need the root matrix's documentation checks.
+requires Neovim 0.12+ and uses isolated `.test/nvim` HOME and XDG paths. The
+scheduled restore checks must prove that cold installs and checkout drift
+preserve canonical pins and report failures. Tree-sitter checks must observe
+active highlighting. Documentation-only edits need the root matrix's
+documentation checks.
 
 Run `go-task test:nvim:profile` for startup-sensitive changes. It runs the
 smoke test first, then reports startup time and loaded plugin count.

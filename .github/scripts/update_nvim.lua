@@ -1,6 +1,6 @@
 -- Run after the disposable config starts; never publish a partial plugin update.
 local ok, err = xpcall(function()
-  assert(vim.fn.has("nvim-0.11.3") == 1, "Plugin upgrades require Neovim 0.11.3 or newer")
+  assert(vim.fn.has("nvim-0.12") == 1, "Plugin upgrades require Neovim 0.12 or newer")
 
   local config = require("lazy.core.config")
   local lock = vim.json.decode(table.concat(vim.fn.readfile(config.options.lockfile), "\n"))
