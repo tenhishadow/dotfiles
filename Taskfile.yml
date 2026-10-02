@@ -503,8 +503,13 @@ tasks:
       - task: nvim:prepare
       - >-
         {{.NVIM_SMOKE_ENV}}
-        timeout 300s nvim --headless "+Lazy! restore" +qa
+        NVIM_DOTFILES_RESTORE=1
+        timeout 300s nvim --headless "+lua require('config.restore').run()" +cquit
       - diff -u dotfiles/.config/nvim/lazy-lock.json .test/nvim/.config/nvim/lazy-lock.json
+      - >-
+        {{.NVIM_TEST_ENV}}
+        timeout 120s nvim --headless --clean -u NONE
+        '+lua dofile(".test/nvim/restore.lua")'
       - >-
         {{.NVIM_SMOKE_ENV}}
         timeout 120s nvim --headless

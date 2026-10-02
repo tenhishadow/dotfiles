@@ -26,7 +26,7 @@ local dry run. Existing remote Renovate PRs are not closed by a local edit.
 | Repository tools | Renovate and its required Node minimum together, pinact, and the matching Super-Linter image tag. |
 | CI bootstrap tools | Exact versions marked with GitHub release annotations in `.github/` YAML. |
 
-The Neovim updater requires Neovim 0.11.3 or newer. It includes optional Mason
+The Neovim updater requires Neovim 0.12 or newer. It includes optional Mason
 plugins without installing Mason tools, temporarily enables the legacy
 EditorConfig plugin in the copied config, and fails on omitted pins or Lazy
 task errors. Runtime enablement stays unchanged. The configured blink.cmp v1

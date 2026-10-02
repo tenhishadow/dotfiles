@@ -5,6 +5,12 @@ local lazy_repo = "https://github.com/folke/lazy.nvim.git"
 local lazy_path = vim.fn.stdpath("data") .. "/lazy/" .. lazy_name
 local lazy_lockfile = vim.fn.stdpath("config") .. "/lazy-lock.json"
 local text = require("utils.text")
+local spec = "plugins"
+local runtime_lockfile = lazy_lockfile
+
+if vim.env.NVIM_DOTFILES_RESTORE == "1" then
+  spec, runtime_lockfile = require("config.restore").prepare()
+end
 
 local function has_ui()
   return #vim.api.nvim_list_uis() > 0
@@ -145,8 +151,8 @@ end
 
 vim.opt.rtp:prepend(lazy_path)
 
-require("lazy").setup("plugins", {
-  lockfile = lazy_lockfile,
+require("lazy").setup(spec, {
+  lockfile = runtime_lockfile,
   local_spec = false,
   install = {
     missing = true,

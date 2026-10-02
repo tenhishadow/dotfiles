@@ -46,7 +46,7 @@ pytestmark = pytest.mark.skipif(
         ),
         pytest.param(
             "vim.fn.has = function() return 0 end",
-            (1, False, "Plugin upgrades require Neovim 0.11.3 or newer"),
+            (1, False, "Plugin upgrades require Neovim 0.12 or newer"),
             id="old_neovim",
         ),
     ],

@@ -1,36 +1,16 @@
-local languages = require("config.languages")
-
-if vim.fn.has("nvim-0.10") == 0 then
+if vim.fn.has("nvim-0.12") == 0 then
   return {}
 end
 
 return {
   {
     "nvim-treesitter/nvim-treesitter",
-    cmd = { "TSInstall", "TSInstallInfo", "TSUpdate", "TSUpdateSync" },
-    event = { "BufReadPost", "BufNewFile" },
-    opts = {
-      ensure_installed = languages.treesitter,
-      sync_install = false,
-      auto_install = false,
-      ignore_install = {},
-      highlight = {
-        enable = true,
-        disable = function(_, buf)
-          local max_filesize = 100 * 1024
-          local name = vim.api.nvim_buf_get_name(buf)
-          local ok_stat, stats = pcall((vim.uv or vim.loop).fs_stat, name)
-          return ok_stat and stats and stats.size > max_filesize
-        end,
-        additional_vim_regex_highlighting = false,
-      },
-      indent = {
-        enable = true,
-        disable = { "python", "yaml" },
-      },
-    },
-    config = function(_, opts)
-      pcall(vim.treesitter.language.register, "yaml", {
+    branch = "main",
+    lazy = false,
+    config = function()
+      require("nvim-treesitter").setup()
+
+      vim.treesitter.language.register("yaml", {
         "yaml.kubernetes",
         "yaml.kustomize",
         "yaml.docker-compose",
@@ -38,24 +18,34 @@ return {
         "yaml.github-actions",
         "yaml.helm-values",
       })
-      pcall(vim.treesitter.language.register, "terraform", {
+      vim.treesitter.language.register("terraform", {
         "terraform-vars",
         "opentofu",
         "opentofu-vars",
       })
+      vim.treesitter.language.register("markdown", "vimwiki")
 
-      local ok_legacy, ts_configs = pcall(require, "nvim-treesitter.configs")
-      if ok_legacy then
-        ts_configs.setup(opts)
-        return
-      end
+      vim.api.nvim_create_autocmd("FileType", {
+        group = vim.api.nvim_create_augroup("dotfiles_treesitter", { clear = true }),
+        callback = function(args)
+          local bufnr = args.buf
+          local size = vim.api.nvim_buf_get_offset(bufnr, vim.api.nvim_buf_line_count(bufnr))
+          if size > 100 * 1024 then
+            vim.treesitter.stop(bufnr)
+            return
+          end
 
-      local ok_modern, ts_config = pcall(require, "nvim-treesitter.config")
-      if ok_modern and ts_config.setup then
-        ts_config.setup(opts)
-      else
-        vim.notify("nvim-treesitter configuration module not found", vim.log.levels.WARN)
-      end
+          -- Parser installation remains an explicit action.
+          if not pcall(vim.treesitter.start, bufnr) then
+            return
+          end
+
+          local language = vim.treesitter.language.get_lang(vim.bo[bufnr].filetype)
+          if language ~= "python" and language ~= "yaml" then
+            vim.bo[bufnr].indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
+          end
+        end,
+      })
     end,
   },
 }

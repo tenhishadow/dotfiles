@@ -104,13 +104,26 @@ explicitly in project workflows when needed.
 Review `inventory/host_vars/this_host/dotfiles.yml` before applying on another
 account because the role can replace managed destinations with symlinks.
 
+## Neovim Restore
+
 The Neovim restore cron command is opt-in and is scheduled only when `crontab`,
 `flock`, and Neovim are executable at the declared paths. If the feature is
 disabled or its runtime dependencies disappear, the role removes its cron
-entry whenever `crontab` is available. It uses a Lua
-`pcall(require, "lazy")` wrapper and `NVIM_USE_MASON=off`, creates the state
-directory before opening its log, and uses `flock` to prevent overlapping
-background restores.
+entry whenever `crontab` is available.
+
+The command sets `NVIM_DOTFILES_RESTORE=1` before Neovim startup and runs
+`config.restore`. It restores enabled Git plugins to the exact commits in
+`lazy-lock.json`, including missing plugins and checkouts that have drifted.
+The canonical lockfile remains read-only to this operation: Lazy receives a
+temporary writable snapshot, and immutable commit specs determine the restore
+targets. The command verifies the resulting checkout commits and exits with a
+nonzero status for missing or malformed pins, plugin task failures, or commit
+mismatches. It does not run plugin cleanup.
+
+The job keeps Mason disabled with `NVIM_USE_MASON=off`, creates its state
+directory before opening the log, and uses `flock` to prevent overlapping runs.
+Plugin upgrades belong to the reviewed
+[dependency update workflow](../../docs/dependency-updates.md).
 
 ## Role Flow
 

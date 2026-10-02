@@ -156,6 +156,7 @@ jobs:
           --needed
           --noprogressbar
           git
+          markdownlint-cli2
           neovim
           nodejs-lts-krypton
           npm

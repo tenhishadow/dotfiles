@@ -265,7 +265,7 @@ M.auto_linters_by_ft = {
     { name = "luacheck", cmd = "luacheck" },
   },
   markdown = {
-    { name = "markdownlint", cmd = "markdownlint-cli2" },
+    { name = "markdownlint-cli2", cmd = "markdownlint-cli2" },
   },
   python = {
     { name = "ruff", cmd = "ruff" },

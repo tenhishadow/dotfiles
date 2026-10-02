@@ -87,6 +87,9 @@ Gemini CLI without copying the engineering contract.
 - AUR helper bootstrap lives in the opt-in system layer, uses tag `aur`, and is
   skipped in check mode, CI, and containers.
 - Cleanup and removal paths should stay explicit, narrow, and reviewable.
+- The user layer owns the opt-in
+  [Neovim restore contract](../roles/dotfiles/README.md#neovim-restore), including
+  canonical lockfile ownership and background failure reporting.
 - Check mode is available for privileged layers through `go-task system:check`
   and `go-task browser-policies:check`.
 - Read-only reports are available through `go-task doctor`,
