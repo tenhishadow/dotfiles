@@ -23,9 +23,8 @@ return {
       end
 
       if vim.fn.executable("markdownlint-cli2") == 1 then
-        local markdownlint = lint.linters.markdownlint or require("lint.linters.markdownlint")
-        markdownlint.cmd = "markdownlint-cli2"
-        lint.linters.markdownlint = markdownlint
+        -- Stdin-only linting cannot rewrite files even when project fixes are enabled.
+        lint.linters["markdownlint-cli2"].args = { "--no-globs", "-" }
       end
 
       local function should_lint(bufnr)

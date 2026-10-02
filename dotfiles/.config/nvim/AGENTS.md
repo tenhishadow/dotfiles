@@ -97,7 +97,8 @@ For runtime configuration or lockfile changes, run `go-task test:nvim`. It
 requires Neovim 0.12+ and uses isolated `.test/nvim` HOME and XDG paths. The
 scheduled restore checks must prove that cold installs and checkout drift
 preserve canonical pins and report failures. Tree-sitter checks must observe
-active highlighting. Documentation-only edits need the root matrix's
+active highlighting, and save-time lint checks must observe buffer diagnostics
+without modifying files. Documentation-only edits need the root matrix's
 documentation checks.
 
 Run `go-task test:nvim:profile` for startup-sensitive changes. It runs the

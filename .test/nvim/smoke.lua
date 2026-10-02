@@ -335,13 +335,16 @@ local function run_format(bufnr, test)
   end
 end
 
-local function run_format_scope_test()
+local function run_markdown_scope_test()
   if not has_any({ "markdownlint-cli2" }) then
+    if vim.env.CI == "true" then
+      add_error("Markdown save checks require markdownlint-cli2 in CI")
+    end
     return
   end
   local root = vim.fn.tempname()
   vim.fn.mkdir(root, "p")
-  vim.fn.writefile({ 'globs: ["**/*.md"]' }, root .. "/.markdownlint-cli2.yaml")
+  vim.fn.writefile({ 'globs: ["**/*.md"]', "fix: true" }, root .. "/.markdownlint-cli2.yaml")
   vim.fn.writefile({ "#Selected" }, root .. "/selected.md")
   vim.fn.writefile({ "#Untouched" }, root .. "/unrelated.md")
   local cwd = vim.fn.getcwd()
@@ -349,6 +352,25 @@ local function run_format_scope_test()
   local bufnr = open_file(root .. "/selected.md")
   -- Vimwiki can own Markdown buffers; select the actual Markdown formatter here.
   vim.bo[bufnr].filetype = "markdown"
+  vim.cmd("write")
+  local diagnosed = vim.wait(5000, function()
+    for _, diagnostic in ipairs(vim.diagnostic.get(bufnr)) do
+      if diagnostic.source == "markdownlint" and diagnostic.message:find("MD018", 1, true) then
+        return true
+      end
+    end
+    return false
+  end, 10)
+  if not diagnosed then
+    add_error("Markdown save did not report the missing heading space")
+  end
+  if
+    vim.api.nvim_buf_get_lines(bufnr, 0, 1, false)[1] ~= "#Selected"
+    or vim.fn.readfile(root .. "/selected.md")[1] ~= "#Selected"
+    or vim.fn.readfile(root .. "/unrelated.md")[1] ~= "#Untouched"
+  then
+    add_error("Markdown save modified content through configured fixes or globs")
+  end
   run_format(bufnr, { name = "Markdown file scope" })
   if vim.api.nvim_buf_get_lines(bufnr, 0, 1, false)[1] ~= "# Selected" then
     add_error("Markdown formatter did not fix the selected buffer")
@@ -819,7 +841,7 @@ run_vimwiki_command_check()
 run_plugin_checks()
 run_tool_inventory_checks()
 run_save_behavior_checks()
-run_format_scope_test()
+run_markdown_scope_test()
 
 local tests = {
   {
