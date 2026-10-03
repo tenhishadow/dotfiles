@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.5.0](https://github.com/tenhishadow/dotfiles/compare/v2.4.2...v2.5.0) (2026-10-02)
+
+
+### Features
+
+* **nvim:** add pinned restore mode and repair editor integrations ([#198](https://github.com/tenhishadow/dotfiles/issues/198)) ([ad4cf8c](https://github.com/tenhishadow/dotfiles/commit/ad4cf8c3738b7938d10538855abc046acb2a4f5a))
+
 ## [2.4.2](https://github.com/tenhishadow/dotfiles/compare/v2.4.1...v2.4.2) (2026-09-30)
 
 
