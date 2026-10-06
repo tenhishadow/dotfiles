@@ -159,6 +159,73 @@ def test_python_sync_respects_the_container_mirror_environment(
     assert not any(call["args"][0] == "sync" for call in calls)
 
 
+def _uv_calls(calls, *subcommand):
+    """Return uv invocations whose subcommand matches, ignoring global flags."""
+    matched = []
+    for call in calls:
+        if call["tool"] != "uv":
+            continue
+        args = call["args"]
+        start = 0
+        while start < len(args) and args[start].startswith("-"):
+            start += 1
+        if tuple(args[start : start + len(subcommand)]) == subcommand:
+            matched.append(args)
+    return matched
+
+
+def test_python_sync_without_an_index_keeps_the_locked_project_sync(task_repo):
+    calls = _calls(task_repo, "default")
+    assert _uv_calls(calls, "sync")
+    assert not _uv_calls(calls, "pip", "sync")
+
+
+def test_python_sync_installs_into_the_project_environment_it_creates(
+    task_repo, monkeypatch
+):
+    (task_repo / "local.env").write_text(
+        "DOTFILES_PYPI_INDEX_URL=https://packages.example/simple/\n",
+        encoding="utf-8",
+    )
+    # An activated unrelated environment must not become the sync target:
+    # `uv pip sync` resolves to $VIRTUAL_ENV when no --python is given, which
+    # would uninstall that environment's packages and leave .venv empty.
+    monkeypatch.setenv("VIRTUAL_ENV", "/outside/foreign-venv")
+    calls = _calls(task_repo, "default")
+
+    assert not _uv_calls(calls, "sync"), (
+        "the locked project sync must be skipped"
+    )
+    venv = _uv_calls(calls, "venv")[0]
+    assert venv[-1] == ".venv"
+
+    sync = _uv_calls(calls, "pip", "sync")[0]
+    assert sync[sync.index("--python") + 1] == ".venv/bin/python"
+    assert (
+        sync[sync.index("--default-index") + 1]
+        == "https://packages.example/simple/"
+    )
+    assert "--require-hashes" in sync
+
+
+def test_python_sync_reads_an_absolute_environment_file(task_repo, monkeypatch):
+    # `. "./${candidate}"` turns an absolute path into a relative one, so the
+    # file is never sourced and the mirror branch is silently skipped.
+    env_file = task_repo / "scratch/elsewhere.env"
+    env_file.write_text(
+        "DOTFILES_PYPI_INDEX_URL=https://absolute.example/simple/\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("DOTFILES_ENV_FILE", str(env_file))
+    calls = _calls(task_repo, "default")
+
+    sync = _uv_calls(calls, "pip", "sync")[0]
+    assert (
+        sync[sync.index("--default-index") + 1]
+        == "https://absolute.example/simple/"
+    )
+
+
 def test_superlinter_quotes_mounts_and_reuses_the_latest_image_runner(
     task_repo,
 ):

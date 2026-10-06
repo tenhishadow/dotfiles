@@ -54,16 +54,18 @@ tasks:
     cmd: >-
       if [ "${UV_NO_SYNC:-false}" = "true" ]; then exit 0; fi;
       for candidate in "${DOTFILES_ENV_FILE:-local.env}" .test/system/local.env; do
-      if [ -f "${candidate}" ]; then set -a; . "./${candidate}"; set +a; break; fi;
+      if [ ! -f "${candidate}" ]; then continue; fi;
+      case "${candidate}" in */*) env_path="${candidate}";; *) env_path="./${candidate}";; esac;
+      set -a; . "${env_path}"; set +a; break;
       done;
       index="${DOTFILES_PYPI_INDEX_URL:-${DOTFILES_TEST_PYPI_INDEX_URL:-}}";
       if [ -z "${index}" ]; then
       uv sync --locked --no-build --no-install-project --managed-python --quiet;
       exit 0;
       fi;
-      uv --no-config venv --managed-python --allow-existing --quiet;
+      uv --no-config venv --managed-python --allow-existing --quiet .venv;
       uv export --locked --no-emit-project --format requirements-txt --quiet
-      | uv --no-config pip sync --default-index "${index}"
+      | uv --no-config pip sync --python .venv/bin/python --default-index "${index}"
       --require-hashes --no-build --strict --quiet -
   deps-galaxy:
     desc: Install the declared Ansible collections once per invocation.
