@@ -52,9 +52,19 @@ tasks:
     silent: true
     deps: [deps-os]
     cmd: >-
-      if [ "${UV_NO_SYNC:-false}" != "true" ]; then
-        uv sync --locked --no-build --no-install-project --no-dev --managed-python --quiet;
-      fi
+      if [ "${UV_NO_SYNC:-false}" = "true" ]; then exit 0; fi;
+      for candidate in "${DOTFILES_ENV_FILE:-local.env}" .test/system/local.env; do
+      if [ -f "${candidate}" ]; then set -a; . "./${candidate}"; set +a; break; fi;
+      done;
+      index="${DOTFILES_PYPI_INDEX_URL:-${DOTFILES_TEST_PYPI_INDEX_URL:-}}";
+      if [ -z "${index}" ]; then
+      uv sync --locked --no-build --no-install-project --managed-python --quiet;
+      exit 0;
+      fi;
+      uv --no-config venv --managed-python --allow-existing --quiet;
+      uv export --locked --no-emit-project --format requirements-txt --quiet
+      | uv --no-config pip sync --default-index "${index}"
+      --require-hashes --no-build --strict --quiet -
   deps-galaxy:
     desc: Install the declared Ansible collections once per invocation.
     run: once
@@ -432,9 +442,11 @@ tasks:
       -e USE_FIND_ALGORITHM=true
       -e VALIDATE_ALL_CODEBASE=true
       -v "${PWD}:/tmp/lint";
-      if [ -f .test/system/local.env ]; then
-        set -- "$@" -v "${PWD}/.test/system/local.env.example:/tmp/lint/.test/system/local.env:ro";
-      fi;
+      for candidate in local.env .test/system/local.env; do
+        if [ -f "${candidate}" ]; then
+          set -- "$@" -v "${PWD}/local.env.example:/tmp/lint/${candidate}:ro";
+        fi;
+      done;
       docker run "$@" ghcr.io/super-linter/super-linter:{{.SUPERLINTER_IMAGE_TAG}}
   superlinter:latest:
     desc: Run the latest slim Super-Linter image in Docker.
@@ -585,10 +597,13 @@ tasks:
     desc: Validate package targets and convergence in a disposable Arch container.
     deps: [deps-docker]
     cmd: >-
-      test_env_file="${DOTFILES_TEST_ENV_FILE:-.test/system/local.env}";
-      if [ -z "${DOTFILES_TEST_ENV_FILE:-}" ] && [ ! -f "${test_env_file}" ]; then
-        test_env_file=/dev/null;
+      test_env_file="${DOTFILES_TEST_ENV_FILE:-}";
+      if [ -z "${test_env_file}" ]; then
+        for candidate in local.env .test/system/local.env; do
+          if [ -f "${candidate}" ]; then test_env_file="${candidate}"; break; fi;
+        done;
       fi;
+      test_env_file="${test_env_file:-/dev/null}";
       docker run --pull always --rm -i
       --env-file "${test_env_file}"
       -v "$(pwd):/.dotfiles:ro"

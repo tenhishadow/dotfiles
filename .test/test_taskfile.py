@@ -162,16 +162,12 @@ def test_python_sync_respects_the_container_mirror_environment(
 def test_superlinter_quotes_mounts_and_reuses_the_latest_image_runner(
     task_repo,
 ):
-    envfile = task_repo / ".test/system/local.env"
-    envfile.parent.mkdir(parents=True)
+    envfile = task_repo / "local.env"
     envfile.write_text("TEST_MIRROR=private\n", encoding="utf-8")
     calls = _calls(task_repo, "superlinter:latest")
     command = next(call["args"] for call in calls if call["args"][0] == "run")
     assert f"{task_repo}:/tmp/lint" in command
-    assert (
-        f"{task_repo}/.test/system/local.env.example:"
-        "/tmp/lint/.test/system/local.env:ro"
-    ) in command
+    assert f"{task_repo}/local.env.example:/tmp/lint/local.env:ro" in command
     assert command[-1] == "ghcr.io/super-linter/super-linter:slim-latest"
 
 

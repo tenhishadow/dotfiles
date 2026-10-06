@@ -212,14 +212,16 @@ go-task test:python -- .test/test_ssh_config.py -q
 Test value, removal criteria, Python style, and layer boundaries are recorded in
 [`docs/adr/0001-validation-strategy.md`](docs/adr/0001-validation-strategy.md).
 
-For repeated container runs, copy `.test/system/local.env.example` to
-`.test/system/local.env`, then uncomment and set either optional mirror. The
-file is loaded automatically, ignored by Git, and masked from the Super-Linter
-container. Without it, public upstream sources remain the default.
+To use private caches on this host, copy `local.env.example` to `local.env`,
+then uncomment and set the entries you need. The file is loaded automatically
+by the user-level install targets and by the container test, ignored by Git,
+and masked from the Super-Linter container. Without it, public upstream
+sources remain the default. The legacy `.test/system/local.env` location is
+still read when no root `local.env` exists.
 
 ```bash
-cp .test/system/local.env.example .test/system/local.env
-chmod 600 .test/system/local.env
+cp local.env.example local.env
+chmod 600 local.env
 go-task test:system
 ```
 

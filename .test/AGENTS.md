@@ -44,14 +44,15 @@ source of truth:
 - `.test/nvim/.state`
 - `.test/nvim/.cache`
 - `.test/nvim/.home`
-- `.test/system/local.env` (optional private test mirrors)
+- `.test/system/local.env` (legacy private mirror overrides; the current
+  location is `local.env` in the repository root)
 
 ## Editing Rules
 
 - Keep fixtures minimal and deterministic.
 - Keep Neovim smoke fixture directories aligned with the `name` values in
   `.test/nvim/smoke.lua`.
-- Keep private mirror and package-index URLs in `.test/system/local.env` only.
+- Keep private mirror and package-index URLs in `local.env` only.
 - Keep `.test/` excluded from Renovate because dependency-like files here are
   fixtures, not repository dependency surfaces.
 - Keep Neovim test language lists sourced from the canonical config when
