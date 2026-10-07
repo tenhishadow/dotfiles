@@ -63,9 +63,10 @@ tasks:
       uv sync --locked --no-build --no-install-project --managed-python --quiet;
       exit 0;
       fi;
-      uv --no-config venv --managed-python --allow-existing --quiet .venv;
+      project_environment="${UV_PROJECT_ENVIRONMENT:-.venv}";
+      uv --no-config venv --managed-python --allow-existing --quiet "${project_environment}";
       uv export --locked --no-emit-project --format requirements-txt --quiet
-      | uv --no-config pip sync --python .venv/bin/python --default-index "${index}"
+      | uv --no-config pip sync --python "${project_environment}/bin/python" --default-index "${index}"
       --require-hashes --no-build --strict --quiet -
   deps-galaxy:
     desc: Install the declared Ansible collections once per invocation.

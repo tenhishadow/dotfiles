@@ -57,6 +57,14 @@ def _task_repo(tmp_path, repo_root, monkeypatch):
         executable = binary_directory / name
         executable.write_text(RECORDER, encoding="utf-8")
         executable.chmod(0o755)
+    for name in (
+        "DOTFILES_ENV_FILE",
+        "DOTFILES_PYPI_INDEX_URL",
+        "DOTFILES_TEST_PYPI_INDEX_URL",
+        "UV_PROJECT_ENVIRONMENT",
+        "VIRTUAL_ENV",
+    ):
+        monkeypatch.delenv(name, raising=False)
     for name, value in {
         "PATH": f"{binary_directory}{os.pathsep}{os.environ['PATH']}",
         "TASK_TEST_LOG": str(root / "calls.jsonl"),
@@ -180,8 +188,9 @@ def test_python_sync_without_an_index_keeps_the_locked_project_sync(task_repo):
     assert not _uv_calls(calls, "pip", "sync")
 
 
+@pytest.mark.parametrize("environment_path", [None, "relative", "absolute"])
 def test_python_sync_installs_into_the_project_environment_it_creates(
-    task_repo, monkeypatch
+    task_repo, monkeypatch, environment_path
 ):
     (task_repo / "local.env").write_text(
         "DOTFILES_PYPI_INDEX_URL=https://packages.example/simple/\n",
@@ -191,16 +200,26 @@ def test_python_sync_installs_into_the_project_environment_it_creates(
     # `uv pip sync` resolves to $VIRTUAL_ENV when no --python is given, which
     # would uninstall that environment's packages and leave .venv empty.
     monkeypatch.setenv("VIRTUAL_ENV", "/outside/foreign-venv")
+    project_environment = ".venv"
+    if environment_path is not None:
+        project_environment = "custom environment"
+        if environment_path == "absolute":
+            project_environment = str(
+                task_repo / "scratch" / project_environment
+            )
+        monkeypatch.setenv("UV_PROJECT_ENVIRONMENT", project_environment)
     calls = _calls(task_repo, "default")
 
     assert not _uv_calls(calls, "sync"), (
         "the locked project sync must be skipped"
     )
     venv = _uv_calls(calls, "venv")[0]
-    assert venv[-1] == ".venv"
+    assert venv[-1] == project_environment
 
     sync = _uv_calls(calls, "pip", "sync")[0]
-    assert sync[sync.index("--python") + 1] == ".venv/bin/python"
+    assert sync[sync.index("--python") + 1] == (
+        f"{project_environment}/bin/python"
+    )
     assert (
         sync[sync.index("--default-index") + 1]
         == "https://packages.example/simple/"
@@ -210,7 +229,7 @@ def test_python_sync_installs_into_the_project_environment_it_creates(
 
 def test_python_sync_reads_an_absolute_environment_file(task_repo, monkeypatch):
     # `. "./${candidate}"` turns an absolute path into a relative one, so the
-    # file is never sourced and the mirror branch is silently skipped.
+    # file cannot be sourced and dependency setup fails.
     env_file = task_repo / "scratch/elsewhere.env"
     env_file.write_text(
         "DOTFILES_PYPI_INDEX_URL=https://absolute.example/simple/\n",
@@ -224,6 +243,26 @@ def test_python_sync_reads_an_absolute_environment_file(task_repo, monkeypatch):
         sync[sync.index("--default-index") + 1]
         == "https://absolute.example/simple/"
     )
+
+
+@pytest.mark.parametrize("failed_command", ["venv", "export", "pip"])
+def test_mirror_setup_failure_prevents_install_and_public_fallback(
+    task_repo, failed_command
+):
+    (task_repo / "local.env").write_text(
+        "DOTFILES_PYPI_INDEX_URL=https://packages.example/simple/\n",
+        encoding="utf-8",
+    )
+    (task_repo / "bin/uv").write_text(
+        RECORDER
+        + f"\nif {failed_command!r} in sys.argv:\n    raise SystemExit(9)\n",
+        encoding="utf-8",
+    )
+    completed = _run(task_repo, "default")
+    assert completed.returncode != 0
+    calls = _read_calls(task_repo)
+    assert not _uv_calls(calls, "sync")
+    assert not _uv_calls(calls, "run")
 
 
 def test_superlinter_quotes_mounts_and_reuses_the_latest_image_runner(
