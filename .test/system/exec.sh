@@ -12,6 +12,11 @@ export CI="true"
 export UV_PYTHON="/usr/bin/python3"
 export UV_PROJECT_ENVIRONMENT="/tmp/dotfiles-system-test-venv"
 
+# local.env is the single operator-facing override file. The DOTFILES_TEST_*
+# names are the legacy spelling and remain accepted.
+DOTFILES_TEST_PYPI_INDEX_URL="${DOTFILES_PYPI_INDEX_URL:-${DOTFILES_TEST_PYPI_INDEX_URL:-}}"
+DOTFILES_TEST_PACMAN_MIRROR_URL="${DOTFILES_PACMAN_MIRROR_URL:-${DOTFILES_TEST_PACMAN_MIRROR_URL:-}}"
+
 validate_https_url() {
   local authority
   local variable_name="$1"

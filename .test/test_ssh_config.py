@@ -12,6 +12,7 @@ def _effective_config(
     repo_root: Path,
     tmp_path: Path,
     host: str,
+    *extra_args: str,
     include_files: dict[str, str] | None = None,
 ) -> dict[str, str]:
     """Resolve the real SSH configuration without reading private includes."""
@@ -38,14 +39,16 @@ def _effective_config(
     assert not relative_includes, (
         f"test config contains relative includes: {relative_includes}"
     )
-    config_path = tmp_path / "config"
-    config_path.write_text("\n".join(config_lines) + "\n", encoding="utf-8")
+    (tmp_path / "config").write_text(
+        "\n".join(config_lines) + "\n", encoding="utf-8"
+    )
     for relative_path, content in (include_files or {}).items():
         include_path = tmp_path / relative_path
         include_path.parent.mkdir(parents=True, exist_ok=True)
         include_path.write_text(content, encoding="utf-8")
     result = run_command(
-        ["ssh", "-G", "-F", str(config_path), host], check=True
+        ["ssh", "-G", "-F", str(tmp_path / "config"), *extra_args, host],
+        check=True,
     )
     return dict(line.split(maxsplit=1) for line in result.stdout.splitlines())
 
@@ -62,10 +65,35 @@ def test_default_host_follows_owner_policy(run_command, repo_root, tmp_path):
         "kbdinteractiveauthentication": "no",
         "passwordauthentication": "no",
         "stricthostkeychecking": "false",
-        "updatehostkeys": "true",
+        # Keeping no host keys and rewriting host key files are contradictory,
+        # so host-key learning stays off. See the comment in the config.
+        "updatehostkeys": "false",
         "userknownhostsfile": "/dev/null",
     }
     assert {key: config[key] for key in expected} == expected
+
+
+def test_a_caller_supplied_known_hosts_file_is_never_rewritten(
+    run_command, repo_root, tmp_path
+):
+    """Proxmox passes its own pmxcfs known_hosts file on the command line.
+
+    pmxcfs cannot hardlink, so any attempt to rewrite that file fails with
+    EPERM. The policy must never ask ssh to write host keys, whatever file a
+    caller points it at.
+    """
+    config = _effective_config(
+        run_command,
+        repo_root,
+        tmp_path,
+        "cluster.example",
+        "-o",
+        "UserKnownHostsFile=/etc/pve/nodes/cluster/ssh_known_hosts",
+    )
+    assert config["userknownhostsfile"] == (
+        "/etc/pve/nodes/cluster/ssh_known_hosts"
+    )
+    assert config["updatehostkeys"] == "false"
 
 
 @pytest.mark.parametrize("include_dir", ["config.d", "conf.d"])
@@ -77,7 +105,7 @@ def test_included_host_config_precedes_general_defaults(
         repo_root,
         tmp_path,
         "override.example",
-        {
+        include_files={
             f"{include_dir}/10-test.conf": """Host override.example
   ForwardAgent no
   KbdInteractiveAuthentication yes
@@ -98,7 +126,7 @@ def test_all_include_directories_are_evaluated_at_top_level(
         repo_root,
         tmp_path,
         "second.example",
-        {
+        include_files={
             "config.d/10-first.conf": "Host first.example\n  Port 2201\n",
             "conf.d/10-second.conf": "Host second.example\n  Port 2202\n",
         },

@@ -1,7 +1,5 @@
 collections:
   - name: ansible.posix
     version: "2.2.2"
-    source: https://galaxy.ansible.com
   - name: community.general
     version: "13.4.0"
-    source: https://galaxy.ansible.com

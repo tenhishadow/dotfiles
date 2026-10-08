@@ -12,6 +12,8 @@
 !.test/nvim/terraform/.terraform/.gitkeep
 .test/nvim/terragrunt/.terraform/*
 !.test/nvim/terragrunt/.terraform/.gitkeep
+/local.env
+# Legacy location, still honoured as a fallback.
 .test/system/local.env
 docs/audits/
 __pycache__/
