@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.5.1](https://github.com/tenhishadow/dotfiles/compare/v2.5.0...v2.5.1) (2026-10-08)
+
+
+### Bug Fixes
+
+* **dotfiles:** support private caches and Proxmox SSH ([#200](https://github.com/tenhishadow/dotfiles/issues/200)) ([476a666](https://github.com/tenhishadow/dotfiles/commit/476a666ffdb3b7f69a384e1962ce0b5a59684338))
+
 ## [2.5.0](https://github.com/tenhishadow/dotfiles/compare/v2.4.2...v2.5.0) (2026-10-02)
 
 
