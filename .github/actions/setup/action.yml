@@ -24,5 +24,5 @@ runs:
     - name: Install locked Python environment
       shell: bash
       run: |
-        uv sync --locked --no-build --no-install-project --no-dev --managed-python
+        uv sync --locked --no-build --no-install-project --managed-python
         printf '%s\n' 'UV_NO_SYNC=true' >> "${GITHUB_ENV}"
