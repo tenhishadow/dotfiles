@@ -105,13 +105,18 @@ def replace_taskfile_scalar(text: str, name: str, value: str) -> str:
 
 
 def parse_node_engine_minimum(engine: str) -> str:
-    """Return the minimum version from Renovate's supported caret constraint."""
-    match = re.fullmatch(r"\^(\d+\.\d+\.\d+)", engine.strip())
-    if not match:
-        raise DependencyUpdateError(
-            f"unsupported Renovate Node.js engine constraint: {engine!r}"
-        )
-    return match.group(1)
+    """Return the lowest minimum from Renovate's precise caret alternatives."""
+    versions = []
+    for constraint in engine.split("||"):
+        match = re.fullmatch(r"\^(\d+\.\d+\.\d+)", constraint.strip())
+        if not match:
+            raise DependencyUpdateError(
+                f"unsupported Renovate Node.js engine constraint: {engine!r}"
+            )
+        versions.append(match.group(1))
+    return min(
+        versions, key=lambda version: tuple(map(int, version.split(".")))
+    )
 
 
 def resolve_github_token(

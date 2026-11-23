@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 import subprocess
 import sys
@@ -83,6 +84,39 @@ def test_refresh_passes_the_validation_python_to_dependency_upgrades(
 
     assert result.returncode == 0, result.stderr
     assert result.stdout.strip() == python_version
+
+
+def test_publisher_keeps_the_shared_release_token_out_of_dependency_execution(
+    repo_root,
+):
+    workflow = yaml.safe_load(
+        (repo_root / ".github/workflows/dependencies.yml").read_text()
+    )
+    release = yaml.safe_load(
+        (repo_root / ".github/workflows/release.yml").read_text()
+    )
+    publisher = next(
+        step
+        for step in workflow["jobs"]["publish"]["steps"]
+        if step.get("uses", "").startswith("peter-evans/create-pull-request@")
+    )
+    release_action = next(
+        step
+        for step in release["jobs"]["release-please"]["steps"]
+        if step.get("uses", "").startswith("googleapis/release-please-action@")
+    )
+
+    assert (
+        publisher["with"]["token"]
+        == release_action["with"]["token"]
+        == "${{ secrets.RELEASE_TOKEN }}"
+    )
+    assert "secrets." not in json.dumps(workflow["jobs"]["refresh"])
+    assert all(
+        "secrets." not in json.dumps(step)
+        for step in workflow["jobs"]["publish"]["steps"]
+        if step is not publisher
+    )
 
 
 def _git(repository, *args):
