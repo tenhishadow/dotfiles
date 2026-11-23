@@ -1,4 +1,4 @@
-"""Exercise the credential boundary of the weekly dependency publisher."""
+"""Exercise weekly dependency refresh and publication boundaries."""
 
 from __future__ import annotations
 
@@ -38,6 +38,51 @@ DEPENDENCY_FILES = (
     "dotfiles/.local/share/codex-mcp/context7/package.json",
     "dotfiles/.local/share/codex-mcp/context7/package-lock.json",
 )
+
+
+def test_refresh_passes_the_validation_python_to_dependency_upgrades(
+    repo_root, tmp_path, monkeypatch, run_command
+):
+    workflow = yaml.safe_load(
+        (repo_root / ".github/workflows/dependencies.yml").read_text()
+    )
+    setup = yaml.safe_load(
+        (repo_root / ".github/actions/setup/action.yml").read_text()
+    )
+    python_version = next(
+        step["with"]["python-version"]
+        for step in setup["runs"]["steps"]
+        if step.get("uses", "").startswith("astral-sh/setup-uv@")
+    )
+    refresh = workflow["jobs"]["refresh"]
+    step = next(
+        step
+        for step in refresh["steps"]
+        if "go-task deps-upgrade" in step.get("run", "")
+    )
+    executable = tmp_path / "go-task"
+    executable.write_text(
+        f"#!{sys.executable}\nimport os\n"
+        "print(os.environ.get('UV_PYTHON', ''))\n",
+        encoding="utf-8",
+    )
+    executable.chmod(0o755)
+    monkeypatch.delenv("UV_PYTHON", raising=False)
+
+    result = run_command(
+        ["bash", "-euo", "pipefail", "-c", step["run"]],
+        cwd=tmp_path,
+        env={
+            **os.environ,
+            **refresh.get("env", {}),
+            "GIT_CONFIG_GLOBAL": str(tmp_path / "gitconfig"),
+            "GITHUB_WORKSPACE": str(tmp_path),
+            "PATH": f"{tmp_path}{os.pathsep}{os.environ['PATH']}",
+        },
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert result.stdout.strip() == python_version
 
 
 def _git(repository, *args):

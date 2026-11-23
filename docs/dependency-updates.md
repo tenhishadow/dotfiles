@@ -47,6 +47,11 @@ review; replacing them automatically would erase repository-specific rules.
 Test fixtures and generated test workspaces are excluded from dependency
 updates.
 
+The weekly refresh job selects Python 3.14 through `UV_PYTHON`, matching static
+validation. This keeps the initial locked install on the validated Python minor
+before upgrading dependencies, even when uv offers a newer interpreter.
+Source builds remain disabled during locked installs.
+
 ## Publication Setup
 
 The scheduled workflow runs from the default branch after this configuration
