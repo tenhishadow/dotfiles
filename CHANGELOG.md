@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.5.2](https://github.com/tenhishadow/dotfiles/compare/v2.5.1...v2.5.2) (2026-11-23)
+
+
+### Bug Fixes
+
+* **ci:** repair dependency refresh and Arch package checks ([#202](https://github.com/tenhishadow/dotfiles/issues/202)) ([dd02f7f](https://github.com/tenhishadow/dotfiles/commit/dd02f7f5d3f76c3b3255e4bf006f850faf43b3b8))
+
 ## [2.5.1](https://github.com/tenhishadow/dotfiles/compare/v2.5.0...v2.5.1) (2026-10-08)
 
 
