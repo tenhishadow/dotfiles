@@ -122,7 +122,7 @@ system_packages:
   - tree-sitter-cli
   - code
   - go-task
-  - tea
+  - gitea-cli
   - ast-grep
   - bat
   - cosign

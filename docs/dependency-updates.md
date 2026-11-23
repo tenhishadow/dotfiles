@@ -33,7 +33,8 @@ task errors. Runtime enablement stays unchanged. The configured blink.cmp v1
 compatibility line is retained; changing that policy is a separate migration.
 
 Only stable releases are selected for release-based pins. Major upgrades are
-included where the native updater supports them. A changed pinact Go module
+included where the native updater supports them. Renovate's precise caret
+alternatives use the lowest supported Node minimum. A changed pinact Go module
 major or an unsupported Renovate Node engine expression stops the refresh for
 an explicit compatibility change; it is not silently ignored. A failed
 refresh does not publish a partial PR.
@@ -47,26 +48,30 @@ review; replacing them automatically would erase repository-specific rules.
 Test fixtures and generated test workspaces are excluded from dependency
 updates.
 
+The weekly refresh job selects Python 3.14 through `UV_PYTHON`, matching static
+validation. This keeps the initial locked install on the validated Python minor
+before upgrading dependencies, even when uv offers a newer interpreter.
+Source builds remain disabled during locked installs.
+
 ## Publication Setup
 
 The scheduled workflow runs from the default branch after this configuration
 is merged. Manual dispatch is restricted to that same trusted branch. Running
 `go-task deps-upgrade` locally only changes files; it never commits or pushes.
 
-Install a dedicated GitHub App on this repository with these repository
-permissions:
+The publication job reuses the `RELEASE_TOKEN` Actions secret used by Release
+Please. A fine-grained personal access token should be restricted to this
+repository with these permissions:
 
 - Contents: read and write.
 - Pull requests: read and write.
 - Workflows: read and write, to refresh action pins in workflow files.
 
-Set the repository variable `DEPENDENCIES_APP_CLIENT_ID` to the App client ID
-and the Actions secret `DEPENDENCIES_APP_PRIVATE_KEY` to its private key.
-Keep the private key only in GitHub Actions secrets.
-The App installation is limited to this repository; tokens are short-lived and
-revoked after use. A normal `GITHUB_TOKEN` is used only for read-only update
-lookups. It cannot substitute for the App token because PR events it creates
-would not trigger the normal CI checks.
+Classic tokens need the `repo` and `workflow` scopes. Workflow access is required
+to publish updated action pins. Keep the token only in the repository Actions
+secret and rotate it for both workflows together. A normal `GITHUB_TOKEN` is
+used only for read-only update lookups; PR events it creates would not trigger
+the normal CI checks.
 
 Dependency resolution and publication run on separate runners. The first can
 execute downloaded tools and Neovim plugins but receives no write credential.
