@@ -28,7 +28,7 @@ vars:
     {{.NVIM_TEST_ENV}}
     NVIM_TS_INSTALL={{default "auto" .NVIM_TS_INSTALL | shellQuote}}
     NVIM_TS_TIMEOUT_MS=120000
-  SUPERLINTER_IMAGE_TAG: "slim-v8.7.0"
+  SUPERLINTER_IMAGE_TAG: "slim-v9.0.0"
 
 tasks:
   deps-os:
