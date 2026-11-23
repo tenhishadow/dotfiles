@@ -10,9 +10,9 @@ vars:
   RUN_BROWSER_PLAYBOOK: "uv run ansible-playbook playbook_browser_policies.yml"
   VINT_TARGETS: "dotfiles/.vimrc dotfiles/.config/nvim"
   STYLUA_TARGETS: "dotfiles/.config/nvim .test/nvim .github/scripts"
-  RENOVATE_VERSION: "44.125.1"
+  RENOVATE_VERSION: "44.258.1"
   RENOVATE_NODE_MIN_VERSION: "24.11.0"
-  PINACT_VERSION: "v5.0.0"
+  PINACT_VERSION: "v5.0.2"
   DEPENDENCY_AUTH_TIMEOUT: "30s"
   DEPENDENCY_COMMAND_TIMEOUT: "600s"
   NVIM_TEST_ENV: >-
